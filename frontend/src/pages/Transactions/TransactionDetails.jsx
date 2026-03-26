@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import Layout from '../../components/Layout/Layout';
+import Layout from '../../components/Layout';
 import api from '../../api';
 
 const TransactionDetails = () => {

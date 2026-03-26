@@ -1,129 +1,208 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Layout from '../../components/Layout/Layout';
+import Layout from '../../components/Layout';
 import api from '../../api';
 
 const Requests = () => {
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
+    
+    // Filter States
     const [searchTerm, setSearchTerm] = useState('');
-    const [filterStatus, setFilterStatus] = useState('all');
+    const [filterStatus, setFilterStatus] = useState('All Status');
+    const [filterType, setFilterType] = useState('All Document');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+    const [entriesPerPage, setEntriesPerPage] = useState(10);
+
     const navigate = useNavigate();
 
     useEffect(() => {
         const fetchRequests = async () => {
             try {
                 const res = await api.get('/requests');
-                if(res.data.length === 0) {
-                   setRequests([
-                       { requestId: 'REQ1234-2026', name: 'Alyssa Jane Cruz', status: 'Pending', dateRequested: 'January 30, 2026' },
-                       { requestId: 'REQ1235-2026', name: 'John Doe', status: 'Approved', dateRequested: 'February 12, 2026' }
-                   ]);
-                } else {
-                   setRequests(res.data);
-                }
+                setRequests(res.data || []);
             } catch (error) {
                 console.error("Error fetching requests:", error);
             } finally {
                 setLoading(false);
             }
         };
-
+        
         fetchRequests();
     }, []);
 
-    const getStatusClass = (status) => {
-        if (!status) return 'bg-[#fcf8a0] text-[#948b04]'; // pending default
-        switch (status.toLowerCase().replace(' ', '-')) {
-            case 'pending': return 'bg-[#fcf8a0] text-[#948b04]';
-            case 'in-process': return 'bg-[#d1ecf1] text-[#0c5460]';
-            case 'approved': return 'bg-[#d4edda] text-[#155724]';
-            case 'released': return 'bg-[#cce5ff] text-[#004085]';
-            default: return 'bg-[#fcf8a0] text-[#948b04]';
+    // Helper for Status Badge Styling
+    const getStatusStyle = (status) => {
+        switch (status?.toLowerCase()) {
+            case 'processing': return 'bg-[#E1FFEB] text-[#28A745]';
+            case 'pending': return 'bg-[#FFFDE1] text-[#D2C300]';
+            default: return 'bg-gray-100 text-gray-600';
         }
     };
 
-    const handleViewRequest = (id) => {
-        navigate(`/requests/${id}`);
-    };
+    // Filter Logic
+    const filteredRequests = useMemo(() => {
+        return requests.filter((req) => {
+            const matchesSearch = req.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                                req.requestId?.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesStatus = filterStatus === 'All Status' || req.status === filterStatus;
+            const matchesType = filterType === 'All Document' || req.documentType === filterType;
+            
+            // Date Logic
+            const reqDate = new Date(req.date);
+            const start = startDate ? new Date(startDate) : null;
+            const end = endDate ? new Date(endDate) : null;
+            const matchesDate = (!start || reqDate >= start) && (!end || reqDate <= end);
 
-    const filteredRequests = requests.filter(req => {
-        const matchesSearch = req.requestId.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                              req.name.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesFilter = filterStatus === 'all' || req.status.toLowerCase() === filterStatus;
-        return matchesSearch && matchesFilter;
-    });
+            return matchesSearch && matchesStatus && matchesType && matchesDate;
+        });
+    }, [requests, searchTerm, filterStatus, filterType, startDate, endDate]);
+
+    // Dynamic Dropdown Options
+    const documentTypes = ['All Document', ...new Set(requests.map(r => r.documentType))];
+    const statuses = ['All Status', 'Processing', 'Pending', 'Approved', 'Rejected'];
 
     return (
         <Layout>
-            <div className="p-6">
-                <div className="flex justify-between items-center mb-[25px] flex-wrap gap-[15px]">
-                    <div className="flex items-center gap-2.5 w-[400px] max-w-full">
-                        <input 
-                            type="text" 
-                            id="searchInput" 
-                            placeholder="Search by ID or Name" 
-                            className="flex-1 h-10 px-[15px] border border-[#ddd] rounded-md bg-[#fafafa] text-[14px] outline-none placeholder:text-[#888] focus:border-[#2c3e50]"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                        <button className="bg-[#2c3e50] text-white border-none h-[42px] px-[25px] rounded-md font-semibold cursor-pointer transition-colors hover:bg-[#1a252f]">Search</button>
+            <div className="p-8 bg-[#F8FAFC] min-h-screen font-sans">
+                
+                {/* --- FILTER SECTION (Matches Image) --- */}
+                <div className="bg-white p-6 rounded-t-lg border-x border-t border-gray-200">
+                    <div className="flex justify-between items-center mb-6">
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                            Show 
+                            <select 
+                                value={entriesPerPage}
+                                onChange={(e) => setEntriesPerPage(e.target.value)}
+                                className="border border-gray-300 rounded px-1 py-1 focus:outline-none"
+                            >
+                                <option>10</option>
+                                <option>25</option>
+                                <option>50</option>
+                            </select> 
+                            entries
+                        </div>
+                        <div className="flex gap-0">
+                            <input 
+                                type="text" 
+                                placeholder="Search by name or action..." 
+                                className="border border-gray-300 rounded-l px-4 py-2 w-80 text-sm focus:outline-none focus:ring-1 focus:ring-slate-400"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                            <button className="bg-[#20354D] text-white px-8 py-2 rounded-r font-bold text-sm hover:bg-slate-800 transition-colors">
+                                Search
+                            </button>
+                        </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                        <i className="fa-solid fa-filter text-[#333]"></i>
-                        <select 
-                            className="py-2 px-[15px] w-[120px] border border-[#ddd] rounded-md bg-white text-[14px] cursor-pointer outline-none focus:border-[#2c3e50]" 
-                            id="filterSelect"
-                            value={filterStatus}
-                            onChange={(e) => setFilterStatus(e.target.value)}
-                        >
-                            <option value="all">All</option>
-                            <option value="pending">Pending</option>
-                            <option value="processing">Processing</option>
-                            <option value="approved">Approved</option>
-                        </select>
+                    <div className="grid grid-cols-4 gap-6 items-end">
+                        <FilterDropdown 
+                            label="Document Type:" 
+                            value={filterType} 
+                            onChange={setFilterType} 
+                            options={documentTypes} 
+                        />
+                        <FilterDropdown 
+                            label="Status:" 
+                            value={filterStatus} 
+                            onChange={setFilterStatus} 
+                            options={statuses} 
+                        />
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-sm font-bold text-gray-700">Start Date:</label>
+                            <input 
+                                type="date" 
+                                className="border border-gray-300 rounded px-3 py-2 text-sm text-gray-500 outline-none"
+                                value={startDate}
+                                onChange={(e) => setStartDate(e.target.value)}
+                            />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-sm font-bold text-gray-700">End Date:</label>
+                            <input 
+                                type="date" 
+                                className="border border-gray-300 rounded px-3 py-2 text-sm text-gray-500 outline-none"
+                                value={endDate}
+                                onChange={(e) => setEndDate(e.target.value)}
+                            />
+                        </div>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-lg overflow-hidden w-full shadow-[0_4px_15px_rgba(0,0,0,0.1)]">
-                    <div className="bg-[#2c3e50] text-white py-[15px] px-5 flex justify-between items-center">
-                        <h3 className="m-0 text-[16px] font-medium">All Document Requests</h3>
-                        <button className="bg-[#2c3e50] text-white border border-[#ffffff33] py-1.5 px-3 rounded-md text-[13px] cursor-pointer font-medium transition-colors hover:bg-[#1a252f]">Export CSV</button>
-                    </div>
-                    
-                    <table className="w-full border-collapse table-fixed">
+                {/* --- TABLE SECTION --- */}
+                <div className="bg-white shadow-sm border border-gray-200 overflow-hidden">
+                    <table className="w-full text-left">
                         <thead>
-                            <tr>
-                                <th className="py-[15px] px-5 text-left font-semibold text-[14px] border-b-2 border-[#eaeaea] text-[#333]">Request ID</th>
-                                <th className="py-[15px] px-5 text-left font-semibold text-[14px] border-b-2 border-[#eaeaea] text-[#333]">Name</th>
-                                <th className="py-[15px] px-5 text-left font-semibold text-[14px] border-b-2 border-[#eaeaea] text-[#333]">Status</th>
-                                <th className="py-[15px] px-5 text-left font-semibold text-[14px] border-b-2 border-[#eaeaea] text-[#333]">Date Requested</th>
-                                <th className="py-[15px] px-5 text-left font-semibold text-[14px] border-b-2 border-[#eaeaea] text-[#333]">Action</th>
+                            <tr className="text-[15px] font-bold text-black border-b border-gray-100">
+                                <th className="px-8 py-5">Request ID</th>
+                                <th className="px-8 py-5">Name</th>
+                                <th className="px-8 py-5">Document Type</th>
+                                <th className="px-8 py-5">Date</th>
+                                <th className="px-8 py-5">Status</th>
+                                <th className="px-8 py-5 text-right"></th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody className="divide-y divide-gray-50">
                             {loading ? (
-                                <tr><td colSpan="5" className="py-[15px] px-5 text-center text-[14px] text-black border-b border-[#eaeaea]">Loading...</td></tr>
+                                <tr><td colSpan="6" className="py-20 text-center text-gray-400">Loading requests...</td></tr>
                             ) : filteredRequests.length > 0 ? (
                                 filteredRequests.map((req, idx) => (
-                                    <tr key={idx} className="last:border-none">
-                                        <td className="py-[15px] px-5 text-[14px] text-black border-b border-[#eaeaea] align-middle">{req.requestId}</td>
-                                        <td className="py-[15px] px-5 text-[14px] text-black border-b border-[#eaeaea] align-middle">{req.name}</td>
-                                        <td className="py-[15px] px-5 text-[14px] text-black border-b border-[#eaeaea] align-middle"><span className={`py-1.5 px-5 rounded-full font-bold text-[12px] inline-block text-center min-w-[80px] ${getStatusClass(req.status)}`}>{req.status.toUpperCase()}</span></td>
-                                        <td className="py-[15px] px-5 text-[14px] text-black border-b border-[#eaeaea] align-middle">{new Date(req.dateRequested).toLocaleDateString() === 'Invalid Date' ? req.dateRequested : new Date(req.dateRequested).toLocaleDateString()}</td>
-                                        <td className="py-[15px] px-5 text-[14px] text-black border-b border-[#eaeaea] align-middle"><button className="bg-[#2c3e50] text-white border-none py-2 px-[18px] rounded-[10px] text-[13px] cursor-pointer font-medium transition-colors hover:bg-[#1a252f]" onClick={() => handleViewRequest(req.requestId)}>View Request</button></td>
+                                    <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
+                                        <td className="px-8 py-5 text-[13px] text-gray-700">{req.requestId}</td>
+                                        <td className="px-8 py-5 text-[13px] text-gray-700">{req.name}</td>
+                                        <td className="px-8 py-5 text-[13px] text-gray-700">{req.documentType}</td>
+                                        <td className="px-8 py-5 text-[13px] text-gray-700">{req.date}</td>
+                                        <td className="px-8 py-5">
+                                            <span className={`px-4 py-1 rounded text-[10px] font-bold uppercase ${getStatusStyle(req.status)}`}>
+                                                {req.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-8 py-5 text-right">
+                                            <button 
+                                                onClick={() => navigate(`/requests/${req.requestId}`)}
+                                                className="bg-[#2f3947] text-white px-5 py-2 rounded text-[12px] font-bold hover:bg-black transition-all"
+                                            >
+                                                View Request
+                                            </button>
+                                        </td>
                                     </tr>
                                 ))
                             ) : (
-                                <tr><td colSpan="5" className="py-[15px] px-5 text-center text-[14px] text-black border-b border-[#eaeaea]">No requests match the current filters.</td></tr>
+                                <tr><td colSpan="6" className="py-20 text-center text-gray-400 italic">No requests found matching your filters.</td></tr>
                             )}
                         </tbody>
                     </table>
+                </div>
+
+                {/* --- PAGINATION --- */}
+                <div className="bg-white p-6 border-x border-b border-gray-200 rounded-b-lg flex justify-center gap-2">
+                    <button className="text-gray-400 text-xs px-2">Previous</button>
+                    <button className="w-8 h-8 bg-[#2f3947] text-white rounded text-xs">1</button>
+                    <button className="w-8 h-8 bg-gray-100 text-gray-600 rounded text-xs hover:bg-gray-200">2</button>
+                    <button className="w-8 h-8 bg-gray-100 text-gray-600 rounded text-xs hover:bg-gray-200">3</button>
+                    <button className="text-gray-400 text-xs px-2">Next</button>
                 </div>
             </div>
         </Layout>
     );
 };
+
+// Reusable Filter Dropdown
+function FilterDropdown({ label, value, onChange, options }) {
+    return (
+        <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-bold text-gray-700">{label}</label>
+            <select 
+                value={value} 
+                onChange={(e) => onChange(e.target.value)}
+                className="border border-gray-300 rounded px-3 py-2 text-sm text-gray-500 bg-white cursor-pointer outline-none focus:border-gray-400"
+            >
+                {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+            </select>
+        </div>
+    );
+}
 
 export default Requests;
