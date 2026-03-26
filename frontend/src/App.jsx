@@ -10,6 +10,8 @@ import Transactions from './pages/Transactions/Transactions';
 import TransactionDetails from './pages/Transactions/TransactionDetails';
 import Notifications from './pages/Notifications/Notifications';
 import Profile from './pages/Profile/Profile';
+import ManageAdmins from './pages/Admin/ManageAdmins';
+import ActivityLogs from './pages/Admin/ActivityLogs';
 
 function App() {
   return (
@@ -20,17 +22,19 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/otp" element={<OTP />} />
         <Route path="/change-password" element={<ChangePassword />} />
-        
+
         {/* Protected Routes (Assuming dashboard relies on layout wrapper later) */}
         <Route path="/" element={<Dashboard />} />
-        
+
         <Route path="/requests" element={<Requests />} />
         <Route path="/requests/:id" element={<RequestDetails />} />
-        
+
         <Route path="/transactions" element={<Transactions />} />
         <Route path="/transactions/:id" element={<TransactionDetails />} />
-        
+
         <Route path="/notifications" element={<Notifications />} />
+        <Route path="/manage-admins" element={<ManageAdmins />} />
+        <Route path="/activity-logs" element={<ActivityLogs />} />
         <Route path="/profile" element={<Profile />} />
 
         {/* Catch-all redirect */}

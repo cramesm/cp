@@ -11,39 +11,33 @@ const RequestDetails = () => {
     const [activeModal, setActiveModal] = useState(null);
     const [uploadedFiles, setUploadedFiles] = useState([]);
     const [confirmed, setConfirmed] = useState(false);
+    const [rejectionReason, setRejectionReason] = useState('');
+    const [actionLoading, setActionLoading] = useState(false);
+
+    const fetchData = async () => {
+        try {
+            const res = await api.get('/requests');
+            // Backend currently doesn't have GET /requests/:id, so we find in list
+            const found = res.data.find(r => r.requestId === id);
+            if (found) {
+                setRequestData(found);
+            } else {
+                // Fallback for demo if not in DB yet
+                setRequestData({
+                    requestId: id,
+                    name: 'Guest User',
+                    status: 'Pending',
+                    dateRequested: new Date().toISOString()
+                });
+            }
+        } catch (error) {
+            console.error("Error fetching request:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        // Mock data fetch simulating /requests/:id
-        const fetchData = async () => {
-             // Simulating API lag
-             setTimeout(() => {
-                 setRequestData({
-                     requestId: id || 'REQ1234-2026',
-                     requester: {
-                        name: 'Juan Dela Cruz',
-                        studentId: '2023-102347',
-                        program: 'BS Information Technology'
-                     },
-                     document: {
-                         type: 'Transcript of Record',
-                         status: 'Pending',
-                         processedDate: '---'
-                     },
-                     payment: {
-                         method: 'Gcash',
-                         status: 'Paid',
-                         amount: '₱150.00',
-                         reference: '1234578839',
-                         date: 'January 15, 2026'
-                     },
-                     validation: {
-                         hashStatus: '---',
-                         blockchainStatus: '---'
-                     }
-                 });
-                 setLoading(false);
-             }, 500);
-        };
         fetchData();
     }, [id]);
 
@@ -55,84 +49,158 @@ const RequestDetails = () => {
         setUploadedFiles(files);
     };
 
+    const handleStatusUpdate = async (newStatus) => {
+        setActionLoading(true);
+        try {
+            await api.put(`/requests/${id}`, { status: newStatus });
+            fetchData();
+            closeModal();
+        } catch (err) {
+            alert(err.response?.data?.message || 'Update failed');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleGenerateHash = async () => {
+        setActionLoading(true);
+        try {
+            await api.post(`/requests/${id}/generate-hash`);
+            fetchData();
+            alert('Document Hash generated successfully!');
+        } catch (err) {
+            alert(err.response?.data?.message || 'Hash generation failed');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
     if (loading) {
         return <Layout><div className="p-5">Loading Request Details...</div></Layout>;
     }
 
-    const { requester, document, payment, validation } = requestData;
+    if (!requestData) {
+        return <Layout><div className="p-5 text-red-500">Request not found.</div></Layout>;
+    }
+
+    const { name, status, dateRequested, documentHash } = requestData;
 
     return (
         <Layout>
             <div className="p-5 bg-white">
-                <h1 className="text-[24px] font-bold mb-[25px] text-black font-mono tracking-[0.5px]">Request ID: {requestData.requestId}</h1>
+                <div className="flex justify-between items-center mb-6">
+                    <h1 className="text-[24px] font-bold text-black font-mono tracking-[0.5px]">Request ID: {id}</h1>
+                    <div className="flex gap-3">
+                         <button 
+                            className="bg-[#2c3e50] text-white px-5 py-2 rounded-lg text-sm font-bold hover:bg-[#1a252f] disabled:opacity-50"
+                            onClick={handleGenerateHash}
+                            disabled={actionLoading || documentHash}
+                        >
+                            {documentHash ? 'Hash Recorded' : 'Generate Hash'}
+                        </button>
+                    </div>
+                </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-1.5">
                     <div className="bg-white border border-[#dcdcdc] rounded-[10px] py-5 px-[25px] mb-5">
                         <h3 className="text-[16px] font-semibold text-[#222] mb-5">Requester Details</h3>
-                        <div className="grid grid-cols-[140px_1fr] mb-3 items-center"><span className="text-[#666] text-[14px]">Request ID:</span><span className="text-[#222] text-[14px] font-normal">{requestData.requestId}</span></div>
-                        <div className="grid grid-cols-[140px_1fr] mb-3 items-center"><span className="text-[#666] text-[14px]">Name:</span><span className="text-[#222] text-[14px] font-normal">{requester.name}</span></div>
-                        <div className="grid grid-cols-[140px_1fr] mb-3 items-center"><span className="text-[#666] text-[14px]">Student ID:</span><span className="text-[#222] text-[14px] font-normal">{requester.studentId}</span></div>
-                        <div className="grid grid-cols-[140px_1fr] mb-3 items-center"><span className="text-[#666] text-[14px]">Program:</span><span className="text-[#222] text-[14px] font-normal">{requester.program}</span></div>
+                        <div className="grid grid-cols-[140px_1fr] mb-3 items-center"><span className="text-[#666] text-[14px]">Name:</span><span className="text-[#222] text-[14px] font-normal">{name}</span></div>
+                        <div className="grid grid-cols-[140px_1fr] mb-3 items-center"><span className="text-[#666] text-[14px]">Date Requested:</span><span className="text-[#222] text-[14px] font-normal">{new Date(dateRequested).toLocaleDateString()}</span></div>
                     </div>
 
                     <div className="bg-white border border-[#dcdcdc] rounded-[10px] py-5 px-[25px] mb-5">
-                        <h3 className="text-[16px] font-semibold text-[#222] mb-5">Document Details</h3>
-                        <div className="grid grid-cols-[140px_1fr] mb-3 items-center"><span className="text-[#666] text-[14px]">Document Type:</span><span className="text-[#222] text-[14px] font-normal">{document.type}</span></div>
-                        <div className="grid grid-cols-[140px_1fr] mb-3 items-center"><span className="text-[#666] text-[14px]">Status:</span>
+                        <h3 className="text-[16px] font-semibold text-[#222] mb-5">Document Status</h3>
+                        <div className="grid grid-cols-[140px_1fr] mb-3 items-center"><span className="text-[#666] text-[14px]">Current Status:</span>
                             <span className={`py-1.5 px-[15px] rounded-[20px] text-[12px] font-bold inline-block text-center w-[120px] uppercase
-                                ${document.status.toLowerCase() === 'pending' ? 'bg-[#fcf8a0] text-[#948b04] !w-[100px]' : 
-                                  document.status.toLowerCase() === 'processing' ? 'bg-[#98fb98] text-[#006400]' :
-                                  document.status.toLowerCase() === 'approved' ? 'bg-[#aed6f1] text-[#1b4f72]' :
-                                  document.status.toLowerCase() === 'released' ? 'bg-[#fad7a0] text-[#e67e22]' :
-                                  document.status.toLowerCase() === 'rejected' ? 'bg-[#fadbd8] text-[#c0392b]' : ''
+                                ${status.toLowerCase() === 'pending' ? 'bg-[#fcf8a0] text-[#948b04]' : 
+                                  status.toLowerCase() === 'in process' ? 'bg-[#d1ecf1] text-[#0c5460]' :
+                                  status.toLowerCase() === 'approved' ? 'bg-[#d4edda] text-[#155724]' :
+                                  status.toLowerCase() === 'released' ? 'bg-[#cce5ff] text-[#004085]' :
+                                  status.toLowerCase() === 'rejected' ? 'bg-[#fadbd8] text-[#c0392b]' : ''
                                 }`}
                             >
-                                {document.status}
+                                {status}
                             </span>
                         </div>
-                        <div className="grid grid-cols-[140px_1fr] mb-3 items-center"><span className="text-[#666] text-[14px]">Processed Date:</span><span className="text-[#222] text-[14px] font-normal">{document.processedDate}</span></div>
+                        {documentHash && (
+                            <div className="mt-4 p-3 bg-gray-50 rounded border border-dashed border-gray-300">
+                                <span className="text-[11px] text-gray-500 block uppercase font-bold mb-1">Secure Document Hash (SHA-256)</span>
+                                <code className="text-[12px] break-all text-[#2c3e50]">{documentHash}</code>
+                            </div>
+                        )}
                     </div>
                 </div>
 
                 <div className="bg-white border border-[#dcdcdc] rounded-[10px] py-5 px-[25px] mb-5">
-                    <h3 className="text-[16px] font-semibold text-[#222] mb-5">Payment Details</h3>
-                    <div className="flex justify-between flex-wrap gap-5">
-                        <div className="flex flex-col gap-1"><div className="text-[13px] text-[#555] font-normal">Payment Method</div><div className="text-[14px] text-[#222] font-medium">{payment.method}</div></div>
-                        <div className="flex flex-col gap-1"><div className="text-[13px] text-[#555] font-normal">Status</div><div className={`text-[14px] font-bold flex items-center gap-1.5 ${payment.status === 'Paid' ? 'text-[#27ae60]' : 'text-[#e74c3c]'}`}><i className="fa-solid fa-circle-check"></i> {payment.status}</div></div>
-                        <div className="flex flex-col gap-1"><div className="text-[13px] text-[#555] font-normal">Amount Paid</div><div className="text-[14px] text-[#222] font-medium">{payment.amount}</div></div>
-                        <div className="flex flex-col gap-1"><div className="text-[13px] text-[#555] font-normal">Reference No.</div><div className="text-[14px] text-[#222] font-medium">{payment.reference}</div></div>
-                        <div className="flex flex-col gap-1"><div className="text-[13px] text-[#555] font-normal">Date Paid</div><div className="text-[14px] text-[#222] font-medium">{payment.date}</div></div>
-                    </div>
-                </div>
-
-                <div className="bg-white border border-[#dcdcdc] rounded-[10px] py-5 px-[25px] mb-5">
-                    <h3 className="text-[16px] font-semibold text-[#222] mb-5">Validation</h3>
+                    <h3 className="text-[16px] font-semibold text-[#222] mb-5">Verification Summary</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4">
-                        <div className="mb-[15px]"><div className="text-[13px] text-[#555] font-normal inline-block w-[140px]">Hash Status:</div><div className="text-[14px] text-[#222] font-medium inline-block">{validation.hashStatus}</div></div>
-                        <div className="mb-[15px]"><div className="text-[13px] text-[#555] font-normal inline-block w-[140px]">Blockchain Status:</div><div className="text-[14px] text-[#222] font-medium inline-block">{validation.blockchainStatus}</div></div>
+                        <div className="mb-[15px]"><div className="text-[13px] text-[#555] font-normal inline-block w-[140px]">Hash Authenticity:</div><div className={`text-[14px] font-bold inline-block ${documentHash ? 'text-green-600' : 'text-orange-500'}`}>{documentHash ? 'GENUINE' : 'PENDING'}</div></div>
+                        <div className="mb-[15px]"><div className="text-[13px] text-[#555] font-normal inline-block w-[140px]">Blockchain Sec:</div><div className="text-[14px] text-[#222] font-medium inline-block">NOT RECORDED</div></div>
                     </div>
                 </div>
 
                 <div className="flex justify-end gap-[15px] mt-[30px]">
-                    <button className="bg-[#dcdcdc] text-[#333] border-none py-3 px-[25px] rounded-[25px] font-semibold text-[14px] cursor-pointer transition-colors duration-200 hover:bg-[#c0c0c0]" onClick={() => openModal('reject')}>Reject Request</button>
-                    {document.status === 'Pending' && <button className="bg-[#2c3e50] text-white border-none py-3 px-[25px] rounded-[25px] font-semibold text-[14px] cursor-pointer transition-colors duration-200 hover:bg-[#1a252f]" onClick={() => openModal('upload')}>Approve Request</button>}
+                    <button 
+                        className="bg-[#dcdcdc] text-[#333] border-none py-3 px-[25px] rounded-[25px] font-semibold text-[14px] cursor-pointer transition-colors duration-200 hover:bg-[#c0c0c0]" 
+                        onClick={() => openModal('reject')}
+                        disabled={status === 'Rejected' || actionLoading}
+                    >
+                        Reject Request
+                    </button>
+                    {status === 'Pending' && (
+                        <button 
+                            className="bg-[#2c3e50] text-white border-none py-3 px-[25px] rounded-[25px] font-semibold text-[14px] cursor-pointer transition-colors duration-200 hover:bg-[#1a252f]" 
+                            onClick={() => openModal('upload')}
+                            disabled={actionLoading}
+                        >
+                            Start Processing
+                        </button>
+                    )}
+                    {status === 'In Process' && (
+                        <button 
+                            className="bg-green-600 text-white border-none py-3 px-[25px] rounded-[25px] font-semibold text-[14px] cursor-pointer transition-colors duration-200 hover:bg-green-700" 
+                            onClick={() => handleStatusUpdate('Approved')}
+                            disabled={actionLoading}
+                        >
+                            Approve Documents
+                        </button>
+                    )}
+                    {status === 'Approved' && (
+                        <button 
+                            className="bg-blue-600 text-white border-none py-3 px-[25px] rounded-[25px] font-semibold text-[14px] cursor-pointer transition-colors duration-200 hover:bg-blue-700" 
+                            onClick={() => handleStatusUpdate('Released')}
+                            disabled={actionLoading}
+                        >
+                            Release Documents
+                        </button>
+                    )}
                 </div>
 
                 {activeModal === 'reject' && (
                     <div className="fixed top-0 left-0 w-full h-full bg-black/50 z-[1000] flex justify-center items-center">
                         <div className="bg-white rounded-[15px] p-[30px] shadow-[0_10px_30px_rgba(0,0,0,0.2)] text-left w-[500px]">
-                            <h3 className="text-[18px] font-bold mb-5 color-[#000]">Reject Request: {requestData.requestId}</h3>
+                            <h3 className="text-[18px] font-bold mb-5 text-black">Reject Request: {id}</h3>
                             <div className="mb-5">
                                 <label className="block text-[13px] text-[#555] mb-2 font-medium">Reason for Rejection:</label>
-                                <select className="w-full py-2.5 px-[15px] border border-[#ccc] rounded-lg box-border outline-none">
-                                    <option value="" disabled selected>Reason</option>
+                                <select 
+                                    className="w-full py-2.5 px-[15px] border border-[#ccc] rounded-lg box-border outline-none"
+                                    value={rejectionReason}
+                                    onChange={(e) => setRejectionReason(e.target.value)}
+                                >
+                                    <option value="" disabled>Select Reason</option>
                                     <option value="incomplete">Incomplete Documents</option>
                                     <option value="invalid">Invalid Information</option>
                                 </select>
                             </div>
                             <div className="flex justify-end gap-[15px] mt-5">
                                 <button className="bg-[#dcdcdc] text-[#333] border-none py-2.5 px-[25px] rounded-[20px] font-semibold text-[13px] cursor-pointer transition-colors hover:bg-[#c0c0c0]" onClick={closeModal}>Cancel</button>
-                                <button className="bg-[#343a40] text-white border-none py-2.5 px-[30px] rounded-[20px] font-semibold cursor-pointer transition-colors hover:bg-[#1d2124]" onClick={() => { /* Handle reject API */ closeModal(); }}>Confirm</button>
+                                <button 
+                                    className="bg-red-600 text-white border-none py-2.5 px-[30px] rounded-[20px] font-semibold cursor-pointer transition-colors hover:bg-red-700" 
+                                    onClick={() => handleStatusUpdate('Rejected')}
+                                    disabled={!rejectionReason || actionLoading}
+                                >
+                                    Confirm Rejection
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -141,7 +209,7 @@ const RequestDetails = () => {
                 {activeModal === 'upload' && (
                     <div className="fixed top-0 left-0 w-full h-full bg-black/50 z-[1000] flex justify-center items-center">
                         <div className="bg-white rounded-[15px] p-[30px] shadow-[0_10px_30px_rgba(0,0,0,0.2)] text-left w-[480px]">
-                            <h3 className="text-[18px] font-bold mb-5 color-[#000]">Upload TOR Files</h3>
+                            <h3 className="text-[18px] font-bold mb-5 text-black">Approve & Upload TOR Files</h3>
                             <input type="file" id="fileInput" className="hidden" accept=".pdf" multiple onChange={handleFileUpload} />
                             <div className="border-2 border-dashed border-[#ccc] bg-[#f9f9f9] rounded-[10px] py-[30px] px-5 text-center mb-[15px] cursor-pointer transition-colors hover:border-[#2c3e50]" onClick={() => document.getElementById('fileInput').click()}>
                                 <i className="fa-solid fa-cloud-arrow-up text-[30px] text-[#2c3e50] mb-2.5"></i>
@@ -154,11 +222,17 @@ const RequestDetails = () => {
                             )}
                             <div className="flex items-start gap-2.5 my-[15px] p-2.5 bg-[#f8f9fa] border border-[#e9ecef] rounded-md">
                                 <input type="checkbox" id="upload-confirm" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} className="mt-1" />
-                                <label htmlFor="upload-confirm" className="text-[13px] text-[#555]">I confirm that the selected files are correct.</label>
+                                <label htmlFor="upload-confirm" className="text-[13px] text-[#555]">I confirm that these documents are ready for processing.</label>
                             </div>
                             <div className="flex justify-end gap-[15px] mt-5">
                                 <button className="bg-[#dcdcdc] text-[#333] border-none py-2.5 px-[25px] rounded-[20px] font-semibold text-[13px] cursor-pointer hover:bg-[#c0c0c0]" onClick={closeModal}>Cancel</button>
-                                <button className="bg-[#2c3e50] text-white border-none py-2.5 px-[25px] rounded-[20px] font-semibold text-[13px] cursor-pointer disabled:bg-[#bdc3c7] disabled:cursor-not-allowed hover:bg-[#1a252f]" disabled={!confirmed} onClick={() => { /* Handle approve API */ closeModal(); }}>Confirm</button>
+                                <button 
+                                    className="bg-[#2c3e50] text-white border-none py-2.5 px-[25px] rounded-[20px] font-semibold text-[13px] cursor-pointer disabled:bg-[#bdc3c7] disabled:cursor-not-allowed hover:bg-[#1a252f]" 
+                                    disabled={!confirmed || actionLoading} 
+                                    onClick={() => handleStatusUpdate('In Process')}
+                                >
+                                    Start Processing
+                                </button>
                             </div>
                         </div>
                     </div>

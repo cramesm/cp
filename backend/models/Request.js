@@ -15,6 +15,9 @@ const requestSchema = new mongoose.Schema({
     enum: ['Pending', 'In Process', 'Approved', 'Released'],
     default: 'Pending'
   },
+  documentHash: {
+    type: String
+  },
   dateRequested: {
     type: Date,
     default: Date.now

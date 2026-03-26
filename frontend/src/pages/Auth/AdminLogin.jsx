@@ -14,7 +14,8 @@ const AdminLogin = () => {
         try {
             const response = await api.post('/auth/login', { email, password });
             if (response.data.success) {
-                // In a real app we'd save a token to localStorage here
+                localStorage.setItem('token', response.data.token);
+                localStorage.setItem('userRole', response.data.user.role);
                 navigate('/');
             }
         } catch (err) {
