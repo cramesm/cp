@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import AdminLayout from '../../components/AdminLayout';
+import Layout from '../../components/Layout';
 import api from '../../api';
 import { AlertCircle, RefreshCw } from 'lucide-react'; // Essential for error feedback
 
@@ -49,7 +49,7 @@ const Dashboard = () => {
     }, []);
 
     return (
-        <AdminLayout>
+        <Layout>
             <div className="p-6">
                 {/* --- NEW: Error Output Message --- */}
                 {error && (
@@ -182,7 +182,7 @@ const Dashboard = () => {
                     </table>
                 </div>
             </div>
-        </AdminLayout>
+        </Layout>
     );
 };
 

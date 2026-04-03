@@ -1,13 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
 import Layout from '../../components/Layout';
 import api from '../../api';
-import { AlertCircle, Info, X } from 'lucide-react';
+import { AlertCircle, Info, X, Search } from 'lucide-react';
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
-  
-  // Toast States
+  const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [toast, setToast] = useState({ show: false, message: '', type: 'error' });
 
   // Filter States
@@ -24,10 +23,8 @@ const Notifications = () => {
     setLoading(true);
     try {
       const res = await api.get('/notifications');
-      // res.data should be an array of notification objects from your DB
       setNotifications(res.data || []);
     } catch (error) {
-      console.error("API Fetch Error:", error);
       triggerToast("Failed to load notifications from server.", "error");
     } finally {
       setLoading(false);
@@ -39,35 +36,12 @@ const Notifications = () => {
     setTimeout(() => setToast({ show: false, message: '', type: 'error' }), 4000);
   };
 
-  const handleStartDateChange = (e) => {
-    const val = e.target.value;
-    if (endDate && val > endDate) {
-      triggerToast("Start Date cannot be later than End Date.", "warning");
-      return;
-    }
-    setStartDate(val);
-  };
-
-  const handleEndDateChange = (e) => {
-    const val = e.target.value;
-    if (startDate && val < startDate) {
-      triggerToast("End Date cannot be earlier than Start Date.", "warning");
-      return;
-    }
-    setEndDate(val);
-  };
-
-  // Logic to update DB and local state
   const handleMarkAllRead = async () => {
     try {
-      // Step 1: Tell the backend to update all unread notifications for this user
       await api.put('/notifications/mark-all-read'); 
-      
-      // Step 2: Update local state to reflect changes immediately
       setNotifications(notifications.map(n => ({ ...n, isRead: true })));
       triggerToast("All notifications caught up!", "info");
     } catch (error) {
-      console.error("Update Error:", error);
       triggerToast("Could not update notifications on server.", "error");
     }
   };
@@ -89,86 +63,118 @@ const Notifications = () => {
 
   return (
     <Layout>
-      <div className="p-8 bg-white min-h-screen font-sans text-[#333] relative">
+      <div className="p-8 bg-[#F8FAFC] min-h-screen font-sans">
         
-        {/* --- DYNAMIC TOAST COMPONENT --- */}
+        {/* Toast Notification */}
         {toast.show && (
-            <div className={`fixed top-5 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-3 px-6 py-3 rounded-lg shadow-2xl transition-all duration-300 transform translate-y-0 ${
-                toast.type === 'error' ? 'bg-red-600 text-white' : 'bg-amber-500 text-white'
+            <div className={`fixed top-5 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-3 px-6 py-3 rounded-lg shadow-2xl transition-all ${
+                toast.type === 'error' ? 'bg-red-600 text-white' : 'bg-[#1D2D44] text-white'
             }`}>
-                <div className="flex-shrink-0">
-                    {toast.type === 'error' ? <AlertCircle size={20} strokeWidth={2.5} /> : <Info size={20} strokeWidth={2.5} />}
-                </div>
-                <p className="font-bold text-sm tracking-wide">{toast.message}</p>
-                <button onClick={() => setToast({ ...toast, show: false })} className="ml-4 p-1 hover:bg-white/20 rounded-full transition-colors">
-                    <X size={16} />
+                {toast.type === 'error' ? <AlertCircle size={18} /> : <Info size={18} />}
+                <p className="font-bold text-sm">{toast.message}</p>
+                <button onClick={() => setToast({ ...toast, show: false })} className="ml-4 hover:bg-white/20 rounded-full p-0.5">
+                    <X size={14} />
                 </button>
             </div>
         )}
 
-        <div className="max-w-[1200px] mx-auto border border-gray-200 rounded-lg shadow-sm">
-          <div className="p-6 space-y-6">
-            <div className="flex justify-between items-center">
-                <div className="text-sm text-gray-400">Showing {filteredNotifications.length} notifications</div>
-                <div className="flex w-full max-w-[400px]">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          
+          {/* Unified Filter Row */}
+          <div className="p-6 border-b border-gray-100">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              
+              {/* Show Entries & Search */}
+              <div className="flex items-center gap-4 flex-1">
+                <div className="flex items-center gap-2 text-[14px] text-[#7E84A3] whitespace-nowrap">
+                  <span>Show</span>
+                  <select 
+                    className="appearance-none bg-white border border-[#DDE2EF] rounded-[6px] px-3 py-2 pr-8 outline-none text-[#4D5E80] cursor-pointer bg-no-repeat bg-[right_10px_center] hover:border-gray-300"
+                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%237E84A3'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundSize: '12px' }}
+                    value={entriesPerPage}
+                    onChange={(e) => setEntriesPerPage(Number(e.target.value))}
+                  >
+                    <option value={10}>10</option>
+                    <option value={25}>25</option>
+                  </select>
+                  <span>entries</span>
+                </div>
+
+                <div className="relative flex-1 max-w-sm">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
                     <input 
                         type="text" 
                         placeholder="Search notifications..." 
-                        className="flex-1 border border-gray-300 rounded-l-md px-4 py-2 text-[14px] outline-none focus:border-[#1D2D44]"
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 pl-9 text-xs outline-none focus:border-[#1D2D44]"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
-                    <button className="bg-[#1D2D44] text-white px-8 py-2 rounded-r-md font-bold text-[14px]">Search</button>
                 </div>
-            </div>
+              </div>
 
-            <div className="grid grid-cols-4 gap-6 items-end">
-              <div className="flex flex-col gap-2">
-                <label className="text-[14px] font-bold text-gray-700">Status:</label>
-                <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="border border-gray-300 rounded px-3 py-2 text-[14px] text-gray-400 outline-none bg-white">
+              {/* Status & Dates & Actions (Single Line) */}
+              <div className="flex items-center gap-3">
+                <select 
+                    value={filterStatus} 
+                    onChange={(e) => setFilterStatus(e.target.value)} 
+                    className="border border-gray-300 rounded-md px-3 py-2 text-xs outline-none bg-white min-w-[110px]"
+                >
                   <option>All Status</option><option>Unread</option><option>Read</option>
                 </select>
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-[14px] font-bold text-gray-700">Start Date:</label>
-                <input type="date" className="border border-gray-300 rounded px-3 py-2 text-[14px] text-gray-400 outline-none" value={startDate} onChange={handleStartDateChange} />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-[14px] font-bold text-gray-700">End Date:</label>
-                <input type="date" className="border border-gray-300 rounded px-3 py-2 text-[14px] text-gray-400 outline-none" value={endDate} onChange={handleEndDateChange} />
-              </div>
-              <div className="flex gap-2">
-                <button onClick={fetchNotifications} className="flex-1 bg-[#D1D1D1] text-gray-700 px-4 py-2 rounded font-bold text-[14px] hover:bg-gray-200 transition-colors">Retry</button>
-                <button onClick={handleMarkAllRead} className="flex-1 bg-[#1D2D44] text-white px-4 py-2 rounded font-bold text-[14px] hover:bg-[#152030] transition-colors shadow-md">Mark all read</button>
+
+                <input type="date" className="border border-gray-300 rounded-md px-3 py-1.5 text-xs text-gray-500 outline-none" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                <input type="date" className="border border-gray-300 rounded-md px-3 py-1.5 text-xs text-gray-500 outline-none" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                
+                <div className="flex gap-2 ml-2">
+                    <button onClick={fetchNotifications} className="bg-[#E5E7EB] text-gray-700 px-5 py-2 rounded-md font-bold text-[12px] hover:bg-gray-200 transition-colors">
+                        Retry
+                    </button>
+                    <button onClick={handleMarkAllRead} className="bg-[#1D2D44] text-white px-5 py-2 rounded-md font-bold text-[12px] hover:bg-[#152030] transition-all whitespace-nowrap">
+                        Mark all read
+                    </button>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-12 bg-white border-y border-gray-200 py-4 px-8 font-bold text-[15px]">
-            <span className="col-span-3">Status</span>
-            <span className="col-span-6 text-center">Notification</span>
-            <span className="col-span-3 text-right">Date & Time</span>
+          {/* Table */}
+          <div className="overflow-x-auto min-h-[450px]">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-gray-200 text-gray-800 font-bold text-[13px]">
+                  <th className="py-5 px-8">Status</th>
+                  <th className="py-5 px-2 text-center">Notification</th>
+                  <th className="py-5 px-8 text-right">Date & Time</th>
+                </tr>
+              </thead>
+              <tbody className="text-[13px]">
+                {loading ? (
+                  <tr><td colSpan="3" className="py-24 text-center text-gray-400 italic">Connecting to server...</td></tr>
+                ) : filteredNotifications.length > 0 ? (
+                    filteredNotifications.map((n, idx) => (
+                        <tr key={n._id || idx} className={`transition-colors ${idx % 2 !== 0 ? 'bg-[#F9FAFF]' : 'bg-white hover:bg-gray-50'}`}>
+                            <td className="py-5 px-8">
+                                <div className="flex items-center gap-3">
+                                    <span className={`w-2 h-2 rounded-full ${n.isRead ? 'bg-gray-300' : 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]'}`}></span>
+                                    <span className={`font-bold ${n.isRead ? 'text-gray-400 font-normal' : 'text-[#1D2D44]'}`}>{n.isRead ? 'Read' : 'Unread'}</span>
+                                </div>
+                            </td>
+                            <td className={`py-5 px-2 text-center ${n.isRead ? 'text-gray-400' : 'text-gray-800 font-medium'}`}>{n.message}</td>
+                            <td className="py-5 px-8 text-right text-gray-400 font-mono text-xs">{n.date}</td>
+                        </tr>
+                    ))
+                ) : (
+                  <tr><td colSpan="3" className="py-24 text-center text-gray-400 italic">No notifications found.</td></tr>
+                )}
+              </tbody>
+            </table>
           </div>
 
-          <div className="min-h-[400px] flex flex-col">
-            {loading ? (
-              <div className="flex-1 flex items-center justify-center text-gray-400 italic">Connecting to server...</div>
-            ) : filteredNotifications.length > 0 ? (
-                filteredNotifications.map((n, idx) => (
-                    <div key={n._id || idx} className={`grid grid-cols-12 px-8 py-5 border-b border-gray-100 items-center transition-colors ${idx % 2 !== 0 ? 'bg-[#F9FAFF]' : 'bg-white'}`}>
-                         <div className="col-span-3 flex items-center gap-3">
-                            <span className={`w-2.5 h-2.5 rounded-full ${n.isRead ? 'bg-[#BDBDBD]' : 'bg-[#73A9D4]'}`}></span>
-                            <span className={`text-[14px] ${n.isRead ? 'text-gray-400' : 'font-bold text-[#1D2D44]'}`}>{n.isRead ? 'Read' : 'Unread'}</span>
-                        </div>
-                        <span className={`col-span-6 text-center text-[14px] ${n.isRead ? 'text-gray-400' : 'text-gray-800'}`}>{n.message}</span>
-                        <span className="col-span-3 text-right text-[14px] text-gray-400 font-mono">{n.date}</span>
-                    </div>
-                ))
-            ) : (
-              <div className="flex-1 flex items-center justify-center text-[#99AAB5] italic text-[18px]">
-                No notifications found.
-              </div>
-            )}
+          {/* Pagination */}
+          <div className="flex justify-center items-center py-6 border-t border-gray-100 gap-2">
+            <button className="text-gray-400 hover:text-black text-xs px-2">Previous</button>
+            <button className="w-8 h-8 bg-[#1D2D44] text-white rounded font-bold text-xs">1</button>
+            <button className="text-gray-400 hover:text-black text-xs px-2">Next</button>
           </div>
         </div>
       </div>

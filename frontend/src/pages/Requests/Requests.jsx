@@ -28,7 +28,7 @@ const Requests = () => {
                 setLoading(false);
             }
         };
-        
+
         fetchRequests();
     }, []);
 

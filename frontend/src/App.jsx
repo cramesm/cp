@@ -11,7 +11,10 @@ import RequestDetails from './pages/Requests/RequestDetails';
 import Transactions from './pages/Transactions/Transactions';
 import TransactionDetails from './pages/Transactions/TransactionDetails';
 import Notifications from './pages/Notifications/Notifications';
-import Profile from './pages/Profile/Profile';
+import Profile from './pages/Profile/Profile'; // This is the Edit Page
+import ProfileInfo from './pages/Profile/ProfileInfo'; // This is the View Page
+import Payments from './pages/Payments/Payments';
+import PaymentDetails from './pages/Payments/PaymentDetails'; // Added this import
 
 {/* System Admin Pages */}
 import ManageRegistrar from './pages/SystemAdmin/ManageRegistrar';
@@ -28,24 +31,35 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/otp" element={<OTP />} />
         <Route path="/change-password" element={<ChangePassword />} />
-        
-        {/* Protected Routes (Assuming dashboard relies on layout wrapper later) */}
+
+        {/* Main Dashboard */}
         <Route path="/" element={<Dashboard />} />
         
+        {/* Requests Management */}
         <Route path="/requests" element={<Requests />} />
         <Route path="/requests/:id" element={<RequestDetails />} />
+
+        {/* Payments Management */}
+        <Route path="/payments" element={<Payments />} />
+        <Route path="/payments/:id" element={<PaymentDetails />} /> {/* Updated to match Payment links */}
         
+        {/* Transaction History */}
         <Route path="/transactions" element={<Transactions />} />
         <Route path="/transactions/:id" element={<TransactionDetails />} />
         
+        {/* Notifications */}
         <Route path="/notifications" element={<Notifications />} />
-        <Route path="/profile" element={<Profile />} />
 
+        {/* Profile Management */}
+        <Route path="/profile/info" element={<ProfileInfo />} /> {/* Main View */}
+        <Route path="/profile" element={<Profile />} />           {/* Edit View */}
+
+        {/* System Admin / Registrar Management */}
         <Route path="/manage-registrar" element={<ManageRegistrar />} />
-        <Route path="/activity-logs" element={<ActivityLogs />} />
         <Route path="/manage-registrar/add" element={<AddRegistrar />} />
         <Route path="/manage-registrar/details/:id" element={<RegistrarInformation />} />
-
+        
+        <Route path="/activity-logs" element={<ActivityLogs />} />
 
         {/* Catch-all redirect */}
         <Route path="*" element={<Navigate to="/" replace />} />
