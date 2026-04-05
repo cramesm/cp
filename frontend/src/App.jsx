@@ -18,9 +18,10 @@ import PaymentDetails from './pages/Payments/PaymentDetails'; // Added this impo
 
 {/* System Admin Pages */}
 import ManageRegistrar from './pages/SystemAdmin/ManageRegistrar';
-import ActivityLogs from './pages/SystemAdmin/ActivityLogs';
 import AddRegistrar from './pages/SystemAdmin/AddRegistrar';
 import RegistrarInformation from './pages/SystemAdmin/RegistrarInformation';
+import ManageAdmins from './pages/Admin/ManageAdmins';
+import ActivityLogs from './pages/Admin/ActivityLogs';
 
 function App() {
   return (
@@ -41,7 +42,7 @@ function App() {
 
         {/* Payments Management */}
         <Route path="/payments" element={<Payments />} />
-        <Route path="/payments/:id" element={<PaymentDetails />} /> {/* Updated to match Payment links */}
+        <Route path="/payments/:id" element={<PaymentDetails />} />
         
         {/* Transaction History */}
         <Route path="/transactions" element={<Transactions />} />
@@ -51,13 +52,14 @@ function App() {
         <Route path="/notifications" element={<Notifications />} />
 
         {/* Profile Management */}
-        <Route path="/profile/info" element={<ProfileInfo />} /> {/* Main View */}
-        <Route path="/profile" element={<Profile />} />           {/* Edit View */}
+        <Route path="/profile/info" element={<ProfileInfo />} />
+        <Route path="/profile" element={<Profile />} />
 
         {/* System Admin / Registrar Management */}
         <Route path="/manage-registrar" element={<ManageRegistrar />} />
         <Route path="/manage-registrar/add" element={<AddRegistrar />} />
         <Route path="/manage-registrar/details/:id" element={<RegistrarInformation />} />
+        <Route path="/manage-admins" element={<ManageAdmins />} />
         
         <Route path="/activity-logs" element={<ActivityLogs />} />
 

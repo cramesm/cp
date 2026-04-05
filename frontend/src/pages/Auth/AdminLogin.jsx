@@ -33,13 +33,16 @@ const AdminLogin = () => {
         setIsLoading(true);
         try {
             const response = await api.post('/auth/login', { email, password });
-            
-            if (response.data.token) {
+            if (response.data.success || response.data.token) {
                 // --- NEW: Security & Authorization (JWT) ---
                 // Storing the token marks "Security & Authorization" as achieved on frontend
                 localStorage.setItem('token', response.data.token);
                 localStorage.setItem('adminUser', JSON.stringify(response.data.user));
                 
+                // --- Role-based Sidebar Check ---
+                if (response.data.user && response.data.user.role) {
+                    localStorage.setItem('userRole', response.data.user.role);
+                }
                 navigate('/');
             }
         } catch (err) {

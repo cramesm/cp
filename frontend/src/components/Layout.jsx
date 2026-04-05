@@ -59,16 +59,25 @@ const Layout = ({ children }) => {
         }
     };
 
+    const userRole = localStorage.getItem('userRole');
+
     const menuItems = [
         { path: '/', label: 'Dashboard', icon: 'fa-solid fa-table-cells-large' },
         { path: '/requests', label: 'Document Requests', icon: 'fa-solid fa-file-lines' },
         { path: '/payments', label: 'Payments', icon: 'fa-solid fa-money-check-dollar' },
-        { path: '/manage-registrar', label: 'Manage Registrar', icon: 'fa-solid fa-user-gear' },
-        { path: '/activity-logs', label: 'Activity Logs', icon: 'fa-solid fa-clipboard-list' },
         { path: '/transactions', label: 'Transactions', icon: 'fa-solid fa-arrow-right-arrow-left' },
-        { path: '/notifications', label: 'Notifications', icon: 'fa-solid fa-bell' },
-        { path: '/profile/info', label: 'Profile', icon: 'fa-solid fa-circle-user' }
+        { path: '/notifications', label: 'Notifications', icon: 'fa-solid fa-bell' }
     ];
+
+    if (userRole === 'system admin') {
+        menuItems.push(
+            { path: '/manage-admins', label: 'Manage Admins', icon: 'fa-solid fa-user-gear' },
+            { path: '/manage-registrar', label: 'Manage Registrar', icon: 'fa-solid fa-user-gear' },
+            { path: '/activity-logs', label: 'Activity Logs', icon: 'fa-solid fa-clipboard-list' }
+        );
+    }
+    
+    menuItems.push({ path: '/profile/info', label: 'Profile', icon: 'fa-solid fa-circle-user' });
 
     useEffect(() => {
         const handleClickOutside = (event) => {

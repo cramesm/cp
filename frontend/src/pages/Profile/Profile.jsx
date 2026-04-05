@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../../components/Layout';
+import api from '../../api';
 import { User, ShieldCheck, Save, X, Camera, CheckCircle, AlertCircle } from 'lucide-react';
 
 const Profile = () => {
@@ -8,10 +9,10 @@ const Profile = () => {
 
     // User Information State
     const [user, setUser] = useState({
-        name: 'John Dela Cruz',
-        email: 'john@email.com',
-        username: 'john.123',
-        role: 'Registrar Administrator'
+        name: '',
+        email: '',
+        username: '',
+        role: ''
     });
 
     // Password State
@@ -21,8 +22,17 @@ const Profile = () => {
         confirm: ''
     });
 
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+
     // Toast State
     const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
+    const triggerToast = (message, type = 'success') => {
+        setToast({ show: true, message, type });
+        // Auto-hide toast after 3s
+        setTimeout(() => setToast(prev => ({ ...prev, show: false })), 3000);
+    };
 
     const handleProfileChange = (e) => {
         setUser({ ...user, [e.target.name]: e.target.value });
@@ -32,30 +42,68 @@ const Profile = () => {
         setPasswords({ ...passwords, [e.target.name]: e.target.value });
     };
 
-    const triggerToast = (message, type = 'success') => {
-        setToast({ show: true, message, type });
-    };
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const res = await api.get('/auth/profile');
+                setUser({
+                    name: res.data.name || '',
+                    email: res.data.email || '',
+                    username: res.data.username || '', // Not typically in minimal API, but keeping for UI
+                    role: res.data.role || ''
+                });
+            } catch (err) {
+                console.error("Error fetching profile:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchProfile();
+    }, []);
 
-    const handleConfirmAll = () => {
-        // 1. Password Validation (Only if user typed something in new password)
-        if (passwords.newGroup && passwords.newGroup !== passwords.confirm) {
-            triggerToast("New passwords do not match!", "error");
-            setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
-            return;
+    const handleConfirmAll = async () => {
+        setSaving(true);
+        try {
+            // 1. Password Validation & Update if provided
+            if (passwords.newGroup) {
+                if (passwords.newGroup !== passwords.confirm) {
+                    triggerToast("New passwords do not match!", "error");
+                    setSaving(false);
+                    return;
+                }
+                
+                await api.put('/auth/change-password', {
+                    currentPassword: passwords.current,
+                    newPassword: passwords.newGroup
+                });
+            }
+
+            // 2. Profile Details Update
+            await api.put('/auth/profile', { 
+                name: user.name, 
+                // profilePic: user.profilePic // (omitted as image upload isn't fully set up)
+            });
+
+            // Update in local instance
+            localStorage.setItem('adminUser', JSON.stringify(user));
+            
+            // 3. Show Toast success
+            triggerToast("Changes are saved successfully!", "success");
+            setPasswords({ current: '', newGroup: '', confirm: '' });
+
+            // 4. Navigate back after delay
+            setTimeout(() => {
+                navigate('/profile/info');
+            }, 2000);
+
+        } catch (err) {
+            triggerToast(err.response?.data?.message || 'Failed to update profile.', "error");
+        } finally {
+            setSaving(false);
         }
-
-        // 2. Save logic to LocalStorage
-        localStorage.setItem('adminUser', JSON.stringify(user));
-        
-        // 3. Show Toast
-        triggerToast("Changes are saved successfully!");
-
-        // 4. Navigate specifically to /profile/info after a short delay
-        setTimeout(() => {
-            setToast({ show: false, message: '', type: 'success' });
-            navigate('/profile/info');
-        }, 2000);
     };
+
+    if (loading) return <Layout><div className="p-8 flex items-center justify-center">Loading Profile Data...</div></Layout>;
 
     return (
         <Layout>
@@ -115,18 +163,9 @@ const Profile = () => {
                                             type="email" 
                                             name="email" 
                                             value={user.email} 
-                                            onChange={handleProfileChange} 
-                                            className="flex-1 border border-gray-300 rounded-md px-4 py-2 text-sm outline-none focus:border-[#1D2D44] transition-all" 
-                                        />
-                                    </div>
-                                    <div className="flex flex-col md:flex-row md:items-center">
-                                        <label className="w-32 text-sm font-bold text-gray-600">Username:</label>
-                                        <input 
-                                            type="text" 
-                                            name="username" 
-                                            value={user.username} 
-                                            onChange={handleProfileChange} 
-                                            className="flex-1 border border-gray-300 rounded-md px-4 py-2 text-sm outline-none focus:border-[#1D2D44] transition-all" 
+                                            disabled 
+                                            title="Email cannot be changed"
+                                            className="flex-1 border border-gray-300 bg-gray-50 text-gray-500 rounded-md px-4 py-2 text-sm outline-none cursor-not-allowed" 
                                         />
                                     </div>
                                     <div className="flex flex-col md:flex-row md:items-center">
@@ -189,15 +228,17 @@ const Profile = () => {
                         <button 
                             className="bg-white border border-gray-300 text-gray-600 py-2.5 px-8 rounded-full font-bold text-[12px] hover:bg-gray-50 transition-colors uppercase tracking-wide"
                             onClick={() => navigate(-1)}
+                            disabled={saving}
                         >
                             Cancel
                         </button>
                         <button 
-                            className="bg-[#1D2D44] text-white py-2.5 px-10 rounded-full font-bold text-[12px] hover:bg-[#152030] transition-all shadow-lg active:scale-95 flex items-center gap-2 uppercase tracking-widest"
+                            className="bg-[#1D2D44] text-white py-2.5 px-10 rounded-full font-bold text-[12px] disabled:opacity-75 disabled:cursor-not-allowed hover:bg-[#152030] transition-all shadow-lg active:scale-95 flex items-center gap-2 uppercase tracking-widest"
                             onClick={handleConfirmAll}
+                            disabled={saving}
                         >
                             <Save size={16} />
-                            Confirm Changes
+                            {saving ? 'Saving...' : 'Confirm Changes'}
                         </button>
                     </div>
                 </div>
