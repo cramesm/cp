@@ -9,7 +9,6 @@ const ProfileInfo = () => {
         name: 'John Dela Cruz',
         username: 'john.123',
         email: 'john@email.com',
-        contact: '63987654321',
         role: 'Registrar Administrator'
     });
 
@@ -61,9 +60,6 @@ const ProfileInfo = () => {
 
                                 <span className="text-gray-500 font-medium">Email:</span>
                                 <span className="text-gray-800 underline decoration-gray-200">{user.email}</span>
-
-                                <span className="text-gray-500 font-medium">Contact Number:</span>
-                                <span className="text-gray-800">{user.contact}</span>
 
                                 <span className="text-gray-500 font-medium">Role:</span>
                                 <span className="text-[#1D2D44] font-bold uppercase tracking-wide text-xs">{user.role}</span>

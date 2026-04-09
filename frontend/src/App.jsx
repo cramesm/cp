@@ -23,6 +23,8 @@ import RegistrarInformation from './pages/SystemAdmin/RegistrarInformation';
 import ManageAdmins from './pages/Admin/ManageAdmins';
 import ActivityLogs from './pages/Admin/ActivityLogs';
 
+import Validation from './pages/Validation/Validation';
+
 function App() {
   return (
     <Router>
@@ -62,6 +64,8 @@ function App() {
         <Route path="/manage-admins" element={<ManageAdmins />} />
         
         <Route path="/activity-logs" element={<ActivityLogs />} />
+
+        <Route path="/validation" element={<Validation />} />
 
         {/* Catch-all redirect */}
         <Route path="*" element={<Navigate to="/" replace />} />
