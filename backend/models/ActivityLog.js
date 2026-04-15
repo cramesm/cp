@@ -5,9 +5,22 @@ const activityLogSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  userName: {
+    type: String,
+    required: true
+  },
   action: {
     type: String,
     required: true
+  },
+  type: {
+    type: String,
+    default: '------'
+  },
+  status: {
+    type: String,
+    enum: ['Successful', 'Process', 'Failed', 'Canceled'],
+    default: 'Successful'
   },
   details: {
     type: String

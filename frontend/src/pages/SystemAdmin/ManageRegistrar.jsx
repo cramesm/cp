@@ -1,25 +1,46 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Layout from '../../components/Layout';
 import { Link } from 'react-router-dom';
 import { Search, Plus } from 'lucide-react';
-
-const registrarData = [
-  { id: 'REG-012345', name: 'Matt Dickerson', role: 'Registrar Staff', email: 'matt@gmail.com' },
-  { id: 'REG-012346', name: 'Wiktoria', role: 'Registrar Staff', email: 'wiktoria@gmail.com' },
-  { id: 'REG-012347', name: 'Trixie Byrd', role: 'Registrar Staff', email: 'trixie@gmail.com' },
-  { id: 'REG-012348', name: 'Brad Mason', role: 'Registrar Staff', email: 'brad@gmail.com' },
-  { id: 'REG-012349', name: 'Sanderson', role: 'Registrar Staff', email: 'sanderson@gmail.com' },
-];
+import api from '../../api';
 
 const ManageRegistrar = () => {
+  const [registrars, setRegistrars] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [entriesPerPage, setEntriesPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Fetch registrars from API
+  useEffect(() => {
+    const fetchRegistrars = async () => {
+      try {
+        const res = await api.get('/registrars');
+        setRegistrars(res.data || []);
+      } catch (error) {
+        console.error('Error fetching registrars:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchRegistrars();
+  }, []);
 
   const filteredRegistrars = useMemo(() => {
-    return registrarData.filter((item) =>
-      Object.values(item).some(val => val.toLowerCase().includes(search.toLowerCase()))
+    return registrars.filter((item) =>
+      Object.values(item).some(val => val?.toString().toLowerCase().includes(search.toLowerCase()))
     );
-  }, [search]);
+  }, [search, registrars]);
+
+  const totalPages = Math.ceil(filteredRegistrars.length / entriesPerPage);
+  const paginatedRegistrars = filteredRegistrars.slice(
+      (currentPage - 1) * entriesPerPage,
+      currentPage * entriesPerPage
+  );
+
+  useEffect(() => {
+      setCurrentPage(1);
+  }, [search, entriesPerPage]);
 
   return (
     <Layout>
@@ -65,35 +86,41 @@ const ManageRegistrar = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 text-[13px]">
-                {filteredRegistrars.map((item, idx) => (
-                  <tr 
-                    key={item.id} 
-                    className={`transition-colors ${idx % 2 !== 0 ? 'bg-[#F9FAFF]' : 'bg-white hover:bg-gray-50'}`}
-                  >
-                    <td className="px-8 py-4 font-mono text-gray-500">{item.id}</td>
-                    <td className="px-8 py-4 font-semibold text-gray-800">{item.name}</td>
-                    <td className="px-8 py-4">
-                      {/* Centered Role Badge */}
-                      <div className="flex justify-center">
-                        <span className="min-w-[100px] text-center px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold uppercase tracking-wide">
-                          {item.role}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-8 py-4 text-gray-600">{item.email}</td>
-                    <td className="px-8 py-4 text-right">
-                      {/* Action Button - Uniform width and centered text */}
-                      <div className="flex justify-end">
-                        <Link 
-                          to={`/manage-registrar/details/${item.id}`}
-                          className="min-w-[130px] rounded-full bg-[#1D2D44] px-4 py-2 text-[11px] font-bold text-white text-center hover:bg-[#152030] transition-colors shadow-sm"
-                        >
-                          Manage Registrar
-                        </Link>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {loading ? (
+                  <tr><td colSpan="5" className="py-20 text-center text-gray-400">Loading registrars...</td></tr>
+                ) : paginatedRegistrars.length > 0 ? (
+                  paginatedRegistrars.map((item, idx) => (
+                    <tr
+                      key={item._id || item.registrarId}
+                      className={`transition-colors ${idx % 2 !== 0 ? 'bg-[#F9FAFF]' : 'bg-white hover:bg-gray-50'}`}
+                    >
+                      <td className="px-8 py-4 font-mono text-gray-500">{item.registrarId}</td>
+                      <td className="px-8 py-4 font-semibold text-gray-800">{item.name}</td>
+                      <td className="px-8 py-4">
+                        {/* Centered Role Badge */}
+                        <div className="flex justify-center">
+                          <span className="min-w-[100px] text-center px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold uppercase tracking-wide">
+                            {item.role}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-8 py-4 text-gray-600">{item.email}</td>
+                      <td className="px-8 py-4 text-right">
+                        {/* Action Button - Uniform width and centered text */}
+                        <div className="flex justify-end">
+                          <Link
+                            to={`/manage-registrar/details/${item._id}`}
+                            className="min-w-[130px] rounded-full bg-[#1D2D44] px-4 py-2 text-[11px] font-bold text-white text-center hover:bg-[#152030] transition-colors shadow-sm"
+                          >
+                            Manage Registrar
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr><td colSpan="5" className="py-20 text-center text-gray-400 italic">No registrars found.</td></tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -101,10 +128,43 @@ const ManageRegistrar = () => {
           {/* Table Footer / Pagination Placeholder */}
           <div className="p-6 border-t border-gray-100 flex justify-center">
             <div className="flex items-center gap-2">
-              <button className="text-gray-400 text-xs px-2 hover:text-gray-600">Previous</button>
-              <button className="w-8 h-8 bg-[#1D2D44] text-white text-xs rounded font-bold">1</button>
-              <button className="w-8 h-8 bg-gray-200 text-gray-700 text-xs rounded font-bold hover:bg-gray-300">2</button>
-              <button className="text-gray-400 text-xs px-2 hover:text-gray-600">Next</button>
+                <button 
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    className={`text-xs px-2 ${currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-black hover:underline cursor-pointer'}`}
+                >
+                    Previous
+                </button>
+                
+                {Array.from({ length: totalPages }).map((_, idx) => {
+                    const pageNumber = idx + 1;
+                    if (pageNumber === 1 || pageNumber === totalPages || (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)) {
+                        return (
+                            <button
+                                key={pageNumber}
+                                onClick={() => setCurrentPage(pageNumber)}
+                                className={`w-8 h-8 rounded text-xs transition-colors font-bold ${
+                                    currentPage === pageNumber 
+                                        ? 'bg-[#1D2D44] text-white' 
+                                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                }`}
+                            >
+                                {pageNumber}
+                            </button>
+                        );
+                    } else if (pageNumber === currentPage - 2 || pageNumber === currentPage + 2) {
+                        return <span key={pageNumber} className="text-gray-400 mt-2 text-xs">...</span>;
+                    }
+                    return null;
+                })}
+
+                <button 
+                    disabled={currentPage === totalPages || totalPages === 0}
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    className={`text-xs px-2 ${currentPage === totalPages || totalPages === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-black hover:underline cursor-pointer'}`}
+                >
+                    Next
+                </button>
             </div>
           </div>
         </div>

@@ -14,6 +14,7 @@ const Requests = () => {
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [entriesPerPage, setEntriesPerPage] = useState(10);
+    const [currentPage, setCurrentPage] = useState(1);
 
     const navigate = useNavigate();
 
@@ -44,13 +45,13 @@ const Requests = () => {
     // Filter Logic
     const filteredRequests = useMemo(() => {
         return requests.filter((req) => {
-            const matchesSearch = req.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+            const matchesSearch = req.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                                 req.requestId?.toLowerCase().includes(searchTerm.toLowerCase());
             const matchesStatus = filterStatus === 'All Status' || req.status === filterStatus;
             const matchesType = filterType === 'All Document' || req.documentType === filterType;
-            
+
             // Date Logic
-            const reqDate = new Date(req.date);
+            const reqDate = new Date(req.dateRequested);
             const start = startDate ? new Date(startDate) : null;
             const end = endDate ? new Date(endDate) : null;
             const matchesDate = (!start || reqDate >= start) && (!end || reqDate <= end);
@@ -58,6 +59,18 @@ const Requests = () => {
             return matchesSearch && matchesStatus && matchesType && matchesDate;
         });
     }, [requests, searchTerm, filterStatus, filterType, startDate, endDate]);
+
+    // Pagination Logic
+    const totalPages = Math.ceil(filteredRequests.length / entriesPerPage);
+    const paginatedRequests = filteredRequests.slice(
+        (currentPage - 1) * entriesPerPage,
+        currentPage * entriesPerPage
+    );
+
+    // Reset to page 1 if filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, filterStatus, filterType, startDate, endDate, entriesPerPage]);
 
     // Dynamic Dropdown Options
     const documentTypes = ['All Document', ...new Set(requests.map(r => r.documentType))];
@@ -74,7 +87,7 @@ const Requests = () => {
                             Show 
                             <select 
                                 value={entriesPerPage}
-                                onChange={(e) => setEntriesPerPage(e.target.value)}
+                                onChange={(e) => setEntriesPerPage(Number(e.target.value))}
                                 className="border border-gray-300 rounded px-1 py-1 focus:outline-none"
                             >
                                 <option>10</option>
@@ -83,7 +96,7 @@ const Requests = () => {
                             </select> 
                             entries
                         </div>
-                        <div className="flex gap-0">
+                        <form onSubmit={(e) => { e.preventDefault(); document.activeElement?.blur(); }} className="flex gap-0">
                             <input 
                                 type="text" 
                                 placeholder="Search by name or action..." 
@@ -91,10 +104,10 @@ const Requests = () => {
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
-                            <button className="bg-[#20354D] text-white px-8 py-2 rounded-r font-bold text-sm hover:bg-slate-800 transition-colors">
+                            <button type="submit" className="bg-[#20354D] text-white px-8 py-2 rounded-r font-bold text-sm hover:bg-slate-800 transition-colors">
                                 Search
                             </button>
-                        </div>
+                        </form>
                     </div>
 
                     <div className="grid grid-cols-4 gap-6 items-end">
@@ -147,28 +160,36 @@ const Requests = () => {
                         <tbody className="divide-y divide-gray-50">
                             {loading ? (
                                 <tr><td colSpan="6" className="py-20 text-center text-gray-400">Loading requests...</td></tr>
-                            ) : filteredRequests.length > 0 ? (
-                                filteredRequests.map((req, idx) => (
-                                    <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
-                                        <td className="px-8 py-5 text-[13px] text-gray-700">{req.requestId}</td>
-                                        <td className="px-8 py-5 text-[13px] text-gray-700">{req.name}</td>
-                                        <td className="px-8 py-5 text-[13px] text-gray-700">{req.documentType}</td>
-                                        <td className="px-8 py-5 text-[13px] text-gray-700">{req.date}</td>
-                                        <td className="px-8 py-5">
-                                            <span className={`px-4 py-1 rounded text-[10px] font-bold uppercase ${getStatusStyle(req.status)}`}>
-                                                {req.status}
-                                            </span>
-                                        </td>
-                                        <td className="px-8 py-5 text-right">
-                                            <button 
-                                                onClick={() => navigate(`/requests/${req.requestId}`)}
-                                                className="bg-[#2f3947] text-white px-5 py-2 rounded text-[12px] font-bold hover:bg-black transition-all"
-                                            >
-                                                View Request
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))
+                            ) : paginatedRequests.length > 0 ? (
+                                paginatedRequests.map((req, idx) => {
+                                    const reqDate = new Date(req.dateRequested);
+                                    const formattedDate = reqDate.toLocaleDateString('en-US', {
+                                        year: 'numeric',
+                                        month: '2-digit',
+                                        day: '2-digit'
+                                    });
+                                    return (
+                                        <tr key={req._id || idx} className="hover:bg-gray-50/50 transition-colors">
+                                            <td className="px-8 py-5 text-[13px] text-gray-700">{req.requestId}</td>
+                                            <td className="px-8 py-5 text-[13px] text-gray-700">{req.name}</td>
+                                            <td className="px-8 py-5 text-[13px] text-gray-700">{req.documentType}</td>
+                                            <td className="px-8 py-5 text-[13px] text-gray-700">{formattedDate}</td>
+                                            <td className="px-8 py-5">
+                                                <span className={`px-4 py-1 rounded text-[10px] font-bold uppercase ${getStatusStyle(req.status)}`}>
+                                                    {req.status}
+                                                </span>
+                                            </td>
+                                            <td className="px-8 py-5 text-right">
+                                                <button
+                                                    onClick={() => navigate(`/requests/${req.requestId}`)}
+                                                    className="bg-[#2f3947] text-white px-5 py-2 rounded text-[12px] font-bold hover:bg-black transition-all"
+                                                >
+                                                    View Request
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
                             ) : (
                                 <tr><td colSpan="6" className="py-20 text-center text-gray-400 italic">No requests found matching your filters.</td></tr>
                             )}
@@ -178,11 +199,43 @@ const Requests = () => {
 
                 {/* --- PAGINATION --- */}
                 <div className="bg-white p-6 border-x border-b border-gray-200 rounded-b-lg flex justify-center gap-2">
-                    <button className="text-gray-400 text-xs px-2">Previous</button>
-                    <button className="w-8 h-8 bg-[#2f3947] text-white rounded text-xs">1</button>
-                    <button className="w-8 h-8 bg-gray-100 text-gray-600 rounded text-xs hover:bg-gray-200">2</button>
-                    <button className="w-8 h-8 bg-gray-100 text-gray-600 rounded text-xs hover:bg-gray-200">3</button>
-                    <button className="text-gray-400 text-xs px-2">Next</button>
+                    <button 
+                        disabled={currentPage === 1}
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        className={`text-xs px-2 ${currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-black hover:underline cursor-pointer'}`}
+                    >
+                        Previous
+                    </button>
+                    
+                    {Array.from({ length: totalPages }).map((_, idx) => {
+                        const pageNumber = idx + 1;
+                        if (pageNumber === 1 || pageNumber === totalPages || (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)) {
+                            return (
+                                <button
+                                    key={pageNumber}
+                                    onClick={() => setCurrentPage(pageNumber)}
+                                    className={`w-8 h-8 rounded text-xs transition-colors ${
+                                        currentPage === pageNumber 
+                                            ? 'bg-[#2f3947] text-white font-bold' 
+                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    }`}
+                                >
+                                    {pageNumber}
+                                </button>
+                            );
+                        } else if (pageNumber === currentPage - 2 || pageNumber === currentPage + 2) {
+                            return <span key={pageNumber} className="text-gray-400 mt-2 text-xs">...</span>;
+                        }
+                        return null;
+                    })}
+
+                    <button 
+                        disabled={currentPage === totalPages || totalPages === 0}
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        className={`text-xs px-2 ${currentPage === totalPages || totalPages === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-black hover:underline cursor-pointer'}`}
+                    >
+                        Next
+                    </button>
                 </div>
             </div>
         </Layout>

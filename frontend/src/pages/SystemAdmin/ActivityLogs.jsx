@@ -1,20 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Layout from '../../components/Layout';
-
-const logData = [
-  { timestamp: '13:30:04', date: '2027-03-26', name: 'Matt Dickerson', action: 'Document Uploaded', type: 'Certificate of Good Moral', status: 'Successful' },
-  { timestamp: '13:30:04', date: '2027-03-26', name: 'Wiktoria', action: 'Blockchain Submission', type: 'Transcript of Records', status: 'Successful' },
-  { timestamp: '13:30:04', date: '2027-03-26', name: 'Trixie Byrd', action: 'Hash Generation', type: 'Transcript of Records', status: 'Process' },
-  { timestamp: '13:30:04', date: '2027-03-26', name: 'Brad Mason', action: 'Blockchain Submission', type: 'Diploma', status: 'Process' },
-  { timestamp: '13:30:04', date: '2027-03-26', name: 'Sanderson', action: 'Document Uploaded', type: 'Certificate of Enrollment', status: 'Failed' },
-  { timestamp: '13:30:04', date: '2027-03-26', name: 'Jun Redfern', action: 'Hash Generation', type: 'Diploma', status: 'Successful' },
-  { timestamp: '13:30:04', date: '2027-03-26', name: 'Miriam Kidd', action: 'Blockchain Submission', type: 'Transcript of Records', status: 'Successful' },
-  { timestamp: '13:30:04', date: '2027-03-26', name: 'Dominic', action: 'User Created', type: '------', status: 'Successful' },
-  { timestamp: '13:30:04', date: '2027-03-26', name: 'Shanice', action: 'Document Uploaded', type: 'Transcript of Records', status: 'Canceled' },
-  { timestamp: '13:30:04', date: '2027-03-26', name: 'Poppy-Rose', action: 'User Created', type: '------', status: 'Process' },
-];
+import api from '../../api';
 
 export default function ActivityLogs() {
+  const [logs, setLogs] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterUser, setFilterUser] = useState('All Users');
   const [filterAction, setFilterAction] = useState('All Actions');
@@ -23,6 +13,22 @@ export default function ActivityLogs() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [entriesPerPage, setEntriesPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Fetch activity logs from API
+  useEffect(() => {
+    const fetchLogs = async () => {
+      try {
+        const res = await api.get('/activity-logs');
+        setLogs(res.data || []);
+      } catch (error) {
+        console.error('Error fetching activity logs:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLogs();
+  }, []);
 
   const getStatusStyle = (status) => {
     switch (status) {
@@ -35,26 +41,36 @@ export default function ActivityLogs() {
   };
 
   const filteredLogs = useMemo(() => {
-    return logData.filter((log) => {
-      const matchesSearch = log.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                            log.action.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesUser = filterUser === 'All Users' || log.name === filterUser;
+    return logs.filter((log) => {
+      const matchesSearch = log.userName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            log.action?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesUser = filterUser === 'All Users' || log.userName === filterUser;
       const matchesAction = filterAction === 'All Actions' || log.action === filterAction;
       const matchesType = filterType === 'All Document' || log.type === filterType;
       const matchesStatus = filterStatus === 'All Status' || log.status === filterStatus;
-      
-      const logDate = new Date(log.date);
+
+      const logDate = new Date(log.timestamp);
       const start = startDate ? new Date(startDate) : null;
       const end = endDate ? new Date(endDate) : null;
       const matchesDate = (!start || logDate >= start) && (!end || logDate <= end);
 
       return matchesSearch && matchesUser && matchesAction && matchesType && matchesStatus && matchesDate;
     });
-  }, [searchTerm, filterUser, filterAction, filterType, filterStatus, startDate, endDate]);
+  }, [logs, searchTerm, filterUser, filterAction, filterType, filterStatus, startDate, endDate]);
 
-  const users = ['All Users', ...new Set(logData.map(l => l.name))];
-  const actions = ['All Actions', ...new Set(logData.map(l => l.action))];
-  const types = ['All Document', ...new Set(logData.map(l => l.type))];
+  const totalPages = Math.ceil(filteredLogs.length / entriesPerPage);
+  const paginatedLogs = filteredLogs.slice(
+      (currentPage - 1) * entriesPerPage,
+      currentPage * entriesPerPage
+  );
+
+  useEffect(() => {
+      setCurrentPage(1);
+  }, [searchTerm, filterUser, filterAction, filterType, filterStatus, startDate, endDate, entriesPerPage]);
+
+  const users = ['All Users', ...new Set(logs.map(l => l.userName))];
+  const actions = ['All Actions', ...new Set(logs.map(l => l.action))];
+  const types = ['All Document', ...new Set(logs.map(l => l.type))];
   const statuses = ['All Status', 'Successful', 'Process', 'Failed', 'Canceled'];
 
   return (
@@ -139,35 +155,79 @@ export default function ActivityLogs() {
                 </tr>
               </thead>
               <tbody className="text-[13px]">
-                {filteredLogs.map((log, index) => (
-                  <tr key={index} className={`transition-colors ${index % 2 !== 0 ? 'bg-[#F9FAFF]' : 'bg-white hover:bg-gray-50'}`}>
-                    <td className="py-4 px-6 font-mono text-gray-500">{log.timestamp}</td>
-                    <td className="py-4 px-2 text-gray-600">{log.date.split('-').reverse().join('/')}</td>
-                    <td className="py-4 px-2 font-semibold text-gray-800">{log.name}</td>
-                    <td className="py-4 px-2 font-medium text-gray-600">{log.action}</td>
-                    <td className="py-4 px-2 text-gray-500">{log.type}</td>
-                    <td className="py-4 px-6">
-                      <div className="flex justify-center">
-                        <span className={`min-w-[100px] text-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${getStatusStyle(log.status)}`}>
-                          {log.status}
-                        </span>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {loading ? (
+                  <tr><td colSpan="6" className="py-20 text-center text-gray-400">Loading activity logs...</td></tr>
+                ) : paginatedLogs.length > 0 ? (
+                  paginatedLogs.map((log, index) => {
+                    const logDate = new Date(log.timestamp);
+                    const timeStr = logDate.toLocaleTimeString('en-US', { hour12: false });
+                    const dateStr = logDate.toISOString().split('T')[0];
+                    return (
+                      <tr key={log._id || index} className={`transition-colors ${index % 2 !== 0 ? 'bg-[#F9FAFF]' : 'bg-white hover:bg-gray-50'}`}>
+                        <td className="py-4 px-6 font-mono text-gray-500">{timeStr}</td>
+                        <td className="py-4 px-2 text-gray-600">{dateStr.split('-').reverse().join('/')}</td>
+                        <td className="py-4 px-2 font-semibold text-gray-800">{log.userName}</td>
+                        <td className="py-4 px-2 font-medium text-gray-600">{log.action}</td>
+                        <td className="py-4 px-2 text-gray-500">{log.type}</td>
+                        <td className="py-4 px-6">
+                          <div className="flex justify-center">
+                            <span className={`min-w-[100px] text-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${getStatusStyle(log.status)}`}>
+                              {log.status}
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr><td colSpan="6" className="py-20 text-center text-gray-400 italic">No activity logs found.</td></tr>
+                )}
               </tbody>
             </table>
-            {filteredLogs.length === 0 && (
+            {paginatedLogs.length === 0 && (
                 <div className="text-center py-24 text-gray-400 italic text-sm">No activity logs match your current filters.</div>
             )}
           </div>
 
           {/* Pagination */}
           <div className="flex justify-center items-center py-6 border-t border-gray-100 gap-2">
-            <button className="text-gray-400 hover:text-black text-xs px-2">Previous</button>
-            <button className="w-8 h-8 bg-[#1D2D44] text-white rounded font-bold text-xs">1</button>
-            <button className="w-8 h-8 bg-gray-200 text-gray-700 rounded font-bold text-xs hover:bg-gray-300">2</button>
-            <button className="text-gray-400 hover:text-black text-xs px-2">Next</button>
+            <button 
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                className={`text-xs px-2 ${currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-black hover:underline cursor-pointer'}`}
+            >
+                Previous
+            </button>
+            
+            {Array.from({ length: totalPages }).map((_, idx) => {
+                const pageNumber = idx + 1;
+                if (pageNumber === 1 || pageNumber === totalPages || (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)) {
+                    return (
+                        <button
+                            key={pageNumber}
+                            onClick={() => setCurrentPage(pageNumber)}
+                            className={`w-8 h-8 rounded text-xs transition-colors font-bold ${
+                                currentPage === pageNumber 
+                                    ? 'bg-[#1D2D44] text-white' 
+                                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                            }`}
+                        >
+                            {pageNumber}
+                        </button>
+                    );
+                } else if (pageNumber === currentPage - 2 || pageNumber === currentPage + 2) {
+                    return <span key={pageNumber} className="text-gray-400 mt-2 text-xs">...</span>;
+                }
+                return null;
+            })}
+
+            <button 
+                disabled={currentPage === totalPages || totalPages === 0}
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                className={`text-xs px-2 ${currentPage === totalPages || totalPages === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-black hover:underline cursor-pointer'}`}
+            >
+                Next
+            </button>
           </div>
         </div>
       </div>

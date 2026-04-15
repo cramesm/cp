@@ -14,6 +14,7 @@ const Transactions = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [entriesPerPage, setEntriesPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const navigate = useNavigate();
 
@@ -50,6 +51,16 @@ const Transactions = () => {
     });
   }, [transactions, searchTerm, filterStatus, filterType, startDate, endDate]);
 
+  const totalPages = Math.ceil(filteredTransactions.length / entriesPerPage);
+  const paginatedTransactions = filteredTransactions.slice(
+      (currentPage - 1) * entriesPerPage,
+      currentPage * entriesPerPage
+  );
+
+  useEffect(() => {
+      setCurrentPage(1);
+  }, [searchTerm, filterStatus, filterType, startDate, endDate, entriesPerPage]);
+
   const documentTypes = ['All Document', ...new Set(transactions.map((t) => t.documentType))];
   const statuses = ['All Status', 'Processing', 'Approved', 'Released', 'Rejected'];
 
@@ -65,7 +76,7 @@ const Transactions = () => {
                 Show
                 <select
                   value={entriesPerPage}
-                  onChange={(e) => setEntriesPerPage(e.target.value)}
+                  onChange={(e) => setEntriesPerPage(Number(e.target.value))}
                   className="border border-gray-300 rounded px-2 py-1 focus:outline-none bg-white"
                 >
                   <option>10</option>
@@ -74,7 +85,7 @@ const Transactions = () => {
                 entries
               </div>
 
-              <div className="flex w-full max-w-[400px]">
+              <form onSubmit={(e) => { e.preventDefault(); document.activeElement?.blur(); }} className="flex w-full max-w-[400px]">
                 <input
                   type="text"
                   placeholder="Search by ID, Name, or Hash..."
@@ -82,10 +93,10 @@ const Transactions = () => {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
-                <button className="bg-[#1D2D44] text-white px-8 py-2 rounded-r-md font-bold text-[14px] transition-colors hover:bg-slate-800">
+                <button type="submit" className="bg-[#1D2D44] text-white px-8 py-2 rounded-r-md font-bold text-[14px] transition-colors hover:bg-slate-800">
                   Search
                 </button>
-              </div>
+              </form>
             </div>
 
             {/* Filter Grid */}
@@ -141,30 +152,38 @@ const Transactions = () => {
               <div className="flex-1 flex items-center justify-center text-gray-400 italic">
                 Loading transactions...
               </div>
-            ) : filteredTransactions.length > 0 ? (
-              filteredTransactions.map((tx, idx) => (
-                <div key={idx} className={`grid grid-cols-8 px-6 py-4 border-b border-gray-100 items-center hover:bg-gray-50 transition-colors ${idx % 2 !== 0 ? 'bg-[#F9FAFF]' : 'bg-white'}`}>
-                  <span className="text-[13px] font-medium">{tx.transactionId}</span>
-                  <span className="text-[13px]">{tx.requestId}</span>
-                  <span className="text-[13px] font-semibold">{tx.name}</span>
-                  <span className="text-[13px]">{tx.documentType}</span>
-                  <span className="text-[13px]">{tx.date}</span>
-                  <span className="text-[13px]">{tx.paymentMode}</span>
-                  <div>
-                    <span className={`px-3 py-1 rounded text-[10px] font-bold uppercase ${getStatusColor(tx.status)}`}>
-                        {tx.status}
-                    </span>
+            ) : paginatedTransactions.length > 0 ? (
+              paginatedTransactions.map((tx, idx) => {
+                const txDate = new Date(tx.date);
+                const formattedDate = txDate.toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit'
+                });
+                return (
+                  <div key={tx._id || idx} className={`grid grid-cols-8 px-6 py-4 border-b border-gray-100 items-center hover:bg-gray-50 transition-colors ${idx % 2 !== 0 ? 'bg-[#F9FAFF]' : 'bg-white'}`}>
+                    <span className="text-[13px] font-medium">{tx.transactionId}</span>
+                    <span className="text-[13px]">{tx.requestId}</span>
+                    <span className="text-[13px] font-semibold">{tx.name}</span>
+                    <span className="text-[13px]">{tx.documentType}</span>
+                    <span className="text-[13px]">{formattedDate}</span>
+                    <span className="text-[13px]">{tx.paymentMode}</span>
+                    <div>
+                      <span className={`px-3 py-1 rounded text-[10px] font-bold uppercase ${getStatusColor(tx.status)}`}>
+                          {tx.status}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <button
+                        onClick={() => navigate(`/transactions/${tx.transactionId}`)}
+                        className="bg-[#2f3947] text-white px-4 py-1.5 rounded text-[11px] font-bold hover:bg-black transition-all"
+                      >
+                        View Transaction
+                      </button>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <button 
-                      onClick={() => navigate(`/transactions/${tx.transactionId}`)}
-                      className="bg-[#2f3947] text-white px-4 py-1.5 rounded text-[11px] font-bold hover:bg-black transition-all"
-                    >
-                      View Transaction
-                    </button>
-                  </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               <div className="flex-1 flex items-center justify-center text-[#99AAB5] italic text-[18px] py-20">
                 No transactions found matching your filters.
@@ -174,11 +193,43 @@ const Transactions = () => {
 
           {/* --- PAGINATION --- */}
             <div className="bg-white p-6 border-x border-b border-gray-200 rounded-b-lg flex justify-center gap-2">
-                <button className="text-gray-400 text-xs px-2">Previous</button>
-                <button className="w-8 h-8 bg-[#2f3947] text-white rounded text-xs">1</button>
-                <button className="w-8 h-8 bg-gray-100 text-gray-600 rounded text-xs hover:bg-gray-200">2</button>
-                <button className="w-8 h-8 bg-gray-100 text-gray-600 rounded text-xs hover:bg-gray-200">3</button>
-                <button className="text-gray-400 text-xs px-2">Next</button>
+                <button 
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    className={`text-xs px-2 ${currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-black hover:underline cursor-pointer'}`}
+                >
+                    Previous
+                </button>
+                
+                {Array.from({ length: totalPages }).map((_, idx) => {
+                    const pageNumber = idx + 1;
+                    if (pageNumber === 1 || pageNumber === totalPages || (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)) {
+                        return (
+                            <button
+                                key={pageNumber}
+                                onClick={() => setCurrentPage(pageNumber)}
+                                className={`w-8 h-8 rounded text-xs transition-colors ${
+                                    currentPage === pageNumber 
+                                        ? 'bg-[#2f3947] text-white font-bold' 
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                            >
+                                {pageNumber}
+                            </button>
+                        );
+                    } else if (pageNumber === currentPage - 2 || pageNumber === currentPage + 2) {
+                        return <span key={pageNumber} className="text-gray-400 mt-2 text-xs">...</span>;
+                    }
+                    return null;
+                })}
+
+                <button 
+                    disabled={currentPage === totalPages || totalPages === 0}
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    className={`text-xs px-2 ${currentPage === totalPages || totalPages === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-black hover:underline cursor-pointer'}`}
+                >
+                    Next
+                </button>
             </div>
         </div>
       </div>

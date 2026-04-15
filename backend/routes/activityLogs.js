@@ -33,10 +33,13 @@ router.get('/', protect, systemAdminOnly, async (req, res) => {
 // Create a log entry (Internal use or if needed by API)
 router.post('/', protect, async (req, res) => {
     try {
-        const { action, details } = req.body;
+        const { action, details, type, status } = req.body;
         const newLog = new ActivityLog({
             userEmail: req.user.email,
+            userName: req.user.name || 'User',
             action,
+            type: type || '------',
+            status: status || 'Successful',
             details
         });
         await newLog.save();

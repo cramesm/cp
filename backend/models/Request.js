@@ -12,8 +12,28 @@ const requestSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['Pending', 'In Process', 'Approved', 'Released'],
+    enum: ['Pending', 'In Process', 'Approved', 'Released', 'Rejected'],
     default: 'Pending'
+  },
+  documentType: {
+    type: String,
+    required: true
+  },
+  subDocumentType: {
+    type: String,
+    default: ''
+  },
+  purpose: {
+    type: String,
+    default: ''
+  },
+  otherPurpose: {
+    type: String,
+    default: ''
+  },
+  quantity: {
+    type: Number,
+    default: 1
   },
   documentHash: {
     type: String

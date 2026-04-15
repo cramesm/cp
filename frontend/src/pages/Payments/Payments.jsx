@@ -15,18 +15,7 @@ const Payments = () => {
   const [filterError, setFilterError] = useState('');
 
   // DATA STATE
-  const [payments, setPayments] = useState([
-    { referenceNo: '89094', requestId: 'REQ1234-2026', name: 'Shanice', amount: 'PHP 250', date: '2027-03-26', paymentMode: 'GCash', status: 'Pending' },
-    { referenceNo: '18933', requestId: 'REQ1234-2026', name: 'Wiktoria', amount: 'PHP 250', date: '2027-03-26', paymentMode: 'GCash', status: 'Completed' },
-    { referenceNo: '89094', requestId: 'REQ1234-2026', name: 'Shanice', amount: 'PHP 250', date: '2027-03-26', paymentMode: 'GCash', status: 'Completed' },
-    { referenceNo: '34304', requestId: 'REQ1234-2026', name: 'Brad Mason', amount: 'PHP 250', date: '2027-03-26', paymentMode: 'GCash', status: 'Completed' },
-    { referenceNo: '20462', requestId: 'REQ1234-2026', name: 'Matt Dickerson', amount: 'PHP 250', date: '2027-03-26', paymentMode: 'GCash', status: 'Pending' },
-    { referenceNo: '73003', requestId: 'REQ1234-2026', name: 'Jun Redfern', amount: 'PHP 250', date: '2027-03-26', paymentMode: 'GCash', status: 'Completed' },
-    { referenceNo: '45169', requestId: 'REQ1234-2026', name: 'Trixie Byrd', amount: 'PHP 250', date: '2027-03-26', paymentMode: 'GCash', status: 'Pending' },
-    { referenceNo: '44122', requestId: 'REQ1234-2026', name: 'Dominic', amount: 'PHP 250', date: '2027-03-26', paymentMode: 'GCash', status: 'Completed' },
-    { referenceNo: '17188', requestId: 'REQ1234-2026', name: 'Sanderson', amount: 'PHP 250', date: '2027-03-26', paymentMode: 'GCash', status: 'Pending' },
-    { referenceNo: '89094', requestId: 'REQ1234-2026', name: 'Shanice', amount: 'PHP 250', date: '2027-03-26', paymentMode: 'GCash', status: 'Completed' },
-  ]);
+  const [payments, setPayments] = useState([]);
 
   // Modal & Toast States
   const [selectedPayment, setSelectedPayment] = useState(null);

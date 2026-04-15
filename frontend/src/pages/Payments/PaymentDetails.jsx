@@ -4,28 +4,7 @@ import Layout from '../../components/Layout';
 import { ArrowLeft, CheckCircle, Image as ImageIcon, Eye, CreditCard, AlertCircle } from 'lucide-react';
 
 // 1. Move data to a shared array (In a real app, this would be an API call)
-const ALL_TRANSACTIONS = [
-  {
-    referenceNo: '18933',
-    status: 'Completed',
-    requestId: 'REQ1234-2026',
-    timestamp: '26/03/27 14:15:30 GMT+8',
-    payer: 'Wiktoria',
-    documentDetails: { type: 'Transcript of Records', qty: '1 Copy', processingFee: 'PHP 100' },
-    breakdown: { subtotal: 'PHP 100', expressFee: 'PHP 100', convenienceFee: 'PHP 50', total: 'PHP 250', method: 'GCash (Wallet)' },
-    verification: { approval: 'Auto-Approved via System Integration' }
-  },
-  {
-    referenceNo: '89094',
-    status: 'Pending',
-    requestId: 'REQ1234-2026',
-    timestamp: '26/03/27 10:12:00 GMT+8',
-    payer: 'Shanice',
-    documentDetails: { type: 'Diploma', qty: '1 Copy', processingFee: 'PHP 150' },
-    breakdown: { subtotal: 'PHP 150', expressFee: 'PHP 100', convenienceFee: 'PHP 50', total: 'PHP 300', method: 'GCash (App)' },
-    verification: { approval: 'Awaiting Manual Verification' }
-  }
-];
+const ALL_TRANSACTIONS = [];
 
 const TransactionDetails = () => {
   const navigate = useNavigate();

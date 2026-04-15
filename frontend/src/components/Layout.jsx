@@ -21,7 +21,7 @@ const Layout = ({ children }) => {
         const path = location.pathname;
 
         switch (path) {
-            case '/':
+            case '/dashboard':
                 return 'Dashboard';
             case '/requests':
                 return 'Document Requests';
@@ -62,7 +62,7 @@ const Layout = ({ children }) => {
     const userRole = localStorage.getItem('userRole');
 
     const menuItems = [
-        { path: '/', label: 'Dashboard', icon: 'fa-solid fa-table-cells-large' },
+        { path: '/dashboard', label: 'Dashboard', icon: 'fa-solid fa-table-cells-large' },
         { path: '/requests', label: 'Document Requests', icon: 'fa-solid fa-file-lines' },
         { path: '/payments', label: 'Payments', icon: 'fa-solid fa-money-check-dollar' },
         { path: '/transactions', label: 'Transactions', icon: 'fa-solid fa-arrow-right-arrow-left' },
@@ -71,7 +71,6 @@ const Layout = ({ children }) => {
 
     if (userRole === 'system admin') {
         menuItems.push(
-            { path: '/manage-admins', label: 'Manage Admins', icon: 'fa-solid fa-user-gear' },
             { path: '/manage-registrar', label: 'Manage Registrar', icon: 'fa-solid fa-user-gear' },
             { path: '/activity-logs', label: 'Activity Logs', icon: 'fa-solid fa-clipboard-list' }
         );
@@ -113,7 +112,7 @@ const Layout = ({ children }) => {
                             <li key={item.path}>
                                 <NavLink
                                     to={item.path}
-                                    end={item.path === '/'}
+                                    end={item.path === '/dashboard'}
                                     className={({ isActive }) =>
                                         `flex items-center gap-3 rounded-md px-3 py-3 text-[14px] transition-all duration-200 ${
                                             isActive

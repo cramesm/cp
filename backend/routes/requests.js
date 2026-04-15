@@ -30,7 +30,10 @@ router.put('/:id', protect, async (req, res) => {
         // Log activity
         const log = new ActivityLog({
             userEmail: req.user.email,
+            userName: req.user.name || 'User',
             action: 'Update Request',
+            type: '------',
+            status: 'Successful',
             details: `Updated request ${req.params.id} status to ${status || 'unchanged'}`
         });
         await log.save();
@@ -58,7 +61,10 @@ router.post('/:id/generate-hash', protect, async (req, res) => {
         // Log activity
         const log = new ActivityLog({
             userEmail: req.user.email,
-            action: 'Generate Hash',
+            userName: req.user.name || 'User',
+            action: 'Hash Generation',
+            type: request.documentType || '------',
+            status: 'Successful',
             details: `Generated secure SHA-256 hash for request ${req.params.id}`
         });
         await log.save();
@@ -72,20 +78,34 @@ router.post('/:id/generate-hash', protect, async (req, res) => {
 // Create a new request (Logged)
 router.post('/', protect, async (req, res) => {
   try {
-    const newDoc = new Request(req.body);
+    // Auto-generate requestId if not provided
+    const requestId = req.body.requestId || 'REQ-' + Date.now();
+
+    // Get user name from authenticated user
+    const userName = req.user.name || 'User';
+
+    const newDoc = new Request({
+      ...req.body,
+      requestId,
+      name: userName,
+    });
     await newDoc.save();
 
     // Log the activity
     const log = new ActivityLog({
       userEmail: req.user.email,
+      userName: userName,
       action: 'Create Request',
-      details: `Created new document request for: ${req.body.name || 'Unknown'}`
+      type: req.body.documentType || '------',
+      status: 'Successful',
+      details: `Created new document request for: ${userName}`
     });
     await log.save();
 
     res.json(newDoc);
   } catch (error) {
-    res.status(500).json({ message: 'Error creating request' });
+    console.error('Error creating request:', error);
+    res.status(500).json({ message: 'Error creating request', error: error.message });
   }
 });
 

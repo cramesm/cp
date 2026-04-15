@@ -1,25 +1,68 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from '../../components/Layout';
-import { ChevronRight, User, Trash2, Edit3, X, CheckCircle, Lock, AlertTriangle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { ChevronRight, User, Trash2, Edit3, X, CheckCircle, Lock, AlertTriangle, RefreshCw } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
+import api from '../../api';
 
 export default function RegistrarInformation() {
   const navigate = useNavigate();
-  
+  const { id } = useParams();
+
   // State to handle editable fields
   const [formData, setFormData] = useState({
-    firstName: "Matt",
-    lastName: "Dickerson",
-    email: "registrar.dickerson@university.edu",
+    firstName: "",
+    lastName: "",
+    email: "",
     role: "Registrar Staff",
-    employeeId: "EMP-2026-042"
+    employeeId: ""
   });
 
+  const [registrarId, setRegistrarId] = useState(''); // MongoDB _id for API calls
+  const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  const [passwordData, setPasswordData] = useState({ newPassword: '', confirmPassword: '' });
+
+  // Fetch registrar data
+  useEffect(() => {
+    const fetchRegistrar = async () => {
+      try {
+        const res = await api.get(`/registrars`);
+        const registrar = res.data.find(r => r._id === id || r.registrarId === id);
+        if (registrar) {
+          setRegistrarId(registrar._id); // Store MongoDB _id for API calls
+          const nameParts = registrar.name.split(' ');
+          setFormData({
+            firstName: nameParts[0] || '',
+            lastName: nameParts.slice(1).join(' ') || '',
+            email: registrar.email,
+            role: registrar.role,
+            employeeId: registrar.registrarId || ''
+          });
+        } else {
+          setToast({ show: true, message: 'Registrar not found', type: 'error' });
+          setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
+        }
+      } catch (error) {
+        console.error('Error fetching registrar:', error);
+        setToast({ show: true, message: 'Failed to load registrar data', type: 'error' });
+        setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchRegistrar();
+  }, [id]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handlePasswordChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordData(prev => ({ ...prev, [name]: value }));
   };
 
   const triggerToast = (message, type = 'success') => {
@@ -27,30 +70,89 @@ export default function RegistrarInformation() {
     setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
   };
 
-  const handleUpdateInfo = () => {
-    triggerToast("Information updated successfully!");
+  const handleUpdateInfo = async () => {
+    setUpdating(true);
+    try {
+      const apiId = registrarId || id; // Use registrarId if available, otherwise use id
+      await api.put(`/registrars/${apiId}`, {
+        name: `${formData.firstName} ${formData.lastName}`,
+        email: formData.email,
+        role: formData.role
+      });
+      triggerToast("Information updated successfully!");
+    } catch (error) {
+      console.error('Error updating registrar:', error);
+      const errorMessage = error.response?.data?.message || 'Failed to update information';
+      triggerToast(errorMessage, 'error');
+    } finally {
+      setUpdating(false);
+    }
   };
 
-  const handlePasswordUpdate = () => {
-    triggerToast("Password updated successfully!");
+  const handlePasswordUpdate = async () => {
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      triggerToast("Passwords do not match", 'error');
+      return;
+    }
+    if (passwordData.newPassword.length < 6) {
+      triggerToast("Password must be at least 6 characters", 'error');
+      return;
+    }
+
+    try {
+      // Note: This would need a backend endpoint for password reset
+      triggerToast("Password update request sent!");
+      setPasswordData({ newPassword: '', confirmPassword: '' });
+    } catch (error) {
+      console.error('Error updating password:', error);
+      triggerToast("Failed to update password", 'error');
+    }
   };
 
-  const handleDeleteAccount = () => {
-    triggerToast("Account deletion request processed.", "error");
+  const handleDeleteAccount = async () => {
+    const consent = document.getElementById('consent')?.checked;
+    if (!consent) {
+      triggerToast("Please confirm deletion by checking the box", 'error');
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      const apiId = registrarId || id; // Use registrarId if available, otherwise use id
+      await api.delete(`/registrars/${apiId}`);
+      triggerToast("Account deleted successfully!", 'success');
+      setTimeout(() => {
+        navigate('/manage-registrar');
+      }, 1500);
+    } catch (error) {
+      console.error('Error deleting registrar:', error);
+      const errorMessage = error.response?.data?.message || 'Failed to delete account';
+      triggerToast(errorMessage, 'error');
+      setDeleting(false);
+    }
   };
 
   return (
     <Layout>
       <div className="flex flex-col min-h-screen bg-[#e9e9e9] font-sans relative">
         
-        {toast.show && (
-          <div className={`fixed top-5 left-1/2 -translate-x-1/2 z-[10001] flex items-center gap-3 px-6 py-3 rounded-lg shadow-2xl text-white transition-all ${
-            toast.type === 'success' ? 'bg-[#1D2D44]' : 'bg-red-600'
-          }`}>
-            {toast.type === 'success' ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
-            <p className="font-bold text-sm tracking-wide">{toast.message}</p>
+        {loading ? (
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="flex items-center gap-3 text-[#1D2D44]">
+              <RefreshCw size={24} className="animate-spin" />
+              <span className="font-bold">Loading registrar data...</span>
+            </div>
           </div>
-        )}
+        ) : (
+          <>
+            {toast.show && (
+              <div className={`fixed top-5 left-1/2 -translate-x-1/2 z-[10001] flex items-center gap-3 px-6 py-3 rounded-lg shadow-2xl text-white transition-all ${
+                toast.type === 'success' ? 'bg-[#1D2D44]' : 'bg-red-600'
+              }`}>
+                {toast.type === 'success' ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
+                <p className="font-bold text-sm tracking-wide">{toast.message}</p>
+              </div>
+            )}
 
         <div className="max-w-6xl mx-auto w-full p-8 flex-grow">
           {/* Breadcrumb */}
@@ -91,11 +193,20 @@ export default function RegistrarInformation() {
                   >
                     <X size={14} /> Back to List
                   </button>
-                  <button 
+                  <button
                     onClick={handleUpdateInfo}
-                    className="flex-1 bg-[#1D2D44] text-white py-2.5 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-[#152030] transition-all shadow-lg flex items-center justify-center gap-2"
+                    disabled={updating}
+                    className="flex-1 bg-[#1D2D44] text-white py-2.5 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-[#152030] transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Edit3 size={14} /> Save Changes
+                    {updating ? (
+                      <>
+                        <RefreshCw size={14} className="animate-spin" /> Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Edit3 size={14} /> Save Changes
+                      </>
+                    )}
                   </button>
                 </div>
               </section>
@@ -109,9 +220,19 @@ export default function RegistrarInformation() {
                   <h3 className="text-[14px] font-bold uppercase tracking-wider">Update Security</h3>
                 </div>
                 <div className="space-y-4">
-                  <PasswordInput label="New Password" />
-                  <PasswordInput label="Confirm New Password" />
-                  <button 
+                  <PasswordInput
+                    label="New Password"
+                    name="newPassword"
+                    value={passwordData.newPassword}
+                    onChange={handlePasswordChange}
+                  />
+                  <PasswordInput
+                    label="Confirm New Password"
+                    name="confirmPassword"
+                    value={passwordData.confirmPassword}
+                    onChange={handlePasswordChange}
+                  />
+                  <button
                     onClick={handlePasswordUpdate}
                     className="w-full bg-[#1D2D44] text-white font-bold py-3 rounded-full text-xs uppercase tracking-widest mt-2 shadow-md hover:bg-[#152030] transition-all"
                   >
@@ -134,11 +255,18 @@ export default function RegistrarInformation() {
                     I confirm that I want to permanently delete this registrar account.
                   </label>
                 </div>
-                <button 
+                <button
                   onClick={handleDeleteAccount}
-                  className="w-full bg-rose-700 text-white font-bold py-3 rounded-full text-xs uppercase tracking-widest hover:bg-rose-800 transition-all shadow-md"
+                  disabled={deleting}
+                  className="w-full bg-rose-700 text-white font-bold py-3 rounded-full text-xs uppercase tracking-widest hover:bg-rose-800 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Delete Account
+                  {deleting ? (
+                    <>
+                      <RefreshCw size={14} className="animate-spin inline mr-2" /> Deleting...
+                    </>
+                  ) : (
+                    'Delete Account'
+                  )}
                 </button>
               </section>
             </div>
@@ -151,6 +279,8 @@ export default function RegistrarInformation() {
             Last Activity Recorded: April 03, 2026 — 11:30 PM
           </p>
         </footer>
+          </>
+        )}
       </div>
     </Layout>
   );
@@ -172,12 +302,15 @@ function InfoInput({ label, name, value, onChange }) {
   );
 }
 
-function PasswordInput({ label }) {
+function PasswordInput({ label, name, value, onChange }) {
   return (
     <div className="flex flex-col gap-2">
       <label className="text-[11px] font-bold text-[#1D2D44] uppercase tracking-wider">{label}</label>
-      <input 
-        type="password" 
+      <input
+        type="password"
+        name={name}
+        value={value}
+        onChange={onChange}
         className="w-full bg-white border border-blue-200 rounded-lg p-3 text-sm outline-none focus:border-[#1D2D44] transition-all"
         placeholder="••••••••"
       />

@@ -20,23 +20,31 @@ import PaymentDetails from './pages/Payments/PaymentDetails'; // Added this impo
 import ManageRegistrar from './pages/SystemAdmin/ManageRegistrar';
 import AddRegistrar from './pages/SystemAdmin/AddRegistrar';
 import RegistrarInformation from './pages/SystemAdmin/RegistrarInformation';
-import ManageAdmins from './pages/Admin/ManageAdmins';
 import ActivityLogs from './pages/Admin/ActivityLogs';
 
 import Validation from './pages/Validation/Validation';
+
+const ProtectedRoute = ({ children }) => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+};
 
 function App() {
   return (
     <Router>
       <Routes>
         {/* Auth Routes */}
-        <Route path="/login" element={<AdminLogin />} />
+        <Route path="/login" element={<Navigate to="/" replace />} />
+        <Route path="/" element={<AdminLogin />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/otp" element={<OTP />} />
         <Route path="/change-password" element={<ChangePassword />} />
 
-        {/* Main Dashboard */}
-        <Route path="/" element={<Dashboard />} />
+        {/* Main Dashboard - Protected */}
+        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         
         {/* Requests Management */}
         <Route path="/requests" element={<Requests />} />
@@ -61,7 +69,6 @@ function App() {
         <Route path="/manage-registrar" element={<ManageRegistrar />} />
         <Route path="/manage-registrar/add" element={<AddRegistrar />} />
         <Route path="/manage-registrar/details/:id" element={<RegistrarInformation />} />
-        <Route path="/manage-admins" element={<ManageAdmins />} />
         
         <Route path="/activity-logs" element={<ActivityLogs />} />
 

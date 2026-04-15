@@ -23,7 +23,10 @@ router.post('/', protect, async (req, res) => {
         // Log activity
         const log = new ActivityLog({
             userEmail: req.user.email,
+            userName: req.user.name || 'User',
             action: 'Blockchain Transaction',
+            type: req.body.documentType || '------',
+            status: 'Successful',
             details: `Submitted transaction to blockchain for Request: ${req.body.requestId || 'Unknown'}`
         });
         await log.save();

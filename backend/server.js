@@ -1,5 +1,6 @@
-// Last updated: 2026-03-26
 require('dotenv').config();
+console.log("MY KEY IS:", process.env.NVIDIA_NIM_API_KEY);
+
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -60,6 +61,9 @@ const transactionRoutes = require('./routes/transactions');
 const notificationRoutes = require('./routes/notifications');
 const adminRoutes = require('./routes/adminManagement');
 const activityLogRoutes = require('./routes/activityLogs');
+const registrarRoutes = require('./routes/registrars');
+
+console.log('Routes imported successfully');
 
 // Mount Routes
 app.use('/api/auth', authRoutes);
@@ -69,9 +73,17 @@ app.use('/api/transactions', transactionRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/admins', adminRoutes);
 app.use('/api/activity-logs', activityLogRoutes);
+app.use('/api/registrars', registrarRoutes);
+
+console.log('Routes mounted successfully');
 
 app.get('/api/health', (req, res) => {
     res.json({ status: 'API is running' });
+});
+
+// Test route for debugging
+app.get('/api/test', (req, res) => {
+    res.json({ message: 'Test route working' });
 });
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

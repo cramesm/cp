@@ -42,7 +42,10 @@ router.post('/', async (req, res) => {
     // Log the action
     const log = new ActivityLog({
       userEmail: req.user.email,
+      userName: req.user.name || 'System Admin',
       action: 'Create Admin',
+      type: '------',
+      status: 'Successful',
       details: `Created new admin account: ${email}`
     });
     await log.save();
@@ -71,7 +74,10 @@ router.post('/:id/reset-password', async (req, res) => {
     // For this 60% push, we'll mock the success and log it.
     const log = new ActivityLog({
       userEmail: req.user.email,
+      userName: req.user.name || 'System Admin',
       action: 'Force Reset Password',
+      type: '------',
+      status: 'Successful',
       details: `Triggered password reset for admin: ${admin.email}`
     });
     await log.save();
@@ -97,7 +103,10 @@ router.delete('/:id', async (req, res) => {
     // Log the action
     const log = new ActivityLog({
       userEmail: req.user.email,
+      userName: req.user.name || 'System Admin',
       action: 'Delete Admin',
+      type: '------',
+      status: 'Successful',
       details: `Deleted admin account: ${email}`
     });
     await log.save();
