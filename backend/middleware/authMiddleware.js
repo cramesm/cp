@@ -13,7 +13,7 @@ const protect = (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'supersecretverifitor123');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     console.log('Token decoded:', decoded);
     req.user = decoded;
     next();

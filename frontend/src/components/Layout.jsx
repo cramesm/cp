@@ -37,6 +37,8 @@ const Layout = ({ children }) => {
                 return 'Add Registrar';
             case '/activity-logs':
                 return 'Activity Logs';
+            case '/tor':
+                return 'TOR Management';
             case '/profile/info':
                 return 'Profile Information';
             case '/profile':
@@ -55,6 +57,9 @@ const Layout = ({ children }) => {
                 if (path.startsWith('/manage-registrar/details/')) {
                     return 'Registrar Information';
                 }
+                if (path.startsWith('/tor/')) {
+                    return 'TOR Details';
+                }
                 return 'Dashboard';
         }
     };
@@ -64,6 +69,7 @@ const Layout = ({ children }) => {
     const menuItems = [
         { path: '/dashboard', label: 'Dashboard', icon: 'fa-solid fa-table-cells-large' },
         { path: '/requests', label: 'Document Requests', icon: 'fa-solid fa-file-lines' },
+        { path: '/tor', label: 'TOR Management', icon: 'fa-solid fa-graduation-cap' },
         { path: '/payments', label: 'Payments', icon: 'fa-solid fa-money-check-dollar' },
         { path: '/transactions', label: 'Transactions', icon: 'fa-solid fa-arrow-right-arrow-left' },
         { path: '/notifications', label: 'Notifications', icon: 'fa-solid fa-bell' }

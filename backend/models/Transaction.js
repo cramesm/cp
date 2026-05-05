@@ -10,11 +10,6 @@ const transactionSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  transactionHash: {
-    type: String,
-    required: true,
-    unique: true
-  },
   name: {
     type: String,
     required: true
@@ -25,12 +20,45 @@ const transactionSchema = new mongoose.Schema({
   },
   paymentMode: {
     type: String,
-    required: true
+    enum: ['GCash', 'Maya', 'GoThyme', 'Other Online Payment'],
+    default: 'GCash'
+  },
+  amount: {
+    type: String,
+    default: '0.00'
+  },
+  receiptImage: {
+    type: String,
+    default: ''
+  },
+  payerName: {
+    type: String,
+    default: ''
+  },
+  payerEmail: {
+    type: String,
+    default: ''
+  },
+  payerType: {
+    type: String,
+    enum: ['Student', 'Alumni'],
+    default: 'Student'
+  },
+  adminRemarks: {
+    type: String,
+    default: ''
   },
   status: {
     type: String,
-    enum: ['Processing', 'Approved', 'Released', 'Rejected'],
-    default: 'Processing'
+    enum: ['Pending Verification', 'Completed', 'Needs Update', 'Rejected'],
+    default: 'Pending Verification'
+  },
+  verifiedBy: {
+    type: String,
+    default: ''
+  },
+  verifiedAt: {
+    type: Date
   },
   date: {
     type: Date,

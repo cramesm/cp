@@ -1,9 +1,9 @@
 require('dotenv').config();
-console.log("MY KEY IS:", process.env.NVIDIA_NIM_API_KEY);
 
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path');
 
 const SystemAdmin = require('./models/Users/SystemAdmin');
 const Admin = require('./models/Users/Admin');
@@ -13,6 +13,9 @@ const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
+
+// Serve uploaded files (receipts, etc.) as static assets
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // MongoDB connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/verifitor')
@@ -62,6 +65,8 @@ const notificationRoutes = require('./routes/notifications');
 const adminRoutes = require('./routes/adminManagement');
 const activityLogRoutes = require('./routes/activityLogs');
 const registrarRoutes = require('./routes/registrars');
+const verifyRoutes = require('./routes/verify');
+const torRoutes = require('./routes/tor');
 
 console.log('Routes imported successfully');
 
@@ -74,6 +79,8 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/admins', adminRoutes);
 app.use('/api/activity-logs', activityLogRoutes);
 app.use('/api/registrars', registrarRoutes);
+app.use('/api/verify', verifyRoutes);
+app.use('/api/tor', torRoutes);
 
 console.log('Routes mounted successfully');
 
