@@ -1,15 +1,18 @@
 const express = require('express');
 const router = express.Router();
-const ActivityLog = require('../models/ActivityLog');
+const supabase = require('../supabaseClient');
 const { protect, systemAdminOnly } = require('../middleware/authMiddleware');
 
-// Get all activity logs - System Admin Only
+// Get all activity logs (export as CSV) - System Admin Only
 router.get('/export', protect, systemAdminOnly, async (req, res) => {
     try {
-      const logs = await ActivityLog.find().sort({ timestamp: -1 });
+      const { data: logs, error } = await supabase
+        .from('activity_logs').select('*').order('timestamp', { ascending: false });
+      if (error) throw error;
+
       let csv = 'User,Action,Details,Timestamp\n';
-      logs.forEach(log => {
-        csv += `"${log.userEmail}","${log.action}","${log.details}","${log.timestamp}"\n`;
+      (logs || []).forEach(log => {
+        csv += `"${log.user_email}","${log.action}","${log.details}","${log.timestamp}"\n`;
       });
       
       res.setHeader('Content-Type', 'text/csv');
@@ -23,26 +26,28 @@ router.get('/export', protect, systemAdminOnly, async (req, res) => {
 // Get all activity logs - System Admin Only
 router.get('/', protect, systemAdminOnly, async (req, res) => {
   try {
-    const logs = await ActivityLog.find().sort({ timestamp: -1 }).limit(100);
-    res.json(logs);
+    const { data: logs, error } = await supabase
+      .from('activity_logs').select('*').order('timestamp', { ascending: false }).limit(100);
+    if (error) throw error;
+    res.json(logs || []);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching activity logs' });
   }
 });
 
-// Create a log entry (Internal use or if needed by API)
+// Create a log entry
 router.post('/', protect, async (req, res) => {
     try {
         const { action, details, type, status } = req.body;
-        const newLog = new ActivityLog({
-            userEmail: req.user.email,
-            userName: req.user.name || 'User',
+        const { data: newLog, error } = await supabase.from('activity_logs').insert({
+            user_email: req.user.email,
+            user_name: req.user.name || 'User',
             action,
             type: type || '------',
             status: status || 'Successful',
             details
-        });
-        await newLog.save();
+        }).select().single();
+        if (error) throw error;
         res.status(201).json(newLog);
     } catch (error) {
         res.status(500).json({ message: 'Error creating log' });

@@ -1,15 +1,16 @@
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
-const Request = require('../models/Request');
-const ActivityLog = require('../models/ActivityLog');
+const supabase = require('../supabaseClient');
 const { protect } = require('../middleware/authMiddleware');
 
 // Get all requests
 router.get('/', async (req, res) => {
   try {
-    const requests = await Request.find().sort({ dateRequested: -1 });
-    res.json(requests);
+    const { data: requests, error } = await supabase
+      .from('requests').select('*').order('date_requested', { ascending: false });
+    if (error) throw error;
+    res.json(requests || []);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching requests' });
   }
@@ -19,24 +20,28 @@ router.get('/', async (req, res) => {
 router.put('/:id', protect, async (req, res) => {
     try {
         const { status, name } = req.body;
-        const request = await Request.findOneAndUpdate(
-            { requestId: req.params.id },
-            { status, name },
-            { new: true }
-        );
+        const updateData = {};
+        if (status) updateData.status = status;
+        if (name) updateData.name = name;
 
-        if (!request) return res.status(404).json({ message: 'Request not found' });
+        const { data: request, error } = await supabase
+            .from('requests')
+            .update(updateData)
+            .eq('request_id', req.params.id)
+            .select()
+            .single();
+
+        if (error || !request) return res.status(404).json({ message: 'Request not found' });
 
         // Log activity
-        const log = new ActivityLog({
-            userEmail: req.user.email,
-            userName: req.user.name || 'User',
+        await supabase.from('activity_logs').insert({
+            user_email: req.user.email,
+            user_name: req.user.name || 'User',
             action: 'Update Request',
             type: '------',
             status: 'Successful',
             details: `Updated request ${req.params.id} status to ${status || 'unchanged'}`
         });
-        await log.save();
 
         res.json(request);
     } catch (error) {
@@ -47,27 +52,28 @@ router.put('/:id', protect, async (req, res) => {
 // Generate Hash for request (Logged)
 router.post('/:id/generate-hash', protect, async (req, res) => {
     try {
-        const request = await Request.findOne({ requestId: req.params.id });
-        if (!request) return res.status(404).json({ message: 'Request not found' });
+        const { data: request, error: fetchError } = await supabase
+          .from('requests').select('*').eq('request_id', req.params.id).single();
+        if (fetchError || !request) return res.status(404).json({ message: 'Request not found' });
 
-        // Generate SHA-256 hash based on request data
+        // Generate SHA-256 hash
         const hash = crypto.createHash('sha256')
-            .update(`${request.requestId}-${request.name}-${Date.now()}`)
+            .update(`${request.request_id}-${request.name}-${Date.now()}`)
             .digest('hex');
 
-        request.documentHash = hash;
-        await request.save();
+        const { error: updateError } = await supabase
+          .from('requests').update({ document_hash: hash }).eq('request_id', req.params.id);
+        if (updateError) throw updateError;
 
         // Log activity
-        const log = new ActivityLog({
-            userEmail: req.user.email,
-            userName: req.user.name || 'User',
+        await supabase.from('activity_logs').insert({
+            user_email: req.user.email,
+            user_name: req.user.name || 'User',
             action: 'Hash Generation',
-            type: request.documentType || '------',
+            type: request.document_type || '------',
             status: 'Successful',
             details: `Generated secure SHA-256 hash for request ${req.params.id}`
         });
-        await log.save();
 
         res.json({ message: 'Hash generated successfully', hash });
     } catch (error) {
@@ -78,29 +84,31 @@ router.post('/:id/generate-hash', protect, async (req, res) => {
 // Create a new request (Logged)
 router.post('/', protect, async (req, res) => {
   try {
-    // Auto-generate requestId if not provided
     const requestId = req.body.requestId || 'REQ-' + Date.now();
-
-    // Get user name from authenticated user
     const userName = req.user.name || 'User';
 
-    const newDoc = new Request({
-      ...req.body,
-      requestId,
+    const { data: newDoc, error } = await supabase.from('requests').insert({
+      request_id: requestId,
       name: userName,
-    });
-    await newDoc.save();
+      status: req.body.status || 'Pending',
+      document_type: req.body.documentType,
+      sub_document_type: req.body.subDocumentType || '',
+      purpose: req.body.purpose || '',
+      other_purpose: req.body.otherPurpose || '',
+      quantity: req.body.quantity || 1,
+    }).select().single();
+
+    if (error) throw error;
 
     // Log the activity
-    const log = new ActivityLog({
-      userEmail: req.user.email,
-      userName: userName,
+    await supabase.from('activity_logs').insert({
+      user_email: req.user.email,
+      user_name: userName,
       action: 'Create Request',
       type: req.body.documentType || '------',
       status: 'Successful',
       details: `Created new document request for: ${userName}`
     });
-    await log.save();
 
     res.json(newDoc);
   } catch (error) {

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const Registrar = require('../models/Registrar');
-const ActivityLog = require('../models/ActivityLog');
+const bcrypt = require('bcryptjs');
+const supabase = require('../supabaseClient');
 const { protect, systemAdminOnly } = require('../middleware/authMiddleware');
 
 console.log('Registrar routes loaded');
@@ -11,13 +11,14 @@ router.use(protect);
 router.use(systemAdminOnly);
 
 // @route   GET /api/registrars
-// @desc    Get all registrars
 router.get('/', async (req, res) => {
   console.log('GET /api/registrars called');
   try {
-    const registrars = await Registrar.find().select('-password');
-    console.log('Found registrars:', registrars.length);
-    res.json(registrars);
+    const { data: registrars, error } = await supabase
+      .from('registrars').select('id, registrar_id, name, email, role, status, created_at, updated_at');
+    if (error) throw error;
+    console.log('Found registrars:', (registrars || []).length);
+    res.json(registrars || []);
   } catch (error) {
     console.error('Error fetching registrars:', error);
     res.status(500).json({ message: 'Error fetching registrars' });
@@ -25,54 +26,42 @@ router.get('/', async (req, res) => {
 });
 
 // @route   POST /api/registrars
-// @desc    Create a new registrar
 router.post('/', async (req, res) => {
   console.log('POST /api/registrars called with body:', req.body);
   try {
     const { name, email, password, role } = req.body;
 
-    // Check if registrar already exists
-    const existingRegistrar = await Registrar.findOne({ email });
+    const { data: existingRegistrar } = await supabase
+      .from('registrars').select('id').eq('email', email).single();
     if (existingRegistrar) {
       console.log('Registrar already exists:', email);
       return res.status(400).json({ message: 'Registrar with this email already exists' });
     }
 
-    // Generate registrar ID
     const registrarId = 'REG-' + Math.floor(100000 + Math.random() * 900000);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newRegistrar = new Registrar({
-      registrarId,
+    const { data: newRegistrar, error } = await supabase.from('registrars').insert({
+      registrar_id: registrarId,
       name,
       email,
-      password,
+      password: hashedPassword,
       role: role || 'Registrar Staff'
-    });
+    }).select('id, registrar_id, name, email, role').single();
 
-    await newRegistrar.save();
-    console.log('New registrar created:', newRegistrar.registrarId);
+    if (error) throw error;
+    console.log('New registrar created:', newRegistrar.registrar_id);
 
-    // Log the action
-    const log = new ActivityLog({
-      userEmail: req.user.email,
-      userName: req.user.name || 'System Admin',
+    await supabase.from('activity_logs').insert({
+      user_email: req.user.email,
+      user_name: req.user.name || 'System Admin',
       action: 'User Created',
       type: '------',
       status: 'Successful',
       details: `Created new registrar account: ${name} (${email})`
     });
-    await log.save();
 
-    res.status(201).json({
-      message: 'Registrar created successfully',
-      registrar: {
-        id: newRegistrar._id,
-        registrarId: newRegistrar.registrarId,
-        name: newRegistrar.name,
-        email: newRegistrar.email,
-        role: newRegistrar.role
-      }
-    });
+    res.status(201).json({ message: 'Registrar created successfully', registrar: newRegistrar });
   } catch (error) {
     console.error('Error creating registrar:', error);
     res.status(500).json({ message: 'Error creating registrar' });
@@ -80,73 +69,69 @@ router.post('/', async (req, res) => {
 });
 
 // @route   PUT /api/registrars/:id
-// @desc    Update a registrar
 router.put('/:id', async (req, res) => {
   try {
     const { name, email, role, status } = req.body;
 
-    // Try to find by _id first, then by registrarId
-    let registrar = await Registrar.findById(req.params.id);
+    // Try by id first, then by registrar_id
+    let { data: registrar } = await supabase
+      .from('registrars').select('*').eq('id', req.params.id).single();
     if (!registrar) {
-      registrar = await Registrar.findOne({ registrarId: req.params.id });
+      const { data: regById } = await supabase
+        .from('registrars').select('*').eq('registrar_id', req.params.id).single();
+      registrar = regById;
     }
+    if (!registrar) return res.status(404).json({ message: 'Registrar not found' });
 
-    if (!registrar) {
-      return res.status(404).json({ message: 'Registrar not found' });
-    }
+    const updateData = {};
+    if (name) updateData.name = name;
+    if (email) updateData.email = email;
+    if (role) updateData.role = role;
+    if (status) updateData.status = status;
 
-    // Update the registrar
-    registrar.name = name || registrar.name;
-    registrar.email = email || registrar.email;
-    registrar.role = role || registrar.role;
-    if (status) registrar.status = status;
+    const { data: updated, error } = await supabase
+      .from('registrars').update(updateData).eq('id', registrar.id).select().single();
+    if (error) throw error;
 
-    await registrar.save();
-
-    // Log the action
-    const log = new ActivityLog({
-      userEmail: req.user.email,
-      userName: req.user.name || 'System Admin',
+    await supabase.from('activity_logs').insert({
+      user_email: req.user.email,
+      user_name: req.user.name || 'System Admin',
       action: 'User Updated',
       type: '------',
       status: 'Successful',
-      details: `Updated registrar: ${registrar.name}`
+      details: `Updated registrar: ${updated.name}`
     });
-    await log.save();
 
-    res.json(registrar);
+    res.json(updated);
   } catch (error) {
     res.status(500).json({ message: 'Error updating registrar' });
   }
 });
 
 // @route   DELETE /api/registrars/:id
-// @desc    Delete a registrar
 router.delete('/:id', async (req, res) => {
   try {
-    // Try to find by _id first, then by registrarId
-    let registrarToDelete = await Registrar.findById(req.params.id);
+    let { data: registrarToDelete } = await supabase
+      .from('registrars').select('*').eq('id', req.params.id).single();
     if (!registrarToDelete) {
-      registrarToDelete = await Registrar.findOne({ registrarId: req.params.id });
+      const { data: regById } = await supabase
+        .from('registrars').select('*').eq('registrar_id', req.params.id).single();
+      registrarToDelete = regById;
     }
-
-    if (!registrarToDelete) {
-      return res.status(404).json({ message: 'Registrar not found' });
-    }
+    if (!registrarToDelete) return res.status(404).json({ message: 'Registrar not found' });
 
     const name = registrarToDelete.name;
-    await Registrar.findByIdAndDelete(registrarToDelete._id);
+    const { error } = await supabase.from('registrars').delete().eq('id', registrarToDelete.id);
+    if (error) throw error;
 
-    // Log the action
-    const log = new ActivityLog({
-      userEmail: req.user.email,
-      userName: req.user.name || 'System Admin',
+    await supabase.from('activity_logs').insert({
+      user_email: req.user.email,
+      user_name: req.user.name || 'System Admin',
       action: 'User Deleted',
       type: '------',
       status: 'Successful',
       details: `Deleted registrar account: ${name}`
     });
-    await log.save();
 
     res.json({ message: 'Registrar deleted successfully' });
   } catch (error) {

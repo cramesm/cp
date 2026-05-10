@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const Admin = require('../models/Users/Admin');
-const ActivityLog = require('../models/ActivityLog');
+const bcrypt = require('bcryptjs');
+const supabase = require('../supabaseClient');
 const { protect, systemAdminOnly } = require('../middleware/authMiddleware');
 
 // All routes here are protected and SystemAdmin only
@@ -9,78 +9,67 @@ router.use(protect);
 router.use(systemAdminOnly);
 
 // @route   GET /api/admins
-// @desc    Get all admins
 router.get('/', async (req, res) => {
   try {
-    const admins = await Admin.find().select('-password');
-    res.json(admins);
+    const { data: admins, error } = await supabase
+      .from('admins').select('id, email, role, name, profile_pic, created_at, updated_at');
+    if (error) throw error;
+    res.json(admins || []);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching admins' });
   }
 });
 
 // @route   POST /api/admins
-// @desc    Create a new admin
 router.post('/', async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Check if admin already exists
-    const existingAdmin = await Admin.findOne({ email });
+    const { data: existingAdmin } = await supabase
+      .from('admins').select('id').eq('email', email).single();
     if (existingAdmin) {
       return res.status(400).json({ message: 'Admin with this email already exists' });
     }
 
-    const newAdmin = new Admin({
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const { data: newAdmin, error } = await supabase.from('admins').insert({
       email,
-      password,
+      password: hashedPassword,
       role: 'admin'
-    });
+    }).select('id, email, role').single();
 
-    await newAdmin.save();
+    if (error) throw error;
 
     // Log the action
-    const log = new ActivityLog({
-      userEmail: req.user.email,
-      userName: req.user.name || 'System Admin',
+    await supabase.from('activity_logs').insert({
+      user_email: req.user.email,
+      user_name: req.user.name || 'System Admin',
       action: 'Create Admin',
       type: '------',
       status: 'Successful',
       details: `Created new admin account: ${email}`
     });
-    await log.save();
 
-    res.status(201).json({
-      message: 'Admin created successfully',
-      admin: {
-        id: newAdmin._id,
-        email: newAdmin.email,
-        role: newAdmin.role
-      }
-    });
+    res.status(201).json({ message: 'Admin created successfully', admin: newAdmin });
   } catch (error) {
     res.status(500).json({ message: 'Error creating admin' });
   }
 });
 
 // @route   POST /api/admins/:id/reset-password
-// @desc    Force reset an admin's password (Logged)
 router.post('/:id/reset-password', async (req, res) => {
   try {
-    const admin = await Admin.findById(req.params.id);
+    const { data: admin } = await supabase.from('admins').select('*').eq('id', req.params.id).single();
     if (!admin) return res.status(404).json({ message: 'Admin not found' });
 
-    // In a real app, we'd set a temporary password and email it.
-    // For this 60% push, we'll mock the success and log it.
-    const log = new ActivityLog({
-      userEmail: req.user.email,
-      userName: req.user.name || 'System Admin',
+    await supabase.from('activity_logs').insert({
+      user_email: req.user.email,
+      user_name: req.user.name || 'System Admin',
       action: 'Force Reset Password',
       type: '------',
       status: 'Successful',
       details: `Triggered password reset for admin: ${admin.email}`
     });
-    await log.save();
 
     res.json({ message: 'Password reset triggered successfully' });
   } catch (error) {
@@ -89,27 +78,24 @@ router.post('/:id/reset-password', async (req, res) => {
 });
 
 // @route   DELETE /api/admins/:id
-// @desc    Delete an admin
 router.delete('/:id', async (req, res) => {
   try {
-    const adminToDelete = await Admin.findById(req.params.id);
-    if (!adminToDelete) {
-      return res.status(404).json({ message: 'Admin not found' });
-    }
+    const { data: adminToDelete } = await supabase
+      .from('admins').select('*').eq('id', req.params.id).single();
+    if (!adminToDelete) return res.status(404).json({ message: 'Admin not found' });
 
     const email = adminToDelete.email;
-    await Admin.findByIdAndDelete(req.params.id);
+    const { error } = await supabase.from('admins').delete().eq('id', req.params.id);
+    if (error) throw error;
 
-    // Log the action
-    const log = new ActivityLog({
-      userEmail: req.user.email,
-      userName: req.user.name || 'System Admin',
+    await supabase.from('activity_logs').insert({
+      user_email: req.user.email,
+      user_name: req.user.name || 'System Admin',
       action: 'Delete Admin',
       type: '------',
       status: 'Successful',
       details: `Deleted admin account: ${email}`
     });
-    await log.save();
 
     res.json({ message: 'Admin deleted successfully' });
   } catch (error) {

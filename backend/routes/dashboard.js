@@ -1,25 +1,23 @@
 const express = require('express');
 const router = express.Router();
-const Request = require('../models/Request');
-const Transaction = require('../models/Transaction');
-const Notification = require('../models/Notification');
+const supabase = require('../supabaseClient');
 
 router.get('/stats', async (req, res) => {
   try {
-    const totalRequests = await Request.countDocuments();
-    const pendingRequests = await Request.countDocuments({ status: 'Pending' });
-    const inProcessRequests = await Request.countDocuments({ status: 'In Process' });
-    const approvedRequests = await Request.countDocuments({ status: 'Approved' });
-    const releasedRequests = await Request.countDocuments({ status: 'Released' });
-    const blockchainTransactions = await Transaction.countDocuments();
+    const { count: totalRequests } = await supabase.from('requests').select('*', { count: 'exact', head: true });
+    const { count: pendingRequests } = await supabase.from('requests').select('*', { count: 'exact', head: true }).eq('status', 'Pending');
+    const { count: inProcessRequests } = await supabase.from('requests').select('*', { count: 'exact', head: true }).eq('status', 'In Process');
+    const { count: approvedRequests } = await supabase.from('requests').select('*', { count: 'exact', head: true }).eq('status', 'Approved');
+    const { count: releasedRequests } = await supabase.from('requests').select('*', { count: 'exact', head: true }).eq('status', 'Released');
+    const { count: blockchainTransactions } = await supabase.from('transactions').select('*', { count: 'exact', head: true });
 
     res.json({
-      totalRequests,
-      pendingRequests,
-      inProcessRequests,
-      approvedRequests,
-      releasedRequests,
-      blockchainTransactions
+      totalRequests: totalRequests || 0,
+      pendingRequests: pendingRequests || 0,
+      inProcessRequests: inProcessRequests || 0,
+      approvedRequests: approvedRequests || 0,
+      releasedRequests: releasedRequests || 0,
+      blockchainTransactions: blockchainTransactions || 0
     });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching stats' });
@@ -28,14 +26,14 @@ router.get('/stats', async (req, res) => {
 
 router.get('/recent', async (req, res) => {
    try {
-     const recentTransactions = await Transaction.find().sort({ date: -1 }).limit(5);
-     const recentNotifications = await Notification.find().sort({ date: -1 }).limit(5);
-     const pendingRequestsList = await Request.find({ status: 'Pending' }).sort({ dateRequested: -1 }).limit(5);
+     const { data: transactions } = await supabase.from('transactions').select('*').order('date', { ascending: false }).limit(5);
+     const { data: notifications } = await supabase.from('notifications').select('*').order('date', { ascending: false }).limit(5);
+     const { data: pendingRequests } = await supabase.from('requests').select('*').eq('status', 'Pending').order('date_requested', { ascending: false }).limit(5);
 
      res.json({
-         transactions: recentTransactions,
-         notifications: recentNotifications,
-         pendingRequests: pendingRequestsList
+         transactions: transactions || [],
+         notifications: notifications || [],
+         pendingRequests: pendingRequests || []
      });
    } catch (error) {
      res.status(500).json({ message: 'Error fetching recent activity' });
