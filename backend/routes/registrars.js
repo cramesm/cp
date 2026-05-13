@@ -1,10 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const bcrypt = require('bcryptjs');
-const supabase = require('../supabaseClient');
+const Registrar = require('../models/Registrar');
+const Admin = require('../models/Users/Admin');
+const ActivityLog = require('../models/ActivityLog');
 const { protect, systemAdminOnly } = require('../middleware/authMiddleware');
-
-console.log('Registrar routes loaded');
 
 // All routes here are protected and SystemAdmin only
 router.use(protect);
@@ -12,37 +11,20 @@ router.use(systemAdminOnly);
 
 // @route   GET /api/registrars
 router.get('/', async (req, res) => {
-  console.log('GET /api/registrars called');
   try {
-    const { data: registrars, error: regError } = await supabase
-      .from('registrars').select('id, registrar_id, name, email, role, status, created_at, updated_at');
-    
-    const { data: admins, error: adminError } = await supabase
-      .from('admins').select('id, email, role, name, created_at, updated_at');
+    const registrars = await Registrar.find();
+    const admins = await Admin.find();
 
-    if (regError) throw regError;
-    if (adminError) throw adminError;
-
-    // Combine results
+    // Combine results for frontend compatibility
     const combined = [
-        ...(registrars || []).map(r => ({
-            ...r,
-            _id: r.id, // Compatibility with frontend
-            registrarId: r.registrar_id // Compatibility with frontend
-        })),
-        ...(admins || []).map(a => ({
-            ...a,
-            _id: a.id, // Compatibility with frontend
-            registrarId: 'ADMIN-' + a.id.toString().substring(0, 4),
-            registrar_id: 'ADMIN-' + a.id.toString().substring(0, 4),
-            status: 'Active',
-            createdAt: a.created_at,
-            updatedAt: a.updated_at
+        ...registrars,
+        ...admins.map(a => ({
+            ...a.toObject(),
+            registrarId: 'ADMIN-' + a._id.toString().substring(0, 4),
+            status: 'Active'
         }))
     ];
 
-    console.log('Found combined staff:', combined.length);
-    console.log('Sample staff:', combined[0]);
     res.json(combined);
   } catch (error) {
     console.error('Error fetching registrars:', error);
@@ -52,38 +34,29 @@ router.get('/', async (req, res) => {
 
 // @route   POST /api/registrars
 router.post('/', async (req, res) => {
-  console.log('POST /api/registrars called with body:', req.body);
   try {
     const { name, email, password, role } = req.body;
 
-    // Check both tables for existing email
-    const { data: existingReg } = await supabase.from('registrars').select('id').eq('email', email).single();
-    const { data: existingAdmin } = await supabase.from('admins').select('id').eq('email', email).single();
+    // Check if email exists
+    const existingReg = await Registrar.findOne({ email });
+    const existingAdmin = await Admin.findOne({ email });
     
     if (existingReg || existingAdmin) {
       return res.status(400).json({ message: 'User with this email already exists' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // If role is System Admin or Admin, put in admins table? 
-    // Actually, based on current logic, let's keep things as they are but handle both.
-    // For simplicity, new staff added via this page go to 'registrars' table.
-    
     const registrarId = 'REG-' + Math.floor(100000 + Math.random() * 900000);
-    const { data: newRegistrar, error } = await supabase.from('registrars').insert({
-      registrar_id: registrarId,
+    const newRegistrar = await Registrar.create({
+      registrarId,
       name,
       email,
-      password: hashedPassword,
+      password, // Model handles hashing
       role: role || 'registrar'
-    }).select('id, registrar_id, name, email, role').single();
+    });
 
-    if (error) throw error;
-
-    await supabase.from('activity_logs').insert({
-      user_email: req.user.email,
-      user_name: req.user.name || 'System Admin',
+    await ActivityLog.create({
+      userEmail: req.user.email,
+      userName: req.user.name || 'System Admin',
       action: 'User Created',
       type: '------',
       status: 'Successful',
@@ -102,17 +75,12 @@ router.put('/:id', async (req, res) => {
   try {
     const { name, email, role, status } = req.body;
 
-    // Try finding in registrars first
-    let { data: staff, error: fetchError } = await supabase.from('registrars').select('*').eq('id', req.params.id).single();
-    let table = 'registrars';
+    let staff = await Registrar.findById(req.params.id);
+    let model = Registrar;
 
     if (!staff) {
-        // Try in admins
-        const { data: admin } = await supabase.from('admins').select('*').eq('id', req.params.id).single();
-        if (admin) {
-            staff = admin;
-            table = 'admins';
-        }
+        staff = await Admin.findById(req.params.id);
+        model = Admin;
     }
 
     if (!staff) return res.status(404).json({ message: 'User not found' });
@@ -123,18 +91,11 @@ router.put('/:id', async (req, res) => {
     if (role) updateData.role = role;
     if (status) updateData.status = status;
 
-    const { data: updated, error } = await supabase
-      .from(table)
-      .update(updateData)
-      .eq('id', req.params.id)
-      .select()
-      .single();
+    const updated = await model.findByIdAndUpdate(req.params.id, updateData, { new: true });
 
-    if (error) throw error;
-
-    await supabase.from('activity_logs').insert({
-      user_email: req.user.email,
-      user_name: req.user.name || 'System Admin',
+    await ActivityLog.create({
+      userEmail: req.user.email,
+      userName: req.user.name || 'System Admin',
       action: 'User Updated',
       type: '------',
       status: 'Successful',
@@ -150,26 +111,22 @@ router.put('/:id', async (req, res) => {
 // @route   DELETE /api/registrars/:id
 router.delete('/:id', async (req, res) => {
   try {
-    let table = 'registrars';
-    let { data: staff } = await supabase.from('registrars').select('*').eq('id', req.params.id).single();
+    let staff = await Registrar.findById(req.params.id);
+    let model = Registrar;
 
     if (!staff) {
-        const { data: admin } = await supabase.from('admins').select('*').eq('id', req.params.id).single();
-        if (admin) {
-            staff = admin;
-            table = 'admins';
-        }
+        staff = await Admin.findById(req.params.id);
+        model = Admin;
     }
 
     if (!staff) return res.status(404).json({ message: 'User not found' });
 
     const name = staff.name;
-    const { error } = await supabase.from(table).delete().eq('id', req.params.id);
-    if (error) throw error;
+    await model.findByIdAndDelete(req.params.id);
 
-    await supabase.from('activity_logs').insert({
-      user_email: req.user.email,
-      user_name: req.user.name || 'System Admin',
+    await ActivityLog.create({
+      userEmail: req.user.email,
+      userName: req.user.name || 'System Admin',
       action: 'User Deleted',
       type: '------',
       status: 'Successful',

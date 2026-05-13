@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const supabase = require('../supabaseClient');
+const Request = require('../models/Request');
+const Transaction = require('../models/Transaction');
 
 // @route   GET /api/verify/:hash
 // @desc    Verify a document by its hash
 router.get('/:hash', async (req, res) => {
     try {
-        const { data: request } = await supabase
-          .from('requests').select('*').eq('document_hash', req.params.hash).single();
+        const request = await Request.findOne({ documentHash: req.params.hash });
         
         if (!request) {
             return res.status(404).json({ 
@@ -17,18 +17,17 @@ router.get('/:hash', async (req, res) => {
         }
 
         // Check for blockchain record
-        const { data: transaction } = await supabase
-          .from('transactions').select('*').eq('request_id', request.request_id).single();
+        const transaction = await Transaction.findOne({ requestId: request.requestId });
 
         res.json({
             success: true,
             data: {
-                requestId: request.request_id,
+                requestId: request.requestId,
                 ownerName: request.name,
                 status: request.status,
-                issuedDate: request.updated_at,
+                issuedDate: request.updatedAt,
                 blockchainRecord: transaction ? {
-                    txID: transaction.transaction_id,
+                    txID: transaction.transactionId,
                     date: transaction.date
                 } : null
             }

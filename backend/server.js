@@ -3,87 +3,64 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const bcrypt = require('bcryptjs');
-const supabase = require('./supabaseClient');
+const mongoose = require('mongoose');
 
 const app = express();
-app.get('/api/test-db', async (req, res) => {
-    try {
-        const { data: admins } = await supabase.from('admins').select('id, email, role');
-        const { data: registrars } = await supabase.from('registrars').select('id, email, role');
-        res.json({ admins, registrars });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
 
-// Serve uploaded files (receipts, etc.) as static assets
+// Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Supabase connection check + seed
-async function initializeDatabase() {
+// MongoDB Connection
+const connectDB = async () => {
     try {
-        // Test connection
-        const { data, error } = await supabase.from('system_admins').select('id').limit(1);
-        if (error) throw error;
-        console.log('Supabase connected successfully for Verifitor');
-
+        await mongoose.connect(process.env.MONGODB_URI);
+        console.log('MongoDB connected successfully');
         await seedUsers();
     } catch (err) {
-        console.error('Supabase connection error:', err.message);
+        console.error('MongoDB connection error:', err.message);
+        process.exit(1);
     }
-}
+};
 
-// Initial seed function
+// Initial seed function for MongoDB
 async function seedUsers() {
+    const SystemAdmin = require('./models/Users/SystemAdmin');
+    const Registrar = require('./models/Registrar');
+    
     try {
         // 1. Seed System Admin
-        const { data: existingSysAdmin } = await supabase
-            .from('system_admins')
-            .select('id')
-            .eq('email', 'sysadmin@verifitor.com')
-            .single();
-
+        const existingSysAdmin = await SystemAdmin.findOne({ email: 'sysadmin@verifitor.com' });
         if (!existingSysAdmin) {
-            const hashedPassword = await bcrypt.hash('sysadmin123', 10);
-            const { error } = await supabase.from('system_admins').insert({
+            await SystemAdmin.create({
                 email: 'sysadmin@verifitor.com',
-                password: hashedPassword,
+                password: 'sysadmin123', // Model handles hashing
                 role: 'system admin',
                 name: 'System Admin'
             });
-            if (error) throw error;
             console.log('Default System Admin created (sysadmin@verifitor.com / sysadmin123)');
         }
 
-        // 2. Seed Standard Admin
-        const adminsToSeed = [
-            { email: 'admin@verifitor.com', password: 'admin123', name: 'Admin' },
-            { email: 'saetsmurf1@gmail.com', password: 'admin123', name: 'Primary Admin' }
+        // 2. Seed Standard Registrars
+        const registrarsToSeed = [
+            { email: 'admin@verifitor.com', password: 'admin123', name: 'Admin', registrarId: 'REG-001' },
+            { email: 'saetsmurf1@gmail.com', password: 'admin123', name: 'Primary Admin', registrarId: 'REG-002' }
         ];
 
-        for (const admin of adminsToSeed) {
-            const { data: existingAdmin } = await supabase
-                .from('admins')
-                .select('id')
-                .eq('email', admin.email)
-                .single();
-
-            if (!existingAdmin) {
-                const hashedPassword = await bcrypt.hash(admin.password, 10);
-                const { error } = await supabase.from('admins').insert({
-                    email: admin.email,
-                    password: hashedPassword,
+        for (const reg of registrarsToSeed) {
+            const existingReg = await Registrar.findOne({ email: reg.email });
+            if (!existingReg) {
+                await Registrar.create({
+                    email: reg.email,
+                    password: reg.password,
                     role: 'registrar',
-                    name: admin.name
+                    name: reg.name,
+                    registrarId: reg.registrarId
                 });
-                if (error) throw error;
-                console.log(`Default Admin created (${admin.email} / ${admin.password})`);
+                console.log(`Default Registrar created (${reg.email} / ${reg.password})`);
             }
         }
     } catch (error) {
@@ -91,8 +68,7 @@ async function seedUsers() {
     }
 }
 
-// Initialize database
-initializeDatabase();
+connectDB();
 
 // Import Routes
 const authRoutes = require('./routes/auth');

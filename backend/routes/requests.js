@@ -1,16 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
-const supabase = require('../supabaseClient');
+const Request = require('../models/Request');
+const ActivityLog = require('../models/ActivityLog');
 const { protect } = require('../middleware/authMiddleware');
 
 // Get all requests
 router.get('/', async (req, res) => {
   try {
-    const { data: requests, error } = await supabase
-      .from('requests').select('*').order('date_requested', { ascending: false });
-    if (error) throw error;
-    res.json(requests || []);
+    const requests = await Request.find().sort({ dateRequested: -1 });
+    res.json(requests);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching requests' });
   }
@@ -24,19 +23,18 @@ router.put('/:id', protect, async (req, res) => {
         if (status) updateData.status = status;
         if (name) updateData.name = name;
 
-        const { data: request, error } = await supabase
-            .from('requests')
-            .update(updateData)
-            .eq('request_id', req.params.id)
-            .select()
-            .single();
+        const request = await Request.findOneAndUpdate(
+            { requestId: req.params.id },
+            updateData,
+            { new: true }
+        );
 
-        if (error || !request) return res.status(404).json({ message: 'Request not found' });
+        if (!request) return res.status(404).json({ message: 'Request not found' });
 
         // Log activity
-        await supabase.from('activity_logs').insert({
-            user_email: req.user.email,
-            user_name: req.user.name || 'User',
+        await ActivityLog.create({
+            userEmail: req.user.email,
+            userName: req.user.name || 'User',
             action: 'Update Request',
             type: '------',
             status: 'Successful',
@@ -52,25 +50,23 @@ router.put('/:id', protect, async (req, res) => {
 // Generate Hash for request (Logged)
 router.post('/:id/generate-hash', protect, async (req, res) => {
     try {
-        const { data: request, error: fetchError } = await supabase
-          .from('requests').select('*').eq('request_id', req.params.id).single();
-        if (fetchError || !request) return res.status(404).json({ message: 'Request not found' });
+        const request = await Request.findOne({ requestId: req.params.id });
+        if (!request) return res.status(404).json({ message: 'Request not found' });
 
         // Generate SHA-256 hash
         const hash = crypto.createHash('sha256')
-            .update(`${request.request_id}-${request.name}-${Date.now()}`)
+            .update(`${request.requestId}-${request.name}-${Date.now()}`)
             .digest('hex');
 
-        const { error: updateError } = await supabase
-          .from('requests').update({ document_hash: hash }).eq('request_id', req.params.id);
-        if (updateError) throw updateError;
+        request.documentHash = hash;
+        await request.save();
 
         // Log activity
-        await supabase.from('activity_logs').insert({
-            user_email: req.user.email,
-            user_name: req.user.name || 'User',
+        await ActivityLog.create({
+            userEmail: req.user.email,
+            userName: req.user.name || 'User',
             action: 'Hash Generation',
-            type: request.document_type || '------',
+            type: request.documentType || '------',
             status: 'Successful',
             details: `Generated secure SHA-256 hash for request ${req.params.id}`
         });
@@ -87,23 +83,21 @@ router.post('/', protect, async (req, res) => {
     const requestId = req.body.requestId || 'REQ-' + Date.now();
     const userName = req.user.name || 'User';
 
-    const { data: newDoc, error } = await supabase.from('requests').insert({
-      request_id: requestId,
+    const newDoc = await Request.create({
+      requestId,
       name: userName,
       status: req.body.status || 'Pending',
-      document_type: req.body.documentType,
-      sub_document_type: req.body.subDocumentType || '',
+      documentType: req.body.documentType,
+      subDocumentType: req.body.subDocumentType || '',
       purpose: req.body.purpose || '',
-      other_purpose: req.body.otherPurpose || '',
+      otherPurpose: req.body.otherPurpose || '',
       quantity: req.body.quantity || 1,
-    }).select().single();
-
-    if (error) throw error;
+    });
 
     // Log the activity
-    await supabase.from('activity_logs').insert({
-      user_email: req.user.email,
-      user_name: userName,
+    await ActivityLog.create({
+      userEmail: req.user.email,
+      userName,
       action: 'Create Request',
       type: req.body.documentType || '------',
       status: 'Successful',

@@ -1,12 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
 const nodemailer = require('nodemailer');
-const supabase = require('../supabaseClient');
 const { protect } = require('../middleware/authMiddleware');
 
-// In-memory OTP store: { email: { otp, expiresAt } }
+const Student = require('../models/Users/Student');
+const SystemAdmin = require('../models/Users/SystemAdmin');
+const Registrar = require('../models/Registrar');
+const ActivityLog = require('../models/ActivityLog');
+
+// In-memory OTP store: { email: { otp, expiresAt, modelName } }
 const otpStore = {};
 
 // Nodemailer transporter (Gmail)
@@ -21,7 +24,7 @@ const transporter = nodemailer.createTransport({
 // Helper to generate JWT
 const generateToken = (user) => {
   return jwt.sign(
-    { id: user.id, email: user.email, role: user.role },
+    { id: user._id, email: user.email, role: user.role },
     process.env.JWT_SECRET || 'supersecretverifitor123',
     { expiresIn: '1d' }
   );
@@ -34,38 +37,30 @@ router.post('/register', async (req, res) => {
     const { firstName, lastName, email, password, role, studentId, course, yearLevel, phoneNumber } = req.body;
 
     // Check if user already exists
-    const { data: existingStudent } = await supabase
-      .from('students').select('id').eq('email', email).single();
+    const existingStudent = await Student.findOne({ email });
     if (existingStudent) {
       return res.status(400).json({ success: false, message: 'Email already registered' });
     }
 
-    // Check if studentId already exists (if provided)
     if (studentId) {
-      const { data: existingId } = await supabase
-        .from('students').select('id').eq('student_id', studentId).single();
+      const existingId = await Student.findOne({ studentId });
       if (existingId) {
         return res.status(400).json({ success: false, message: 'Student ID already registered' });
       }
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
     // Create new student
-    const { data: student, error } = await supabase.from('students').insert({
-      first_name: firstName,
-      last_name: lastName,
+    const student = await Student.create({
+      firstName,
+      lastName,
       email,
-      password: hashedPassword,
+      password, // Model pre-save hook hashes this
       role: role || 'student',
-      student_id: studentId || null,
+      studentId: studentId || null,
       course: course || '',
-      year_level: yearLevel || '',
-      phone_number: phoneNumber || ''
-    }).select().single();
-
-    if (error) throw error;
+      yearLevel: yearLevel || '',
+      phoneNumber: phoneNumber || ''
+    });
 
     const token = generateToken(student);
 
@@ -74,10 +69,10 @@ router.post('/register', async (req, res) => {
       message: 'Registration successful',
       token,
       user: {
-        id: student.id,
+        id: student._id,
         email: student.email,
-        firstName: student.first_name,
-        lastName: student.last_name,
+        firstName: student.firstName,
+        lastName: student.lastName,
         role: student.role
       }
     });
@@ -94,40 +89,30 @@ router.post('/login', async (req, res) => {
     const { email, password } = req.body;
 
     let user = null;
-    let userType = '';
+    let modelName = '';
 
-    // 1. Check Student collection first
-    const { data: student } = await supabase
-      .from('students').select('*').eq('email', email).single();
-    if (student) { user = student; userType = 'student'; }
+    // 1. Check Student
+    user = await Student.findOne({ email });
+    if (user) modelName = 'Student';
 
-    // 2. Check SystemAdmin collection
+    // 2. Check SystemAdmin
     if (!user) {
-      const { data: sysAdmin } = await supabase
-        .from('system_admins').select('*').eq('email', email).single();
-      if (sysAdmin) { user = sysAdmin; userType = 'system_admin'; }
+      user = await SystemAdmin.findOne({ email });
+      if (user) modelName = 'SystemAdmin';
     }
 
-    // 3. Check Admin collection
+    // 3. Check Registrar
     if (!user) {
-      const { data: admin } = await supabase
-        .from('admins').select('*').eq('email', email).single();
-      if (admin) { user = admin; userType = 'registrar'; }
-    }
-
-    // 4. Check Registrars collection
-    if (!user) {
-      const { data: registrar } = await supabase
-        .from('registrars').select('*').eq('email', email).single();
-      if (registrar) { user = registrar; userType = 'registrar'; }
+      user = await Registrar.findOne({ email });
+      if (user) modelName = 'Registrar';
     }
 
     if (!user) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
-    // Check for password
-    const isMatch = await bcrypt.compare(password, user.password);
+    // Check password
+    const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
@@ -135,9 +120,9 @@ router.post('/login', async (req, res) => {
     const token = generateToken(user);
 
     // Log activity
-    await supabase.from('activity_logs').insert({
-      user_email: user.email,
-      user_name: user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'User',
+    await ActivityLog.create({
+      userEmail: user.email,
+      userName: user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User',
       action: 'Login',
       type: '------',
       status: 'Successful',
@@ -149,11 +134,11 @@ router.post('/login', async (req, res) => {
       message: 'Logged in successfully',
       token,
       user: {
-        id: user.id,
+        id: user._id,
         email: user.email,
         role: user.role,
-        firstName: user.first_name,
-        lastName: user.last_name,
+        firstName: user.firstName,
+        lastName: user.lastName,
         name: user.name
       }
     });
@@ -168,35 +153,31 @@ router.post('/forgot-password', async (req, res) => {
     const { email } = req.body;
     if (!email) return res.status(400).json({ success: false, message: 'Email is required' });
 
-    // Check if email exists in any user table
     let user = null;
-    let tableName = '';
+    let modelName = '';
 
-    const { data: student } = await supabase.from('students').select('id, email').eq('email', email).single();
-    if (student) { user = student; tableName = 'students'; }
-
+    user = await Student.findOne({ email });
+    if (user) modelName = 'Student';
+    
     if (!user) {
-      const { data: sysAdmin } = await supabase.from('system_admins').select('id, email').eq('email', email).single();
-      if (sysAdmin) { user = sysAdmin; tableName = 'system_admins'; }
+      user = await SystemAdmin.findOne({ email });
+      if (user) modelName = 'SystemAdmin';
     }
 
     if (!user) {
-      const { data: admin } = await supabase.from('admins').select('id, email').eq('email', email).single();
-      if (admin) { user = admin; tableName = 'admins'; }
+      user = await Registrar.findOne({ email });
+      if (user) modelName = 'Registrar';
     }
 
     if (!user) {
       return res.status(404).json({ success: false, message: 'No account found with that email' });
     }
 
-    // Generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
+    const expiresAt = Date.now() + 10 * 60 * 1000;
 
-    // Store OTP
-    otpStore[email] = { otp, expiresAt, tableName };
+    otpStore[email] = { otp, expiresAt, modelName };
 
-    // Send OTP email
     await transporter.sendMail({
       from: `"VeriFitor System" <${process.env.SMTP_EMAIL}>`,
       to: email,
@@ -209,14 +190,12 @@ router.post('/forgot-password', async (req, res) => {
             <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #2f3947;">${otp}</span>
           </div>
           <p style="color: #666;">This OTP expires in <strong>10 minutes</strong>.</p>
-          <p style="color: #999; font-size: 12px;">If you didn't request this, you can safely ignore this email.</p>
           <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
           <p style="color: #999; font-size: 11px; text-align: center;">VeriFitor — Document Verification System</p>
         </div>
       `
     });
 
-    console.log(`OTP sent to ${email}: ${otp}`);
     res.json({ success: true, message: 'OTP sent to your email' });
   } catch (error) {
     console.error('Forgot password error:', error);
@@ -224,30 +203,16 @@ router.post('/forgot-password', async (req, res) => {
   }
 });
 
-// @route   POST /api/auth/verify-otp
-// @desc    Verify the OTP code
 router.post('/verify-otp', async (req, res) => {
   try {
     const { email, otp } = req.body;
-    if (!email || !otp) return res.status(400).json({ success: false, message: 'Email and OTP are required' });
-
     const stored = otpStore[email];
-    if (!stored) {
-      return res.status(400).json({ success: false, message: 'No OTP request found for this email. Please request a new one.' });
+    if (!stored || Date.now() > stored.expiresAt || stored.otp !== otp) {
+      return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
     }
 
-    if (Date.now() > stored.expiresAt) {
-      delete otpStore[email];
-      return res.status(400).json({ success: false, message: 'OTP has expired. Please request a new one.' });
-    }
-
-    if (stored.otp !== otp) {
-      return res.status(400).json({ success: false, message: 'Invalid OTP. Please try again.' });
-    }
-
-    // OTP is valid — generate a short-lived reset token
     const resetToken = jwt.sign(
-      { email, tableName: stored.tableName },
+      { email, modelName: stored.modelName },
       process.env.JWT_SECRET,
       { expiresIn: '15m' }
     );
@@ -255,133 +220,109 @@ router.post('/verify-otp', async (req, res) => {
     delete otpStore[email];
     res.json({ success: true, message: 'OTP verified successfully', resetToken });
   } catch (error) {
-    console.error('Verify OTP error:', error);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });
 
-// @route   POST /api/auth/reset-password
-// @desc    Reset password using the reset token from verify-otp
 router.post('/reset-password', async (req, res) => {
   try {
     const { resetToken, newPassword } = req.body;
-    if (!resetToken || !newPassword) {
-      return res.status(400).json({ success: false, message: 'Reset token and new password are required' });
-    }
-
-    // Verify the reset token
     const decoded = jwt.verify(resetToken, process.env.JWT_SECRET);
-    const { email, tableName } = decoded;
+    const { email, modelName } = decoded;
 
-    // Hash new password and update
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    const { error } = await supabase.from(tableName).update({ password: hashedPassword }).eq('email', email);
-    if (error) throw error;
+    let userModel;
+    if (modelName === 'Student') userModel = Student;
+    else if (modelName === 'SystemAdmin') userModel = SystemAdmin;
+    else userModel = Registrar;
 
-    // Log activity
-    await supabase.from('activity_logs').insert({
-      user_email: email,
-      user_name: 'User',
+    const user = await userModel.findOne({ email });
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    user.password = newPassword;
+    await user.save();
+
+    await ActivityLog.create({
+      userEmail: email,
+      userName: 'User',
       action: 'Password Reset',
       type: '------',
       status: 'Successful',
       details: `Password reset completed for ${email}`
     });
 
-    res.json({ success: true, message: 'Password reset successfully. You can now log in with your new password.' });
+    res.json({ success: true, message: 'Password reset successfully' });
   } catch (error) {
-    if (error.name === 'TokenExpiredError') {
-      return res.status(400).json({ success: false, message: 'Reset token expired. Please request a new OTP.' });
-    }
-    console.error('Reset password error:', error);
     res.status(500).json({ success: false, message: 'Error resetting password' });
   }
 });
 
-// @route   GET /api/auth/profile
 router.get('/profile', protect, async (req, res) => {
   try {
-    // Fetch full user data from the appropriate table based on role
     let user = null;
     if (req.user.role === 'system admin') {
-      const { data } = await supabase.from('system_admins').select('*').eq('id', req.user.id).single();
-      user = data;
+      user = await SystemAdmin.findById(req.user.id);
     } else if (req.user.role === 'registrar') {
-      const { data } = await supabase.from('admins').select('*').eq('id', req.user.id).single();
-      user = data;
+      user = await Registrar.findById(req.user.id);
     } else {
-      const { data } = await supabase.from('students').select('*').eq('id', req.user.id).single();
-      user = data;
+      user = await Student.findById(req.user.id);
     }
 
     if (!user) return res.status(404).json({ message: 'User not found' });
 
     res.json({
-      id: user.id,
+      id: user._id,
       email: user.email,
       role: user.role,
-      name: user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'User',
-      firstName: user.first_name,
-      lastName: user.last_name,
-      profilePic: user.profile_pic || ''
+      name: user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User',
+      firstName: user.firstName,
+      lastName: user.lastName,
+      profilePic: user.profilePic || ''
     });
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// @route   PUT /api/auth/profile
 router.put('/profile', protect, async (req, res) => {
   try {
     const { name, firstName, lastName, profilePic, course, yearLevel, phoneNumber } = req.body;
-
-    let tableName;
-    if (req.user.role === 'system admin') tableName = 'system_admins';
-    else if (req.user.role === 'registrar') tableName = 'admins';
-    else tableName = 'students';
+    
+    let userModel;
+    if (req.user.role === 'system admin') userModel = SystemAdmin;
+    else if (req.user.role === 'registrar') userModel = Registrar;
+    else userModel = Student;
 
     const updateData = {};
     if (name) updateData.name = name;
-    if (firstName) updateData.first_name = firstName;
-    if (lastName) updateData.last_name = lastName;
-    if (profilePic) updateData.profile_pic = profilePic;
+    if (firstName) updateData.firstName = firstName;
+    if (lastName) updateData.lastName = lastName;
+    if (profilePic) updateData.profilePic = profilePic;
     if (course) updateData.course = course;
-    if (yearLevel) updateData.year_level = yearLevel;
-    if (phoneNumber) updateData.phone_number = phoneNumber;
+    if (yearLevel) updateData.yearLevel = yearLevel;
+    if (phoneNumber) updateData.phoneNumber = phoneNumber;
 
-    const { data: updatedUser, error } = await supabase
-      .from(tableName)
-      .update(updateData)
-      .eq('id', req.user.id)
-      .select('id, email, role, name, first_name, last_name, profile_pic, course, year_level, phone_number')
-      .single();
-
-    if (error) throw error;
+    const updatedUser = await userModel.findByIdAndUpdate(req.user.id, updateData, { new: true });
     res.json(updatedUser);
   } catch (error) {
     res.status(500).json({ message: 'Error updating profile' });
   }
 });
 
-// @route   PUT /api/auth/change-password
 router.put('/change-password', protect, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
+    
+    let userModel;
+    if (req.user.role === 'system admin') userModel = SystemAdmin;
+    else if (req.user.role === 'registrar') userModel = Registrar;
+    else userModel = Student;
 
-    let tableName;
-    if (req.user.role === 'system admin') tableName = 'system_admins';
-    else if (req.user.role === 'registrar') tableName = 'admins';
-    else tableName = 'students';
-
-    const { data: user, error } = await supabase
-      .from(tableName).select('*').eq('id', req.user.id).single();
-    if (error) throw error;
-
-    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    const user = await userModel.findById(req.user.id);
+    const isMatch = await user.comparePassword(currentPassword);
     if (!isMatch) return res.status(400).json({ message: 'Current password incorrect' });
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    await supabase.from(tableName).update({ password: hashedPassword }).eq('id', req.user.id);
+    user.password = newPassword;
+    await user.save();
 
     res.json({ message: 'Password updated successfully' });
   } catch (error) {

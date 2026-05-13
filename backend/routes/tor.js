@@ -5,7 +5,8 @@ const csv = require('csv-parser');
 const fs = require('fs');
 const path = require('path');
 const PDFDocument = require('pdfkit');
-const supabase = require('../supabaseClient');
+const TOR = require('../models/TOR');
+const ActivityLog = require('../models/ActivityLog');
 const { protect, systemAdminOnly, registrarOrSystemAdmin } = require('../middleware/authMiddleware');
 
 // Configure multer for CSV uploads
@@ -95,29 +96,24 @@ router.post('/upload-csv', protect, registrarOrSystemAdmin, uploadCSV.single('cs
         const { gwa, totalUnits } = computeGWA(grades);
         const torId = 'TOR-' + Date.now();
 
-        const { data: tor, error } = await supabase.from('tors').insert({
-            tor_id: torId,
-            student_id: studentInfo.studentId,
-            student_name: studentInfo.studentName,
+        const tor = await TOR.create({
+            torId,
+            studentId: studentInfo.studentId,
+            studentName: studentInfo.studentName,
             course: studentInfo.course,
-            year_level: studentInfo.yearLevel,
-            grades: JSON.stringify(grades),
+            yearLevel: studentInfo.yearLevel,
+            grades,
             gwa,
-            total_units: totalUnits,
+            totalUnits,
             status: 'Draft',
-            generated_by: req.user.email
-        }).select().single();
-
-        if (error) throw error;
-
-        // Parse grades back from string if needed
-        if (typeof tor.grades === 'string') tor.grades = JSON.parse(tor.grades);
+            generatedBy: req.user.email
+        });
 
         fs.unlinkSync(req.file.path);
 
-        await supabase.from('activity_logs').insert({
-            user_email: req.user.email,
-            user_name: req.user.name || 'User',
+        await ActivityLog.create({
+            userEmail: req.user.email,
+            userName: req.user.name || 'User',
             action: 'CSV Import',
             type: 'Transcript of Records',
             status: 'Successful',
@@ -134,10 +130,8 @@ router.post('/upload-csv', protect, registrarOrSystemAdmin, uploadCSV.single('cs
 // @route   GET /api/tor
 router.get('/', protect, registrarOrSystemAdmin, async (req, res) => {
     try {
-        const { data: tors, error } = await supabase
-          .from('tors').select('*').order('created_at', { ascending: false });
-        if (error) throw error;
-        res.json(tors || []);
+        const tors = await TOR.find().sort({ createdAt: -1 });
+        res.json(tors);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching TOR records' });
     }
@@ -146,9 +140,8 @@ router.get('/', protect, registrarOrSystemAdmin, async (req, res) => {
 // @route   GET /api/tor/:id
 router.get('/:id', protect, registrarOrSystemAdmin, async (req, res) => {
     try {
-        const { data: tor, error } = await supabase
-          .from('tors').select('*').eq('tor_id', req.params.id).single();
-        if (error || !tor) return res.status(404).json({ message: 'TOR not found' });
+        const tor = await TOR.findOne({ torId: req.params.id });
+        if (!tor) return res.status(404).json({ message: 'TOR not found' });
         res.json(tor);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching TOR' });
@@ -158,36 +151,33 @@ router.get('/:id', protect, registrarOrSystemAdmin, async (req, res) => {
 // @route   PUT /api/tor/:id
 router.put('/:id', protect, registrarOrSystemAdmin, async (req, res) => {
     try {
-        const { data: tor, error: fetchError } = await supabase
-          .from('tors').select('*').eq('tor_id', req.params.id).single();
-        if (fetchError || !tor) return res.status(404).json({ message: 'TOR not found' });
+        const tor = await TOR.findOne({ torId: req.params.id });
+        if (!tor) return res.status(404).json({ message: 'TOR not found' });
 
         if (tor.status !== 'Draft') {
             return res.status(400).json({ message: 'Can only edit TOR records in Draft status' });
         }
 
         const updateData = {};
-        if (req.body.studentName) updateData.student_name = req.body.studentName;
+        if (req.body.studentName) updateData.studentName = req.body.studentName;
         if (req.body.course) updateData.course = req.body.course;
-        if (req.body.yearLevel) updateData.year_level = req.body.yearLevel;
+        if (req.body.yearLevel) updateData.yearLevel = req.body.yearLevel;
         if (req.body.grades) {
-            updateData.grades = JSON.stringify(req.body.grades);
+            updateData.grades = req.body.grades;
             const { gwa, totalUnits } = computeGWA(req.body.grades);
             updateData.gwa = gwa;
-            updateData.total_units = totalUnits;
+            updateData.totalUnits = totalUnits;
         }
 
-        const { data: updated, error } = await supabase
-          .from('tors').update(updateData).eq('tor_id', req.params.id).select().single();
-        if (error) throw error;
+        const updated = await TOR.findOneAndUpdate({ torId: req.params.id }, updateData, { new: true });
 
-        await supabase.from('activity_logs').insert({
-            user_email: req.user.email,
-            user_name: req.user.name || 'User',
+        await ActivityLog.create({
+            userEmail: req.user.email,
+            userName: req.user.name || 'User',
             action: 'Edit TOR',
             type: 'Transcript of Records',
             status: 'Successful',
-            details: `Edited TOR for ${updated.student_name} (${updated.student_id})`
+            details: `Edited TOR for ${updated.studentName} (${updated.studentId})`
         });
 
         res.json(updated);
@@ -199,39 +189,32 @@ router.put('/:id', protect, registrarOrSystemAdmin, async (req, res) => {
 // @route   POST /api/tor/:id/generate
 router.post('/:id/generate', protect, registrarOrSystemAdmin, async (req, res) => {
     try {
-        const { data: tor, error: fetchError } = await supabase
-          .from('tors').select('*').eq('tor_id', req.params.id).single();
-        if (fetchError || !tor) return res.status(404).json({ message: 'TOR not found' });
-
-        // Parse grades if stored as string
-        if (typeof tor.grades === 'string') tor.grades = JSON.parse(tor.grades);
+        const tor = await TOR.findOne({ torId: req.params.id });
+        if (!tor) return res.status(404).json({ message: 'TOR not found' });
 
         const pdfDir = path.join(__dirname, '..', 'uploads', 'tor');
         if (!fs.existsSync(pdfDir)) {
             fs.mkdirSync(pdfDir, { recursive: true });
         }
-        const pdfFilename = `${tor.tor_id}-${tor.student_id}.pdf`;
+        const pdfFilename = `${tor.torId}-${tor.studentId}.pdf`;
         const pdfPath = path.join(pdfDir, pdfFilename);
 
         await generateTORPdf(tor, pdfPath);
 
-        const { data: updated, error } = await supabase
-          .from('tors')
-          .update({ pdf_path: pdfFilename, status: 'Finalized' })
-          .eq('tor_id', req.params.id)
-          .select().single();
-        if (error) throw error;
+        tor.pdfPath = pdfFilename;
+        tor.status = 'Finalized';
+        await tor.save();
 
-        await supabase.from('activity_logs').insert({
-            user_email: req.user.email,
-            user_name: req.user.name || 'User',
+        await ActivityLog.create({
+            userEmail: req.user.email,
+            userName: req.user.name || 'User',
             action: 'Generate TOR',
             type: 'Transcript of Records',
             status: 'Successful',
-            details: `Generated TOR PDF for ${tor.student_name} (${tor.student_id})`
+            details: `Generated TOR PDF for ${tor.studentName} (${tor.studentId})`
         });
 
-        res.json({ message: 'TOR generated successfully', tor: updated });
+        res.json({ message: 'TOR generated successfully', tor });
     } catch (error) {
         console.error('Error generating TOR:', error);
         res.status(500).json({ message: 'Error generating TOR', error: error.message });
@@ -241,17 +224,16 @@ router.post('/:id/generate', protect, registrarOrSystemAdmin, async (req, res) =
 // @route   GET /api/tor/:id/download
 router.get('/:id/download', protect, registrarOrSystemAdmin, async (req, res) => {
     try {
-        const { data: tor } = await supabase
-          .from('tors').select('*').eq('tor_id', req.params.id).single();
+        const tor = await TOR.findOne({ torId: req.params.id });
         if (!tor) return res.status(404).json({ message: 'TOR not found' });
-        if (!tor.pdf_path) return res.status(400).json({ message: 'TOR PDF has not been generated yet' });
+        if (!tor.pdfPath) return res.status(400).json({ message: 'TOR PDF has not been generated yet' });
 
-        const pdfFullPath = path.join(__dirname, '..', 'uploads', 'tor', tor.pdf_path);
+        const pdfFullPath = path.join(__dirname, '..', 'uploads', 'tor', tor.pdfPath);
         if (!fs.existsSync(pdfFullPath)) {
             return res.status(404).json({ message: 'PDF file not found on server' });
         }
 
-        res.download(pdfFullPath, `TOR-${tor.student_name}-${tor.student_id}.pdf`);
+        res.download(pdfFullPath, `TOR-${tor.studentName}-${tor.studentId}.pdf`);
     } catch (error) {
         res.status(500).json({ message: 'Error downloading TOR PDF' });
     }
@@ -260,26 +242,25 @@ router.get('/:id/download', protect, registrarOrSystemAdmin, async (req, res) =>
 // @route   DELETE /api/tor/:id
 router.delete('/:id', protect, systemAdminOnly, async (req, res) => {
     try {
-        const { data: tor } = await supabase
-          .from('tors').select('*').eq('tor_id', req.params.id).single();
+        const tor = await TOR.findOne({ torId: req.params.id });
         if (!tor) return res.status(404).json({ message: 'TOR not found' });
 
-        if (tor.pdf_path) {
-            const pdfFullPath = path.join(__dirname, '..', 'uploads', 'tor', tor.pdf_path);
+        if (tor.pdfPath) {
+            const pdfFullPath = path.join(__dirname, '..', 'uploads', 'tor', tor.pdfPath);
             if (fs.existsSync(pdfFullPath)) {
                 fs.unlinkSync(pdfFullPath);
             }
         }
 
-        await supabase.from('tors').delete().eq('tor_id', req.params.id);
+        await TOR.deleteOne({ torId: req.params.id });
 
-        await supabase.from('activity_logs').insert({
-            user_email: req.user.email,
-            user_name: req.user.name || 'User',
+        await ActivityLog.create({
+            userEmail: req.user.email,
+            userName: req.user.name || 'User',
             action: 'Delete TOR',
             type: 'Transcript of Records',
             status: 'Successful',
-            details: `Deleted TOR for ${tor.student_name} (${tor.student_id})`
+            details: `Deleted TOR for ${tor.studentName} (${tor.studentId})`
         });
 
         res.json({ message: 'TOR deleted successfully' });
@@ -289,7 +270,7 @@ router.delete('/:id', protect, systemAdminOnly, async (req, res) => {
 });
 
 // ============================================================
-// PDF Generation Helper (unchanged from original)
+// PDF Generation Helper
 // ============================================================
 function generateTORPdf(tor, outputPath) {
     return new Promise((resolve, reject) => {
@@ -330,16 +311,16 @@ function generateTORPdf(tor, outputPath) {
         const valueX = doc.page.margins.left + 120;
 
         doc.text('Student Name:', labelX, infoStartY);
-        doc.font('Helvetica').text(tor.student_name, valueX, infoStartY);
+        doc.font('Helvetica').text(tor.studentName, valueX, infoStartY);
 
         doc.font('Helvetica-Bold').text('Student ID:', labelX, infoStartY + 18);
-        doc.font('Helvetica').text(tor.student_id, valueX, infoStartY + 18);
+        doc.font('Helvetica').text(tor.studentId, valueX, infoStartY + 18);
 
         doc.font('Helvetica-Bold').text('Program:', labelX, infoStartY + 36);
         doc.font('Helvetica').text(tor.course, valueX, infoStartY + 36);
 
         doc.font('Helvetica-Bold').text('Year Level:', labelX, infoStartY + 54);
-        doc.font('Helvetica').text(tor.year_level || 'N/A', valueX, infoStartY + 54);
+        doc.font('Helvetica').text(tor.yearLevel || 'N/A', valueX, infoStartY + 54);
 
         doc.y = infoStartY + 80;
 
@@ -439,7 +420,7 @@ function generateTORPdf(tor, outputPath) {
         doc.text(`General Weighted Average (GWA): ${Number(tor.gwa).toFixed(4)}`, doc.page.margins.left);
         doc.moveDown(0.3);
         doc.fontSize(10).font('Helvetica').fillColor('#333333');
-        doc.text(`Total Units Earned: ${tor.total_units}`);
+        doc.text(`Total Units Earned: ${tor.totalUnits}`);
 
         // === FOOTER ===
         doc.moveDown(2);
@@ -449,7 +430,7 @@ function generateTORPdf(tor, outputPath) {
         doc.moveDown(0.5);
 
         doc.fontSize(8).fillColor('#999999').font('Helvetica')
-            .text(`Generated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}  |  TOR ID: ${tor.tor_id}`, { align: 'center' });
+            .text(`Generated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}  |  TOR ID: ${tor.torId}`, { align: 'center' });
         doc.moveDown(0.3);
         doc.text('This document is system-generated by VerifiTOR.', { align: 'center' });
 
