@@ -34,12 +34,12 @@ const systemAdminOnly = (req, res, next) => {
   }
 };
 
-const adminOrSystemAdmin = (req, res, next) => {
-  if (req.user && (req.user.role === 'admin' || req.user.role === 'system admin')) {
+const registrarOrSystemAdmin = (req, res, next) => {
+  if (req.user && (req.user.role === 'registrar' || req.user.role === 'system admin')) {
     next();
   } else {
     res.status(403).json({ message: 'Not authorized, role insufficient' });
   }
 };
 
-module.exports = { protect, systemAdminOnly, adminOrSystemAdmin };
+module.exports = { protect, systemAdminOnly, registrarOrSystemAdmin };

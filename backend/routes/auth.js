@@ -112,14 +112,21 @@ router.post('/login', async (req, res) => {
     if (!user) {
       const { data: admin } = await supabase
         .from('admins').select('*').eq('email', email).single();
-      if (admin) { user = admin; userType = 'admin'; }
+      if (admin) { user = admin; userType = 'registrar'; }
+    }
+
+    // 4. Check Registrars collection
+    if (!user) {
+      const { data: registrar } = await supabase
+        .from('registrars').select('*').eq('email', email).single();
+      if (registrar) { user = registrar; userType = 'registrar'; }
     }
 
     if (!user) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
-    // Check password
+    // Check for password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
@@ -299,7 +306,7 @@ router.get('/profile', protect, async (req, res) => {
     if (req.user.role === 'system admin') {
       const { data } = await supabase.from('system_admins').select('*').eq('id', req.user.id).single();
       user = data;
-    } else if (req.user.role === 'admin') {
+    } else if (req.user.role === 'registrar') {
       const { data } = await supabase.from('admins').select('*').eq('id', req.user.id).single();
       user = data;
     } else {
@@ -330,7 +337,7 @@ router.put('/profile', protect, async (req, res) => {
 
     let tableName;
     if (req.user.role === 'system admin') tableName = 'system_admins';
-    else if (req.user.role === 'admin') tableName = 'admins';
+    else if (req.user.role === 'registrar') tableName = 'admins';
     else tableName = 'students';
 
     const updateData = {};
@@ -363,7 +370,7 @@ router.put('/change-password', protect, async (req, res) => {
 
     let tableName;
     if (req.user.role === 'system admin') tableName = 'system_admins';
-    else if (req.user.role === 'admin') tableName = 'admins';
+    else if (req.user.role === 'registrar') tableName = 'admins';
     else tableName = 'students';
 
     const { data: user, error } = await supabase

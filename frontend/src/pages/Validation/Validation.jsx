@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, ExternalLink, ShieldCheck, AlertTriangle, Mail, Phone, Globe, Loader2 } from 'lucide-react';
+import { CheckCircle, ExternalLink, ShieldCheck, AlertTriangle, Mail, Phone, Globe, Loader2, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import ValidationNavbar from '../../components/ValidationPageNavBar';
 import Footer from '../../components/Footer';
 
 const Validation = () => {
+  const navigate = useNavigate();
   // STATE MANAGEMENT
   const [isLoading, setIsLoading] = useState(true);
   const [isValid, setIsValid] = useState(false); // Toggle to 'true' to test the green success view
@@ -59,7 +61,13 @@ const Validation = () => {
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
                 <div className="bg-[#2ecc71] text-white rounded-2xl p-10 mb-10 text-center shadow-lg shadow-green-100">
                   <h1 className="text-3xl lg:text-4xl font-bold mb-3">Status: Verified and Authentic</h1>
-                  <p className="text-lg opacity-90 font-light">This Transcript is authentic and has been successfully verified on the blockchain</p>
+                  <p className="text-lg opacity-90 font-light mb-6">This Transcript is authentic and has been successfully verified on the blockchain</p>
+                  <button 
+                    onClick={() => navigate('/verify')}
+                    className="inline-flex items-center gap-2 bg-white/20 hover:bg-white/30 px-6 py-2 rounded-full text-sm font-bold transition-all border border-white/10"
+                  >
+                    <ShieldCheck size={16} /> New Verification
+                  </button>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -140,7 +148,13 @@ const Validation = () => {
                 {/* Status Banner (Red) */}
                 <div className="bg-[#c0392b] text-white rounded-2xl p-10 mb-10 text-center shadow-lg shadow-red-100">
                   <h1 className="text-3xl lg:text-4xl font-bold mb-3 uppercase tracking-tight">Status: Invalid / Not Found / Tampered</h1>
-                  <p className="text-lg opacity-90 font-light">This transcript of record is invalid, has been altered, or does not exist in our records</p>
+                  <p className="text-lg opacity-90 font-light mb-6">This transcript of record is invalid, has been altered, or does not exist in our records</p>
+                  <button 
+                    onClick={() => navigate('/verify')}
+                    className="inline-flex items-center gap-2 bg-white/20 hover:bg-white/30 px-6 py-2 rounded-full text-sm font-bold transition-all border border-white/10"
+                  >
+                    <ShieldCheck size={16} /> Try Another Document
+                  </button>
                 </div>
 
                 {/* Warning Card */}

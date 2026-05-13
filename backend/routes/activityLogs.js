@@ -29,7 +29,17 @@ router.get('/', protect, systemAdminOnly, async (req, res) => {
     const { data: logs, error } = await supabase
       .from('activity_logs').select('*').order('timestamp', { ascending: false }).limit(100);
     if (error) throw error;
-    res.json(logs || []);
+    
+    // Map to camelCase for frontend compatibility
+    const mappedLogs = (logs || []).map(log => ({
+        ...log,
+        _id: log.id,
+        userEmail: log.user_email,
+        userName: log.user_name,
+        timestamp: log.timestamp || log.created_at
+    }));
+
+    res.json(mappedLogs);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching activity logs' });
   }

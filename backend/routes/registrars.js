@@ -14,11 +14,36 @@ router.use(systemAdminOnly);
 router.get('/', async (req, res) => {
   console.log('GET /api/registrars called');
   try {
-    const { data: registrars, error } = await supabase
+    const { data: registrars, error: regError } = await supabase
       .from('registrars').select('id, registrar_id, name, email, role, status, created_at, updated_at');
-    if (error) throw error;
-    console.log('Found registrars:', (registrars || []).length);
-    res.json(registrars || []);
+    
+    const { data: admins, error: adminError } = await supabase
+      .from('admins').select('id, email, role, name, created_at, updated_at');
+
+    if (regError) throw regError;
+    if (adminError) throw adminError;
+
+    // Combine results
+    const combined = [
+        ...(registrars || []).map(r => ({
+            ...r,
+            _id: r.id, // Compatibility with frontend
+            registrarId: r.registrar_id // Compatibility with frontend
+        })),
+        ...(admins || []).map(a => ({
+            ...a,
+            _id: a.id, // Compatibility with frontend
+            registrarId: 'ADMIN-' + a.id.toString().substring(0, 4),
+            registrar_id: 'ADMIN-' + a.id.toString().substring(0, 4),
+            status: 'Active',
+            createdAt: a.created_at,
+            updatedAt: a.updated_at
+        }))
+    ];
+
+    console.log('Found combined staff:', combined.length);
+    console.log('Sample staff:', combined[0]);
+    res.json(combined);
   } catch (error) {
     console.error('Error fetching registrars:', error);
     res.status(500).json({ message: 'Error fetching registrars' });
@@ -31,26 +56,30 @@ router.post('/', async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
-    const { data: existingRegistrar } = await supabase
-      .from('registrars').select('id').eq('email', email).single();
-    if (existingRegistrar) {
-      console.log('Registrar already exists:', email);
-      return res.status(400).json({ message: 'Registrar with this email already exists' });
+    // Check both tables for existing email
+    const { data: existingReg } = await supabase.from('registrars').select('id').eq('email', email).single();
+    const { data: existingAdmin } = await supabase.from('admins').select('id').eq('email', email).single();
+    
+    if (existingReg || existingAdmin) {
+      return res.status(400).json({ message: 'User with this email already exists' });
     }
 
-    const registrarId = 'REG-' + Math.floor(100000 + Math.random() * 900000);
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // If role is System Admin or Admin, put in admins table? 
+    // Actually, based on current logic, let's keep things as they are but handle both.
+    // For simplicity, new staff added via this page go to 'registrars' table.
+    
+    const registrarId = 'REG-' + Math.floor(100000 + Math.random() * 900000);
     const { data: newRegistrar, error } = await supabase.from('registrars').insert({
       registrar_id: registrarId,
       name,
       email,
       password: hashedPassword,
-      role: role || 'Registrar Staff'
+      role: role || 'registrar'
     }).select('id, registrar_id, name, email, role').single();
 
     if (error) throw error;
-    console.log('New registrar created:', newRegistrar.registrar_id);
 
     await supabase.from('activity_logs').insert({
       user_email: req.user.email,
@@ -58,13 +87,13 @@ router.post('/', async (req, res) => {
       action: 'User Created',
       type: '------',
       status: 'Successful',
-      details: `Created new registrar account: ${name} (${email})`
+      details: `Created new staff account: ${name} (${email})`
     });
 
-    res.status(201).json({ message: 'Registrar created successfully', registrar: newRegistrar });
+    res.status(201).json({ message: 'Staff created successfully', registrar: newRegistrar });
   } catch (error) {
-    console.error('Error creating registrar:', error);
-    res.status(500).json({ message: 'Error creating registrar' });
+    console.error('Error creating staff:', error);
+    res.status(500).json({ message: 'Error creating staff' });
   }
 });
 
@@ -73,15 +102,20 @@ router.put('/:id', async (req, res) => {
   try {
     const { name, email, role, status } = req.body;
 
-    // Try by id first, then by registrar_id
-    let { data: registrar } = await supabase
-      .from('registrars').select('*').eq('id', req.params.id).single();
-    if (!registrar) {
-      const { data: regById } = await supabase
-        .from('registrars').select('*').eq('registrar_id', req.params.id).single();
-      registrar = regById;
+    // Try finding in registrars first
+    let { data: staff, error: fetchError } = await supabase.from('registrars').select('*').eq('id', req.params.id).single();
+    let table = 'registrars';
+
+    if (!staff) {
+        // Try in admins
+        const { data: admin } = await supabase.from('admins').select('*').eq('id', req.params.id).single();
+        if (admin) {
+            staff = admin;
+            table = 'admins';
+        }
     }
-    if (!registrar) return res.status(404).json({ message: 'Registrar not found' });
+
+    if (!staff) return res.status(404).json({ message: 'User not found' });
 
     const updateData = {};
     if (name) updateData.name = name;
@@ -90,7 +124,12 @@ router.put('/:id', async (req, res) => {
     if (status) updateData.status = status;
 
     const { data: updated, error } = await supabase
-      .from('registrars').update(updateData).eq('id', registrar.id).select().single();
+      .from(table)
+      .update(updateData)
+      .eq('id', req.params.id)
+      .select()
+      .single();
+
     if (error) throw error;
 
     await supabase.from('activity_logs').insert({
@@ -99,29 +138,33 @@ router.put('/:id', async (req, res) => {
       action: 'User Updated',
       type: '------',
       status: 'Successful',
-      details: `Updated registrar: ${updated.name}`
+      details: `Updated staff: ${updated.name}`
     });
 
     res.json(updated);
   } catch (error) {
-    res.status(500).json({ message: 'Error updating registrar' });
+    res.status(500).json({ message: 'Error updating staff' });
   }
 });
 
 // @route   DELETE /api/registrars/:id
 router.delete('/:id', async (req, res) => {
   try {
-    let { data: registrarToDelete } = await supabase
-      .from('registrars').select('*').eq('id', req.params.id).single();
-    if (!registrarToDelete) {
-      const { data: regById } = await supabase
-        .from('registrars').select('*').eq('registrar_id', req.params.id).single();
-      registrarToDelete = regById;
-    }
-    if (!registrarToDelete) return res.status(404).json({ message: 'Registrar not found' });
+    let table = 'registrars';
+    let { data: staff } = await supabase.from('registrars').select('*').eq('id', req.params.id).single();
 
-    const name = registrarToDelete.name;
-    const { error } = await supabase.from('registrars').delete().eq('id', registrarToDelete.id);
+    if (!staff) {
+        const { data: admin } = await supabase.from('admins').select('*').eq('id', req.params.id).single();
+        if (admin) {
+            staff = admin;
+            table = 'admins';
+        }
+    }
+
+    if (!staff) return res.status(404).json({ message: 'User not found' });
+
+    const name = staff.name;
+    const { error } = await supabase.from(table).delete().eq('id', req.params.id);
     if (error) throw error;
 
     await supabase.from('activity_logs').insert({
@@ -130,12 +173,12 @@ router.delete('/:id', async (req, res) => {
       action: 'User Deleted',
       type: '------',
       status: 'Successful',
-      details: `Deleted registrar account: ${name}`
+      details: `Deleted staff account: ${name}`
     });
 
-    res.json({ message: 'Registrar deleted successfully' });
+    res.json({ message: 'User deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: 'Error deleting registrar' });
+    res.status(500).json({ message: 'Error deleting user' });
   }
 });
 

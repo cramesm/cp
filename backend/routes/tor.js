@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const PDFDocument = require('pdfkit');
 const supabase = require('../supabaseClient');
-const { protect, systemAdminOnly, adminOrSystemAdmin } = require('../middleware/authMiddleware');
+const { protect, systemAdminOnly, registrarOrSystemAdmin } = require('../middleware/authMiddleware');
 
 // Configure multer for CSV uploads
 const csvStorage = multer.diskStorage({
@@ -48,7 +48,7 @@ function computeGWA(grades) {
 }
 
 // @route   POST /api/tor/upload-csv
-router.post('/upload-csv', protect, adminOrSystemAdmin, uploadCSV.single('csvFile'), async (req, res) => {
+router.post('/upload-csv', protect, registrarOrSystemAdmin, uploadCSV.single('csvFile'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ message: 'No CSV file uploaded' });
@@ -132,7 +132,7 @@ router.post('/upload-csv', protect, adminOrSystemAdmin, uploadCSV.single('csvFil
 });
 
 // @route   GET /api/tor
-router.get('/', protect, adminOrSystemAdmin, async (req, res) => {
+router.get('/', protect, registrarOrSystemAdmin, async (req, res) => {
     try {
         const { data: tors, error } = await supabase
           .from('tors').select('*').order('created_at', { ascending: false });
@@ -144,7 +144,7 @@ router.get('/', protect, adminOrSystemAdmin, async (req, res) => {
 });
 
 // @route   GET /api/tor/:id
-router.get('/:id', protect, adminOrSystemAdmin, async (req, res) => {
+router.get('/:id', protect, registrarOrSystemAdmin, async (req, res) => {
     try {
         const { data: tor, error } = await supabase
           .from('tors').select('*').eq('tor_id', req.params.id).single();
@@ -156,7 +156,7 @@ router.get('/:id', protect, adminOrSystemAdmin, async (req, res) => {
 });
 
 // @route   PUT /api/tor/:id
-router.put('/:id', protect, adminOrSystemAdmin, async (req, res) => {
+router.put('/:id', protect, registrarOrSystemAdmin, async (req, res) => {
     try {
         const { data: tor, error: fetchError } = await supabase
           .from('tors').select('*').eq('tor_id', req.params.id).single();
@@ -197,7 +197,7 @@ router.put('/:id', protect, adminOrSystemAdmin, async (req, res) => {
 });
 
 // @route   POST /api/tor/:id/generate
-router.post('/:id/generate', protect, adminOrSystemAdmin, async (req, res) => {
+router.post('/:id/generate', protect, registrarOrSystemAdmin, async (req, res) => {
     try {
         const { data: tor, error: fetchError } = await supabase
           .from('tors').select('*').eq('tor_id', req.params.id).single();
@@ -239,7 +239,7 @@ router.post('/:id/generate', protect, adminOrSystemAdmin, async (req, res) => {
 });
 
 // @route   GET /api/tor/:id/download
-router.get('/:id/download', protect, adminOrSystemAdmin, async (req, res) => {
+router.get('/:id/download', protect, registrarOrSystemAdmin, async (req, res) => {
     try {
         const { data: tor } = await supabase
           .from('tors').select('*').eq('tor_id', req.params.id).single();

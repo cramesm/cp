@@ -120,7 +120,7 @@ const AdminLogin = () => {
                         title="Click to auto-fill"
                     >
                         <p className="text-[11px] font-semibold text-blue-800 mb-0.5 flex items-center gap-1.5">
-                            <i className="fa-solid fa-user-tie text-[10px]"></i> Admin (Registrar)
+                            <i className="fa-solid fa-user-tie text-[10px]"></i> Registrar (Admin)
                         </p>
                         <p className="text-[10px] text-blue-600 m-0">admin@verifitor.com / admin123</p>
                     </div>

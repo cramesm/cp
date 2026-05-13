@@ -25,18 +25,16 @@ const Layout = ({ children }) => {
                 return 'Dashboard';
             case '/requests':
                 return 'Document Requests';
-            case '/payments':
-                return 'Payments';
             case '/transactions':
                 return 'Transactions';
             case '/notifications':
                 return 'Notifications';
             case '/manage-registrar':
-                return 'Manage Registrar';
+                return 'System Administrators';
             case '/manage-registrar/add':
                 return 'Add Registrar';
             case '/activity-logs':
-                return 'Activity Logs';
+                return 'Audit Trail / System Logs';
             case '/tor':
                 return 'TOR Management';
             case '/profile/info':
@@ -47,9 +45,6 @@ const Layout = ({ children }) => {
                 // Check for dynamic routes
                 if (path.startsWith('/requests/')) {
                     return 'Request Details';
-                }
-                if (path.startsWith('/payments/')) { // UPDATED: Added check for Payment Details
-                    return 'Payment Details';
                 }
                 if (path.startsWith('/transactions/')) {
                     return 'Transaction Details';
@@ -70,7 +65,6 @@ const Layout = ({ children }) => {
         { path: '/dashboard', label: 'Dashboard', icon: 'fa-solid fa-table-cells-large' },
         { path: '/requests', label: 'Document Requests', icon: 'fa-solid fa-file-lines' },
         { path: '/tor', label: 'TOR Management', icon: 'fa-solid fa-graduation-cap' },
-        { path: '/payments', label: 'Payments', icon: 'fa-solid fa-money-check-dollar' },
         { path: '/transactions', label: 'Transactions', icon: 'fa-solid fa-arrow-right-arrow-left' },
         { path: '/notifications', label: 'Notifications', icon: 'fa-solid fa-bell' }
     ];
@@ -78,7 +72,7 @@ const Layout = ({ children }) => {
     if (userRole === 'system admin') {
         menuItems.push(
             { path: '/manage-registrar', label: 'Manage Registrar', icon: 'fa-solid fa-user-gear' },
-            { path: '/activity-logs', label: 'Activity Logs', icon: 'fa-solid fa-clipboard-list' }
+            { path: '/activity-logs', label: 'System Logs', icon: 'fa-solid fa-clipboard-list' }
         );
     }
     
@@ -103,7 +97,7 @@ const Layout = ({ children }) => {
 
     return (
         <div className="flex min-h-screen bg-[#e9e9e9]">
-            <aside className="hidden md:flex w-[230px] min-h-screen bg-[#2f3947] fixed top-0 left-0 flex-col z-[1000] shadow-lg">
+            <aside className="hidden md:flex w-[230px] min-h-screen bg-[#2f3947] fixed top-0 left-0 flex-col z-[1000] shadow-lg sidebar">
                 <div className="h-[60px] bg-[#f4f6f8] flex items-center px-4 border-b border-[#d9d9d9]">
                     <img
                         src="/assets/verifitorlogo.png"
@@ -136,8 +130,8 @@ const Layout = ({ children }) => {
                 </nav>
             </aside>
 
-            <div className="flex flex-col w-full md:ml-[230px] md:w-[calc(100%-230px)]">
-                <header className="flex items-center justify-between px-5 bg-[#6f8faa] sticky top-0 z-[999] h-[60px] shadow-sm">
+            <div className="flex flex-col w-full md:ml-[230px] md:w-[calc(100%-230px)] main-content">
+                <header className="flex items-center justify-between px-5 bg-[#6f8faa] sticky top-0 z-[999] h-[60px] shadow-sm top-nav">
                     <h2 className="text-white text-[20px] font-semibold m-0 uppercase tracking-tight">
                         {getPageTitle()}
                     </h2>

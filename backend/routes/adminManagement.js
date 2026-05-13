@@ -35,7 +35,7 @@ router.post('/', async (req, res) => {
     const { data: newAdmin, error } = await supabase.from('admins').insert({
       email,
       password: hashedPassword,
-      role: 'admin'
+      role: 'registrar'
     }).select('id, email, role').single();
 
     if (error) throw error;
@@ -74,6 +74,43 @@ router.post('/:id/reset-password', async (req, res) => {
     res.json({ message: 'Password reset triggered successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Error resetting password' });
+  }
+});
+
+// @route   PUT /api/admins/:id
+router.put('/:id', async (req, res) => {
+  try {
+    const { name, email, role } = req.body;
+
+    const { data: admin } = await supabase.from('admins').select('*').eq('id', req.params.id).single();
+    if (!admin) return res.status(404).json({ message: 'Admin not found' });
+
+    const updateData = {};
+    if (name) updateData.name = name;
+    if (email) updateData.email = email;
+    if (role) updateData.role = role;
+
+    const { data: updatedAdmin, error } = await supabase
+      .from('admins')
+      .update(updateData)
+      .eq('id', req.params.id)
+      .select('id, email, role, name')
+      .single();
+
+    if (error) throw error;
+
+    await supabase.from('activity_logs').insert({
+      user_email: req.user.email,
+      user_name: req.user.name || 'System Admin',
+      action: 'Update Admin',
+      type: '------',
+      status: 'Successful',
+      details: `Updated admin account: ${admin.email}`
+    });
+
+    res.json(updatedAdmin);
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating admin' });
   }
 });
 

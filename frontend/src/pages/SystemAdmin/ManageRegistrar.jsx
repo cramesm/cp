@@ -45,6 +45,10 @@ const ManageRegistrar = () => {
   return (
     <Layout>
       <div className="p-8 bg-[#f8fafc] min-h-screen">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-800">Manage Registrar</h1>
+          <p className="text-sm text-gray-500">View and manage registrars accounts.</p>
+        </div>
         <div className="rounded-xl bg-white shadow-sm border border-gray-100 overflow-hidden">
           
           {/* Header Section */}

@@ -13,16 +13,15 @@ import TransactionDetails from './pages/Transactions/TransactionDetails';
 import Notifications from './pages/Notifications/Notifications';
 import Profile from './pages/Profile/Profile'; // This is the Edit Page
 import ProfileInfo from './pages/Profile/ProfileInfo'; // This is the View Page
-import Payments from './pages/Payments/Payments';
-import PaymentDetails from './pages/Payments/PaymentDetails';
 
 // System Admin Pages
 import ManageRegistrar from './pages/SystemAdmin/ManageRegistrar';
 import AddRegistrar from './pages/SystemAdmin/AddRegistrar';
 import RegistrarInformation from './pages/SystemAdmin/RegistrarInformation';
-import ActivityLogs from './pages/Admin/ActivityLogs';
+import ActivityLogs from './pages/SystemAdmin/ActivityLogs';
 
-import Validation from './pages/Validation/Validation';
+import ValidationLanding from './pages/Validation/Landing';
+import ValidationResults from './pages/Validation/Validation';
 
 import TORManagement from './pages/TOR/TORManagement';
 import TORDetails from './pages/TOR/TORDetails';
@@ -53,9 +52,6 @@ function App() {
         <Route path="/requests" element={<ProtectedRoute><Requests /></ProtectedRoute>} />
         <Route path="/requests/:id" element={<ProtectedRoute><RequestDetails /></ProtectedRoute>} />
 
-        {/* Payments Management - Protected */}
-        <Route path="/payments" element={<ProtectedRoute><Payments /></ProtectedRoute>} />
-        <Route path="/payments/:id" element={<ProtectedRoute><PaymentDetails /></ProtectedRoute>} />
         
         {/* Transaction History - Protected */}
         <Route path="/transactions" element={<ProtectedRoute><Transactions /></ProtectedRoute>} />
@@ -80,7 +76,8 @@ function App() {
         <Route path="/tor/:id" element={<ProtectedRoute><TORDetails /></ProtectedRoute>} />
 
         {/* Public Validation Page */}
-        <Route path="/validation" element={<Validation />} />
+        <Route path="/verify" element={<ValidationLanding />} />
+        <Route path="/verify/results" element={<ValidationResults />} />
 
         {/* Catch-all redirect */}
         <Route path="*" element={<Navigate to="/" replace />} />

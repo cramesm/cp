@@ -32,7 +32,8 @@ export default function RegistrarInformation() {
         const registrar = res.data.find(r => r._id === id || r.registrarId === id);
         if (registrar) {
           setRegistrarId(registrar._id); // Store MongoDB _id for API calls
-          const nameParts = registrar.name.split(' ');
+          const fullName = registrar.name || '';
+          const nameParts = fullName.split(' ');
           setFormData({
             firstName: nameParts[0] || '',
             lastName: nameParts.slice(1).join(' ') || '',

@@ -76,6 +76,10 @@ export default function ActivityLogs() {
   return (
     <Layout>
       <div className="p-8 bg-[#f8fafc] min-h-screen">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-800">System Logs</h1>
+          <p className="text-sm text-gray-500">Audit trail and record of all system activities.</p>
+        </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           
           {/* Top Header Filter */}
