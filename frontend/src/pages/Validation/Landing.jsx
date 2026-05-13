@@ -9,10 +9,12 @@ const VerificationPortal = () => {
     const [activeTab, setActiveTab] = useState('upload');
     const [isHovered, setIsHovered] = useState(null);
 
+    const [hash, setHash] = useState('');
+
     const handleVerify = (e) => {
         e.preventDefault();
-        // For demo/frontend first, we navigate to the validation results page
-        navigate('/verify/results');
+        if (!hash) return;
+        navigate(`/verify/results?hash=${hash}`);
     };
 
     return (
@@ -99,7 +101,9 @@ const VerificationPortal = () => {
                                             <input 
                                                 type="text" 
                                                 className="w-full bg-slate-50 border border-slate-200 rounded-xl py-4 px-5 outline-none focus:border-[#2c3e50] focus:ring-4 focus:ring-slate-100 transition-all font-mono text-slate-700"
-                                                placeholder="e.g. 0x5a1b2c3d4e5f..."
+                                                placeholder="e.g. a665a45920422f9d..."
+                                                value={hash}
+                                                onChange={(e) => setHash(e.target.value)}
                                             />
                                             <button 
                                                 type="submit"

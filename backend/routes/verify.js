@@ -7,7 +7,12 @@ const Transaction = require('../models/Transaction');
 // @desc    Verify a document by its hash
 router.get('/:hash', async (req, res) => {
     try {
-        const request = await Request.findOne({ documentHash: req.params.hash });
+        const request = await Request.findOne({ 
+            $or: [
+                { documentHash: req.params.hash },
+                { requestId: req.params.hash }
+            ]
+        });
         
         if (!request) {
             return res.status(404).json({ 

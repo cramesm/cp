@@ -3,39 +3,47 @@ import { CheckCircle, ExternalLink, ShieldCheck, AlertTriangle, Mail, Phone, Glo
 import { useNavigate } from 'react-router-dom';
 import ValidationNavbar from '../../components/ValidationPageNavBar';
 import Footer from '../../components/Footer';
+import api from '../../api';
 
 const Validation = () => {
   const navigate = useNavigate();
   // STATE MANAGEMENT
   const [isLoading, setIsLoading] = useState(true);
-  const [isValid, setIsValid] = useState(false); // Toggle to 'true' to test the green success view
+  const [isValid, setIsValid] = useState(false);
+  const [verificationData, setVerificationData] = useState(null);
+  const [error, setError] = useState(null);
 
-  // MOCK DATA
-  const data = {
-    student: {
-      requestId: "REQ1234-2026",
-      name: "Juan Dela Cruz",
-      studentId: "2023-102347",
-      program: "BS Information Technology",
-    },
-    blockchain: {
-      docType: "Transcript of Records",
-      institution: "University",
-      dateIssued: "January 30, 2026",
-      hash: "028372473",
-      status: "Recorded",
-      txId: "0x523427a65",
-      recordedDate: "January 28, 2026",
-    }
-  };
+  const hashFromUrl = new URLSearchParams(window.location.search).get('hash');
 
-  // SIMULATE BLOCKCHAIN FETCH
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 2000); // 2-second delay to simulate blockchain querying
-    return () => clearTimeout(timer);
-  }, []);
+    const fetchVerification = async () => {
+      if (!hashFromUrl) {
+        setIsLoading(false);
+        setError('No hash provided');
+        return;
+      }
+
+      try {
+        const response = await api.get(`/verify/${hashFromUrl}`);
+        const result = response.data;
+
+        if (result.success) {
+          setVerificationData(result.data);
+          setIsValid(true);
+        } else {
+          setIsValid(false);
+          setError(result.message);
+        }
+      } catch (err) {
+        setIsValid(false);
+        setError(err.response?.data?.message || 'Failed to reach verification server');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchVerification();
+  }, [hashFromUrl]);
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-gray-800 flex flex-col">
@@ -81,10 +89,10 @@ const Validation = () => {
                     </div>
                     <div className="space-y-5">
                       {[
-                        ["Request ID", data.student.requestId],
-                        ["Name", data.student.name],
-                        ["Student ID", data.student.studentId],
-                        ["Program", data.student.program]
+                        ["Request ID", verificationData?.requestId],
+                        ["Name", verificationData?.ownerName],
+                        ["Status", verificationData?.status],
+                        ["Verification Date", new Date(verificationData?.issuedDate).toLocaleDateString()]
                       ].map(([label, value]) => (
                         <div key={label} className="flex border-b border-gray-50 pb-3">
                           <span className="w-1/3 text-gray-500 font-medium">{label}:</span>
@@ -103,39 +111,39 @@ const Validation = () => {
                     <div className="space-y-5">
                       <div className="flex border-b border-gray-50 pb-3">
                         <span className="w-1/3 text-gray-500 font-medium">Document Type:</span>
-                        <span className="w-2/3 text-gray-900 font-semibold">{data.blockchain.docType}</span>
+                        <span className="w-2/3 text-gray-900 font-semibold">Transcript of Records</span>
                       </div>
                       <div className="flex border-b border-gray-50 pb-3">
                         <span className="w-1/3 text-gray-500 font-medium">Issuing Institution:</span>
-                        <span className="w-2/3 text-gray-900 font-semibold">{data.blockchain.institution}</span>
+                        <span className="w-2/3 text-gray-900 font-semibold">VerifiTOR University</span>
                       </div>
                       <div className="flex border-b border-gray-50 pb-3">
                         <span className="w-1/3 text-gray-500 font-medium">Date Issued:</span>
-                        <span className="w-2/3 text-gray-900 font-semibold">{data.blockchain.dateIssued}</span>
+                        <span className="w-2/3 text-gray-900 font-semibold">{verificationData?.issuedDate ? new Date(verificationData.issuedDate).toLocaleDateString() : 'N/A'}</span>
                       </div>
                       
                       <div className="pt-6 mt-6 border-t-2 border-dashed border-gray-100 space-y-4 bg-slate-50 p-4 rounded-lg">
                         <div className="flex justify-between items-center">
                           <span className="text-sm font-medium text-gray-500 uppercase tracking-tight">Hash Value:</span>
-                          <span className="text-gray-800 font-mono font-bold bg-white px-2 py-1 rounded border border-gray-200">{data.blockchain.hash}</span>
+                          <span className="text-gray-800 font-mono font-bold bg-white px-2 py-1 rounded border border-gray-200 overflow-hidden text-ellipsis max-w-[150px]">{hashFromUrl}</span>
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-sm font-medium text-gray-500 uppercase tracking-tight">Blockchain Status:</span>
                           <span className="text-blue-600 font-bold italic flex items-center uppercase text-xs">
                             <span className="w-2 h-2 bg-blue-600 rounded-full mr-2 animate-pulse"></span>
-                            {data.blockchain.status}
+                            {verificationData?.blockchainRecord ? 'RECORDED' : 'NOT FOUND'}
                           </span>
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-sm font-medium text-gray-500 uppercase tracking-tight">Transaction ID:</span>
                           <div className="flex items-center text-gray-700 hover:text-blue-600 cursor-pointer transition-colors">
-                            <span className="font-mono text-xs mr-1">{data.blockchain.txId}</span>
+                            <span className="font-mono text-xs mr-1">{verificationData?.blockchainRecord?.txID || 'N/A'}</span>
                             <ExternalLink className="w-3 h-3" />
                           </div>
                         </div>
                         <div className="flex justify-between items-center pt-2">
                           <span className="text-[10px] font-bold text-gray-400 uppercase">Timestamp:</span>
-                          <span className="text-[10px] text-gray-500 font-medium uppercase">{data.blockchain.recordedDate}</span>
+                          <span className="text-[10px] text-gray-500 font-medium uppercase">{verificationData?.blockchainRecord?.date ? new Date(verificationData.blockchainRecord.date).toLocaleString() : 'N/A'}</span>
                         </div>
                       </div>
                     </div>
