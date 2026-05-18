@@ -15,9 +15,7 @@ const TransactionController = {
     createTransaction: async (req, res) => {
         try {
             const { typeOfDocument, nameOfStudent, studentSONumber, nameOfSchool, yearGraduated } = req.body;
-
             const referenceNumber = createReferenceNumber();
-
             const transaction = await BlockchainTransaction.create({
                 user: new mongoose.Types.ObjectId(req.user.id),
                 referenceNumber,
@@ -29,6 +27,7 @@ const TransactionController = {
                 blockchainTxHash: "",
                 blockchainBlockNumber: null,
                 blockchainStatus: "Pending",
+                createdByEmail: req.user.email, 
             });
 
             try {
@@ -82,13 +81,22 @@ const TransactionController = {
     },
 
     /* GET USER'S TRANSACTIONS */
-    getMyTransactions: async (req, res) => {
-        try {
-            const transactions = await BlockchainTransaction.find({ user: new mongoose.Types.ObjectId(req.user.id) }).sort({
-                createdAt: -1,
-            });
+getMyTransactions: async (req, res) => {
+    try {
+        console.log("=== getMyTransactions DEBUG ===");
+        console.log("req.user:", req.user);
+        console.log("req.user.id:", req.user.id);
 
-            return res.json(transactions);
+        const userId = new mongoose.Types.ObjectId(req.user.id);
+        console.log("userId as ObjectId:", userId);
+
+       const query = req.user.role === 'system admin' ? {} : { user: userId };
+    const transactions = await BlockchainTransaction.find(query).sort({ createdAt: -1 });
+
+        console.log("Transactions found:", transactions.length);
+        console.log("Sample user field in DB:", transactions[0]?.user);
+
+        return res.json(transactions);
         } catch (error) {
             return res.status(500).json({
                 message: "Failed to fetch transactions",

@@ -101,7 +101,7 @@ function CreateTransaction() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Student S/O Number *</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Student S.O. Number *</label>
                                     <input
                                         type="text"
                                         name="studentSONumber"

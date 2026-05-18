@@ -7,6 +7,10 @@ const blockchainTransactionSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    createdByEmail: { 
+      type: String, 
+      default: '' 
+    },
     referenceNumber: {
       type: String,
       required: true,

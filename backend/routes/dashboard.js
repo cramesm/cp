@@ -3,6 +3,7 @@ const router = express.Router();
 const Request = require('../models/Request');
 const Transaction = require('../models/Transaction');
 const Notification = require('../models/Notification');
+const BlockchainTransaction = require('../blockchain_essentials/modelBC/blockchainTransactionModel');
 
 router.get('/stats', async (req, res) => {
   try {
@@ -11,7 +12,7 @@ router.get('/stats', async (req, res) => {
     const inProcessRequests = await Request.countDocuments({ status: 'In Process' });
     const approvedRequests = await Request.countDocuments({ status: 'Approved' });
     const releasedRequests = await Request.countDocuments({ status: 'Released' });
-    const blockchainTransactions = await Transaction.countDocuments();
+    const blockchainTransactions = await BlockchainTransaction.countDocuments();
 
     res.json({
       totalRequests,
@@ -28,7 +29,10 @@ router.get('/stats', async (req, res) => {
 
 router.get('/recent', async (req, res) => {
    try {
-     const transactions = await Transaction.find().sort({ date: -1 }).limit(5);
+     const transactions = await BlockchainTransaction.find()
+    .sort({ createdAt: -1 })
+    .limit(5);
+    
      const notifications = await Notification.find().sort({ date: -1 }).limit(5);
      const pendingRequests = await Request.find({ status: 'Pending' }).sort({ dateRequested: -1 }).limit(5);
 

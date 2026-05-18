@@ -12,7 +12,7 @@ const Dashboard = () => {
         releasedRequests: 0,
         blockchainTransactions: 0
     });
-    
+
     const [recentData, setRecentData] = useState({
         transactions: [],
         notifications: [],
@@ -31,7 +31,7 @@ const Dashboard = () => {
                 api.get('/dashboard/stats'),
                 api.get('/dashboard/recent')
             ]);
-            
+
             // Validation: Ensure data integrity even if API returns null/undefined
             setStats(statsRes.data || {});
             setRecentData(recentRes.data || { transactions: [], notifications: [], pendingRequests: [] });
@@ -117,15 +117,18 @@ const Dashboard = () => {
                         <table className="w-full border-collapse mb-2.5 table-fixed">
                             <thead>
                                 <tr>
-                                    <th colSpan="2" className="text-left py-2.5 px-5 text-[14px] font-normal text-black border-y border-[#eaeaea] bg-white">Latest Transactions:</th>
+                                    <th className="text-left py-2.5 px-5 text-[14px] font-normal text-black border-y border-[#eaeaea] bg-white">Reference #</th>
+                                    <th className="text-left py-2.5 px-5 text-[14px] font-normal text-black border-y border-[#eaeaea] bg-white">Student Name</th>
+                                    <th className="text-left py-2.5 px-5 text-[14px] font-normal text-black border-y border-[#eaeaea] bg-white">Recorded By</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {recentData.transactions?.length > 0 ? (
                                     recentData.transactions.map((tx, idx) => (
                                         <tr key={idx} className="last:border-none">
-                                            <td className="py-3 px-5 text-[14px] text-black border-b border-[#eaeaea] align-middle">{tx.requestId}</td>
-                                            <td className="py-3 px-5 text-[14px] text-black border-b border-[#eaeaea] align-middle tracking-[0.5px] truncate">{tx.transactionHash}</td>
+                                            <td className="py-3 px-5 text-[14px] text-black border-b border-[#eaeaea] align-middle">{tx.referenceNumber}</td>
+                                            <td className="py-3 px-5 text-[14px] text-black border-b border-[#eaeaea] align-middle tracking-[0.5px] truncate">{tx.nameOfStudent}</td>
+                                            <td className="py-3 px-5 text-[14px] text-black border-b border-[#eaeaea] align-middle tracking-[0.5px] truncate">{tx.createdByEmail || '—'}</td>
                                         </tr>
                                     ))
                                 ) : (
