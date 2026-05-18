@@ -1,11 +1,17 @@
-const jwt = require('jsonwebtoken');
-require('dotenv').config({ path: './.env' });
+const jwt = require("jsonwebtoken");
 
-const secret = process.env.JWT_SECRET || 'supersecretverifitor123';
-const token = jwt.sign(
-    { id: 'a72c0617-3670-491c-b894-a8355d7504ca', email: 'sysadmin@verifitor.com', role: 'system admin' },
-    secret,
-    { expiresIn: '1h' }
-);
+const generateToken = (user) => {
+  return jwt.sign(
+    {
+      id: user.id,
+      role: user.role,
+      email: user.email,
+    },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: "7d",
+    }
+  );
+};
 
-console.log(token);
+module.exports = generateToken;

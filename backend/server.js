@@ -4,12 +4,14 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const mongoose = require('mongoose');
+const bodyParser = require('body-parser');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -75,6 +77,7 @@ const authRoutes = require('./routes/auth');
 const dashboardRoutes = require('./routes/dashboard');
 const requestRoutes = require('./routes/requests');
 const transactionRoutes = require('./routes/transactions');
+const blockchainTransactionRoutes = require('./blockchain_essentials/router/transactionRoutes');
 const notificationRoutes = require('./routes/notifications');
 const adminRoutes = require('./routes/adminManagement');
 const activityLogRoutes = require('./routes/activityLogs');
@@ -89,6 +92,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/requests', requestRoutes);
 app.use('/api/transactions', transactionRoutes);
+app.use('/api/blockchain/transactions', blockchainTransactionRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/admins', adminRoutes);
 app.use('/api/activity-logs', activityLogRoutes);
