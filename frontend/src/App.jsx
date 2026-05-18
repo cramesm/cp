@@ -14,6 +14,12 @@ import Notifications from './pages/Notifications/Notifications';
 import Profile from './pages/Profile/Profile'; // This is the Edit Page
 import ProfileInfo from './pages/Profile/ProfileInfo'; // This is the View Page
 
+// Blockchain Pages
+import Blockchain from './pages/Blockchain/Blockchain';
+import CreateTransaction from './pages/Blockchain/CreateTransaction';
+import MyTransactions from './pages/Blockchain/MyTransactions';
+import VerifyTransactions from './pages/Blockchain/VerifyTransactions';
+
 // System Admin Pages
 import ManageRegistrar from './pages/SystemAdmin/ManageRegistrar';
 import AddRegistrar from './pages/SystemAdmin/AddRegistrar';
@@ -47,20 +53,22 @@ function App() {
 
         {/* Main Dashboard - Protected */}
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        
+
         {/* Requests Management - Protected */}
         <Route path="/requests" element={<ProtectedRoute><Requests /></ProtectedRoute>} />
         <Route path="/requests/:id" element={<ProtectedRoute><RequestDetails /></ProtectedRoute>} />
 
-        
+
         {/* Transaction History - Protected */}
         <Route path="/transactions" element={<ProtectedRoute><Transactions /></ProtectedRoute>} />
         <Route path="/transactions/:id" element={<ProtectedRoute><TransactionDetails /></ProtectedRoute>} />
-        
-        {/* Notifications - Protected */}
-        <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
 
-        {/* Profile Management - Protected */}
+        {/* Blockchain - Protected */}
+        <Route path="/blockchain" element={<ProtectedRoute><Blockchain /></ProtectedRoute>} />
+        <Route path="/blockchain/create" element={<ProtectedRoute><CreateTransaction /></ProtectedRoute>} />
+        <Route path="/blockchain/my-transactions" element={<ProtectedRoute><MyTransactions /></ProtectedRoute>} />
+        <Route path="/blockchain/verify" element={<ProtectedRoute><VerifyTransactions /></ProtectedRoute>} />
+        
         <Route path="/profile/info" element={<ProtectedRoute><ProfileInfo /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
@@ -68,7 +76,7 @@ function App() {
         <Route path="/manage-registrar" element={<ProtectedRoute><ManageRegistrar /></ProtectedRoute>} />
         <Route path="/manage-registrar/add" element={<ProtectedRoute><AddRegistrar /></ProtectedRoute>} />
         <Route path="/manage-registrar/details/:id" element={<ProtectedRoute><RegistrarInformation /></ProtectedRoute>} />
-        
+
         <Route path="/activity-logs" element={<ProtectedRoute><ActivityLogs /></ProtectedRoute>} />
 
         {/* TOR Management - Protected */}

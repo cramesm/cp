@@ -124,9 +124,8 @@ const TORDetails = () => {
                             <button
                                 onClick={handleGenerate}
                                 disabled={generating}
-                                className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium text-white shadow-sm transition-colors ${
-                                    generating ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#2f3947] hover:bg-[#3a4858]'
-                                }`}
+                                className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium text-white shadow-sm transition-colors ${generating ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#2f3947] hover:bg-[#3a4858]'
+                                    }`}
                             >
                                 {generating ? (
                                     <>
@@ -160,9 +159,8 @@ const TORDetails = () => {
 
                 {/* Message Banner */}
                 {message && (
-                    <div className={`flex items-center gap-2 p-3 rounded-lg text-sm mb-6 ${
-                        message.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'
-                    }`}>
+                    <div className={`flex items-center gap-2 p-3 rounded-lg text-sm mb-6 ${message.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'
+                        }`}>
                         {message.type === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
                         {message.text}
                     </div>

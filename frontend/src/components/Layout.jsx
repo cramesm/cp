@@ -27,6 +27,8 @@ const Layout = ({ children }) => {
                 return 'Document Requests';
             case '/transactions':
                 return 'Transactions';
+            case '/blockchain':
+                return 'Blockchain';
             case '/notifications':
                 return 'Notifications';
             case '/manage-registrar':
@@ -55,6 +57,15 @@ const Layout = ({ children }) => {
                 if (path.startsWith('/tor/')) {
                     return 'TOR Details';
                 }
+                if (path === '/blockchain/create') {
+                    return 'Create Transaction';
+                }
+                if (path === '/blockchain/my-transactions') {
+                    return 'My Transactions';
+                }
+                if (path === '/blockchain/verify') {
+                    return 'Verify Transaction';
+                }
                 return 'Dashboard';
         }
     };
@@ -66,6 +77,7 @@ const Layout = ({ children }) => {
         { path: '/requests', label: 'Document Requests', icon: 'fa-solid fa-file-lines' },
         { path: '/tor', label: 'TOR Management', icon: 'fa-solid fa-graduation-cap' },
         { path: '/transactions', label: 'Transactions', icon: 'fa-solid fa-arrow-right-arrow-left' },
+        { path: '/blockchain', label: 'Blockchain', icon: 'fa-solid fa-cubes' },
         { path: '/notifications', label: 'Notifications', icon: 'fa-solid fa-bell' }
     ];
 
