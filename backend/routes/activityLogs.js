@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const ActivityLog = require('../models/ActivityLog');
-const { protect, systemAdminOnly } = require('../middleware/authMiddleware');
+const { protect, superAdminOnly } = require('../middleware/authMiddleware');
 
-// Get all activity logs (export as CSV) - System Admin Only
-router.get('/export', protect, systemAdminOnly, async (req, res) => {
+// Get all activity logs (export as CSV) - Super Admin Only
+router.get('/export', protect, superAdminOnly, async (req, res) => {
     try {
       const logs = await ActivityLog.find().sort({ timestamp: -1 });
 
@@ -21,8 +21,8 @@ router.get('/export', protect, systemAdminOnly, async (req, res) => {
     }
   });
 
-// Get all activity logs - System Admin Only
-router.get('/', protect, systemAdminOnly, async (req, res) => {
+// Get all activity logs - Super Admin Only
+router.get('/', protect, superAdminOnly, async (req, res) => {
   try {
     const logs = await ActivityLog.find().sort({ timestamp: -1 }).limit(100);
     res.json(logs);

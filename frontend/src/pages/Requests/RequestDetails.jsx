@@ -93,7 +93,7 @@ const RequestDetails = () => {
         return <Layout><div className="p-5 text-red-500">Request not found.</div></Layout>;
     }
 
-    const { name, status, dateRequested, documentHash, document_type, purpose } = requestData;
+    const { name, status, dateRequested, documentHash, documentType, document_type, purpose } = requestData;
 
     const steps = [
         { id: 'Pending', label: 'Request Received', icon: Clock, desc: 'Student submitted the request' },
@@ -117,13 +117,30 @@ const RequestDetails = () => {
                         </div>
                         <p className="text-slate-500 text-sm flex items-center gap-2">
                             <FileText size={14} className="text-slate-400" /> 
-                            {document_type || 'Transcript of Records'} 
+                            {documentType || document_type || 'Transcript of Records'} 
                             <span className="text-slate-300">|</span> 
                             Requested on {new Date(dateRequested).toLocaleDateString()}
                         </p>
                     </div>
                     
                     <div className="flex items-center gap-3 no-print">
+                        <button 
+                            className="flex items-center gap-2 px-4 py-2 bg-[#2c3e50] text-white hover:bg-[#1a252f] rounded-xl transition-all text-sm font-medium shadow-sm"
+                            onClick={() => {
+                                const params = new URLSearchParams({
+                                    fromRequest: id,
+                                    studentName: name || '',
+                                    studentId: requestData.studentId || '',
+                                    course: requestData.course || '',
+                                    yearLevel: requestData.yearLevel || '',
+                                    documentType: requestData.documentType || '',
+                                    purpose: purpose || ''
+                                });
+                                navigate(`/documents?${params.toString()}`);
+                            }}
+                        >
+                            <FileText size={16} /> Prepare Document
+                        </button>
                         <button 
                             className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-xl transition-all text-sm font-medium border border-slate-200"
                             onClick={handlePrint}
@@ -185,6 +202,18 @@ const RequestDetails = () => {
                                             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Full Name</label>
                                             <p className="text-slate-800 font-semibold text-lg">{name}</p>
                                         </div>
+                                        {requestData.studentId && (
+                                            <div>
+                                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Student ID</label>
+                                                <p className="text-slate-800 font-semibold text-slate-700">{requestData.studentId}</p>
+                                            </div>
+                                        )}
+                                        {requestData.course && (
+                                            <div>
+                                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Course & Year Level</label>
+                                                <p className="text-slate-800 font-semibold text-slate-700">{requestData.course} {requestData.yearLevel ? `(Year ${requestData.yearLevel})` : ''}</p>
+                                            </div>
+                                        )}
                                         <div>
                                             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Purpose of Request</label>
                                             <p className="text-slate-700">{purpose || 'General Requirement'}</p>
@@ -193,7 +222,7 @@ const RequestDetails = () => {
                                     <div className="space-y-6">
                                         <div>
                                             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Document Requested</label>
-                                            <p className="text-slate-800 font-semibold">{document_type || 'Transcript of Records'}</p>
+                                            <p className="text-slate-800 font-semibold">{documentType || document_type || 'Transcript of Records'}</p>
                                         </div>
                                         <div>
                                             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Quantity</label>

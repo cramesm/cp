@@ -128,7 +128,7 @@ export default function AddRegistrar() {
         if (error.response.status === 404) {
           errorMessage = 'API endpoint not found. Please restart the backend server.';
         } else if (error.response.status === 403) {
-          errorMessage = 'Access denied. You must be logged in as a System Admin.';
+          errorMessage = 'Access denied. You must be logged in as a Super Admin.';
         } else if (error.response.status === 401) {
           errorMessage = 'Unauthorized. Please log in again.';
         }
@@ -250,7 +250,7 @@ export default function AddRegistrar() {
                       className="w-full bg-white border border-gray-300 rounded-lg p-3 text-sm outline-none focus:border-[#1D2D44] transition-all"
                     >
                       <option value="Registrar Staff">Registrar Staff</option>
-                      <option value="System Admin">System Admin</option>
+                      <option value="Super Admin">Super Admin</option>
                     </select>
                   </div>
                   

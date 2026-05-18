@@ -14,17 +14,24 @@ import Notifications from './pages/Notifications/Notifications';
 import Profile from './pages/Profile/Profile'; // This is the Edit Page
 import ProfileInfo from './pages/Profile/ProfileInfo'; // This is the View Page
 
-// System Admin Pages
-import ManageRegistrar from './pages/SystemAdmin/ManageRegistrar';
-import AddRegistrar from './pages/SystemAdmin/AddRegistrar';
-import RegistrarInformation from './pages/SystemAdmin/RegistrarInformation';
-import ActivityLogs from './pages/SystemAdmin/ActivityLogs';
+// Super Admin Pages
+import ManageRegistrar from './pages/SuperAdmin/ManageRegistrar';
+import AddRegistrar from './pages/SuperAdmin/AddRegistrar';
+import RegistrarInformation from './pages/SuperAdmin/RegistrarInformation';
+import ActivityLogs from './pages/SuperAdmin/ActivityLogs';
 
 import ValidationLanding from './pages/Validation/Landing';
 import ValidationResults from './pages/Validation/Validation';
 
-import TORManagement from './pages/TOR/TORManagement';
 import TORDetails from './pages/TOR/TORDetails';
+import DocumentManagement from './pages/Documents/DocumentManagement';
+import DocumentDetails from './pages/Documents/DocumentDetails';
+
+// Blockchain Pages
+import Blockchain from './pages/Blockchain/Blockchain';
+import CreateTransaction from './pages/Blockchain/CreateTransaction';
+import MyTransactions from './pages/Blockchain/MyTransactions';
+import VerifyTransactions from './pages/Blockchain/VerifyTransactions';
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('token');
@@ -60,19 +67,29 @@ function App() {
         {/* Notifications - Protected */}
         <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
 
+        {/* Blockchain - Protected */}
+        <Route path="/blockchain" element={<ProtectedRoute><Blockchain /></ProtectedRoute>} />
+        <Route path="/blockchain/create" element={<ProtectedRoute><CreateTransaction /></ProtectedRoute>} />
+        <Route path="/blockchain/my-transactions" element={<ProtectedRoute><MyTransactions /></ProtectedRoute>} />
+        <Route path="/blockchain/verify" element={<ProtectedRoute><VerifyTransactions /></ProtectedRoute>} />
+
         {/* Profile Management - Protected */}
         <Route path="/profile/info" element={<ProtectedRoute><ProfileInfo /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
-        {/* System Admin / Registrar Management - Protected */}
+        {/* Super Admin / Registrar Management - Protected */}
         <Route path="/manage-registrar" element={<ProtectedRoute><ManageRegistrar /></ProtectedRoute>} />
         <Route path="/manage-registrar/add" element={<ProtectedRoute><AddRegistrar /></ProtectedRoute>} />
         <Route path="/manage-registrar/details/:id" element={<ProtectedRoute><RegistrarInformation /></ProtectedRoute>} />
         
         <Route path="/activity-logs" element={<ProtectedRoute><ActivityLogs /></ProtectedRoute>} />
 
-        {/* TOR Management - Protected */}
-        <Route path="/tor" element={<ProtectedRoute><TORManagement /></ProtectedRoute>} />
+        {/* Document Management - Protected */}
+        <Route path="/documents" element={<ProtectedRoute><DocumentManagement /></ProtectedRoute>} />
+        <Route path="/documents/:id" element={<ProtectedRoute><DocumentDetails /></ProtectedRoute>} />
+
+        {/* TOR Details (legacy route kept) - Protected */}
+        <Route path="/tor" element={<ProtectedRoute><DocumentManagement /></ProtectedRoute>} />
         <Route path="/tor/:id" element={<ProtectedRoute><TORDetails /></ProtectedRoute>} />
 
         {/* Public Validation Page */}

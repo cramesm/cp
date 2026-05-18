@@ -10,6 +10,18 @@ const requestSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  studentId: {
+    type: String,
+    default: ''
+  },
+  course: {
+    type: String,
+    default: ''
+  },
+  yearLevel: {
+    type: String,
+    default: ''
+  },
   status: {
     type: String,
     enum: ['Pending', 'In Process', 'Approved', 'Released', 'Rejected'],

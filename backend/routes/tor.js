@@ -7,7 +7,7 @@ const path = require('path');
 const PDFDocument = require('pdfkit');
 const TOR = require('../models/TOR');
 const ActivityLog = require('../models/ActivityLog');
-const { protect, systemAdminOnly, registrarOrSystemAdmin } = require('../middleware/authMiddleware');
+const { protect, superAdminOnly, registrarOrSuperAdmin } = require('../middleware/authMiddleware');
 
 // Configure multer for CSV uploads
 const csvStorage = multer.diskStorage({
@@ -49,7 +49,7 @@ function computeGWA(grades) {
 }
 
 // @route   POST /api/tor/upload-csv
-router.post('/upload-csv', protect, registrarOrSystemAdmin, uploadCSV.single('csvFile'), async (req, res) => {
+router.post('/upload-csv', protect, registrarOrSuperAdmin, uploadCSV.single('csvFile'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ message: 'No CSV file uploaded' });
@@ -128,7 +128,7 @@ router.post('/upload-csv', protect, registrarOrSystemAdmin, uploadCSV.single('cs
 });
 
 // @route   GET /api/tor
-router.get('/', protect, registrarOrSystemAdmin, async (req, res) => {
+router.get('/', protect, registrarOrSuperAdmin, async (req, res) => {
     try {
         const tors = await TOR.find().sort({ createdAt: -1 });
         res.json(tors);
@@ -138,7 +138,7 @@ router.get('/', protect, registrarOrSystemAdmin, async (req, res) => {
 });
 
 // @route   GET /api/tor/:id
-router.get('/:id', protect, registrarOrSystemAdmin, async (req, res) => {
+router.get('/:id', protect, registrarOrSuperAdmin, async (req, res) => {
     try {
         const tor = await TOR.findOne({ torId: req.params.id });
         if (!tor) return res.status(404).json({ message: 'TOR not found' });
@@ -149,7 +149,7 @@ router.get('/:id', protect, registrarOrSystemAdmin, async (req, res) => {
 });
 
 // @route   PUT /api/tor/:id
-router.put('/:id', protect, registrarOrSystemAdmin, async (req, res) => {
+router.put('/:id', protect, registrarOrSuperAdmin, async (req, res) => {
     try {
         const tor = await TOR.findOne({ torId: req.params.id });
         if (!tor) return res.status(404).json({ message: 'TOR not found' });
@@ -187,7 +187,7 @@ router.put('/:id', protect, registrarOrSystemAdmin, async (req, res) => {
 });
 
 // @route   POST /api/tor/:id/generate
-router.post('/:id/generate', protect, registrarOrSystemAdmin, async (req, res) => {
+router.post('/:id/generate', protect, registrarOrSuperAdmin, async (req, res) => {
     try {
         const tor = await TOR.findOne({ torId: req.params.id });
         if (!tor) return res.status(404).json({ message: 'TOR not found' });
@@ -222,7 +222,7 @@ router.post('/:id/generate', protect, registrarOrSystemAdmin, async (req, res) =
 });
 
 // @route   GET /api/tor/:id/download
-router.get('/:id/download', protect, registrarOrSystemAdmin, async (req, res) => {
+router.get('/:id/download', protect, registrarOrSuperAdmin, async (req, res) => {
     try {
         const tor = await TOR.findOne({ torId: req.params.id });
         if (!tor) return res.status(404).json({ message: 'TOR not found' });
@@ -240,7 +240,7 @@ router.get('/:id/download', protect, registrarOrSystemAdmin, async (req, res) =>
 });
 
 // @route   DELETE /api/tor/:id
-router.delete('/:id', protect, systemAdminOnly, async (req, res) => {
+router.delete('/:id', protect, superAdminOnly, async (req, res) => {
     try {
         const tor = await TOR.findOne({ torId: req.params.id });
         if (!tor) return res.status(404).json({ message: 'TOR not found' });

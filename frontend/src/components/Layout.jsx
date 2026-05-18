@@ -29,14 +29,17 @@ const Layout = ({ children }) => {
                 return 'Transactions';
             case '/notifications':
                 return 'Notifications';
+            case '/blockchain':
+                return 'Blockchain Management';
             case '/manage-registrar':
-                return 'System Administrators';
+                return 'Super Administrators';
             case '/manage-registrar/add':
                 return 'Add Registrar';
             case '/activity-logs':
                 return 'Audit Trail / System Logs';
             case '/tor':
-                return 'TOR Management';
+            case '/documents':
+                return 'Document Management';
             case '/profile/info':
                 return 'Profile Information';
             case '/profile':
@@ -55,6 +58,15 @@ const Layout = ({ children }) => {
                 if (path.startsWith('/tor/')) {
                     return 'TOR Details';
                 }
+                if (path === '/blockchain/create') {
+                    return 'Create Blockchain Record';
+                }
+                if (path === '/blockchain/my-transactions') {
+                    return 'My Blockchain Records';
+                }
+                if (path === '/blockchain/verify') {
+                    return 'Verify Blockchain Record';
+                }
                 return 'Dashboard';
         }
     };
@@ -64,12 +76,13 @@ const Layout = ({ children }) => {
     const menuItems = [
         { path: '/dashboard', label: 'Dashboard', icon: 'fa-solid fa-table-cells-large' },
         { path: '/requests', label: 'Document Requests', icon: 'fa-solid fa-file-lines' },
-        { path: '/tor', label: 'TOR Management', icon: 'fa-solid fa-graduation-cap' },
+        { path: '/documents', label: 'Document Management', icon: 'fa-solid fa-folder-open' },
         { path: '/transactions', label: 'Transactions', icon: 'fa-solid fa-arrow-right-arrow-left' },
+        { path: '/blockchain', label: 'Blockchain', icon: 'fa-solid fa-cubes' },
         { path: '/notifications', label: 'Notifications', icon: 'fa-solid fa-bell' }
     ];
 
-    if (userRole === 'system admin') {
+    if (userRole === 'super admin') {
         menuItems.push(
             { path: '/manage-registrar', label: 'Manage Registrar', icon: 'fa-solid fa-user-gear' },
             { path: '/activity-logs', label: 'System Logs', icon: 'fa-solid fa-clipboard-list' }

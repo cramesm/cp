@@ -131,7 +131,7 @@ const AdminLogin = () => {
                         title="Click to auto-fill"
                     >
                         <p className="text-[11px] font-semibold text-amber-800 mb-0.5 flex items-center gap-1.5">
-                            <i className="fa-solid fa-shield-halved text-[10px]"></i> System Admin
+                            <i className="fa-solid fa-shield-halved text-[10px]"></i> Super Admin
                         </p>
                         <p className="text-[10px] text-amber-600 m-0">sysadmin@verifitor.com / sysadmin123</p>
                     </div>

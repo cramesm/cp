@@ -2,11 +2,10 @@ const express = require('express');
 const router = express.Router();
 const Admin = require('../models/Users/Admin');
 const ActivityLog = require('../models/ActivityLog');
-const { protect, systemAdminOnly } = require('../middleware/authMiddleware');
+const { protect, superAdminOnly } = require('../middleware/authMiddleware');
 
-// All routes here are protected and SystemAdmin only
 router.use(protect);
-router.use(systemAdminOnly);
+router.use(superAdminOnly);
 
 // @route   GET /api/admins
 router.get('/', async (req, res) => {
@@ -38,7 +37,7 @@ router.post('/', async (req, res) => {
     // Log the action
     await ActivityLog.create({
       userEmail: req.user.email,
-      userName: req.user.name || 'System Admin',
+      userName: req.user.name || 'Super Admin',
       action: 'Create Admin',
       type: '------',
       status: 'Successful',
@@ -59,7 +58,7 @@ router.post('/:id/reset-password', async (req, res) => {
 
     await ActivityLog.create({
       userEmail: req.user.email,
-      userName: req.user.name || 'System Admin',
+      userName: req.user.name || 'Super Admin',
       action: 'Force Reset Password',
       type: '------',
       status: 'Successful',
@@ -89,7 +88,7 @@ router.put('/:id', async (req, res) => {
 
     await ActivityLog.create({
       userEmail: req.user.email,
-      userName: req.user.name || 'System Admin',
+      userName: req.user.name || 'Super Admin',
       action: 'Update Admin',
       type: '------',
       status: 'Successful',
@@ -113,7 +112,7 @@ router.delete('/:id', async (req, res) => {
 
     await ActivityLog.create({
       userEmail: req.user.email,
-      userName: req.user.name || 'System Admin',
+      userName: req.user.name || 'Super Admin',
       action: 'Delete Admin',
       type: '------',
       status: 'Successful',

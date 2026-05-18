@@ -5,7 +5,7 @@ const nodemailer = require('nodemailer');
 const { protect } = require('../middleware/authMiddleware');
 
 const Student = require('../models/Users/Student');
-const SystemAdmin = require('../models/Users/SystemAdmin');
+const SuperAdmin = require('../models/Users/SuperAdmin');
 const Registrar = require('../models/Registrar');
 const ActivityLog = require('../models/ActivityLog');
 
@@ -24,7 +24,7 @@ const transporter = nodemailer.createTransport({
 // Helper to generate JWT
 const generateToken = (user) => {
   return jwt.sign(
-    { id: user._id, email: user.email, role: user.role },
+    { id: user._id, email: user.email, role: user.role, name: user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User' },
     process.env.JWT_SECRET || 'supersecretverifitor123',
     { expiresIn: '1d' }
   );
@@ -73,7 +73,11 @@ router.post('/register', async (req, res) => {
         email: student.email,
         firstName: student.firstName,
         lastName: student.lastName,
-        role: student.role
+        role: student.role,
+        studentId: student.studentId || '',
+        course: student.course || '',
+        yearLevel: student.yearLevel || '',
+        phoneNumber: student.phoneNumber || ''
       }
     });
   } catch (error) {
@@ -95,10 +99,10 @@ router.post('/login', async (req, res) => {
     user = await Student.findOne({ email });
     if (user) modelName = 'Student';
 
-    // 2. Check SystemAdmin
+    // 2. Check SuperAdmin
     if (!user) {
-      user = await SystemAdmin.findOne({ email });
-      if (user) modelName = 'SystemAdmin';
+      user = await SuperAdmin.findOne({ email });
+      if (user) modelName = 'SuperAdmin';
     }
 
     // 3. Check Registrar
@@ -139,7 +143,11 @@ router.post('/login', async (req, res) => {
         role: user.role,
         firstName: user.firstName,
         lastName: user.lastName,
-        name: user.name
+        name: user.name,
+        studentId: user.studentId || '',
+        course: user.course || '',
+        yearLevel: user.yearLevel || '',
+        phoneNumber: user.phoneNumber || ''
       }
     });
   } catch (error) {
@@ -160,8 +168,8 @@ router.post('/forgot-password', async (req, res) => {
     if (user) modelName = 'Student';
     
     if (!user) {
-      user = await SystemAdmin.findOne({ email });
-      if (user) modelName = 'SystemAdmin';
+      user = await SuperAdmin.findOne({ email });
+      if (user) modelName = 'SuperAdmin';
     }
 
     if (!user) {
@@ -226,19 +234,24 @@ router.post('/verify-otp', async (req, res) => {
 
 router.post('/reset-password', async (req, res) => {
   try {
-    const { resetToken, newPassword } = req.body;
+    const { resetToken, newPassword, password } = req.body;
     const decoded = jwt.verify(resetToken, process.env.JWT_SECRET);
     const { email, modelName } = decoded;
 
+    const targetPassword = newPassword || password;
+    if (!targetPassword) {
+      return res.status(400).json({ success: false, message: 'New password is required' });
+    }
+
     let userModel;
     if (modelName === 'Student') userModel = Student;
-    else if (modelName === 'SystemAdmin') userModel = SystemAdmin;
+    else if (modelName === 'SuperAdmin') userModel = SuperAdmin;
     else userModel = Registrar;
 
     const user = await userModel.findOne({ email });
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
-    user.password = newPassword;
+    user.password = targetPassword;
     await user.save();
 
     await ActivityLog.create({
@@ -252,6 +265,7 @@ router.post('/reset-password', async (req, res) => {
 
     res.json({ success: true, message: 'Password reset successfully' });
   } catch (error) {
+    console.error('Password reset error:', error);
     res.status(500).json({ success: false, message: 'Error resetting password' });
   }
 });
@@ -259,8 +273,8 @@ router.post('/reset-password', async (req, res) => {
 router.get('/profile', protect, async (req, res) => {
   try {
     let user = null;
-    if (req.user.role === 'system admin') {
-      user = await SystemAdmin.findById(req.user.id);
+    if (req.user.role === 'super admin') {
+      user = await SuperAdmin.findById(req.user.id);
     } else if (req.user.role === 'registrar') {
       user = await Registrar.findById(req.user.id);
     } else {
@@ -276,7 +290,11 @@ router.get('/profile', protect, async (req, res) => {
       name: user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User',
       firstName: user.firstName,
       lastName: user.lastName,
-      profilePic: user.profilePic || ''
+      profilePic: user.profilePic || '',
+      studentId: user.studentId || '',
+      course: user.course || '',
+      yearLevel: user.yearLevel || '',
+      phoneNumber: user.phoneNumber || ''
     });
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
@@ -288,7 +306,7 @@ router.put('/profile', protect, async (req, res) => {
     const { name, firstName, lastName, profilePic, course, yearLevel, phoneNumber } = req.body;
     
     let userModel;
-    if (req.user.role === 'system admin') userModel = SystemAdmin;
+    if (req.user.role === 'super admin') userModel = SuperAdmin;
     else if (req.user.role === 'registrar') userModel = Registrar;
     else userModel = Student;
 
@@ -313,7 +331,7 @@ router.put('/change-password', protect, async (req, res) => {
     const { currentPassword, newPassword } = req.body;
     
     let userModel;
-    if (req.user.role === 'system admin') userModel = SystemAdmin;
+    if (req.user.role === 'super admin') userModel = SuperAdmin;
     else if (req.user.role === 'registrar') userModel = Registrar;
     else userModel = Student;
 

@@ -3,11 +3,10 @@ const router = express.Router();
 const Registrar = require('../models/Registrar');
 const Admin = require('../models/Users/Admin');
 const ActivityLog = require('../models/ActivityLog');
-const { protect, systemAdminOnly } = require('../middleware/authMiddleware');
+const { protect, superAdminOnly } = require('../middleware/authMiddleware');
 
-// All routes here are protected and SystemAdmin only
 router.use(protect);
-router.use(systemAdminOnly);
+router.use(superAdminOnly);
 
 // @route   GET /api/registrars
 router.get('/', async (req, res) => {
@@ -56,7 +55,7 @@ router.post('/', async (req, res) => {
 
     await ActivityLog.create({
       userEmail: req.user.email,
-      userName: req.user.name || 'System Admin',
+      userName: req.user.name || 'Super Admin',
       action: 'User Created',
       type: '------',
       status: 'Successful',
@@ -95,7 +94,7 @@ router.put('/:id', async (req, res) => {
 
     await ActivityLog.create({
       userEmail: req.user.email,
-      userName: req.user.name || 'System Admin',
+      userName: req.user.name || 'Super Admin',
       action: 'User Updated',
       type: '------',
       status: 'Successful',
@@ -126,7 +125,7 @@ router.delete('/:id', async (req, res) => {
 
     await ActivityLog.create({
       userEmail: req.user.email,
-      userName: req.user.name || 'System Admin',
+      userName: req.user.name || 'Super Admin',
       action: 'User Deleted',
       type: '------',
       status: 'Successful',

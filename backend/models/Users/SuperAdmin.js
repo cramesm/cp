@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
-const systemAdminSchema = new mongoose.Schema({
+const superAdminSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
@@ -13,11 +13,11 @@ const systemAdminSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    default: 'system admin'
+    default: 'super admin'
   },
   name: {
     type: String,
-    default: 'System Admin'
+    default: 'Super Admin'
   },
   profilePic: {
     type: String,
@@ -26,14 +26,14 @@ const systemAdminSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Hash password before saving
-systemAdminSchema.pre('save', async function() {
+superAdminSchema.pre('save', async function() {
   if (!this.isModified('password')) return;
   this.password = await bcrypt.hash(this.password, 10);
 });
 
 // Method to compare password
-systemAdminSchema.methods.comparePassword = async function(candidatePassword) {
+superAdminSchema.methods.comparePassword = async function(candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-module.exports = mongoose.model('SystemAdmin', systemAdminSchema);
+module.exports = mongoose.model('SuperAdmin', superAdminSchema);

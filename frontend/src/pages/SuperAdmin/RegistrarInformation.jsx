@@ -158,7 +158,7 @@ export default function RegistrarInformation() {
         <div className="max-w-6xl mx-auto w-full p-8 flex-grow">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-[12px] mb-6 text-gray-500 uppercase tracking-widest font-bold">
-            <span className="cursor-pointer hover:text-[#1D2D44] transition-colors" onClick={() => navigate('/manage-registrar')}>Manage Registrar</span>
+            <span className="cursor-pointer hover:text-[#1D2D44] transition-colors" onClick={() => navigate('/manage-registrar')}>Manage Staff</span>
             <ChevronRight size={14} />
             <span className="text-[#1D2D44]">Registrar Details</span>
           </div>

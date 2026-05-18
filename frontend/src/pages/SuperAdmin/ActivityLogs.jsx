@@ -152,7 +152,7 @@ export default function ActivityLogs() {
                 <tr className="border-b border-gray-200 text-gray-800 font-bold text-[13px]">
                   <th className="py-5 px-6">Timestamp</th>
                   <th className="py-5 px-2">Date</th>
-                  <th className="py-5 px-2">Registrar Name</th>
+                  <th className="py-5 px-2">User Name</th>
                   <th className="py-5 px-2">Action</th>
                   <th className="py-5 px-2">Document Type</th>
                   <th className="py-5 px-6 text-center">Status</th>

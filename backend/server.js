@@ -28,20 +28,20 @@ const connectDB = async () => {
 
 // Initial seed function for MongoDB
 async function seedUsers() {
-    const SystemAdmin = require('./models/Users/SystemAdmin');
+    const SuperAdmin = require('./models/Users/SuperAdmin');
     const Registrar = require('./models/Registrar');
     
     try {
-        // 1. Seed System Admin
-        const existingSysAdmin = await SystemAdmin.findOne({ email: 'sysadmin@verifitor.com' });
-        if (!existingSysAdmin) {
-            await SystemAdmin.create({
+        // 1. Seed Super Admin
+        const existingSuperAdmin = await SuperAdmin.findOne({ email: 'sysadmin@verifitor.com' });
+        if (!existingSuperAdmin) {
+            await SuperAdmin.create({
                 email: 'sysadmin@verifitor.com',
                 password: 'sysadmin123', // Model handles hashing
-                role: 'system admin',
-                name: 'System Admin'
+                role: 'super admin',
+                name: 'Super Admin'
             });
-            console.log('Default System Admin created (sysadmin@verifitor.com / sysadmin123)');
+            console.log('Default Super Admin created (sysadmin@verifitor.com / sysadmin123)');
         }
 
         // 2. Seed Standard Registrars
@@ -75,12 +75,14 @@ const authRoutes = require('./routes/auth');
 const dashboardRoutes = require('./routes/dashboard');
 const requestRoutes = require('./routes/requests');
 const transactionRoutes = require('./routes/transactions');
+const blockchainTransactionRoutes = require('./blockchain_essentials/router/transactionRoutes');
 const notificationRoutes = require('./routes/notifications');
 const adminRoutes = require('./routes/adminManagement');
 const activityLogRoutes = require('./routes/activityLogs');
 const registrarRoutes = require('./routes/registrars');
 const verifyRoutes = require('./routes/verify');
 const torRoutes = require('./routes/tor');
+const documentRoutes = require('./routes/documents');
 
 console.log('Routes imported successfully');
 
@@ -89,12 +91,14 @@ app.use('/api/auth', authRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/requests', requestRoutes);
 app.use('/api/transactions', transactionRoutes);
+app.use('/api/blockchain/transactions', blockchainTransactionRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/admins', adminRoutes);
 app.use('/api/activity-logs', activityLogRoutes);
 app.use('/api/registrars', registrarRoutes);
 app.use('/api/verify', verifyRoutes);
 app.use('/api/tor', torRoutes);
+app.use('/api/documents', documentRoutes);
 
 console.log('Routes mounted successfully');
 
