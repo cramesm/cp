@@ -11,18 +11,33 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+// Request logger
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
+    next();
+});
+
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// MongoDB Connection
 const connectDB = async () => {
     try {
-        await mongoose.connect(process.env.MONGODB_URI);
-        console.log('MongoDB connected successfully');
+        console.log('Connecting to primary MongoDB (Atlas)...');
+        await mongoose.connect(process.env.MONGODB_URI, { serverSelectionTimeoutMS: 4000 });
+        console.log('MongoDB (Atlas) connected successfully');
         await seedUsers();
     } catch (err) {
-        console.error('MongoDB connection error:', err.message);
-        process.exit(1);
+        console.warn('MongoDB Atlas connection failed:', err.message);
+        console.log('Attempting local MongoDB fallback (mongodb://127.0.0.1:27017/verifitor)...');
+        try {
+            await mongoose.connect('mongodb://127.0.0.1:27017/verifitor', { serverSelectionTimeoutMS: 4000 });
+            console.log('MongoDB (Local Fallback) connected successfully!');
+            await seedUsers();
+        } catch (localErr) {
+            console.error('Critical Database Error: Both Atlas and Local MongoDB connections failed!');
+            console.error('Local error:', localErr.message);
+            process.exit(1);
+        }
     }
 };
 
@@ -83,6 +98,7 @@ const registrarRoutes = require('./routes/registrars');
 const verifyRoutes = require('./routes/verify');
 const torRoutes = require('./routes/tor');
 const documentRoutes = require('./routes/documents');
+const studentRoutes = require('./routes/students');
 
 console.log('Routes imported successfully');
 
@@ -99,6 +115,7 @@ app.use('/api/registrars', registrarRoutes);
 app.use('/api/verify', verifyRoutes);
 app.use('/api/tor', torRoutes);
 app.use('/api/documents', documentRoutes);
+app.use('/api/students', studentRoutes);
 
 console.log('Routes mounted successfully');
 
@@ -109,6 +126,17 @@ app.get('/api/health', (req, res) => {
 // Test route for debugging
 app.get('/api/test', (req, res) => {
     res.json({ message: 'Test route working' });
+});
+
+// Global error handler for Express 5 async errors
+app.use((err, req, res, next) => {
+    console.error('=== GLOBAL ERROR HANDLER ===');
+    console.error('Route:', req.method, req.originalUrl);
+    console.error('Error:', err.message);
+    console.error('Stack:', err.stack);
+    if (!res.headersSent) {
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
 });
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

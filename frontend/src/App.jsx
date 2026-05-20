@@ -23,6 +23,8 @@ import ActivityLogs from './pages/SuperAdmin/ActivityLogs';
 import ValidationLanding from './pages/Validation/Landing';
 import ValidationResults from './pages/Validation/Validation';
 
+import StudentManagement from './pages/Users/StudentManagement';
+
 import TORDetails from './pages/TOR/TORDetails';
 import DocumentManagement from './pages/Documents/DocumentManagement';
 import DocumentDetails from './pages/Documents/DocumentDetails';
@@ -81,6 +83,7 @@ function App() {
         <Route path="/manage-registrar" element={<ProtectedRoute><ManageRegistrar /></ProtectedRoute>} />
         <Route path="/manage-registrar/add" element={<ProtectedRoute><AddRegistrar /></ProtectedRoute>} />
         <Route path="/manage-registrar/details/:id" element={<ProtectedRoute><RegistrarInformation /></ProtectedRoute>} />
+        <Route path="/manage-users" element={<ProtectedRoute><StudentManagement /></ProtectedRoute>} />
         
         <Route path="/activity-logs" element={<ProtectedRoute><ActivityLogs /></ProtectedRoute>} />
 

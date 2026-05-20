@@ -33,6 +33,8 @@ const Layout = ({ children }) => {
                 return 'Blockchain Management';
             case '/manage-registrar':
                 return 'Super Administrators';
+            case '/manage-users':
+                return 'User Management';
             case '/manage-registrar/add':
                 return 'Add Registrar';
             case '/activity-logs':
@@ -85,6 +87,7 @@ const Layout = ({ children }) => {
     if (userRole === 'super admin') {
         menuItems.push(
             { path: '/manage-registrar', label: 'Manage Registrar', icon: 'fa-solid fa-user-gear' },
+            { path: '/manage-users', label: 'Manage Users', icon: 'fa-solid fa-users' },
             { path: '/activity-logs', label: 'System Logs', icon: 'fa-solid fa-clipboard-list' }
         );
     }
