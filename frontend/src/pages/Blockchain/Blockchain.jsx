@@ -7,14 +7,6 @@ function Blockchain() {
 
     const features = [
         {
-            title: 'Create Transaction',
-            description: 'Record a new transaction on the blockchain',
-            icon: Plus,
-            color: 'bg-blue-50 border-blue-200',
-            buttonColor: 'bg-blue-600 hover:bg-blue-700',
-            path: '/blockchain/create'
-        },
-        {
             title: 'My Transactions',
             description: 'View all your recorded blockchain transactions',
             icon: Eye,

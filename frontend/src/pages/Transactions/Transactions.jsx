@@ -73,7 +73,7 @@ const Transactions = () => {
       fetchTransactions();
     } catch (err) {
       console.error('Verification error:', err);
-      triggerToast('Failed to update transaction. Please try again.', 'error');
+      triggerToast('Failed to update payment. Please try again.', 'error');
     }
   };
 
@@ -187,7 +187,7 @@ const Transactions = () => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="text-[13px] text-gray-800 border-b border-gray-200 uppercase font-bold">
-                  <th className="px-6 py-4">Transaction ID</th>
+                  <th className="px-6 py-4">Payment ID</th>
                   <th className="px-6 py-4">Request ID</th>
                   <th className="px-6 py-4">Payer Name</th>
                   <th className="px-6 py-4">Type</th>
@@ -200,7 +200,7 @@ const Transactions = () => {
               </thead>
               <tbody className="text-[13px]">
                 {loading ? (
-                  <tr><td colSpan="9" className="px-6 py-20 text-center text-gray-400 italic">Loading transactions...</td></tr>
+                  <tr><td colSpan="9" className="px-6 py-20 text-center text-gray-400 italic">Loading payments...</td></tr>
                 ) : paginatedTransactions.length > 0 ? (
                   paginatedTransactions.map((tx, idx) => {
                     const txDate = new Date(tx.date);
@@ -252,7 +252,7 @@ const Transactions = () => {
                 ) : (
                   <tr>
                     <td colSpan="9" className="px-6 py-20 text-center text-[#99AAB5] italic text-[16px]">
-                      No transactions found matching your filters.
+                      No payments found matching your filters.
                     </td>
                   </tr>
                 )}

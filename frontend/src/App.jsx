@@ -31,7 +31,6 @@ import DocumentDetails from './pages/Documents/DocumentDetails';
 
 // Blockchain Pages
 import Blockchain from './pages/Blockchain/Blockchain';
-import CreateTransaction from './pages/Blockchain/CreateTransaction';
 import MyTransactions from './pages/Blockchain/MyTransactions';
 import VerifyTransactions from './pages/Blockchain/VerifyTransactions';
 
@@ -71,7 +70,6 @@ function App() {
 
         {/* Blockchain - Protected */}
         <Route path="/blockchain" element={<ProtectedRoute><Blockchain /></ProtectedRoute>} />
-        <Route path="/blockchain/create" element={<ProtectedRoute><CreateTransaction /></ProtectedRoute>} />
         <Route path="/blockchain/my-transactions" element={<ProtectedRoute><MyTransactions /></ProtectedRoute>} />
         <Route path="/blockchain/verify" element={<ProtectedRoute><VerifyTransactions /></ProtectedRoute>} />
 

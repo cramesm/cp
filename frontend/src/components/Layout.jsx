@@ -26,7 +26,7 @@ const Layout = ({ children }) => {
             case '/requests':
                 return 'Document Requests';
             case '/transactions':
-                return 'Transactions';
+                return 'Payments';
             case '/notifications':
                 return 'Notifications';
             case '/blockchain':
@@ -79,7 +79,7 @@ const Layout = ({ children }) => {
         { path: '/dashboard', label: 'Dashboard', icon: 'fa-solid fa-table-cells-large' },
         { path: '/requests', label: 'Document Requests', icon: 'fa-solid fa-file-lines' },
         { path: '/documents', label: 'Document Management', icon: 'fa-solid fa-folder-open' },
-        { path: '/transactions', label: 'Transactions', icon: 'fa-solid fa-arrow-right-arrow-left' },
+        { path: '/transactions', label: 'Payments', icon: 'fa-solid fa-money-check-dollar' },
         { path: '/blockchain', label: 'Blockchain', icon: 'fa-solid fa-cubes' },
         { path: '/notifications', label: 'Notifications', icon: 'fa-solid fa-bell' }
     ];

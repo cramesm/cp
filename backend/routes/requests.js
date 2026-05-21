@@ -16,27 +16,8 @@ const enrichRequestWithStudentData = async (reqObj) => {
       student = await Student.findOne({ studentId: reqObj.studentId });
     }
     
-    // 2. Try to find by exact/case-insensitive full name matching
-    if (!student && reqObj.name) {
-      const allStudents = await Student.find({});
-      student = allStudents.find(s => {
-        const fullName = `${s.firstName || ''} ${s.lastName || ''}`.trim().toLowerCase();
-        return fullName === reqObj.name.trim().toLowerCase();
-      });
-    }
-
-    // 3. Fallback: split name matching
-    if (!student && reqObj.name) {
-      const nameParts = reqObj.name.trim().split(/\s+/);
-      if (nameParts.length > 0) {
-        student = await Student.findOne({
-          $or: [
-            { firstName: new RegExp('^' + nameParts[0] + '$', 'i') },
-            { lastName: new RegExp('^' + nameParts[nameParts.length - 1] + '$', 'i') }
-          ]
-        });
-      }
-    }
+    // 2. We no longer guess by name to maintain data integrity. 
+    // If studentId isn't provided, we can't reliably link the profile.
     
     if (student) {
       reqObj.studentId = student.studentId || reqObj.studentId || '';
@@ -191,14 +172,7 @@ router.post('/', protect, async (req, res) => {
         student = await Student.findOne({ email: req.user.email });
       }
       
-      // Fallback 2: Resolve by case-insensitive name matching
-      if (!student && userName && userName !== 'User') {
-        const allStudents = await Student.find({});
-        student = allStudents.find(s => {
-          const fullName = `${s.firstName || ''} ${s.lastName || ''}`.trim().toLowerCase();
-          return fullName === userName.trim().toLowerCase();
-        });
-      }
+      // We removed Fallback 2: Name matching to enforce data integrity
 
       if (student) {
         if (!userName || userName === 'User') {
