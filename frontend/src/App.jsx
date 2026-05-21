@@ -28,6 +28,7 @@ import StudentManagement from './pages/Users/StudentManagement';
 import TORDetails from './pages/TOR/TORDetails';
 import DocumentManagement from './pages/Documents/DocumentManagement';
 import DocumentDetails from './pages/Documents/DocumentDetails';
+import DiplomaDetails from './pages/Diploma/DiplomaDetails';
 
 // Blockchain Pages
 import Blockchain from './pages/Blockchain/Blockchain';
@@ -92,6 +93,9 @@ function App() {
         {/* TOR Details (legacy route kept) - Protected */}
         <Route path="/tor" element={<ProtectedRoute><DocumentManagement /></ProtectedRoute>} />
         <Route path="/tor/:id" element={<ProtectedRoute><TORDetails /></ProtectedRoute>} />
+
+        {/* Diploma Details - Protected */}
+        <Route path="/diploma/:id" element={<ProtectedRoute><DiplomaDetails /></ProtectedRoute>} />
 
         {/* Public Validation Page */}
         <Route path="/verify" element={<ValidationLanding />} />

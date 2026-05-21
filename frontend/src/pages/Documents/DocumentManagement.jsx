@@ -3,9 +3,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Upload, FileText, Search, Filter, Trash2, Eye, FolderOpen, AlertCircle, CheckCircle2, X, FileUp, Plus } from 'lucide-react';
 import Layout from '../../components/Layout';
 import api from '../../api';
-import { CreateDocumentModal, TORUploadModal } from './DocumentModals';
+import { CreateDocumentModal, TORUploadModal, DiplomaUploadModal } from './DocumentModals';
 
-const CATEGORIES = ['All', 'Certification', 'Certified True Copy', 'Transcript of Records'];
+const CATEGORIES = ['All', 'Certification', 'Certified True Copy', 'Transcript of Records', 'Diploma'];
 
 const CERT_TYPES = [
   'Certificate of Enrollment', 'Certificate of Good Moral', 'Grade Certification',
@@ -18,12 +18,14 @@ const DocumentManagement = () => {
     const navigate = useNavigate();
     const [documents, setDocuments] = useState([]);
     const [tors, setTors] = useState([]);
+    const [diplomas, setDiplomas] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [activeTab, setActiveTab] = useState('All');
     const [statusFilter, setStatusFilter] = useState('All');
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showUploadModal, setShowUploadModal] = useState(false);
+    const [showDiplomaUploadModal, setShowDiplomaUploadModal] = useState(false);
     const [prefillData, setPrefillData] = useState(null);
     const userRole = localStorage.getItem('userRole');
     const [searchParams, setSearchParams] = useSearchParams();
@@ -51,12 +53,15 @@ const DocumentManagement = () => {
     const fetchAll = useCallback(async () => {
         try {
             setLoading(true);
-            const [docRes, torRes] = await Promise.all([
+            const [docRes, torRes, diplomaRes] = await Promise.allSettled([
                 api.get('/documents'),
-                api.get('/tor')
+                api.get('/tor'),
+                api.get('/diploma')
             ]);
-            setDocuments(docRes.data || []);
-            setTors(torRes.data || []);
+            
+            setDocuments(docRes.status === 'fulfilled' ? docRes.value.data : []);
+            setTors(torRes.status === 'fulfilled' ? torRes.value.data : []);
+            setDiplomas(diplomaRes.status === 'fulfilled' ? diplomaRes.value.data : []);
         } catch (error) {
             console.error('Error fetching:', error);
         } finally {
@@ -79,6 +84,12 @@ const DocumentManagement = () => {
             documentType: 'Transcript of Records', studentName: t.studentName,
             studentId: t.studentId, status: t.status, date: t.createdAt,
             course: t.course, raw: t
+        })),
+        ...diplomas.map(d => ({
+            id: d.diplomaId, type: 'diploma', category: 'Diploma',
+            documentType: 'Diploma', studentName: d.studentName,
+            studentId: d.studentId, status: d.status, date: d.createdAt,
+            course: d.course, raw: d
         }))
     ];
 
@@ -98,6 +109,7 @@ const DocumentManagement = () => {
         'Certification': allItems.filter(i => i.category === 'Certification').length,
         'Certified True Copy': allItems.filter(i => i.category === 'Certified True Copy').length,
         'Transcript of Records': allItems.filter(i => i.category === 'Transcript of Records').length,
+        'Diploma': allItems.filter(i => i.category === 'Diploma').length,
     };
 
     const handleDelete = async (item) => {
@@ -105,6 +117,8 @@ const DocumentManagement = () => {
         try {
             if (item.type === 'tor') {
                 await api.delete(`/tor/${item.id}`);
+            } else if (item.type === 'diploma') {
+                await api.delete(`/diploma/${item.id}`);
             } else {
                 await api.delete(`/documents/${item.id}`);
             }
@@ -156,7 +170,15 @@ const DocumentManagement = () => {
                                 <Upload className="w-4 h-4" /> Import CSV
                             </button>
                         )}
-                        {activeTab !== 'Transcript of Records' && (
+                        {activeTab === 'Diploma' && (
+                            <button
+                                onClick={() => { setShowDiplomaUploadModal(true); }}
+                                className="flex items-center gap-2 bg-[#2f3947] text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#3a4858] transition-colors shadow-sm"
+                            >
+                                <Upload className="w-4 h-4" /> Import CSV
+                            </button>
+                        )}
+                        {activeTab !== 'Transcript of Records' && activeTab !== 'Diploma' && (
                             <button
                                 onClick={() => setShowCreateModal(true)}
                                 className="flex items-center gap-2 bg-[#2f3947] text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#3a4858] transition-colors shadow-sm"
@@ -279,7 +301,7 @@ const DocumentManagement = () => {
                                             <td className="px-5 py-3.5 text-center">
                                                 <div className="flex items-center justify-center gap-2">
                                                     <button
-                                                        onClick={() => navigate(item.type === 'tor' ? `/tor/${item.id}` : `/documents/${item.id}`)}
+                                                        onClick={() => navigate(item.type === 'tor' ? `/tor/${item.id}` : item.type === 'diploma' ? `/diploma/${item.id}` : `/documents/${item.id}`)}
                                                         className="p-1.5 rounded-md hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors"
                                                         title="View Details"
                                                     >
@@ -319,6 +341,14 @@ const DocumentManagement = () => {
                     <TORUploadModal
                         onClose={() => setShowUploadModal(false)}
                         onSuccess={() => { setShowUploadModal(false); fetchAll(); }}
+                    />
+                )}
+
+                {/* Diploma CSV Upload Modal */}
+                {showDiplomaUploadModal && (
+                    <DiplomaUploadModal
+                        onClose={() => setShowDiplomaUploadModal(false)}
+                        onSuccess={() => { setShowDiplomaUploadModal(false); fetchAll(); }}
                     />
                 )}
             </div>

@@ -217,8 +217,8 @@ export const TORUploadModal = ({ onClose, onSuccess }) => {
         setUploading(true);
         try {
             const formData = new FormData();
-            formData.append('file', selectedFile);
-            const res = await api.post('/tor/upload', formData, {
+            formData.append('csvFile', selectedFile);
+            const res = await api.post('/tor/upload-csv', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             setUploadResult({ type: 'success', message: res.data.message || 'TOR records imported successfully!' });
@@ -270,6 +270,125 @@ export const TORUploadModal = ({ onClose, onSuccess }) => {
                                 <FileUp className="w-10 h-10 text-gray-300 mx-auto mb-3" />
                                 <p className="text-sm text-gray-600 font-medium">Drag & drop CSV file here</p>
                                 <p className="text-xs text-gray-400 mt-1">or click to browse</p>
+                            </>
+                        )}
+                    </div>
+
+                    {csvPreview && (
+                        <div className="mt-4 overflow-x-auto border border-gray-100 rounded-lg">
+                            <table className="w-full text-xs">
+                                <tbody>
+                                    {csvPreview.map((row, i) => (
+                                        <tr key={i} className={i === 0 ? 'bg-gray-50 font-semibold' : ''}>
+                                            {row.map((cell, j) => (
+                                                <td key={j} className="px-3 py-1.5 border-b border-gray-50 text-gray-600 truncate max-w-[120px]">{cell}</td>
+                                            ))}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+
+                    <div className="flex gap-3 mt-6">
+                        <button onClick={onClose}
+                            className="flex-1 py-2.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors">
+                            Cancel
+                        </button>
+                        <button onClick={handleUpload} disabled={!selectedFile || uploading}
+                            className="flex-[2] py-2.5 rounded-lg bg-[#2f3947] text-white text-sm font-medium hover:bg-[#3a4858] transition-colors disabled:opacity-50">
+                            {uploading ? 'Uploading...' : 'Import CSV'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// ─── Diploma CSV Upload Modal ───
+export const DiplomaUploadModal = ({ onClose, onSuccess }) => {
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [uploading, setUploading] = useState(false);
+    const [uploadResult, setUploadResult] = useState(null);
+    const [dragOver, setDragOver] = useState(false);
+    const [csvPreview, setCsvPreview] = useState(null);
+
+    const handleFile = (file) => {
+        if (!file || !file.name.endsWith('.csv')) {
+            alert('Please select a CSV file');
+            return;
+        }
+        setSelectedFile(file);
+        setUploadResult(null);
+        // Preview
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const lines = e.target.result.split('\n').slice(0, 6);
+            setCsvPreview(lines.map(l => l.split(',')));
+        };
+        reader.readAsText(file);
+    };
+
+    const handleUpload = async () => {
+        if (!selectedFile) return;
+        setUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append('csvFile', selectedFile);
+            const res = await api.post('/diploma/upload-csv', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            setUploadResult({ type: 'success', message: res.data.message || 'Diploma records imported successfully!' });
+            setTimeout(() => onSuccess(), 1500);
+        } catch (error) {
+            setUploadResult({ type: 'error', message: error.response?.data?.message || 'Upload failed' });
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[2000] flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+                <div className="flex items-center justify-between p-6 border-b border-gray-100">
+                    <h2 className="text-lg font-bold text-gray-800">Import Diploma Records (CSV)</h2>
+                    <button onClick={onClose} className="p-1 rounded-lg hover:bg-gray-100 transition-colors">
+                        <X className="w-5 h-5 text-gray-400" />
+                    </button>
+                </div>
+                <div className="p-6">
+                    {uploadResult && (
+                        <div className={`flex items-center gap-2 p-3 rounded-lg text-sm mb-4 ${
+                            uploadResult.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+                        }`}>
+                            {uploadResult.type === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+                            {uploadResult.message}
+                        </div>
+                    )}
+
+                    <div
+                        className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer ${
+                            dragOver ? 'border-blue-400 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                        onDragLeave={() => setDragOver(false)}
+                        onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFile(e.dataTransfer.files[0]); }}
+                        onClick={() => document.getElementById('csvInputDiploma').click()}
+                    >
+                        <input type="file" id="csvInputDiploma" accept=".csv" className="hidden"
+                            onChange={(e) => handleFile(e.target.files[0])} />
+                        {selectedFile ? (
+                            <div className="flex items-center justify-center gap-2 text-green-600">
+                                <FileText className="w-6 h-6" />
+                                <span className="font-medium">{selectedFile.name}</span>
+                            </div>
+                        ) : (
+                            <>
+                                <FileUp className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+                                <p className="text-sm text-gray-600 font-medium">Drag & drop CSV file here</p>
+                                <p className="text-xs text-gray-400 mt-1">or click to browse</p>
+                                <p className="text-[10px] text-gray-400 mt-2">Required Columns: Student ID, Student Name, Course, Honors, Date of Graduation</p>
                             </>
                         )}
                     </div>
