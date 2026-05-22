@@ -124,9 +124,6 @@ const RequestDetails = () => {
                 
                 // Also generate local hash
                 await api.post(`/requests/${id}/generate-hash`);
-            } else {
-                // Just local hash
-                await api.post(`/requests/${id}/generate-hash`);
             }
             
             await handleStatusUpdate('Approved');
@@ -360,7 +357,7 @@ const RequestDetails = () => {
                                                 </span>
                                             ) : (
                                                 <span className="inline-flex items-center gap-1 bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs font-bold">
-                                                    Local Hash Only
+                                                    Standard Document
                                                 </span>
                                             )}
                                         </div>
@@ -685,11 +682,10 @@ const RequestDetails = () => {
                                                 if (!isBlockchainEligible) {
                                                     setActionLoading(true);
                                                     try {
-                                                        await api.post(`/requests/${id}/generate-hash`);
-                                                        await fetchData();
+                                                        await handleStatusUpdate('Approved');
                                                         setProcessingStep(4);
                                                     } catch (err) {
-                                                        alert('Failed to generate hash.');
+                                                        alert('Failed to update status.');
                                                     } finally {
                                                         setActionLoading(false);
                                                     }
