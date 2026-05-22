@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Download, FileText, GraduationCap, Printer, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import Layout from '../../components/Layout';
+import ConfirmModal from '../../components/ConfirmModal';
 import api from '../../api';
 
 const TORDetails = () => {
@@ -12,6 +13,28 @@ const TORDetails = () => {
     const [generating, setGenerating] = useState(false);
     const [downloading, setDownloading] = useState(false);
     const [message, setMessage] = useState(null);
+    const [confirmConfig, setConfirmConfig] = useState(null);
+
+    const showConfirm = ({ title, message, onConfirm, type = 'info', confirmText = 'Confirm', cancelText = 'Cancel' }) => {
+        setConfirmConfig({
+            title,
+            message,
+            onConfirm: async () => {
+                setConfirmConfig(prev => ({ ...prev, isLoading: true }));
+                try {
+                    await onConfirm();
+                } catch (err) {
+                    console.error(err);
+                } finally {
+                    setConfirmConfig(null);
+                }
+            },
+            type,
+            confirmText,
+            cancelText,
+            isLoading: false
+        });
+    };
 
     const fetchTOR = useCallback(async () => {
         try {
@@ -29,19 +52,26 @@ const TORDetails = () => {
         fetchTOR();
     }, [fetchTOR]);
 
-    const handleGenerate = async () => {
-        if (!window.confirm('Generate TOR PDF? The record will be marked as Finalized.')) return;
-        setGenerating(true);
-        setMessage(null);
-        try {
-            const res = await api.post(`/tor/${id}/generate`);
-            setTor(res.data.tor);
-            setMessage({ type: 'success', text: 'TOR PDF generated successfully!' });
-        } catch (error) {
-            setMessage({ type: 'error', text: error.response?.data?.message || 'Error generating TOR' });
-        } finally {
-            setGenerating(false);
-        }
+    const handleGenerate = () => {
+        showConfirm({
+            title: 'Generate TOR PDF',
+            message: 'Are you sure you want to generate the TOR PDF? The record will be marked as Finalized.',
+            type: 'info',
+            confirmText: 'Generate & Finalize',
+            onConfirm: async () => {
+                setGenerating(true);
+                setMessage(null);
+                try {
+                    const res = await api.post(`/tor/${id}/generate`);
+                    setTor(res.data.tor);
+                    setMessage({ type: 'success', text: 'TOR PDF generated successfully!' });
+                } catch (error) {
+                    setMessage({ type: 'error', text: error.response?.data?.message || 'Error generating TOR' });
+                } finally {
+                    setGenerating(false);
+                }
+            }
+        });
     };
 
     const handleDownload = async () => {
@@ -282,6 +312,18 @@ const TORDetails = () => {
                     </p>
                 </div>
             </div>
+
+            <ConfirmModal
+                isOpen={confirmConfig !== null}
+                onClose={() => setConfirmConfig(null)}
+                onConfirm={confirmConfig?.onConfirm}
+                title={confirmConfig?.title}
+                message={confirmConfig?.message}
+                type={confirmConfig?.type}
+                confirmText={confirmConfig?.confirmText}
+                cancelText={confirmConfig?.cancelText}
+                isLoading={confirmConfig?.isLoading}
+            />
         </Layout>
     );
 };

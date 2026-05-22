@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Upload, FileText, Search, Filter, Trash2, Eye, FolderOpen, AlertCircle, CheckCircle2, X, FileUp, Plus } from 'lucide-react';
+import { Upload, FileText, Search, Filter, Trash2, Eye, FolderOpen, AlertCircle, CheckCircle2, X, FileUp, Plus, Download } from 'lucide-react';
 import Layout from '../../components/Layout';
+import ConfirmModal from '../../components/ConfirmModal';
 import api from '../../api';
 import { CreateDocumentModal, TORUploadModal, DiplomaUploadModal } from './DocumentModals';
 
@@ -27,6 +28,7 @@ const DocumentManagement = () => {
     const [showUploadModal, setShowUploadModal] = useState(false);
     const [showDiplomaUploadModal, setShowDiplomaUploadModal] = useState(false);
     const [prefillData, setPrefillData] = useState(null);
+    const [confirmConfig, setConfirmConfig] = useState(null);
     const userRole = localStorage.getItem('userRole');
     const [searchParams, setSearchParams] = useSearchParams();
 
@@ -77,19 +79,19 @@ const DocumentManagement = () => {
             id: d.documentId, type: 'document', category: d.category,
             documentType: d.documentType, studentName: d.studentName,
             studentId: d.studentId, status: d.status, date: d.createdAt,
-            course: d.course, raw: d
+            course: d.course, pdfPath: d.pdfPath, raw: d
         })),
         ...tors.map(t => ({
             id: t.torId, type: 'tor', category: 'Transcript of Records',
             documentType: 'Transcript of Records', studentName: t.studentName,
             studentId: t.studentId, status: t.status, date: t.createdAt,
-            course: t.course, raw: t
+            course: t.course, pdfPath: t.pdfPath, raw: t
         })),
         ...diplomas.map(d => ({
             id: d.diplomaId, type: 'diploma', category: 'Diploma',
             documentType: 'Diploma', studentName: d.studentName,
             studentId: d.studentId, status: d.status, date: d.createdAt,
-            course: d.course, raw: d
+            course: d.course, pdfPath: d.pdfPath, raw: d
         }))
     ];
 
@@ -112,19 +114,48 @@ const DocumentManagement = () => {
         'Diploma': allItems.filter(i => i.category === 'Diploma').length,
     };
 
-    const handleDelete = async (item) => {
-        if (!window.confirm(`Delete "${item.documentType}" for ${item.studentName}?`)) return;
-        try {
-            if (item.type === 'tor') {
-                await api.delete(`/tor/${item.id}`);
-            } else if (item.type === 'diploma') {
-                await api.delete(`/diploma/${item.id}`);
-            } else {
-                await api.delete(`/documents/${item.id}`);
+    const handleDelete = (item) => {
+        setConfirmConfig({
+            title: 'Delete Document',
+            message: `Are you sure you want to permanently delete "${item.documentType}" for ${item.studentName}? This action cannot be undone.`,
+            type: 'danger',
+            confirmText: 'Delete',
+            onConfirm: async () => {
+                setConfirmConfig(prev => ({ ...prev, isLoading: true }));
+                try {
+                    if (item.type === 'tor') {
+                        await api.delete(`/tor/${item.id}`);
+                    } else if (item.type === 'diploma') {
+                        await api.delete(`/diploma/${item.id}`);
+                    } else {
+                        await api.delete(`/documents/${item.id}`);
+                    }
+                    fetchAll();
+                } catch (error) {
+                    alert(error.response?.data?.message || 'Error deleting');
+                } finally {
+                    setConfirmConfig(null);
+                }
             }
-            fetchAll();
+        });
+    };
+
+    const handleDownload = async (item) => {
+        try {
+            const endpoint = item.type === 'tor' ? `/tor/${item.id}/download`
+                : item.type === 'diploma' ? `/diploma/${item.id}/download`
+                : `/documents/${item.id}/download`;
+            const res = await api.get(endpoint, { responseType: 'blob' });
+            const url = window.URL.createObjectURL(new Blob([res.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `${item.documentType}-${item.studentName}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
         } catch (error) {
-            alert(error.response?.data?.message || 'Error deleting');
+            alert('Error downloading PDF');
         }
     };
 
@@ -183,7 +214,7 @@ const DocumentManagement = () => {
                                 onClick={() => setShowCreateModal(true)}
                                 className="flex items-center gap-2 bg-[#2f3947] text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#3a4858] transition-colors shadow-sm"
                             >
-                                <Plus className="w-4 h-4" /> Create Document
+                                <Upload className="w-4 h-4" /> Import PDF
                             </button>
                         )}
                     </div>
@@ -307,6 +338,15 @@ const DocumentManagement = () => {
                                                     >
                                                         <Eye className="w-4 h-4" />
                                                     </button>
+                                                    {item.pdfPath && (
+                                                        <button
+                                                            onClick={() => handleDownload(item)}
+                                                            className="p-1.5 rounded-md hover:bg-green-50 text-gray-400 hover:text-green-600 transition-colors"
+                                                            title="Download PDF"
+                                                        >
+                                                            <Download className="w-4 h-4" />
+                                                        </button>
+                                                    )}
                                                     {userRole === 'super admin' && (
                                                         <button
                                                             onClick={() => handleDelete(item)}
@@ -351,6 +391,18 @@ const DocumentManagement = () => {
                         onSuccess={() => { setShowDiplomaUploadModal(false); fetchAll(); }}
                     />
                 )}
+
+                <ConfirmModal
+                    isOpen={confirmConfig !== null}
+                    onClose={() => setConfirmConfig(null)}
+                    onConfirm={confirmConfig?.onConfirm}
+                    title={confirmConfig?.title}
+                    message={confirmConfig?.message}
+                    type={confirmConfig?.type}
+                    confirmText={confirmConfig?.confirmText}
+                    cancelText={confirmConfig?.cancelText}
+                    isLoading={confirmConfig?.isLoading}
+                />
             </div>
         </Layout>
     );

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../../components/Layout';
+import ConfirmModal from '../../components/ConfirmModal';
 import { ChevronRight, UserPlus, ShieldCheck, Briefcase, Save, X, CheckCircle, RefreshCw, AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';
@@ -9,6 +10,28 @@ export default function AddRegistrar() {
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [generatedPassword, setGeneratedPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [confirmConfig, setConfirmConfig] = useState(null);
+
+  const showConfirm = ({ title, message, onConfirm, type = 'info', confirmText = 'Confirm', cancelText = 'Cancel' }) => {
+    setConfirmConfig({
+      title,
+      message,
+      onConfirm: async () => {
+        setConfirmConfig(prev => ({ ...prev, isLoading: true }));
+        try {
+          await onConfirm();
+        } catch (err) {
+          console.error(err);
+        } finally {
+          setConfirmConfig(null);
+        }
+      },
+      type,
+      confirmText,
+      cancelText,
+      isLoading: false
+    });
+  };
 
   // Form state
   const [formData, setFormData] = useState({
@@ -85,7 +108,7 @@ export default function AddRegistrar() {
     return isValid;
   };
 
-  const handleAddRegistrar = async () => {
+  const handleAddRegistrar = () => {
     // Validation
     if (!validateForm()) {
       setToast({ show: true, message: 'Please fix the errors before submitting', type: 'error' });
@@ -93,58 +116,66 @@ export default function AddRegistrar() {
       return;
     }
 
-    setLoading(true);
-    try {
-      console.log('Sending request to /registrars with data:', {
-        name: `${formData.firstName} ${formData.lastName}`,
-        email: formData.email,
-        role: formData.role
-      });
+    showConfirm({
+      title: 'Register Registrar Account',
+      message: `Are you sure you want to register a new ${formData.role} account for ${formData.firstName} ${formData.lastName}?`,
+      type: 'info',
+      confirmText: 'Register',
+      onConfirm: async () => {
+        setLoading(true);
+        try {
+          console.log('Sending request to /registrars with data:', {
+            name: `${formData.firstName} ${formData.lastName}`,
+            email: formData.email,
+            role: formData.role
+          });
 
-      const response = await api.post('/registrars', {
-        name: `${formData.firstName} ${formData.lastName}`,
-        email: formData.email,
-        password: generatedPassword,
-        role: formData.role
-      });
+          const response = await api.post('/registrars', {
+            name: `${formData.firstName} ${formData.lastName}`,
+            email: formData.email,
+            password: generatedPassword,
+            role: formData.role
+          });
 
-      console.log('Response:', response.data);
+          console.log('Response:', response.data);
 
-      setToast({ show: true, message: 'New Registrar added successfully!', type: 'success' });
-      setTimeout(() => {
-        setToast({ show: false, message: '', type: 'success' });
-        navigate('/manage-registrar');
-      }, 2000);
-    } catch (error) {
-      console.error('Error adding registrar:', error);
-      console.error('Error response:', error.response);
-      console.error('Error request:', error.request);
+          setToast({ show: true, message: 'New Registrar added successfully!', type: 'success' });
+          setTimeout(() => {
+            setToast({ show: false, message: '', type: 'success' });
+            navigate('/manage-registrar');
+          }, 2000);
+        } catch (error) {
+          console.error('Error adding registrar:', error);
+          console.error('Error response:', error.response);
+          console.error('Error request:', error.request);
 
-      let errorMessage = 'Failed to add registrar';
+          let errorMessage = 'Failed to add registrar';
 
-      if (error.response) {
-        // Server responded with error
-        errorMessage = error.response.data?.message || errorMessage;
-        if (error.response.status === 404) {
-          errorMessage = 'API endpoint not found. Please restart the backend server.';
-        } else if (error.response.status === 403) {
-          errorMessage = 'Access denied. You must be logged in as a Super Admin.';
-        } else if (error.response.status === 401) {
-          errorMessage = 'Unauthorized. Please log in again.';
+          if (error.response) {
+            // Server responded with error
+            errorMessage = error.response.data?.message || errorMessage;
+            if (error.response.status === 404) {
+              errorMessage = 'API endpoint not found. Please restart the backend server.';
+            } else if (error.response.status === 403) {
+              errorMessage = 'Access denied. You must be logged in as a Super Admin.';
+            } else if (error.response.status === 401) {
+              errorMessage = 'Unauthorized. Please log in again.';
+            }
+          } else if (error.request) {
+            // Request made but no response
+            errorMessage = 'Server is not responding. Please check if the backend is running.';
+          } else {
+            // Something else happened
+            errorMessage = error.message;
+          }
+
+          setToast({ show: true, message: errorMessage, type: 'error' });
+          setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
+        } finally {
+          setLoading(false);
         }
-      } else if (error.request) {
-        // Request made but no response
-        errorMessage = 'Server is not responding. Please check if the backend is running.';
-      } else {
-        // Something else happened
-        errorMessage = error.message;
       }
-
-      setToast({ show: true, message: errorMessage, type: 'error' });
-      setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
-    } finally {
-      setLoading(false);
-    }
+    });
   };
 
   return (
@@ -293,6 +324,18 @@ export default function AddRegistrar() {
           </div>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={confirmConfig !== null}
+        onClose={() => setConfirmConfig(null)}
+        onConfirm={confirmConfig?.onConfirm}
+        title={confirmConfig?.title}
+        message={confirmConfig?.message}
+        type={confirmConfig?.type}
+        confirmText={confirmConfig?.confirmText}
+        cancelText={confirmConfig?.cancelText}
+        isLoading={confirmConfig?.isLoading}
+      />
     </Layout>
   );
 }

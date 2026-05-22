@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../../components/Layout';
+import ConfirmModal from '../../components/ConfirmModal';
 import { ChevronRight, User, Trash2, Edit3, X, CheckCircle, Lock, AlertTriangle, RefreshCw } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../../api';
@@ -23,6 +24,28 @@ export default function RegistrarInformation() {
   const [deleting, setDeleting] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [passwordData, setPasswordData] = useState({ newPassword: '', confirmPassword: '' });
+  const [confirmConfig, setConfirmConfig] = useState(null);
+
+  const showConfirm = ({ title, message, onConfirm, type = 'info', confirmText = 'Confirm', cancelText = 'Cancel' }) => {
+    setConfirmConfig({
+      title,
+      message,
+      onConfirm: async () => {
+        setConfirmConfig(prev => ({ ...prev, isLoading: true }));
+        try {
+          await onConfirm();
+        } catch (err) {
+          console.error(err);
+        } finally {
+          setConfirmConfig(null);
+        }
+      },
+      type,
+      confirmText,
+      cancelText,
+      isLoading: false
+    });
+  };
 
   // Fetch registrar data
   useEffect(() => {
@@ -71,26 +94,34 @@ export default function RegistrarInformation() {
     setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
   };
 
-  const handleUpdateInfo = async () => {
-    setUpdating(true);
-    try {
-      const apiId = registrarId || id; // Use registrarId if available, otherwise use id
-      await api.put(`/registrars/${apiId}`, {
-        name: `${formData.firstName} ${formData.lastName}`,
-        email: formData.email,
-        role: formData.role
-      });
-      triggerToast("Information updated successfully!");
-    } catch (error) {
-      console.error('Error updating registrar:', error);
-      const errorMessage = error.response?.data?.message || 'Failed to update information';
-      triggerToast(errorMessage, 'error');
-    } finally {
-      setUpdating(false);
-    }
+  const handleUpdateInfo = () => {
+    showConfirm({
+      title: 'Update Profile Information',
+      message: `Are you sure you want to save changes for ${formData.firstName} ${formData.lastName}?`,
+      type: 'info',
+      confirmText: 'Save Changes',
+      onConfirm: async () => {
+        setUpdating(true);
+        try {
+          const apiId = registrarId || id; // Use registrarId if available, otherwise use id
+          await api.put(`/registrars/${apiId}`, {
+            name: `${formData.firstName} ${formData.lastName}`,
+            email: formData.email,
+            role: formData.role
+          });
+          triggerToast("Information updated successfully!");
+        } catch (error) {
+          console.error('Error updating registrar:', error);
+          const errorMessage = error.response?.data?.message || 'Failed to update information';
+          triggerToast(errorMessage, 'error');
+        } finally {
+          setUpdating(false);
+        }
+      }
+    });
   };
 
-  const handlePasswordUpdate = async () => {
+  const handlePasswordUpdate = () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       triggerToast("Passwords do not match", 'error');
       return;
@@ -100,37 +131,53 @@ export default function RegistrarInformation() {
       return;
     }
 
-    try {
-      // Note: This would need a backend endpoint for password reset
-      triggerToast("Password update request sent!");
-      setPasswordData({ newPassword: '', confirmPassword: '' });
-    } catch (error) {
-      console.error('Error updating password:', error);
-      triggerToast("Failed to update password", 'error');
-    }
+    showConfirm({
+      title: 'Reset Password',
+      message: `Are you sure you want to reset the password for ${formData.firstName} ${formData.lastName}?`,
+      type: 'warning',
+      confirmText: 'Reset Password',
+      onConfirm: async () => {
+        try {
+          // Note: This would need a backend endpoint for password reset
+          triggerToast("Password update request sent!");
+          setPasswordData({ newPassword: '', confirmPassword: '' });
+        } catch (error) {
+          console.error('Error updating password:', error);
+          triggerToast("Failed to update password", 'error');
+        }
+      }
+    });
   };
 
-  const handleDeleteAccount = async () => {
+  const handleDeleteAccount = () => {
     const consent = document.getElementById('consent')?.checked;
     if (!consent) {
       triggerToast("Please confirm deletion by checking the box", 'error');
       return;
     }
 
-    setDeleting(true);
-    try {
-      const apiId = registrarId || id; // Use registrarId if available, otherwise use id
-      await api.delete(`/registrars/${apiId}`);
-      triggerToast("Account deleted successfully!", 'success');
-      setTimeout(() => {
-        navigate('/manage-registrar');
-      }, 1500);
-    } catch (error) {
-      console.error('Error deleting registrar:', error);
-      const errorMessage = error.response?.data?.message || 'Failed to delete account';
-      triggerToast(errorMessage, 'error');
-      setDeleting(false);
-    }
+    showConfirm({
+      title: 'Delete Registrar Account',
+      message: `CRITICAL: Are you sure you want to permanently delete the registrar account for ${formData.firstName} ${formData.lastName}? This action CANNOT be undone.`,
+      type: 'danger',
+      confirmText: 'Delete Permanently',
+      onConfirm: async () => {
+        setDeleting(true);
+        try {
+          const apiId = registrarId || id; // Use registrarId if available, otherwise use id
+          await api.delete(`/registrars/${apiId}`);
+          triggerToast("Account deleted successfully!", 'success');
+          setTimeout(() => {
+            navigate('/manage-registrar');
+          }, 1500);
+        } catch (error) {
+          console.error('Error deleting registrar:', error);
+          const errorMessage = error.response?.data?.message || 'Failed to delete account';
+          triggerToast(errorMessage, 'error');
+          setDeleting(false);
+        }
+      }
+    });
   };
 
   return (
@@ -283,6 +330,18 @@ export default function RegistrarInformation() {
           </>
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={confirmConfig !== null}
+        onClose={() => setConfirmConfig(null)}
+        onConfirm={confirmConfig?.onConfirm}
+        title={confirmConfig?.title}
+        message={confirmConfig?.message}
+        type={confirmConfig?.type}
+        confirmText={confirmConfig?.confirmText}
+        cancelText={confirmConfig?.cancelText}
+        isLoading={confirmConfig?.isLoading}
+      />
     </Layout>
   );
 }

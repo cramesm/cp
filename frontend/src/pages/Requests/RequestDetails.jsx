@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Info, Plus, CheckCircle2, Circle, Clock, FileText, Send, ShieldCheck, ChevronRight, AlertCircle, FileSearch, Trash2, Printer, ExternalLink, Key, Receipt, QrCode } from 'lucide-react';
 import Layout from '../../components/Layout';
+import ConfirmModal from '../../components/ConfirmModal';
 import api from '../../api';
 import QRCode from 'react-qr-code'; // Assuming react-qr-code is installed or we can just render a placeholder/img if not. We can use a simple generic icon if the library isn't there, but usually it's standard. Wait, to be safe from missing dependencies, I'll use an img tag to a public QR code generator API.
 
@@ -20,6 +21,7 @@ const RequestDetails = () => {
     const [processingStep, setProcessingStep] = useState(1); // 1: Verify, 2: Upload, 3: Secure, 4: Release
     const [uploadedFiles, setUploadedFiles] = useState([]);
     const [rejectionReason, setRejectionReason] = useState('');
+    const [confirmConfig, setConfirmConfig] = useState(null);
     
     // Blockchain Form State (for Step 3)
     const [blockchainData, setBlockchainData] = useState({
@@ -27,6 +29,27 @@ const RequestDetails = () => {
         nameOfSchool: "VeriFitor University",
         yearGraduated: new Date().getFullYear(),
     });
+
+    const showConfirm = ({ title, message, onConfirm, type = 'info', confirmText = 'Confirm', cancelText = 'Cancel' }) => {
+        setConfirmConfig({
+            title,
+            message,
+            onConfirm: async () => {
+                setConfirmConfig(prev => ({ ...prev, isLoading: true }));
+                try {
+                    await onConfirm();
+                } catch (err) {
+                    console.error(err);
+                } finally {
+                    setConfirmConfig(null);
+                }
+            },
+            type,
+            confirmText,
+            cancelText,
+            isLoading: false
+        });
+    };
 
     const handlePrint = () => {
         window.print();
@@ -186,45 +209,50 @@ const RequestDetails = () => {
 
     const isPaymentCleared = !paymentTx || paymentTx.status === 'Completed';
 
+    const userRole = localStorage.getItem('userRole');
+    const isSuperAdmin = userRole === 'super admin';
+
     return (
         <Layout>
             <div className="p-8 bg-[#f8fafc] min-h-screen">
                 
                 {/* Print Only: Verification Slip */}
-                <div className="hidden print:block mb-8">
-                    <div className="border-2 border-black p-8 rounded-xl bg-white max-w-3xl mx-auto">
-                        <div className="flex justify-between items-center border-b-2 border-black pb-6 mb-6">
-                            <div>
-                                <h1 className="text-3xl font-black uppercase tracking-tight">VeriFitor</h1>
-                                <p className="text-sm font-bold tracking-widest uppercase">Official Verification Slip</p>
+                {isBlockchainEligible && (
+                    <div className="hidden print:block mb-8">
+                        <div className="border-2 border-black p-8 rounded-xl bg-white max-w-3xl mx-auto">
+                            <div className="flex justify-between items-center border-b-2 border-black pb-6 mb-6">
+                                <div>
+                                    <h1 className="text-3xl font-black uppercase tracking-tight">VeriFitor</h1>
+                                    <p className="text-sm font-bold tracking-widest uppercase">Official Verification Slip</p>
+                                </div>
+                                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${documentHash || id}`} alt="QR Code" className="w-24 h-24" />
                             </div>
-                            <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${documentHash || id}`} alt="QR Code" className="w-24 h-24" />
+                            <div className="grid grid-cols-2 gap-8 mb-6">
+                                <div>
+                                    <p className="text-xs font-bold uppercase text-gray-500">Document Issued</p>
+                                    <p className="text-xl font-bold">{docTypeRaw}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold uppercase text-gray-500">Issued To</p>
+                                    <p className="text-xl font-bold">{name}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold uppercase text-gray-500">Request ID</p>
+                                    <p className="font-mono">{id}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold uppercase text-gray-500">Date Issued</p>
+                                    <p className="font-mono">{new Date().toLocaleDateString()}</p>
+                                </div>
+                            </div>
+                            <div className="bg-gray-100 p-4 rounded text-center break-all">
+                                <p className="text-[10px] font-bold uppercase text-gray-500 mb-1">Cryptographic Hash</p>
+                                <p className="font-mono text-sm">{documentHash || 'Hash will be generated upon release'}</p>
+                            </div>
+                            <p className="text-xs text-center mt-6 italic">Attach this slip to the physical document. Scan the QR code to verify authenticity online.</p>
                         </div>
-                        <div className="grid grid-cols-2 gap-8 mb-6">
-                            <div>
-                                <p className="text-xs font-bold uppercase text-gray-500">Document Issued</p>
-                                <p className="text-xl font-bold">{docTypeRaw}</p>
-                            </div>
-                            <div>
-                                <p className="text-xs font-bold uppercase text-gray-500">Issued To</p>
-                                <p className="text-xl font-bold">{name}</p>
-                            </div>
-                            <div>
-                                <p className="text-xs font-bold uppercase text-gray-500">Request ID</p>
-                                <p className="font-mono">{id}</p>
-                            </div>
-                            <div>
-                                <p className="text-xs font-bold uppercase text-gray-500">Date Issued</p>
-                                <p className="font-mono">{new Date().toLocaleDateString()}</p>
-                            </div>
-                        </div>
-                        <div className="bg-gray-100 p-4 rounded text-center break-all">
-                            <p className="text-[10px] font-bold uppercase text-gray-500 mb-1">Cryptographic Hash</p>
-                            <p className="font-mono text-sm">{documentHash || 'Hash will be generated upon release'}</p>
-                        </div>
-                        <p className="text-xs text-center mt-6 italic">Attach this slip to the physical document. Scan the QR code to verify authenticity online.</p>
                     </div>
-                </div>
+                )}
 
                 {/* Header (No Print) */}
                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-100 print:hidden">
@@ -241,14 +269,16 @@ const RequestDetails = () => {
                         </p>
                     </div>
                     
-                    <div className="flex items-center gap-3">
-                        <button 
-                            className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-xl transition-all text-sm font-medium border border-slate-200"
-                            onClick={handlePrint}
-                        >
-                            <Printer size={16} /> Print Slip
-                        </button>
-                    </div>
+                    {isBlockchainEligible && (
+                        <div className="flex items-center gap-3">
+                            <button 
+                                className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-xl transition-all text-sm font-medium border border-slate-200"
+                                onClick={handlePrint}
+                            >
+                                <Printer size={16} /> Print Slip
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Progress Stepper */}
@@ -431,6 +461,70 @@ const RequestDetails = () => {
                                 </div>
                             )}
                         </section>
+
+                        {isSuperAdmin && (
+                            <section className="bg-white p-6 rounded-2xl shadow-sm border border-red-100 bg-red-50/5">
+                                <h3 className="text-xs font-bold text-red-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                    <Key size={14}/> Super Admin Panel
+                                </h3>
+                                <p className="text-slate-500 text-xs mb-4">
+                                    Manipulate request status directly. Reverting the status will reset processing steps.
+                                </p>
+                                <div className="space-y-3">
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Set Status</label>
+                                        <select 
+                                            value={status}
+                                            onChange={(e) => {
+                                                const newStatus = e.target.value;
+                                                showConfirm({
+                                                    title: 'Override Request Status',
+                                                    message: `Are you sure you want to change the status of this request to "${newStatus}"? This will bypass standard validation steps.`,
+                                                    type: 'warning',
+                                                    confirmText: 'Override Status',
+                                                    onConfirm: () => handleStatusUpdate(newStatus)
+                                                });
+                                            }}
+                                            className="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm font-semibold text-slate-700 focus:border-red-500 outline-none shadow-sm"
+                                        >
+                                            <option value="Pending">Pending (Received)</option>
+                                            <option value="In Process">In Process (Processing)</option>
+                                            <option value="Approved">Approved (Secured)</option>
+                                            <option value="Released">Released (Released)</option>
+                                            <option value="Rejected">Rejected</option>
+                                        </select>
+                                    </div>
+                                    
+                                    {documentHash && (
+                                        <button
+                                            className="w-full py-2.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 border border-red-200"
+                                            onClick={() => {
+                                                showConfirm({
+                                                    title: 'Clear Cryptographic Hash',
+                                                    message: 'Are you sure you want to clear the generated cryptographic hash? This is a high-risk action that will invalidate online checks.',
+                                                    type: 'danger',
+                                                    confirmText: 'Clear Hash',
+                                                    onConfirm: async () => {
+                                                        setActionLoading(true);
+                                                        try {
+                                                            await api.put(`/requests/${id}`, { documentHash: "" });
+                                                            await fetchData();
+                                                        } catch (err) {
+                                                            alert("Failed to clear hash.");
+                                                        } finally {
+                                                            setActionLoading(false);
+                                                        }
+                                                    }
+                                                });
+                                            }}
+                                            disabled={actionLoading}
+                                        >
+                                            Clear Cryptographic Hash
+                                        </button>
+                                    )}
+                                </div>
+                            </section>
+                        )}
                     </div>
                 </div>
 
@@ -454,14 +548,30 @@ const RequestDetails = () => {
                             <div className="flex gap-3">
                                 <button 
                                     className="flex-[1] py-4 text-red-500 border border-red-200 font-bold text-sm hover:bg-red-50 rounded-2xl transition-all" 
-                                    onClick={() => handleVerifyPayment('Needs Update')}
+                                    onClick={() => {
+                                        showConfirm({
+                                            title: 'Reject Payment Receipt',
+                                            message: 'Are you sure you want to reject this payment receipt? The student will be prompted to upload a new receipt.',
+                                            type: 'danger',
+                                            confirmText: 'Reject Receipt',
+                                            onConfirm: () => handleVerifyPayment('Needs Update')
+                                        });
+                                    }}
                                     disabled={actionLoading}
                                 >
                                     Reject
                                 </button>
                                 <button 
                                     className="flex-[2] bg-green-600 text-white py-4 rounded-2xl font-bold text-sm hover:bg-green-700 transition-all shadow-lg shadow-green-100" 
-                                    onClick={() => handleVerifyPayment('Completed')}
+                                    onClick={() => {
+                                        showConfirm({
+                                            title: 'Approve Payment Receipt',
+                                            message: 'Are you sure you want to approve this payment receipt? This will unlock the processing steps for this request.',
+                                            type: 'success',
+                                            confirmText: 'Approve & Unlock',
+                                            onConfirm: () => handleVerifyPayment('Completed')
+                                        });
+                                    }}
                                     disabled={actionLoading}
                                 >
                                     Approve & Unlock
@@ -519,9 +629,19 @@ const RequestDetails = () => {
                                             className="flex-[2] bg-blue-600 text-white py-4 rounded-2xl font-bold text-sm hover:bg-blue-700 transition-all shadow-lg shadow-blue-100" 
                                             onClick={async () => {
                                                 if (status === 'Pending') {
-                                                    await handleStatusUpdate('In Process');
+                                                    showConfirm({
+                                                        title: 'Start Processing Request',
+                                                        message: 'Are you sure you want to start processing this request? This will mark the status as "In Process" and notify the student.',
+                                                        type: 'info',
+                                                        confirmText: 'Start Processing',
+                                                        onConfirm: async () => {
+                                                            await handleStatusUpdate('In Process');
+                                                            setProcessingStep(2);
+                                                        }
+                                                    });
+                                                } else {
+                                                    setProcessingStep(2);
                                                 }
-                                                setProcessingStep(2);
                                             }}
                                             disabled={actionLoading}
                                         >
@@ -653,7 +773,17 @@ const RequestDetails = () => {
                                         <button className="flex-1 py-4 text-slate-400 font-bold text-sm hover:bg-slate-50 rounded-2xl transition-all" onClick={() => setProcessingStep(2)}>Back</button>
                                         <button 
                                             className="flex-[2] bg-[#2c3e50] text-white py-4 rounded-2xl font-bold text-sm hover:bg-[#1a252f] transition-all shadow-lg shadow-slate-200 disabled:opacity-50" 
-                                            onClick={handleSecureDocument}
+                                            onClick={() => {
+                                                showConfirm({
+                                                    title: isBlockchainEligible ? 'Record to Blockchain' : 'Generate Cryptographic Hash',
+                                                    message: isBlockchainEligible 
+                                                        ? 'Are you sure you want to record this document payload to the blockchain? This action is immutable.'
+                                                        : 'Are you sure you want to generate a cryptographic hash for this document?',
+                                                    type: isBlockchainEligible ? 'warning' : 'info',
+                                                    confirmText: isBlockchainEligible ? 'Record & Secure' : 'Generate Hash',
+                                                    onConfirm: handleSecureDocument
+                                                });
+                                            }}
                                             disabled={actionLoading || (isBlockchainEligible && (!blockchainData.studentSONumber || !blockchainData.yearGraduated || !blockchainData.nameOfSchool))}
                                         >
                                             {actionLoading ? 'Securing...' : isBlockchainEligible ? 'Record to Blockchain' : 'Generate Local Hash'}
@@ -669,25 +799,39 @@ const RequestDetails = () => {
                                         <Send size={40} />
                                     </div>
                                     <h3 className="text-2xl font-bold mb-2 text-slate-800">Ready for Release</h3>
-                                    <p className="text-slate-500 text-sm mb-6">The document is secured. You can now generate the Verification Slip and release it.</p>
+                                    <p className="text-slate-500 text-sm mb-6">
+                                        {isBlockchainEligible 
+                                            ? "The document is secured. You can now generate the Verification Slip and release it."
+                                            : "The document has been successfully processed and is ready for release."}
+                                    </p>
                                     
-                                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-8 flex justify-between items-center text-left">
-                                        <div>
-                                            <p className="text-xs font-bold text-slate-500 uppercase">Action</p>
-                                            <p className="font-bold text-slate-800">Print Verification Slip</p>
+                                    {isBlockchainEligible && (
+                                        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-8 flex justify-between items-center text-left">
+                                            <div>
+                                                <p className="text-xs font-bold text-slate-500 uppercase">Action</p>
+                                                <p className="font-bold text-slate-800">Print Verification Slip</p>
+                                            </div>
+                                            <button 
+                                                onClick={handlePrint}
+                                                className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-100 flex items-center gap-2"
+                                            >
+                                                <Printer size={16}/> Print Now
+                                            </button>
                                         </div>
-                                        <button 
-                                            onClick={handlePrint}
-                                            className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-100 flex items-center gap-2"
-                                        >
-                                            <Printer size={16}/> Print Now
-                                        </button>
-                                    </div>
+                                    )}
 
                                     <div className="flex gap-3">
                                         <button 
                                             className="w-full bg-green-600 text-white py-4 rounded-2xl font-bold text-sm hover:bg-green-700 transition-all shadow-lg shadow-green-100" 
-                                            onClick={handleRelease}
+                                            onClick={() => {
+                                                showConfirm({
+                                                    title: 'Release Document',
+                                                    message: 'Are you sure you want to finalize and release this document to the student?',
+                                                    type: 'success',
+                                                    confirmText: 'Finalize & Release',
+                                                    onConfirm: handleRelease
+                                                });
+                                            }}
                                             disabled={actionLoading}
                                         >
                                             {actionLoading ? 'Releasing...' : 'Finalize & Release'}
@@ -729,6 +873,18 @@ const RequestDetails = () => {
                         </div>
                     </div>
                 )}
+
+                <ConfirmModal
+                    isOpen={confirmConfig !== null}
+                    onClose={() => setConfirmConfig(null)}
+                    onConfirm={confirmConfig?.onConfirm}
+                    title={confirmConfig?.title}
+                    message={confirmConfig?.message}
+                    type={confirmConfig?.type}
+                    confirmText={confirmConfig?.confirmText}
+                    cancelText={confirmConfig?.cancelText}
+                    isLoading={confirmConfig?.isLoading}
+                />
             </div>
         </Layout>
     );

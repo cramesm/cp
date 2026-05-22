@@ -42,6 +42,10 @@ export const CreateDocumentModal = ({ activeTab, prefillData, onClose, onSuccess
             setError('Please fill in all required fields');
             return;
         }
+        if (!pdfFile) {
+            setError('Please upload a PDF file');
+            return;
+        }
         setSubmitting(true);
         setError('');
         try {
@@ -55,7 +59,7 @@ export const CreateDocumentModal = ({ activeTab, prefillData, onClose, onSuccess
             formData.append('purpose', purpose);
             formData.append('notes', notes);
             if (linkedRequestId) formData.append('linkedRequestId', linkedRequestId);
-            if (pdfFile) formData.append('pdfFile', pdfFile);
+            formData.append('pdfFile', pdfFile);
 
             await api.post('/documents', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
@@ -72,7 +76,7 @@ export const CreateDocumentModal = ({ activeTab, prefillData, onClose, onSuccess
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[2000] flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
                 <div className="flex items-center justify-between p-6 border-b border-gray-100">
-                    <h2 className="text-lg font-bold text-gray-800">Create Document</h2>
+                    <h2 className="text-lg font-bold text-gray-800">Import Document PDF</h2>
                     <button onClick={onClose} className="p-1 rounded-lg hover:bg-gray-100 transition-colors">
                         <X className="w-5 h-5 text-gray-400" />
                     </button>
@@ -145,7 +149,7 @@ export const CreateDocumentModal = ({ activeTab, prefillData, onClose, onSuccess
 
                     {/* PDF Upload */}
                     <div>
-                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Upload PDF</label>
+                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Document PDF *</label>
                         <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center hover:border-[#6f8faa] transition-colors cursor-pointer"
                             onClick={() => document.getElementById('docPdfInput').click()}>
                             <input type="file" id="docPdfInput" accept=".pdf" className="hidden"
@@ -179,7 +183,7 @@ export const CreateDocumentModal = ({ activeTab, prefillData, onClose, onSuccess
                         </button>
                         <button type="submit" disabled={submitting}
                             className="flex-[2] py-2.5 rounded-lg bg-[#2f3947] text-white text-sm font-medium hover:bg-[#3a4858] transition-colors disabled:opacity-50">
-                            {submitting ? 'Creating...' : 'Create Document'}
+                            {submitting ? 'Importing...' : 'Import Document'}
                         </button>
                     </div>
                 </form>

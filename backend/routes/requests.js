@@ -80,10 +80,11 @@ router.get('/', async (req, res) => {
 // Update a request (Logged)
 router.put('/:id', protect, async (req, res) => {
     try {
-        const { status, name } = req.body;
+        const { status, name, documentHash } = req.body;
         const updateData = {};
         if (status) updateData.status = status;
         if (name) updateData.name = name;
+        if (documentHash !== undefined) updateData.documentHash = documentHash;
 
         const request = await Request.findOneAndUpdate(
             { requestId: req.params.id },

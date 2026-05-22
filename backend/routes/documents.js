@@ -144,6 +144,36 @@ router.put('/:id', protect, registrarOrSuperAdmin, upload.single('pdfFile'), asy
   }
 });
 
+// @route   POST /api/documents/:id/finalize
+// @desc    Finalize a document (Document Management only — no hash/blockchain)
+router.post('/:id/finalize', protect, registrarOrSuperAdmin, async (req, res) => {
+  try {
+    const doc = await Document.findOne({ documentId: req.params.id });
+    if (!doc) return res.status(404).json({ message: 'Document not found' });
+
+    if (doc.status !== 'Draft') {
+      return res.status(400).json({ message: 'Only documents in Draft status can be finalized' });
+    }
+
+    doc.status = 'Finalized';
+    await doc.save();
+
+    await ActivityLog.create({
+      userEmail: req.user.email,
+      userName: req.user.name || 'User',
+      action: 'Finalize Document',
+      type: doc.documentType,
+      status: 'Successful',
+      details: `Finalized ${doc.documentType} for ${doc.studentName} (${doc.documentId})`
+    });
+
+    res.json(doc);
+  } catch (error) {
+    console.error('Error finalizing document:', error);
+    res.status(500).json({ message: 'Error finalizing document' });
+  }
+});
+
 // @route   POST /api/documents/:id/generate-hash
 // @desc    Generate SHA-256 hash for a document
 router.post('/:id/generate-hash', protect, registrarOrSuperAdmin, async (req, res) => {
