@@ -141,7 +141,7 @@ const RequestDetails = () => {
         setActiveModal('process');
         const s = requestData?.status?.toLowerCase();
         if (s === 'pending') setProcessingStep(1);
-        else if (s === 'in process') setProcessingStep(3);
+        else if (s === 'in process') setProcessingStep(2);
         else if (s === 'approved') setProcessingStep(4);
     };
 
@@ -166,14 +166,22 @@ const RequestDetails = () => {
     const docTypeRaw = documentType || document_type || 'Transcript of Records';
     const isBlockchainEligible = docTypeRaw.toLowerCase().includes('transcript') || docTypeRaw.toLowerCase().includes('tor') || docTypeRaw.toLowerCase().includes('diploma');
 
-    const steps = [
+    const baseSteps = [
         { id: 'Pending', label: 'Received', icon: Clock },
-        { id: 'In Process', label: 'Processing', icon: FileSearch },
-        { id: 'Approved', label: 'Secured', icon: ShieldCheck },
-        { id: 'Released', label: 'Released', icon: Send }
+        { id: 'In Process', label: 'Processing', icon: FileSearch }
     ];
+    
+    if (isBlockchainEligible) {
+        baseSteps.push({ id: 'Approved', label: 'Secured', icon: ShieldCheck });
+    }
+    
+    baseSteps.push({ id: 'Released', label: 'Released', icon: Send });
+    const steps = baseSteps;
 
-    const currentStepIndex = steps.findIndex(s => s.id.toLowerCase() === status.toLowerCase());
+    let currentStepIndex = steps.findIndex(s => s.id.toLowerCase() === status.toLowerCase());
+    if (currentStepIndex === -1) {
+        currentStepIndex = 1; // Fallback to Processing if status mismatches
+    }
     const isRejected = status.toLowerCase() === 'rejected';
 
     const isPaymentCleared = !paymentTx || paymentTx.status === 'Completed';
@@ -471,19 +479,19 @@ const RequestDetails = () => {
                             
                             {/* Wizard Header */}
                             <div className="flex items-center justify-between mb-10 px-4">
-                                {[1, 2, 3, 4].map((s, idx) => (
+                                {(isBlockchainEligible ? [1, 2, 3, 4] : [1, 2, 4]).map((s, idx, arr) => (
                                     <React.Fragment key={s}>
                                         <div className={`flex flex-col items-center gap-2 relative`}>
                                             <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-black transition-all ${
                                                 processingStep >= s ? 'bg-blue-600 text-white shadow-lg shadow-blue-100' : 'bg-slate-100 text-slate-400'
                                             }`}>
-                                                {processingStep > s ? <CheckCircle2 size={20} /> : s}
+                                                {processingStep > s ? <CheckCircle2 size={20} /> : (idx + 1)}
                                             </div>
                                             <span className={`text-[10px] font-bold uppercase tracking-widest ${processingStep >= s ? 'text-blue-600' : 'text-slate-300'}`}>
                                                 {s === 1 ? 'Verify' : s === 2 ? 'Upload' : s === 3 ? 'Secure' : 'Release'}
                                             </span>
                                         </div>
-                                        {s < 4 && <div className={`flex-1 h-[2px] mx-2 ${processingStep > s ? 'bg-blue-600' : 'bg-slate-100'}`}></div>}
+                                        {idx < arr.length - 1 && <div className={`flex-1 h-[2px] mx-2 ${processingStep > s ? 'bg-blue-600' : 'bg-slate-100'}`}></div>}
                                     </React.Fragment>
                                 ))}
                             </div>
@@ -553,9 +561,25 @@ const RequestDetails = () => {
                                         <button className="flex-1 py-4 text-slate-400 font-bold text-sm hover:bg-slate-50 rounded-2xl transition-all" onClick={() => setProcessingStep(1)}>Back</button>
                                         <button 
                                             className="flex-[2] bg-blue-600 text-white py-4 rounded-2xl font-bold text-sm hover:bg-blue-700 transition-all shadow-lg shadow-blue-100" 
-                                            onClick={() => setProcessingStep(3)}
+                                            onClick={async () => {
+                                                if (!isBlockchainEligible) {
+                                                    setActionLoading(true);
+                                                    try {
+                                                        await api.post(`/requests/${id}/generate-hash`);
+                                                        await fetchData();
+                                                        setProcessingStep(4);
+                                                    } catch (err) {
+                                                        alert('Failed to generate hash.');
+                                                    } finally {
+                                                        setActionLoading(false);
+                                                    }
+                                                } else {
+                                                    setProcessingStep(3);
+                                                }
+                                            }}
+                                            disabled={actionLoading}
                                         >
-                                            Continue
+                                            {actionLoading ? 'Processing...' : 'Continue'}
                                         </button>
                                     </div>
                                 </div>
