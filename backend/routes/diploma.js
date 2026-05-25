@@ -169,7 +169,8 @@ router.post('/:id/generate', protect, registrarOrSuperAdmin, async (req, res) =>
         const pdfFilename = `${diploma.diplomaId}-${diploma.studentId}.pdf`;
         const pdfPath = path.join(pdfDir, pdfFilename);
 
-        await generateDiplomaPdf(diploma, pdfPath);
+        const frontendUrl = req.get('origin') || process.env.FRONTEND_URL || 'http://localhost:5173';
+        await generateDiplomaPdf(diploma, pdfPath, frontendUrl);
 
         diploma.pdfPath = pdfFilename;
         diploma.status = 'Finalized';
@@ -242,8 +243,8 @@ router.delete('/:id', protect, superAdminOnly, async (req, res) => {
 // ============================================================
 // PDF Generation Helper
 // ============================================================
-async function generateDiplomaPdf(diploma, outputPath) {
-    const qrUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify/results?hash=${diploma.diplomaId}`;
+async function generateDiplomaPdf(diploma, outputPath, frontendUrl) {
+    const qrUrl = `${frontendUrl}/verify/results?hash=${diploma.diplomaId}`;
     const qrDataUri = await qrcode.toDataURL(qrUrl, { width: 100, margin: 1 });
 
     return new Promise((resolve, reject) => {

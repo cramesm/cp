@@ -200,7 +200,8 @@ router.post('/:id/generate', protect, registrarOrSuperAdmin, async (req, res) =>
         const pdfFilename = `${tor.torId}-${tor.studentId}.pdf`;
         const pdfPath = path.join(pdfDir, pdfFilename);
 
-        await generateTORPdf(tor, pdfPath);
+        const frontendUrl = req.get('origin') || process.env.FRONTEND_URL || 'http://localhost:5173';
+        await generateTORPdf(tor, pdfPath, frontendUrl);
 
         tor.pdfPath = pdfFilename;
         tor.status = 'Finalized';
@@ -273,8 +274,8 @@ router.delete('/:id', protect, superAdminOnly, async (req, res) => {
 // ============================================================
 // PDF Generation Helper
 // ============================================================
-async function generateTORPdf(tor, outputPath) {
-    const qrUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify/results?hash=${tor.torId}`;
+async function generateTORPdf(tor, outputPath, frontendUrl) {
+    const qrUrl = `${frontendUrl}/verify/results?hash=${tor.torId}`;
     const qrDataUri = await qrcode.toDataURL(qrUrl, { width: 100, margin: 1 });
 
     return new Promise((resolve, reject) => {

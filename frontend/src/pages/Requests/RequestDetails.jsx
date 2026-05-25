@@ -55,9 +55,7 @@ const RequestDetails = () => {
         });
     };
 
-    const handlePrint = () => {
-        window.print();
-    };
+
 
     const fetchData = async () => {
         try {
@@ -288,43 +286,7 @@ const RequestDetails = () => {
         <Layout>
             <div className="p-8 bg-[#f8fafc] min-h-screen">
 
-                {/* Print Only: Verification Slip */}
-                {isBlockchainEligible && (
-                    <div className="hidden print:block mb-8">
-                        <div className="border-2 border-black p-8 rounded-xl bg-white max-w-3xl mx-auto">
-                            <div className="flex justify-between items-center border-b-2 border-black pb-6 mb-6">
-                                <div>
-                                    <h1 className="text-3xl font-black uppercase tracking-tight">VeriFitor</h1>
-                                    <p className="text-sm font-bold tracking-widest uppercase">Official Verification Slip</p>
-                                </div>
-                                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${documentHash || id}`} alt="QR Code" className="w-24 h-24" />
-                            </div>
-                            <div className="grid grid-cols-2 gap-8 mb-6">
-                                <div>
-                                    <p className="text-xs font-bold uppercase text-gray-500">Document Issued</p>
-                                    <p className="text-xl font-bold">{docTypeRaw}</p>
-                                </div>
-                                <div>
-                                    <p className="text-xs font-bold uppercase text-gray-500">Issued To</p>
-                                    <p className="text-xl font-bold">{name}</p>
-                                </div>
-                                <div>
-                                    <p className="text-xs font-bold uppercase text-gray-500">Request ID</p>
-                                    <p className="font-mono">{id}</p>
-                                </div>
-                                <div>
-                                    <p className="text-xs font-bold uppercase text-gray-500">Date Issued</p>
-                                    <p className="font-mono">{new Date().toLocaleDateString()}</p>
-                                </div>
-                            </div>
-                            <div className="bg-gray-100 p-4 rounded text-center break-all">
-                                <p className="text-[10px] font-bold uppercase text-gray-500 mb-1">Cryptographic Hash</p>
-                                <p className="font-mono text-sm">{documentHash || 'Hash will be generated upon release'}</p>
-                            </div>
-                            <p className="text-xs text-center mt-6 italic">Attach this slip to the physical document. Scan the QR code to verify authenticity online.</p>
-                        </div>
-                    </div>
-                )}
+
 
                 {/* Header (No Print) */}
                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-100 print:hidden">
@@ -341,16 +303,7 @@ const RequestDetails = () => {
                         </p>
                     </div>
 
-                    {isBlockchainEligible && (
-                        <div className="flex items-center gap-3">
-                            <button
-                                className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-xl transition-all text-sm font-medium border border-slate-200"
-                                onClick={handlePrint}
-                            >
-                                <Printer size={16} /> Print Slip
-                            </button>
-                        </div>
-                    )}
+
                 </div>
 
                 {/* Progress Stepper */}
@@ -892,26 +845,9 @@ const RequestDetails = () => {
                                         <Send size={40} />
                                     </div>
                                     <h3 className="text-2xl font-bold mb-2 text-slate-800">Ready for Release</h3>
-                                    <p className="text-slate-500 text-sm mb-6">
-                                        {isBlockchainEligible
-                                            ? "The document is secured. You can now generate the Verification Slip and release it."
-                                            : "The document has been successfully processed and is ready for release."}
+                                    <p className="text-slate-500 text-sm mb-8">
+                                        The document has been successfully processed and is ready for release.
                                     </p>
-
-                                    {isBlockchainEligible && (
-                                        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-8 flex justify-between items-center text-left">
-                                            <div>
-                                                <p className="text-xs font-bold text-slate-500 uppercase">Action</p>
-                                                <p className="font-bold text-slate-800">Print Verification Slip</p>
-                                            </div>
-                                            <button
-                                                onClick={handlePrint}
-                                                className="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-100 flex items-center gap-2"
-                                            >
-                                                <Printer size={16} /> Print Now
-                                            </button>
-                                        </div>
-                                    )}
 
                                     <div className="flex gap-3">
                                         <button

@@ -108,8 +108,12 @@ router.put('/:id', protect, async (req, res) => {
         if (status) {
             try {
                 const Notification = require('../models/Notification');
+                let message = `Your request #${request.requestId} for ${request.documentType} is now ${status}!`;
+                if (status === 'Released') {
+                    message = `Your request #${request.requestId} for ${request.documentType} is ready for pickup!`;
+                }
                 await Notification.create({
-                    message: `Your request #${request.requestId} for ${request.documentType} is now ${status}!`,
+                    message,
                     isRead: false
                 });
             } catch (err) {
