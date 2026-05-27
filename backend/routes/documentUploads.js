@@ -11,20 +11,8 @@ const Request = require('../models/Request');
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 
-// Configure multer
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const uploadPath = path.join(__dirname, '..', 'uploads', 'documents');
-        if (!fs.existsSync(uploadPath)) {
-            fs.mkdirSync(uploadPath, { recursive: true });
-        }
-        cb(null, uploadPath);
-    },
-    filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-        cb(null, uniqueSuffix + '-' + file.originalname);
-    }
-});
+// Configure multer for memory storage (Serverless/Vercel compatible)
+const storage = multer.memoryStorage();
 
 const upload = multer({
     storage: storage,
@@ -34,7 +22,8 @@ const upload = multer({
         } else {
             cb(new Error('Only PDF files are allowed'), false);
         }
-    }
+    },
+    limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 });
 
 router.post('/:id/upload', protect, upload.single('document'), async (req, res) => {
@@ -47,14 +36,13 @@ router.post('/:id/upload', protect, upload.single('document'), async (req, res) 
         const request = await Request.findOne({ requestId: requestId });
 
         if (!request) {
-            fs.unlinkSync(req.file.path);
             return res.status(404).json({ message: 'Request not found' });
         }
 
         const docType = (request.documentType || request.document_type || '').toLowerCase();
         const isBlockchainEligible = docType.includes('transcript') || docType.includes('tor') || docType.includes('diploma');
 
-        let finalPath = `/uploads/documents/${req.file.filename}`;
+        let finalBase64String = `data:application/pdf;base64,${req.file.buffer.toString('base64')}`;
         let documentHash = request.documentHash;
 
         if (isBlockchainEligible) {
@@ -74,8 +62,8 @@ router.post('/:id/upload', protect, upload.single('document'), async (req, res) 
                 width: 150
             });
 
-            // Read the uploaded PDF
-            const existingPdfBytes = fs.readFileSync(req.file.path);
+            // Read the uploaded PDF from memory buffer
+            const existingPdfBytes = req.file.buffer;
             const pdfDoc = await PDFDocument.load(existingPdfBytes);
 
             // Embed QR Code
@@ -96,25 +84,19 @@ router.post('/:id/upload', protect, upload.single('document'), async (req, res) 
                 height: qrDims.height,
             });
 
-            // Save modified PDF
+            // Save modified PDF back to buffer
             const modifiedPdfBytes = await pdfDoc.save();
-            const newFilename = `qr-${req.file.filename}`;
-            const newFilePath = path.join(__dirname, '..', 'uploads', 'documents', newFilename);
             
-            fs.writeFileSync(newFilePath, modifiedPdfBytes);
-            
-            // Delete original file
-            fs.unlinkSync(req.file.path);
-
-            finalPath = `/uploads/documents/${newFilename}`;
+            // Convert to Base64 data URI
+            finalBase64String = `data:application/pdf;base64,${Buffer.from(modifiedPdfBytes).toString('base64')}`;
         }
 
-        request.documentFile = finalPath; // assuming we want to save the path
+        request.documentFile = finalBase64String;
         await request.save();
 
         res.json({
             message: 'Document uploaded and processed successfully',
-            documentFile: finalPath,
+            documentFile: finalBase64String,
             documentHash: documentHash,
             isBlockchainEligible
         });

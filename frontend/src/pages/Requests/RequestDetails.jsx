@@ -564,7 +564,8 @@ const RequestDetails = () => {
                                         <div className="flex gap-4 justify-center">
                                             {requestData.documentFile && (
                                                 <a
-                                                    href={`${API_BASE}${requestData.documentFile}`}
+                                                    href={requestData.documentFile.startsWith('data:') ? requestData.documentFile : `${API_BASE}${requestData.documentFile}`}
+                                                    download={requestData.documentFile.startsWith('data:') ? `document-${requestData.requestId}.pdf` : undefined}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="bg-blue-600 text-white px-8 py-4 rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg flex items-center gap-2"

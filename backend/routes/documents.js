@@ -10,16 +10,8 @@ const Transaction = require('../models/Transaction');
 const blockchainService = require('../services/blockchainService');
 const { protect, superAdminOnly, registrarOrSuperAdmin } = require('../middleware/authMiddleware');
 
-// Configure multer for PDF uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, '../uploads/documents'));
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'DOC-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
+// Configure multer for memory storage
+const storage = multer.memoryStorage();
 
 const upload = multer({
   storage,
@@ -72,7 +64,7 @@ router.post('/', protect, registrarOrSuperAdmin, upload.single('pdfFile'), async
     }
 
     const documentId = 'DOC-' + Date.now();
-    const pdfPath = req.file ? req.file.filename : '';
+    const pdfPath = req.file ? `data:application/pdf;base64,${req.file.buffer.toString('base64')}` : '';
 
     const newDoc = await Document.create({
       documentId,
@@ -123,7 +115,7 @@ router.put('/:id', protect, registrarOrSuperAdmin, upload.single('pdfFile'), asy
     if (course !== undefined) doc.course = course;
     if (yearLevel !== undefined) doc.yearLevel = yearLevel;
     if (purpose !== undefined) doc.purpose = purpose;
-    if (req.file) doc.pdfPath = req.file.filename;
+    if (req.file) doc.pdfPath = `data:application/pdf;base64,${req.file.buffer.toString('base64')}`;
 
     await doc.save();
 
@@ -304,8 +296,17 @@ router.get('/:id/download', protect, registrarOrSuperAdmin, async (req, res) => 
       return res.status(404).json({ message: 'PDF not found for this document' });
     }
 
-    const filePath = path.join(__dirname, '../uploads/documents', doc.pdfPath);
-    res.download(filePath, `${doc.documentType}-${doc.studentName}.pdf`);
+    if (doc.pdfPath.startsWith('data:application/pdf;base64,')) {
+      const base64Data = doc.pdfPath.replace('data:application/pdf;base64,', '');
+      const pdfBuffer = Buffer.from(base64Data, 'base64');
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${doc.documentType}-${doc.studentName}.pdf"`);
+      res.send(pdfBuffer);
+    } else {
+      const filePath = path.join(__dirname, '../uploads/documents', doc.pdfPath);
+      res.download(filePath, `${doc.documentType}-${doc.studentName}.pdf`);
+    }
   } catch (error) {
     res.status(500).json({ message: 'Error downloading document' });
   }
