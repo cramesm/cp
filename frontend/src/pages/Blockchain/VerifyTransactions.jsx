@@ -5,7 +5,7 @@ import { CheckCircle, AlertCircle, Copy } from 'lucide-react';
 import { useNavigate } from "react-router-dom";
 
 function VerifyTransaction() {
-    const [studentSONumber, setStudentSONumber] = useState("");
+    const [studentIDNumber, setStudentIDNumber] = useState("");
     const [result, setResult] = useState(null);
     const [toast, setToast] = useState({ show: false, message: '', type: 'info' });
     const [loading, setLoading] = useState(false);
@@ -22,7 +22,7 @@ function VerifyTransaction() {
 
         try {
             const response = await API.get(
-                `/blockchain/transactions/verify-by-so/${studentSONumber}`
+                `/blockchain/transactions/verify-by-id/${studentIDNumber}`
             );
 
             setResult(response.data);
@@ -69,12 +69,12 @@ function VerifyTransaction() {
 
                         <form onSubmit={handleVerify} className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Student S.O. Number *</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Student ID Number *</label>
                                 <input
                                     type="text"
-                                    placeholder="e.g., SO-2023-0001"
-                                    value={studentSONumber}
-                                    onChange={(e) => setStudentSONumber(e.target.value)}
+                                    placeholder="e.g., ID-2023-0001"
+                                    value={studentIDNumber}
+                                    onChange={(e) => setStudentIDNumber(e.target.value)}
                                     required
                                     className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44]"
                                 />
@@ -141,9 +141,9 @@ function VerifyTransaction() {
                                         </div>
 
                                         <div>
-                                            <p className="text-xs font-semibold text-gray-600 uppercase mb-1">S.O. Number</p>
+                                            <p className="text-xs font-semibold text-gray-600 uppercase mb-1">ID Number</p>
                                             <p className="text-sm font-mono bg-gray-50 p-3 rounded">
-                                                {result.blockchainRecord?.studentSONumber}
+                                                {result.blockchainRecord?.studentIDNumber}
                                             </p>
                                         </div>
 
@@ -216,7 +216,7 @@ function VerifyTransaction() {
                         <div className="lg:col-span-2 bg-white rounded-lg shadow-sm border border-gray-100 p-12 flex flex-col items-center justify-center">
                             <AlertCircle size={48} className="text-gray-400 mb-4" />
                             <p className="text-gray-500 text-center">
-                                Enter a student S.O. number to verify their transaction on the blockchain
+                                Enter a student ID number to verify their transaction on the blockchain
                             </p>
                         </div>
                     )}

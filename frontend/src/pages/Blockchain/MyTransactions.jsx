@@ -61,7 +61,7 @@ function MyTransactions() {
             const matchesSearch =
                 tx.referenceNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 tx.nameOfStudent?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                tx.studentSONumber?.toLowerCase().includes(searchTerm.toLowerCase());
+                tx.studentIDNumber?.toLowerCase().includes(searchTerm.toLowerCase());
 
             const matchesStatus =
                 filterStatus === "All Status" || tx.blockchainStatus === filterStatus;
@@ -152,7 +152,7 @@ function MyTransactions() {
                                 <input
                                     type="text"
                                     className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-[#1D2D44] min-w-0"
-                                    placeholder="Search by Reference Number, Student Name, or S.O. Number"
+                                    placeholder="Search by Reference Number, Student Name, or ID Number"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
@@ -207,7 +207,7 @@ function MyTransactions() {
                                 <tr className="text-[13px] text-gray-800 border-b border-gray-200 uppercase font-bold bg-gray-50">
                                     <th className="px-6 py-4">Reference Number</th>
                                     <th className="px-6 py-4">Student Name</th>
-                                    <th className="px-6 py-4">S.O. Number</th>
+                                    <th className="px-6 py-4">ID Number</th>
                                     <th className="px-6 py-4">Document Type</th>
                                     <th className="px-6 py-4">Year Graduated</th>
                                     <th className="px-6 py-4">Status</th>
@@ -221,7 +221,7 @@ function MyTransactions() {
                                         <tr key={tx._id} className="border-b border-gray-200 hover:bg-gray-50 transition">
                                             <td className="px-6 py-4 text-sm font-mono text-[#1D2D44]">{tx.referenceNumber}</td>
                                             <td className="px-6 py-4 text-sm">{tx.nameOfStudent}</td>
-                                            <td className="px-6 py-4 text-sm">{tx.studentSONumber}</td>
+                                            <td className="px-6 py-4 text-sm">{tx.studentIDNumber}</td>
                                             <td className="px-6 py-4 text-sm">{tx.typeOfDocument}</td>
                                             <td className="px-6 py-4 text-sm text-center">{tx.yearGraduated}</td>
                                             <td className="px-6 py-4 text-sm">

@@ -61,8 +61,8 @@ const Transactions = () => {
       });
 
       triggerToast(
-        type === 'Approve' 
-          ? `Payment approved for ${selectedTx.name}.` 
+        type === 'Approve'
+          ? `Payment approved for ${selectedTx.name}.`
           : `Update requested for ${selectedTx.name}.`,
         'success'
       );
@@ -124,7 +124,7 @@ const Transactions = () => {
         )}
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-          
+
           {/* Top Controls Section */}
           <div className="p-6 border-b border-gray-100">
             <div className="flex flex-wrap items-center justify-between gap-6">
@@ -277,11 +277,10 @@ const Transactions = () => {
                   <button
                     key={pageNumber}
                     onClick={() => setCurrentPage(pageNumber)}
-                    className={`w-8 h-8 rounded text-xs transition-colors ${
-                      currentPage === pageNumber
-                        ? 'bg-[#2f3947] text-white font-bold'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
+                    className={`w-8 h-8 rounded text-xs transition-colors ${currentPage === pageNumber
+                      ? 'bg-[#2f3947] text-white font-bold'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
                   >
                     {pageNumber}
                   </button>
@@ -306,7 +305,7 @@ const Transactions = () => {
         {selectedTx && (
           <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
             <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden">
-              
+
               {/* Modal Header */}
               <div className="bg-[#1D2D44] p-6 text-white flex justify-between items-center">
                 <div>
@@ -322,13 +321,13 @@ const Transactions = () => {
 
               {/* Modal Body */}
               <div className="p-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
-                
+
                 {/* Left: Receipt Image */}
                 <div className="lg:col-span-7">
                   <h4 className="text-[12px] font-bold text-gray-500 uppercase mb-3 flex justify-between">
                     Uploaded Receipt
                     {selectedTx.receiptImage && (
-                      <span 
+                      <span
                         className="text-[#1D2D44] cursor-pointer flex items-center gap-1 hover:underline"
                         onClick={() => setZoomedImage(!zoomedImage)}
                       >
@@ -357,7 +356,7 @@ const Transactions = () => {
 
                 {/* Right: Details & Actions */}
                 <div className="lg:col-span-5 flex flex-col gap-6">
-                  
+
                   {/* Payment Info */}
                   <div className="bg-[#F9FAFF] p-5 rounded-xl border border-[#DDE2EF]">
                     <h4 className="text-[11px] font-bold text-[#1D2D44] uppercase mb-4 tracking-wider">Payment Details</h4>
@@ -393,9 +392,8 @@ const Transactions = () => {
                       Admin Remarks
                     </label>
                     <textarea
-                      className={`w-full h-32 p-4 border rounded-xl text-sm outline-none transition-all resize-none ${
-                        error ? 'border-red-500 bg-red-50' : 'border-gray-200 focus:border-[#1D2D44]'
-                      }`}
+                      className={`w-full h-32 p-4 border rounded-xl text-sm outline-none transition-all resize-none ${error ? 'border-red-500 bg-red-50' : 'border-gray-200 focus:border-[#1D2D44]'
+                        }`}
                       placeholder="Enter remarks (required for requesting updates)..."
                       value={adminNote}
                       onChange={(e) => { setAdminNote(e.target.value); setError(''); }}
@@ -435,7 +433,7 @@ const Transactions = () => {
 
         {/* ====== ZOOMED IMAGE OVERLAY ====== */}
         {zoomedImage && selectedTx?.receiptImage && (
-          <div 
+          <div
             className="fixed inset-0 z-[1001] bg-black/80 flex items-center justify-center cursor-zoom-out"
             onClick={() => setZoomedImage(false)}
           >

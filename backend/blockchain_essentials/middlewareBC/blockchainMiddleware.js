@@ -14,7 +14,7 @@ const recordTransactionOnBlockchain = async ({
   referenceNumber,
   typeOfDocument,
   nameOfStudent,
-  studentSONumber,
+  studentIDNumber,
   nameOfSchool,
   yearGraduated,
 }) => {
@@ -26,7 +26,7 @@ const recordTransactionOnBlockchain = async ({
     referenceNumber,
     typeOfDocument,
     nameOfStudent,
-    studentSONumber,
+    studentIDNumber,
     nameOfSchool,
     yearGraduated
   );
@@ -49,7 +49,7 @@ const verifyTransactionOnBlockchain = async (referenceNumber) => {
     referenceNumber: result[0],
     typeOfDocument: result[1],
     nameOfStudent: result[2],
-    studentSONumber: result[3],
+    studentIDNumber: result[3],
     nameOfSchool: result[4],
     yearGraduated: result[5].toString(),
     recordedBy: result[6],

@@ -24,7 +24,7 @@ const blockchainTransactionSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    studentSONumber: {
+    studentIDNumber: {
       type: String,
       required: true,
     },

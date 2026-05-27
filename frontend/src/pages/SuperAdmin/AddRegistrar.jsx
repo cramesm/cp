@@ -181,11 +181,10 @@ export default function AddRegistrar() {
   return (
     <Layout>
       <div className="p-8 bg-[#F8FAFC] min-h-screen font-sans relative">
-        
+
         {toast.show && (
-          <div className={`fixed top-5 left-1/2 -translate-x-1/2 z-[10001] flex items-center gap-3 px-6 py-3 rounded-lg shadow-2xl text-white ${
-            toast.type === 'error' ? 'bg-red-600' : 'bg-[#1D2D44]'
-          }`}>
+          <div className={`fixed top-5 left-1/2 -translate-x-1/2 z-[10001] flex items-center gap-3 px-6 py-3 rounded-lg shadow-2xl text-white ${toast.type === 'error' ? 'bg-red-600' : 'bg-[#1D2D44]'
+            }`}>
             {toast.type === 'error' ? <AlertTriangle size={18} /> : <CheckCircle size={18} />}
             <p className="font-bold text-sm">{toast.message}</p>
           </div>
@@ -242,21 +241,21 @@ export default function AddRegistrar() {
                 </div>
                 <div className="space-y-5">
                   <FormInput label="Employee ID" placeholder="e.g. 2024-REG-001" />
-                  
+
                   <div className="flex flex-col gap-2">
                     <div className="flex justify-between items-center">
-                        <label className="text-[12px] font-bold text-gray-500 uppercase tracking-tight">Auto-Generated Password</label>
-                        <button 
-                            onClick={generatePassword}
-                            className="text-[#1D2D44] text-[10px] font-bold flex items-center gap-1 hover:underline uppercase"
-                        >
-                            <RefreshCw size={12} /> Regenerate
-                        </button>
+                      <label className="text-[12px] font-bold text-gray-500 uppercase tracking-tight">Auto-Generated Password</label>
+                      <button
+                        onClick={generatePassword}
+                        className="text-[#1D2D44] text-[10px] font-bold flex items-center gap-1 hover:underline uppercase"
+                      >
+                        <RefreshCw size={12} /> Regenerate
+                      </button>
                     </div>
-                    <input 
-                      type="text" 
-                      value={generatedPassword} 
-                      readOnly 
+                    <input
+                      type="text"
+                      value={generatedPassword}
+                      readOnly
                       className="w-full bg-[#F1F5F9] border border-gray-200 rounded-lg p-3 text-sm font-mono text-[#1D2D44] font-bold text-center tracking-widest"
                     />
                     <p className="text-[10px] text-gray-400 italic">Complexity: Uppercase, Lowercase, Number, & Special Char.</p>
@@ -284,12 +283,12 @@ export default function AddRegistrar() {
                       <option value="Super Admin">Super Admin</option>
                     </select>
                   </div>
-                  
+
                   <div className="flex flex-col gap-2">
                     <label className="text-[12px] font-bold text-gray-500 uppercase tracking-tight">Specific Responsibility (Optional)</label>
-                    <textarea 
+                    <textarea
                       placeholder="e.g. Handles Transcript of Records..."
-                      className="w-full bg-white border border-gray-300 rounded-lg p-3 text-sm h-48 outline-none focus:border-[#1D2D44] resize-none transition-all" 
+                      className="w-full bg-white border border-gray-300 rounded-lg p-3 text-sm h-48 outline-none focus:border-[#1D2D44] resize-none transition-all"
                     />
                   </div>
                 </div>
@@ -300,16 +299,16 @@ export default function AddRegistrar() {
           {/* Action Buttons */}
           <div className="flex justify-end gap-3 mt-10">
             {/* Styled according to the requested "Cancel" image */}
-            <button 
-                onClick={() => navigate('/manage-registrar')} 
-                className="bg-white border border-gray-300 text-gray-600 px-8 py-2.5 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-gray-50 transition-all flex items-center gap-2"
+            <button
+              onClick={() => navigate('/manage-registrar')}
+              className="bg-white border border-gray-300 text-gray-600 px-8 py-2.5 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-gray-50 transition-all flex items-center gap-2"
             >
               <X size={14} /> Cancel
             </button>
             <button
-                onClick={handleAddRegistrar}
-                disabled={loading}
-                className="bg-[#1D2D44] text-white px-10 py-2.5 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-[#152030] shadow-lg active:scale-95 flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={handleAddRegistrar}
+              disabled={loading}
+              className="bg-[#1D2D44] text-white px-10 py-2.5 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-[#152030] shadow-lg active:scale-95 flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <>
@@ -350,11 +349,10 @@ function FormInput({ label, placeholder = "", name, value, onChange, error }) {
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className={`w-full bg-white border rounded-lg p-3 text-sm outline-none transition-all ${
-          error
-            ? 'border-red-500 focus:border-red-500'
-            : 'border-gray-300 focus:border-[#1D2D44]'
-        }`}
+        className={`w-full bg-white border rounded-lg p-3 text-sm outline-none transition-all ${error
+          ? 'border-red-500 focus:border-red-500'
+          : 'border-gray-300 focus:border-[#1D2D44]'
+          }`}
       />
       {error && (
         <p className="text-[10px] text-red-600 font-medium flex items-center gap-1">

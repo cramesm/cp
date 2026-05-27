@@ -10,7 +10,7 @@ const API_BASE = (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.re
 const RequestDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    
+
     const userRole = localStorage.getItem('userRole') || 'registrar';
     const isSuperAdmin = userRole === 'super admin';
 
@@ -19,7 +19,7 @@ const RequestDetails = () => {
     const [paymentTx, setPaymentTx] = useState(null);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
-    
+
     // Wizard State
     const [currentStep, setCurrentStep] = useState(1);
     const [uploadedFile, setUploadedFile] = useState(null);
@@ -30,7 +30,7 @@ const RequestDetails = () => {
 
     // Blockchain Data State
     const [blockchainData, setBlockchainData] = useState({
-        studentSONumber: "",
+        studentIDNumber: "",
         nameOfSchool: "VeriFitor University",
         yearGraduated: new Date().getFullYear(),
     });
@@ -83,7 +83,7 @@ const RequestDetails = () => {
                 if (found && found.documentFile) {
                     setCurrentStep(3);
                 } else {
-                    setCurrentStep(2); 
+                    setCurrentStep(2);
                 }
             } else {
                 setCurrentStep(1); // Pending payment verification
@@ -151,7 +151,7 @@ const RequestDetails = () => {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             setDocumentData(res.data);
-            
+
             if (!res.data.isBlockchainEligible) {
                 await api.put(`/requests/${id}`, { status: "Released" });
                 setCurrentStep(3); // Non-blockchain finishes at step 3 visually
@@ -175,7 +175,7 @@ const RequestDetails = () => {
             if (isBlockchainEligible) {
                 const blockchainRes = await api.post('/blockchain/transactions', {
                     nameOfStudent: requestData.name || "Unknown",
-                    studentSONumber: blockchainData.studentSONumber,
+                    studentIDNumber: blockchainData.studentIDNumber,
                     typeOfDocument: requestData.documentType || requestData.document_type || "Document",
                     nameOfSchool: blockchainData.nameOfSchool,
                     yearGraduated: Number(blockchainData.yearGraduated)
@@ -185,7 +185,7 @@ const RequestDetails = () => {
                     referenceNumber: blockchainRes.data.referenceNumber || `TXN-${Date.now()}`,
                     transactionHash: blockchainRes.data.blockchainTxHash || blockchainRes.data.transactionHash,
                     blockchainTimestamp: blockchainRes.data.timestamp || new Date().toLocaleString(),
-                    studentSONumber: blockchainData.studentSONumber,
+                    studentIDNumber: blockchainData.studentIDNumber,
                 });
             }
 
@@ -229,12 +229,11 @@ const RequestDetails = () => {
                             <h1 className="text-3xl font-bold text-slate-800">Process Document Request</h1>
                             <p className="text-slate-500 mt-1">Request ID: <span className="font-mono">{requestData.requestId}</span></p>
                         </div>
-                        <span className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest shadow-sm border ${
-                            status === 'Pending' ? 'bg-amber-50 text-amber-600 border-amber-200' :
-                            status === 'In Process' ? 'bg-blue-50 text-blue-600 border-blue-200' :
-                            status === 'Released' ? 'bg-green-50 text-green-600 border-green-200' :
-                            'bg-red-50 text-red-600 border-red-200'
-                        }`}>
+                        <span className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest shadow-sm border ${status === 'Pending' ? 'bg-amber-50 text-amber-600 border-amber-200' :
+                                status === 'In Process' ? 'bg-blue-50 text-blue-600 border-blue-200' :
+                                    status === 'Released' ? 'bg-green-50 text-green-600 border-green-200' :
+                                        'bg-red-50 text-red-600 border-red-200'
+                            }`}>
                             {status}
                         </span>
                     </div>
@@ -258,7 +257,7 @@ const RequestDetails = () => {
 
                     {status !== 'Rejected' && (
                         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                            
+
                             {/* Stepper Sidebar */}
                             <div className="lg:col-span-1">
                                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 sticky top-8">
@@ -290,12 +289,12 @@ const RequestDetails = () => {
 
                             {/* Main Content Area */}
                             <div className="lg:col-span-3">
-                                
+
                                 {/* Step 1 Content */}
                                 {currentStep === 1 && (
                                     <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 animate-in fade-in slide-in-from-right-4 duration-300">
                                         <h2 className="text-2xl font-bold text-slate-800 mb-6">Verify Request & Payment</h2>
-                                        
+
                                         <div className="grid grid-cols-2 gap-6 mb-8">
                                             <div className="bg-slate-50 p-4 rounded-xl">
                                                 <p className="text-xs font-bold text-slate-400 uppercase">Student Name</p>
@@ -335,7 +334,7 @@ const RequestDetails = () => {
                                                         </div>
                                                     </div>
                                                 </div>
-                                                
+
                                                 {paymentTx.status === 'Pending Verification' && (
                                                     <div className="p-4 bg-slate-50 flex gap-4 border-t border-slate-200">
                                                         <button
@@ -364,7 +363,7 @@ const RequestDetails = () => {
 
                                         {!paymentTx && (
                                             <div className="bg-amber-50 p-4 rounded-xl text-amber-700 font-bold mb-8">
-                                                <AlertCircle className="inline mr-2" size={18}/> No payment transaction found for this request.
+                                                <AlertCircle className="inline mr-2" size={18} /> No payment transaction found for this request.
                                             </div>
                                         )}
 
@@ -388,7 +387,7 @@ const RequestDetails = () => {
                                                     </button>
                                                 </div>
                                             )}
-                                            
+
                                             {showRejectForm ? (
                                                 <div className="bg-red-50 p-4 rounded-xl border border-red-100 animate-in fade-in">
                                                     <p className="font-bold text-red-700 text-sm mb-2">Provide reason for rejection:</p>
@@ -404,7 +403,7 @@ const RequestDetails = () => {
                                                     </select>
                                                     <div className="flex gap-2">
                                                         <button className="flex-1 py-2 text-slate-500 font-bold hover:bg-red-100 rounded-lg" onClick={() => setShowRejectForm(false)}>Cancel</button>
-                                                        <button 
+                                                        <button
                                                             className="flex-1 bg-red-600 text-white py-2 rounded-lg font-bold hover:bg-red-700 disabled:opacity-50"
                                                             disabled={!rejectionReason || actionLoading}
                                                             onClick={() => handleStatusUpdate('Rejected')}
@@ -430,7 +429,7 @@ const RequestDetails = () => {
                                 {currentStep === 2 && (
                                     <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 animate-in fade-in slide-in-from-right-4 duration-300">
                                         <h2 className="text-2xl font-bold text-slate-800 mb-2">Upload External PDF</h2>
-                                        <p className="text-slate-500 mb-8">Upload the requested document as a PDF. If it's a TOR or Diploma, a QR code will be automatically embedded.</p>
+                                        <p className="text-slate-500 mb-8">Upload the requested document as a PDF. If it is a TOR or Diploma, a QR code will be automatically embedded.</p>
 
                                         <input type="file" id="pdfUpload" className="hidden" accept=".pdf" onChange={handleFileUpload} disabled={!isSuperAdmin} />
                                         <div
@@ -446,11 +445,11 @@ const RequestDetails = () => {
                                         </div>
 
                                         <div className="flex gap-4 pt-6 border-t border-slate-100">
-                                            <button 
+                                            <button
                                                 className="flex-[1] bg-slate-100 text-slate-600 py-4 rounded-xl font-bold hover:bg-slate-200 transition-all"
                                                 onClick={() => setCurrentStep(1)}
                                             >Back</button>
-                                            <button 
+                                            <button
                                                 className={`flex-[2] text-white py-4 rounded-xl font-bold transition-all shadow-md disabled:opacity-50 ${!isSuperAdmin ? 'bg-slate-300 shadow-none' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-100'}`}
                                                 disabled={!uploadedFile || actionLoading || !isSuperAdmin}
                                                 onClick={processUpload}
@@ -465,7 +464,7 @@ const RequestDetails = () => {
                                 {currentStep === 3 && isBlockchainEligible && (
                                     <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 animate-in fade-in slide-in-from-right-4 duration-300">
                                         <h2 className="text-2xl font-bold text-slate-800 mb-2">Secure & Finalize</h2>
-                                        
+
                                         {isBlockchainEligible && (
                                             <div>
                                                 <div className="bg-blue-50 text-blue-800 p-4 rounded-xl border border-blue-100 mb-8 flex items-start gap-3">
@@ -478,13 +477,13 @@ const RequestDetails = () => {
 
                                                 <div className="grid grid-cols-2 gap-6 mb-8">
                                                     <div>
-                                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-2">S.O. Number *</label>
+                                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-2">ID Number *</label>
                                                         <input
                                                             type="text"
                                                             required
-                                                            placeholder="e.g. SO-2023-001"
-                                                            value={blockchainData.studentSONumber}
-                                                            onChange={(e) => setBlockchainData({ ...blockchainData, studentSONumber: e.target.value })}
+                                                            placeholder="e.g. ID-2023-001"
+                                                            value={blockchainData.studentIDNumber}
+                                                            onChange={(e) => setBlockchainData({ ...blockchainData, studentIDNumber: e.target.value })}
                                                             className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:border-blue-500 outline-none"
                                                         />
                                                     </div>
@@ -513,13 +512,13 @@ const RequestDetails = () => {
                                         )}
 
                                         <div className="flex gap-4 pt-6 border-t border-slate-100">
-                                            <button 
+                                            <button
                                                 className="flex-[1] bg-slate-100 text-slate-600 py-4 rounded-xl font-bold hover:bg-slate-200 transition-all"
                                                 onClick={() => setCurrentStep(2)}
                                             >Back</button>
-                                            <button 
+                                            <button
                                                 className={`flex-[2] text-white py-4 rounded-xl font-bold transition-all shadow-md disabled:opacity-50 ${(!isSuperAdmin) ? 'bg-slate-300 shadow-none' : (isBlockchainEligible ? 'bg-[#2c3e50] hover:bg-[#1a252f]' : 'bg-green-600 hover:bg-green-700')}`}
-                                                disabled={actionLoading || !isSuperAdmin || (isBlockchainEligible && !blockchainData.studentSONumber)}
+                                                disabled={actionLoading || !isSuperAdmin || (isBlockchainEligible && !blockchainData.studentIDNumber)}
                                                 onClick={() => showConfirm({
                                                     title: isBlockchainEligible ? 'Secure to Blockchain' : 'Finalize Document',
                                                     message: 'Are you sure you want to finalize this request?',
@@ -552,8 +551,8 @@ const RequestDetails = () => {
                                                         <p className="font-mono text-xs text-slate-700 truncate">{blockchainResult.transactionHash}</p>
                                                     </div>
                                                     <div>
-                                                        <p className="text-xs text-slate-500">Reference / SO Number</p>
-                                                        <p className="font-bold text-slate-700">{blockchainResult.referenceNumber} / {blockchainResult.studentSONumber}</p>
+                                                        <p className="text-xs text-slate-500">Reference / ID Number</p>
+                                                        <p className="font-bold text-slate-700">{blockchainResult.referenceNumber} / {blockchainResult.studentIDNumber}</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -561,7 +560,7 @@ const RequestDetails = () => {
 
                                         <div className="flex gap-4 justify-center">
                                             {requestData.documentFile && (
-                                                <a 
+                                                <a
                                                     href={`${API_BASE}${requestData.documentFile}`}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
@@ -570,7 +569,7 @@ const RequestDetails = () => {
                                                     <FileText size={20} /> View / Download Document
                                                 </a>
                                             )}
-                                            <button 
+                                            <button
                                                 className="bg-slate-800 text-white px-8 py-4 rounded-xl font-bold hover:bg-slate-900 transition-colors shadow-lg"
                                                 onClick={() => navigate('/requests')}
                                             >
@@ -585,7 +584,7 @@ const RequestDetails = () => {
                 </div>
             </div>
             {confirmConfig && (
-                <ConfirmModal 
+                <ConfirmModal
                     isOpen={!!confirmConfig}
                     title={confirmConfig.title}
                     message={confirmConfig.message}

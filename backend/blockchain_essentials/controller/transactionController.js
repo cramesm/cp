@@ -14,14 +14,14 @@ const TransactionController = {
     /* CREATE TRANSACTION */
     createTransaction: async (req, res) => {
         try {
-            const { typeOfDocument, nameOfStudent, studentSONumber, nameOfSchool, yearGraduated } = req.body;
+            const { typeOfDocument, nameOfStudent, studentIDNumber, nameOfSchool, yearGraduated } = req.body;
             const referenceNumber = createReferenceNumber();
             const transaction = await BlockchainTransaction.create({
                 user: new mongoose.Types.ObjectId(req.user.id),
                 referenceNumber,
                 typeOfDocument,
                 nameOfStudent,
-                studentSONumber,
+                studentIDNumber,
                 nameOfSchool,
                 yearGraduated,
                 blockchainTxHash: "",
@@ -35,7 +35,7 @@ const TransactionController = {
                     referenceNumber,
                     typeOfDocument,
                     nameOfStudent,
-                    studentSONumber,
+                    studentIDNumber,
                     nameOfSchool,
                     yearGraduated,
                 });
@@ -135,16 +135,16 @@ getMyTransactions: async (req, res) => {
         }
     },
 
-    /* VERIFY TRANSACTION BY STUDENT SO NUMBER */
-    verifyTransactionByStudentSO: async (req, res) => {
+    /* VERIFY TRANSACTION BY STUDENT ID NUMBER */
+    verifyTransactionByStudentID: async (req, res) => {
         try {
-            const { studentSONumber } = req.params;
+            const { studentIDNumber } = req.params;
 
-            const transaction = await BlockchainTransaction.findOne({ studentSONumber });
+            const transaction = await BlockchainTransaction.findOne({ studentIDNumber });
 
             if (!transaction) {
                 return res.status(404).json({
-                    message: "No transaction found for this student S/O number",
+                    message: "No transaction found for this student ID number",
                 });
             }
 

@@ -7,6 +7,6 @@ const router = express.Router();
 router.post("/", protect, TransactionController.createTransaction);
 router.get("/my-transactions", protect, TransactionController.getMyTransactions);
 router.get("/verify/:referenceNumber", protect, TransactionController.verifyTransaction);
-router.get("/verify-by-so/:studentSONumber", protect, TransactionController.verifyTransactionByStudentSO);
+router.get("/verify-by-id/:studentIDNumber", protect, TransactionController.verifyTransactionByStudentID);
 
 module.exports = router;

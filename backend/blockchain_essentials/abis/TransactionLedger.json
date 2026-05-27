@@ -59,7 +59,7 @@
         },
         {
           "internalType": "string",
-          "name": "_studentSONumber",
+          "name": "_studentIDNumber",
           "type": "string"
         },
         {
@@ -105,7 +105,7 @@
         },
         {
           "internalType": "string",
-          "name": "studentSONumber",
+          "name": "studentIDNumber",
           "type": "string"
         },
         {
