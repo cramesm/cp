@@ -106,7 +106,7 @@ router.post('/upload-csv', protect, registrarOrSuperAdmin, uploadCSV.single('csv
 // @route   GET /api/diploma
 router.get('/', protect, registrarOrSuperAdmin, async (req, res) => {
     try {
-        const diplomas = await Diploma.find().sort({ createdAt: -1 });
+        const diplomas = await Diploma.find().sort({ createdAt: 1 });
         res.json(diplomas);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching Diploma records' });

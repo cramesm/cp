@@ -131,7 +131,7 @@ router.post('/upload-csv', protect, registrarOrSuperAdmin, uploadCSV.single('csv
 // @route   GET /api/tor
 router.get('/', protect, registrarOrSuperAdmin, async (req, res) => {
     try {
-        const tors = await TOR.find().sort({ createdAt: -1 });
+        const tors = await TOR.find().sort({ createdAt: 1 });
         res.json(tors);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching TOR records' });

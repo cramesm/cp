@@ -30,7 +30,7 @@ router.get('/recent', async (req, res) => {
    try {
      const transactions = await Transaction.find().sort({ date: -1 }).limit(5);
      const notifications = await Notification.find().sort({ date: -1 }).limit(5);
-     const pendingRequests = await Request.find({ status: 'Pending' }).sort({ dateRequested: -1 }).limit(5);
+     const pendingRequests = await Request.find({ status: 'Pending' }).sort({ dateRequested: 1 }).limit(5);
 
      res.json({
          transactions,

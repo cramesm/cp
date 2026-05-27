@@ -41,7 +41,7 @@ router.get('/', protect, registrarOrSuperAdmin, async (req, res) => {
     if (req.query.category && req.query.category !== 'All') {
       filter.category = req.query.category;
     }
-    const documents = await Document.find(filter).sort({ createdAt: -1 });
+    const documents = await Document.find(filter).sort({ createdAt: 1 });
     res.json(documents);
   } catch (error) {
     console.error('Error fetching documents:', error);

@@ -116,7 +116,10 @@ const RequestDetails = () => {
     const handleVerifyPayment = async (status) => {
         setActionLoading(true);
         try {
-            await api.put(`/transactions/${paymentTx.transactionId}`, { status });
+            await api.put(`/transactions/${paymentTx.transactionId}/verify`, { status });
+            // Note: The backend now automatically syncs the Request status to "In Process" when status === "Completed".
+            // However, we still call the explicit /requests update here as well to ensure UI state syncs properly,
+            // or we could just rely on the backend. Since the backend handles it, the following is slightly redundant but safe.
             if (status === 'Completed') {
                 await api.put(`/requests/${id}`, { status: 'In Process' });
             }

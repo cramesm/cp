@@ -64,7 +64,7 @@ router.get('/', async (req, res) => {
       }
     }
 
-    const requests = await Request.find(query).sort({ dateRequested: -1 });
+    const requests = await Request.find(query).sort({ dateRequested: 1 });
     
     // Dynamically enrich requests with student profile details (ID, Course, Year) for seamless UX
     const enrichedRequests = await Promise.all(

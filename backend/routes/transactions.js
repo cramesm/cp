@@ -36,7 +36,7 @@ const upload = multer({
 // Get all transactions
 router.get('/', async (req, res) => {
   try {
-    const transactions = await Transaction.find().sort({ date: -1 });
+    const transactions = await Transaction.find().sort({ date: 1 });
     res.json(transactions);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching transactions' });
@@ -164,6 +164,15 @@ router.put('/:id/verify', protect, async (req, res) => {
     );
 
     if (!transaction) return res.status(404).json({ message: 'Transaction not found' });
+
+    // Sync to Request Collection
+    if (status === 'Completed') {
+      const Request = require('../models/Request');
+      await Request.findOneAndUpdate(
+        { requestId: transaction.requestId },
+        { status: 'In Process' }
+      );
+    }
 
     // Log the verification activity
     await ActivityLog.create({

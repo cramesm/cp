@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Layout from '../../components/Layout';
 import api from '../../api';
-import { AlertCircle, RefreshCw } from 'lucide-react'; // Essential for error feedback
+import { AlertCircle, RefreshCw } from 'lucide-react';
 
 const Dashboard = () => {
     const [stats, setStats] = useState({
@@ -22,6 +23,8 @@ const Dashboard = () => {
     // --- NEW: Status States for Validation & Error Handling ---
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+
+    const navigate = useNavigate();
 
     const fetchDashboardData = async () => {
         setLoading(true);
@@ -73,7 +76,15 @@ const Dashboard = () => {
                             <p className="text-[28px] font-bold text-[#2F3640] m-0">{stats.totalRequests || 0}</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-[15px] bg-white rounded-[15px] p-[18px] shadow-[0_6px_15px_rgba(0,0,0,0.08)]">
+                    <div 
+                        onClick={() => navigate('/requests')}
+                        className="flex items-center gap-[15px] bg-white rounded-[15px] p-[18px] shadow-[0_6px_15px_rgba(0,0,0,0.08)] cursor-pointer hover:shadow-[0_8px_20px_rgba(0,0,0,0.15)] hover:-translate-y-1 transition-all relative"
+                    >
+                        {stats.pendingRequests > 0 && (
+                            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full shadow-md animate-bounce">
+                                {stats.pendingRequests}
+                            </span>
+                        )}
                         <i className="fa-solid fa-clock-rotate-left text-[26px]"></i>
                         <div>
                             <h4 className="text-[14px] text-[#666] mb-[10px] font-normal">Pending Requests</h4>
