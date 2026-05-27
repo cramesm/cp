@@ -15,7 +15,8 @@ export default function RegistrarInformation() {
     lastName: "",
     email: "",
     role: "Registrar Staff",
-    employeeId: ""
+    employeeId: "",
+    status: "Inactive"
   });
 
   const [registrarId, setRegistrarId] = useState(''); // MongoDB _id for API calls
@@ -62,7 +63,8 @@ export default function RegistrarInformation() {
             lastName: nameParts.slice(1).join(' ') || '',
             email: registrar.email,
             role: registrar.role,
-            employeeId: registrar.registrarId || ''
+            employeeId: registrar.registrarId || '',
+            status: registrar.status || 'Inactive'
           });
         } else {
           setToast({ show: true, message: 'Registrar not found', type: 'error' });
@@ -219,8 +221,12 @@ export default function RegistrarInformation() {
                     <User size={22} />
                     <h3 className="text-[18px] font-bold uppercase tracking-wider">Registrar Profile</h3>
                   </div>
-                  <span className="bg-[#C6E7FF] text-[#2D6A8E] px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
-                    Active
+                  <span className={`px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
+                    formData.status === 'Active' 
+                        ? 'bg-[#C6E7FF] text-[#2D6A8E]' 
+                        : 'bg-red-100 text-red-700'
+                  }`}>
+                    {formData.status}
                   </span>
                 </div>
 

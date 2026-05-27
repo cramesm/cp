@@ -43,6 +43,29 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Get a receipt for a specific request
+router.get('/receipt', async (req, res) => {
+  try {
+    const { docName, purpose } = req.query;
+    if (!docName || !purpose) {
+      return res.status(400).json({ success: false, message: 'Missing parameters' });
+    }
+
+    const transaction = await Transaction.findOne({
+      documentType: docName,
+      requestId: purpose
+    }).sort({ date: -1 });
+
+    if (!transaction) {
+      return res.json({ success: true, receipt: null });
+    }
+
+    res.json({ success: true, receipt: transaction });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error fetching receipt' });
+  }
+});
+
 // Get a single transaction by transactionId
 router.get('/:id', async (req, res) => {
   try {

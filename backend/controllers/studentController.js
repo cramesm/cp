@@ -76,6 +76,37 @@ const StudentController = {
             console.error('Error deleting student:', error);
             res.status(500).json({ message: 'Failed to delete student', error: error.message });
         }
+    },
+
+    // Update student status
+    updateStudentStatus: async (req, res) => {
+        try {
+            const { id } = req.params;
+            const { status } = req.body;
+
+            if (!mongoose.Types.ObjectId.isValid(id)) {
+                return res.status(400).json({ message: 'Invalid student ID' });
+            }
+
+            if (!['Active', 'Inactive'].includes(status)) {
+                return res.status(400).json({ message: 'Invalid status' });
+            }
+
+            const updatedStudent = await Student.findByIdAndUpdate(
+                id,
+                { status },
+                { new: true }
+            );
+
+            if (!updatedStudent) {
+                return res.status(404).json({ message: 'Student not found' });
+            }
+
+            res.status(200).json({ message: 'Student status updated successfully', student: updatedStudent });
+        } catch (error) {
+            console.error('Error updating student status:', error);
+            res.status(500).json({ message: 'Failed to update student status', error: error.message });
+        }
     }
 };
 

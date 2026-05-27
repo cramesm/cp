@@ -26,6 +26,25 @@ const ManageRegistrar = () => {
     fetchRegistrars();
   }, []);
 
+  const handleToggleStatus = async (registrarId, currentStatus) => {
+    const newStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
+    if (window.confirm(`Are you sure you want to ${newStatus === 'Active' ? 'activate' : 'deactivate'} this account?`)) {
+        try {
+            const response = await api.put(`/registrars/${registrarId}`, { status: newStatus });
+            if (response.data) {
+                setRegistrars(registrars.map(reg => 
+                    (reg._id === registrarId || reg.registrarId === registrarId) 
+                        ? { ...reg, status: response.data.status } 
+                        : reg
+                ));
+            }
+        } catch (err) {
+            console.error('Error updating status:', err);
+            alert('Failed to update account status. Please try again later.');
+        }
+    }
+  };
+
   const filteredRegistrars = useMemo(() => {
     return registrars.filter((item) =>
       Object.values(item).some(val => val?.toString().toLowerCase().includes(search.toLowerCase()))
@@ -86,6 +105,7 @@ const ManageRegistrar = () => {
                   <th className="px-8 py-5">Registrar Name</th>
                   <th className="px-8 py-5 text-center">Role</th>
                   <th className="px-8 py-5">Email Address</th>
+                  <th className="px-8 py-5 text-center">Status</th>
                   <th className="px-8 py-5 text-right">Action</th>
                 </tr>
               </thead>
@@ -109,11 +129,30 @@ const ManageRegistrar = () => {
                         </div>
                       </td>
                       <td className="px-8 py-4 text-gray-600">{item.email}</td>
+                      <td className="px-8 py-4 text-center">
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${
+                            item.status === 'Active' 
+                                ? 'bg-green-100 text-green-700' 
+                                : 'bg-red-100 text-red-700'
+                        }`}>
+                            {item.status || 'Inactive'}
+                        </span>
+                      </td>
                       <td className="px-8 py-4 text-right">
                         {/* Action Button - Uniform width and centered text */}
-                        <div className="flex justify-end">
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() => handleToggleStatus(item._id || item.registrarId, item.status || 'Inactive')}
+                            className={`min-w-[90px] rounded-full px-4 py-2 text-[11px] font-bold text-white text-center transition-colors shadow-sm ${
+                                (item.status || 'Inactive') === 'Active'
+                                    ? 'bg-orange-500 hover:bg-orange-600'
+                                    : 'bg-green-500 hover:bg-green-600'
+                            }`}
+                          >
+                            {(item.status || 'Inactive') === 'Active' ? 'Deactivate' : 'Activate'}
+                          </button>
                           <Link
-                            to={`/manage-registrar/details/${item._id}`}
+                            to={`/manage-registrar/details/${item._id || item.registrarId}`}
                             className="min-w-[130px] rounded-full bg-[#1D2D44] px-4 py-2 text-[11px] font-bold text-white text-center hover:bg-[#152030] transition-colors shadow-sm"
                           >
                             Manage Registrar

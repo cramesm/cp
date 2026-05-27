@@ -12,4 +12,7 @@ router.post('/', protect, superAdminOnly, StudentController.addStudent);
 // Route to delete a student (Super Admin only)
 router.delete('/:id', protect, superAdminOnly, StudentController.deleteStudent);
 
+// Route to update student status (Super Admin only)
+router.put('/:id/status', protect, superAdminOnly, StudentController.updateStudentStatus);
+
 module.exports = router;

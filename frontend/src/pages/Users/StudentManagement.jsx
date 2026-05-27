@@ -55,6 +55,23 @@ const StudentManagement = () => {
         }
     };
 
+    const handleToggleStatus = async (userId, currentStatus) => {
+        const newStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
+        if (window.confirm(`Are you sure you want to ${newStatus === 'Active' ? 'activate' : 'deactivate'} this account?`)) {
+            try {
+                const response = await axiosInstance.put(`/students/${userId}/status`, { status: newStatus });
+                if (response.data && response.data.student) {
+                    setUsers(users.map(user => 
+                        user._id === userId ? { ...user, status: response.data.student.status } : user
+                    ));
+                }
+            } catch (err) {
+                console.error('Error updating status:', err);
+                alert('Failed to update account status. Please try again later.');
+            }
+        }
+    };
+
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({
@@ -182,6 +199,7 @@ const StudentManagement = () => {
                                     <th className="px-8 py-5">{activeTab === 'student' ? 'School Email' : 'Email'}</th>
                                     <th className="px-8 py-5">Student ID</th>
                                     <th className="px-8 py-5">Joined Date</th>
+                                    <th className="px-8 py-5 text-center">Status</th>
                                     <th className="px-8 py-5 text-right">Action</th>
                                 </tr>
                             </thead>
@@ -204,11 +222,30 @@ const StudentManagement = () => {
                                             <td className="px-8 py-4 text-gray-600">
                                                 {new Date(user.createdAt).toLocaleDateString()}
                                             </td>
+                                            <td className="px-8 py-4 text-center">
+                                                <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${
+                                                    user.status === 'Active' 
+                                                        ? 'bg-green-100 text-green-700' 
+                                                        : 'bg-red-100 text-red-700'
+                                                }`}>
+                                                    {user.status || 'Active'}
+                                                </span>
+                                            </td>
                                             <td className="px-8 py-4 text-right">
-                                                <div className="flex justify-end">
+                                                <div className="flex justify-end gap-2">
+                                                    <button
+                                                        onClick={() => handleToggleStatus(user._id, user.status || 'Active')}
+                                                        className={`min-w-[90px] rounded-full px-4 py-2 text-[11px] font-bold text-white text-center transition-colors shadow-sm ${
+                                                            (user.status || 'Active') === 'Active'
+                                                                ? 'bg-orange-500 hover:bg-orange-600'
+                                                                : 'bg-green-500 hover:bg-green-600'
+                                                        }`}
+                                                    >
+                                                        {(user.status || 'Active') === 'Active' ? 'Deactivate' : 'Activate'}
+                                                    </button>
                                                     <button
                                                         onClick={() => handleDelete(user._id, `${user.firstName} ${user.lastName}`)}
-                                                        className="min-w-[100px] rounded-full bg-[#fce8e8] px-4 py-2 text-[11px] font-bold text-red-600 text-center hover:bg-red-600 hover:text-white transition-colors shadow-sm border border-red-100"
+                                                        className="min-w-[80px] rounded-full bg-[#fce8e8] px-4 py-2 text-[11px] font-bold text-red-600 text-center hover:bg-red-600 hover:text-white transition-colors shadow-sm border border-red-100"
                                                     >
                                                         Delete
                                                     </button>

@@ -50,6 +50,9 @@ const requestSchema = new mongoose.Schema({
   documentHash: {
     type: String
   },
+  documentFile: {
+    type: String
+  },
   dateRequested: {
     type: Date,
     default: Date.now

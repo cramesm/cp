@@ -43,6 +43,11 @@ const studentSchema = new mongoose.Schema({
   phoneNumber: {
     type: String,
     default: ''
+  },
+  status: {
+    type: String,
+    enum: ['Active', 'Inactive'],
+    default: 'Inactive'
   }
 }, { timestamps: true });
 

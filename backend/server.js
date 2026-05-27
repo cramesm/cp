@@ -100,6 +100,7 @@ const torRoutes = require('./routes/tor');
 const documentRoutes = require('./routes/documents');
 const studentRoutes = require('./routes/students');
 const diplomaRoutes = require('./routes/diploma');
+const documentUploadRoutes = require('./routes/documentUploads');
 
 console.log('Routes imported successfully');
 
@@ -118,6 +119,7 @@ app.use('/api/tor', torRoutes);
 app.use('/api/documents', documentRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/diploma', diplomaRoutes);
+app.use('/api/requests', documentUploadRoutes);
 
 console.log('Routes mounted successfully');
 

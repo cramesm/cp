@@ -22,6 +22,11 @@ const adminSchema = new mongoose.Schema({
   profilePic: {
     type: String,
     default: ''
+  },
+  status: {
+    type: String,
+    enum: ['Active', 'Inactive'],
+    default: 'Inactive'
   }
 }, { timestamps: true });
 

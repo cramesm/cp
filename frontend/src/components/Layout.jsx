@@ -40,7 +40,6 @@ const Layout = ({ children }) => {
             case '/activity-logs':
                 return 'Audit Trail / System Logs';
             case '/tor':
-            case '/documents':
                 return 'Document Management';
             case '/profile/info':
                 return 'Profile Information';
@@ -78,7 +77,6 @@ const Layout = ({ children }) => {
     const menuItems = [
         { path: '/dashboard', label: 'Dashboard', icon: 'fa-solid fa-table-cells-large' },
         { path: '/requests', label: 'Document Requests', icon: 'fa-solid fa-file-lines' },
-        { path: '/documents', label: 'Document Management', icon: 'fa-solid fa-folder-open' },
         { path: '/transactions', label: 'Payments', icon: 'fa-solid fa-money-check-dollar' },
         { path: '/blockchain', label: 'Blockchain', icon: 'fa-solid fa-cubes' },
         { path: '/notifications', label: 'Notifications', icon: 'fa-solid fa-bell' }

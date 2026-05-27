@@ -25,11 +25,6 @@ import ValidationResults from './pages/Validation/Validation';
 
 import StudentManagement from './pages/Users/StudentManagement';
 
-import TORDetails from './pages/TOR/TORDetails';
-import DocumentManagement from './pages/Documents/DocumentManagement';
-import DocumentDetails from './pages/Documents/DocumentDetails';
-import DiplomaDetails from './pages/Diploma/DiplomaDetails';
-
 // Blockchain Pages
 import Blockchain from './pages/Blockchain/Blockchain';
 import MyTransactions from './pages/Blockchain/MyTransactions';
@@ -85,17 +80,6 @@ function App() {
         <Route path="/manage-users" element={<ProtectedRoute><StudentManagement /></ProtectedRoute>} />
         
         <Route path="/activity-logs" element={<ProtectedRoute><ActivityLogs /></ProtectedRoute>} />
-
-        {/* Document Management - Protected */}
-        <Route path="/documents" element={<ProtectedRoute><DocumentManagement /></ProtectedRoute>} />
-        <Route path="/documents/:id" element={<ProtectedRoute><DocumentDetails /></ProtectedRoute>} />
-
-        {/* TOR Details (legacy route kept) - Protected */}
-        <Route path="/tor" element={<ProtectedRoute><DocumentManagement /></ProtectedRoute>} />
-        <Route path="/tor/:id" element={<ProtectedRoute><TORDetails /></ProtectedRoute>} />
-
-        {/* Diploma Details - Protected */}
-        <Route path="/diploma/:id" element={<ProtectedRoute><DiplomaDetails /></ProtectedRoute>} />
 
         {/* Public Validation Page */}
         <Route path="/verify" element={<ValidationLanding />} />
