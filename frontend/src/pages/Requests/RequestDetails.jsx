@@ -330,7 +330,7 @@ const RequestDetails = () => {
                                                         <p className="text-xs text-slate-500 mb-2">Receipt Uploaded</p>
                                                         <div className="bg-slate-100 rounded-lg p-2 h-64 flex items-center justify-center border border-slate-200">
                                                             {paymentTx.receiptImage ? (
-                                                                <img src={`${API_BASE}${paymentTx.receiptImage}`} alt="Receipt" className="max-h-full object-contain" />
+                                                                <img src={paymentTx.receiptImage.startsWith('http') ? paymentTx.receiptImage : `${API_BASE}${paymentTx.receiptImage}`} alt="Receipt" className="max-h-full object-contain" />
                                                             ) : (
                                                                 <span className="text-slate-400 font-bold text-sm">No image uploaded</span>
                                                             )}

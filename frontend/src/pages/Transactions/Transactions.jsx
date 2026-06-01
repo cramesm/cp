@@ -338,8 +338,8 @@ const Transactions = () => {
                   <div className="bg-[#F8FAFC] border-2 border-dashed border-gray-200 rounded-xl p-4 flex justify-center items-center min-h-[320px] overflow-auto">
                     {selectedTx.receiptImage ? (
                       <img
-                        src={`${API_BASE}${selectedTx.receiptImage}`}
-                        alt="Payment Receipt"
+                        src={selectedTx.receiptImage.startsWith('http') ? selectedTx.receiptImage : `${API_BASE}${selectedTx.receiptImage}`}
+                        alt="Receipt"
                         className={`rounded-lg shadow-sm transition-all duration-300 ${zoomedImage ? 'max-w-none w-auto' : 'max-h-[300px] object-contain'}`}
                         onError={(e) => {
                           e.target.style.display = 'none';
@@ -438,7 +438,7 @@ const Transactions = () => {
             onClick={() => setZoomedImage(false)}
           >
             <img
-              src={`${API_BASE}${selectedTx.receiptImage}`}
+              src={selectedTx.receiptImage.startsWith('http') ? selectedTx.receiptImage : `${API_BASE}${selectedTx.receiptImage}`}
               alt="Receipt Zoomed"
               className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl"
             />

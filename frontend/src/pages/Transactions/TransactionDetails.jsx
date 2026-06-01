@@ -180,7 +180,7 @@ const TransactionDetails = () => {
                                 {txData.receiptImage ? (
                                     <div className="flex flex-col items-center gap-4">
                                         <img
-                                            src={`${API_BASE}${txData.receiptImage}`}
+                                            src={txData.receiptImage.startsWith('http') ? txData.receiptImage : `${API_BASE}${txData.receiptImage}`}
                                             alt="Payment Receipt"
                                             className="max-h-[400px] object-contain rounded-lg shadow-sm cursor-pointer hover:shadow-md transition-shadow"
                                             onClick={() => setZoomedImage(true)}
@@ -288,7 +288,7 @@ const TransactionDetails = () => {
                         onClick={() => setZoomedImage(false)}
                     >
                         <img
-                            src={`${API_BASE}${txData.receiptImage}`}
+                            src={txData.receiptImage.startsWith('http') ? txData.receiptImage : `${API_BASE}${txData.receiptImage}`}
                             alt="Receipt Zoomed"
                             className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl"
                         />
