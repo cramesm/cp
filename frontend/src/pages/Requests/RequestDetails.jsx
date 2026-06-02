@@ -13,6 +13,7 @@ const RequestDetails = () => {
 
     const userRole = localStorage.getItem('userRole') || 'registrar';
     const isSuperAdmin = userRole === 'super admin';
+    const hasProcessingAccess = userRole === 'super admin' || userRole === 'registrar';
 
     // Core Data State
     const [requestData, setRequestData] = useState(null);
@@ -248,12 +249,12 @@ const RequestDetails = () => {
                         </div>
                     )}
 
-                    {!isSuperAdmin && status !== 'Rejected' && status !== 'Released' && (
+                    {!hasProcessingAccess && status !== 'Rejected' && status !== 'Released' && (
                         <div className="bg-blue-50 p-4 rounded-xl border border-blue-200 mb-8 flex items-center gap-3 text-blue-700">
                             <Shield className="shrink-0" size={20} />
                             <div>
                                 <h4 className="font-bold text-sm">Read-Only View</h4>
-                                <p className="text-xs">Only Super Administrators have the permission to process document requests, upload files, and secure them on the blockchain.</p>
+                                <p className="text-xs">Only authorized personnel have the permission to process document requests, upload files, and secure them on the blockchain.</p>
                             </div>
                         </div>
                     )}
@@ -348,14 +349,14 @@ const RequestDetails = () => {
                                                                 type: 'danger',
                                                                 onConfirm: () => handleVerifyPayment('Needs Update')
                                                             })}
-                                                            disabled={actionLoading || !isSuperAdmin}
+                                                            disabled={actionLoading || !hasProcessingAccess}
                                                         >
                                                             Reject Payment
                                                         </button>
                                                         <button
-                                                            className={`flex-[2] text-white py-3 rounded-xl font-bold text-sm transition-all shadow-md ${!isSuperAdmin ? 'bg-slate-300 shadow-none' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-100'}`}
+                                                            className={`flex-[2] text-white py-3 rounded-xl font-bold text-sm transition-all shadow-md ${!hasProcessingAccess ? 'bg-slate-300 shadow-none' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-100'}`}
                                                             onClick={() => handleVerifyPayment('Completed')}
-                                                            disabled={actionLoading || !isSuperAdmin}
+                                                            disabled={actionLoading || !hasProcessingAccess}
                                                         >
                                                             {actionLoading ? 'Approving...' : 'Approve & Proceed'}
                                                         </button>
@@ -384,7 +385,7 @@ const RequestDetails = () => {
                                                                 setCurrentStep(2);
                                                             }
                                                         })}
-                                                        disabled={!isSuperAdmin}
+                                                        disabled={!hasProcessingAccess}
                                                     >
                                                         Admin Override: Force Proceed <ChevronRight size={16} />
                                                     </button>
@@ -418,7 +419,7 @@ const RequestDetails = () => {
                                                     <button
                                                         className="text-slate-400 hover:text-red-500 font-bold text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                                                         onClick={() => setShowRejectForm(true)}
-                                                        disabled={!isSuperAdmin}
+                                                        disabled={!hasProcessingAccess}
                                                     >
                                                         <Trash2 size={16} /> Reject Request
                                                     </button>
@@ -434,12 +435,12 @@ const RequestDetails = () => {
                                         <h2 className="text-2xl font-bold text-slate-800 mb-2">Upload External PDF</h2>
                                         <p className="text-slate-500 mb-8">Upload the requested document as a PDF. If it is a TOR or Diploma, a QR code will be automatically embedded.</p>
 
-                                        <input type="file" id="pdfUpload" className="hidden" accept=".pdf" onChange={handleFileUpload} disabled={!isSuperAdmin} />
+                                        <input type="file" id="pdfUpload" className="hidden" accept=".pdf" onChange={handleFileUpload} disabled={!hasProcessingAccess} />
                                         <div
-                                            className={`border-2 border-dashed border-slate-200 bg-slate-50 rounded-2xl py-16 px-8 text-center mb-8 transition-all group ${isSuperAdmin ? 'cursor-pointer hover:border-blue-500 hover:bg-blue-50' : 'opacity-70 cursor-not-allowed'}`}
-                                            onClick={() => { if (isSuperAdmin) document.getElementById('pdfUpload').click() }}
+                                            className={`border-2 border-dashed border-slate-200 bg-slate-50 rounded-2xl py-16 px-8 text-center mb-8 transition-all group ${hasProcessingAccess ? 'cursor-pointer hover:border-blue-500 hover:bg-blue-50' : 'opacity-70 cursor-not-allowed'}`}
+                                            onClick={() => { if (hasProcessingAccess) document.getElementById('pdfUpload').click() }}
                                         >
-                                            <Upload size={40} className={`mx-auto mb-4 transition-colors ${isSuperAdmin ? 'text-slate-400 group-hover:text-blue-600' : 'text-slate-300'}`} />
+                                            <Upload size={40} className={`mx-auto mb-4 transition-colors ${hasProcessingAccess ? 'text-slate-400 group-hover:text-blue-600' : 'text-slate-300'}`} />
                                             {uploadedFile ? (
                                                 <p className="text-blue-600 font-bold">{uploadedFile.name}</p>
                                             ) : (
@@ -453,8 +454,8 @@ const RequestDetails = () => {
                                                 onClick={() => setCurrentStep(1)}
                                             >Back</button>
                                             <button
-                                                className={`flex-[2] text-white py-4 rounded-xl font-bold transition-all shadow-md disabled:opacity-50 ${!isSuperAdmin ? 'bg-slate-300 shadow-none' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-100'}`}
-                                                disabled={!uploadedFile || actionLoading || !isSuperAdmin}
+                                                className={`flex-[2] text-white py-4 rounded-xl font-bold transition-all shadow-md disabled:opacity-50 ${!hasProcessingAccess ? 'bg-slate-300 shadow-none' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-100'}`}
+                                                disabled={!uploadedFile || actionLoading || !hasProcessingAccess}
                                                 onClick={processUpload}
                                             >
                                                 {actionLoading ? 'Uploading & Processing...' : 'Process Document'}
@@ -520,8 +521,8 @@ const RequestDetails = () => {
                                                 onClick={() => setCurrentStep(2)}
                                             >Back</button>
                                             <button
-                                                className={`flex-[2] text-white py-4 rounded-xl font-bold transition-all shadow-md disabled:opacity-50 ${(!isSuperAdmin) ? 'bg-slate-300 shadow-none' : (isBlockchainEligible ? 'bg-[#2c3e50] hover:bg-[#1a252f]' : 'bg-green-600 hover:bg-green-700')}`}
-                                                disabled={actionLoading || !isSuperAdmin || (isBlockchainEligible && !blockchainData.studentIDNumber)}
+                                                className={`flex-[2] text-white py-4 rounded-xl font-bold transition-all shadow-md disabled:opacity-50 ${(!hasProcessingAccess) ? 'bg-slate-300 shadow-none' : (isBlockchainEligible ? 'bg-[#2c3e50] hover:bg-[#1a252f]' : 'bg-green-600 hover:bg-green-700')}`}
+                                                disabled={actionLoading || !hasProcessingAccess || (isBlockchainEligible && !blockchainData.studentIDNumber)}
                                                 onClick={() => showConfirm({
                                                     title: isBlockchainEligible ? 'Secure to Blockchain' : 'Finalize Document',
                                                     message: 'Are you sure you want to finalize this request?',
