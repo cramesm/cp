@@ -63,4 +63,5 @@ const requestSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-module.exports = mongoose.models.Request || mongoose.model('Request', requestSchema);
+delete mongoose.models.Request;
+module.exports = mongoose.model('Request', requestSchema);
