@@ -9,11 +9,15 @@ const { protect } = require('../middleware/authMiddleware');
 const enrichRequestWithStudentData = async (reqObj) => {
   try {
     const Student = require('../models/Users/Student');
+    const Alumni = require('../models/Users/Alumni');
     let student = null;
     
     // 1. Try to find by studentId if present
     if (reqObj.studentId) {
       student = await Student.findOne({ studentId: reqObj.studentId });
+      if (!student) {
+        student = await Alumni.findOne({ studentId: reqObj.studentId });
+      }
     }
     
     // 2. We no longer guess by name to maintain data integrity. 
@@ -50,7 +54,9 @@ router.get('/', async (req, res) => {
           let userName = decoded.name;
           if (!userName || userName === 'User') {
             const Student = require('../models/Users/Student');
-            const student = await Student.findById(decoded.id);
+            const Alumni = require('../models/Users/Alumni');
+            let student = await Student.findById(decoded.id);
+            if (!student) student = await Alumni.findById(decoded.id);
             if (student) {
               userName = `${student.firstName || ''} ${student.lastName || ''}`.trim();
             }
@@ -171,11 +177,14 @@ router.post('/', protect, async (req, res) => {
     
     try {
       const Student = require('../models/Users/Student');
+      const Alumni = require('../models/Users/Alumni');
       let student = await Student.findById(req.user.id);
+      if (!student) student = await Alumni.findById(req.user.id);
       
       // Fallback 1: Resolve by email
       if (!student && req.user.email) {
         student = await Student.findOne({ email: req.user.email });
+        if (!student) student = await Alumni.findOne({ email: req.user.email });
       }
       
       // We removed Fallback 2: Name matching to enforce data integrity

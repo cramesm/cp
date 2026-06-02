@@ -20,6 +20,7 @@ const protect = async (req, res, next) => {
     if (!decoded.name || decoded.name === 'User') {
       try {
         const Student = require('../models/Users/Student');
+        const Alumni = require('../models/Users/Alumni');
         const Registrar = require('../models/Registrar');
         const SuperAdmin = require('../models/Users/SuperAdmin');
 
@@ -27,9 +28,14 @@ const protect = async (req, res, next) => {
         if (dbUser) {
           decoded.name = `${dbUser.firstName || ''} ${dbUser.lastName || ''}`.trim();
         } else {
-          dbUser = await Registrar.findById(decoded.id) || await SuperAdmin.findById(decoded.id);
+          dbUser = await Alumni.findById(decoded.id);
           if (dbUser) {
-            decoded.name = dbUser.name;
+            decoded.name = `${dbUser.firstName || ''} ${dbUser.lastName || ''}`.trim();
+          } else {
+            dbUser = await Registrar.findById(decoded.id) || await SuperAdmin.findById(decoded.id);
+            if (dbUser) {
+              decoded.name = dbUser.name;
+            }
           }
         }
       } catch (dbErr) {

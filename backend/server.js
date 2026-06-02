@@ -101,6 +101,7 @@ const documentRoutes = require('./routes/documents');
 const studentRoutes = require('./routes/students');
 const diplomaRoutes = require('./routes/diploma');
 const documentUploadRoutes = require('./routes/documentUploads');
+const alumniRoutes = require('./routes/alumni');
 
 console.log('Routes imported successfully');
 
@@ -120,6 +121,7 @@ app.use('/api/documents', documentRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/diploma', diplomaRoutes);
 app.use('/api/requests', documentUploadRoutes);
+app.use('/api/alumni', alumniRoutes);
 
 console.log('Routes mounted successfully');
 

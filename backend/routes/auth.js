@@ -7,6 +7,7 @@ const multer = require('multer');
 const path = require('path');
 
 const Student = require('../models/Users/Student');
+const Alumni = require('../models/Users/Alumni');
 const SuperAdmin = require('../models/Users/SuperAdmin');
 const Registrar = require('../models/Registrar');
 const ActivityLog = require('../models/ActivityLog');
@@ -45,14 +46,18 @@ router.post('/register', async (req, res) => {
     }
 
     if (studentId) {
-      const existingId = await Student.findOne({ studentId });
-      if (existingId) {
+      const existingIdStudent = await Student.findOne({ studentId });
+      const existingIdAlumni = await Alumni.findOne({ studentId });
+      if (existingIdStudent || existingIdAlumni) {
         return res.status(400).json({ success: false, message: 'Student ID already registered' });
       }
     }
 
-    // Create new student
-    const student = await Student.create({
+    const isAlumni = role === 'alumni';
+    const UserModel = isAlumni ? Alumni : Student;
+
+    // Create new user
+    const user = await UserModel.create({
       firstName,
       lastName,
       email,
@@ -64,22 +69,22 @@ router.post('/register', async (req, res) => {
       phoneNumber: phoneNumber || ''
     });
 
-    const token = generateToken(student);
+    const token = generateToken(user);
 
     res.status(201).json({
       success: true,
       message: 'Registration successful',
       token,
       user: {
-        id: student._id,
-        email: student.email,
-        firstName: student.firstName,
-        lastName: student.lastName,
-        role: student.role,
-        studentId: student.studentId || '',
-        course: student.course || '',
-        yearLevel: student.yearLevel || '',
-        phoneNumber: student.phoneNumber || ''
+        id: user._id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        studentId: user.studentId || '',
+        course: user.course || '',
+        yearLevel: user.yearLevel || '',
+        phoneNumber: user.phoneNumber || ''
       }
     });
   } catch (error) {
@@ -100,6 +105,12 @@ router.post('/login', async (req, res) => {
     // 1. Check Student
     user = await Student.findOne({ email });
     if (user) modelName = 'Student';
+
+    // 1.5 Check Alumni
+    if (!user) {
+      user = await Alumni.findOne({ email });
+      if (user) modelName = 'Alumni';
+    }
 
     // 2. Check SuperAdmin
     if (!user) {
@@ -175,6 +186,11 @@ router.post('/forgot-password', async (req, res) => {
     user = await Student.findOne({ email });
     if (user) modelName = 'Student';
     
+    if (!user) {
+      user = await Alumni.findOne({ email });
+      if (user) modelName = 'Alumni';
+    }
+
     if (!user) {
       user = await SuperAdmin.findOne({ email });
       if (user) modelName = 'SuperAdmin';
@@ -253,6 +269,7 @@ router.post('/reset-password', async (req, res) => {
 
     let userModel;
     if (modelName === 'Student') userModel = Student;
+    else if (modelName === 'Alumni') userModel = Alumni;
     else if (modelName === 'SuperAdmin') userModel = SuperAdmin;
     else userModel = Registrar;
 
@@ -285,6 +302,8 @@ router.get('/profile', protect, async (req, res) => {
       user = await SuperAdmin.findById(req.user.id);
     } else if (req.user.role === 'registrar') {
       user = await Registrar.findById(req.user.id);
+    } else if (req.user.role === 'alumni') {
+      user = await Alumni.findById(req.user.id);
     } else {
       user = await Student.findById(req.user.id);
     }
@@ -316,6 +335,7 @@ router.put('/profile', protect, async (req, res) => {
     let userModel;
     if (req.user.role === 'super admin') userModel = SuperAdmin;
     else if (req.user.role === 'registrar') userModel = Registrar;
+    else if (req.user.role === 'alumni') userModel = Alumni;
     else userModel = Student;
 
     const updateData = {};
@@ -341,6 +361,7 @@ router.put('/change-password', protect, async (req, res) => {
     let userModel;
     if (req.user.role === 'super admin') userModel = SuperAdmin;
     else if (req.user.role === 'registrar') userModel = Registrar;
+    else if (req.user.role === 'alumni') userModel = Alumni;
     else userModel = Student;
 
     const user = await userModel.findById(req.user.id);
@@ -392,6 +413,7 @@ router.post('/profile/photo', protect, uploadProfile.single('photo'), async (req
     let userModel;
     if (req.user.role === 'super admin') userModel = SuperAdmin;
     else if (req.user.role === 'registrar') userModel = Registrar;
+    else if (req.user.role === 'alumni') userModel = Alumni;
     else userModel = Student;
 
     const profilePicUrl = `/uploads/profiles/${req.file.filename}`;

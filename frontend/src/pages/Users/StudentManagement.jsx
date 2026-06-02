@@ -28,8 +28,11 @@ const StudentManagement = () => {
     const fetchUsers = async () => {
         try {
             setLoading(true);
-            const response = await axiosInstance.get('/students');
-            setUsers(response.data);
+            const [studentsRes, alumniRes] = await Promise.all([
+                axiosInstance.get('/students'),
+                axiosInstance.get('/alumni').catch(() => ({ data: [] }))
+            ]);
+            setUsers([...studentsRes.data, ...alumniRes.data]);
             setError(null);
         } catch (err) {
             console.error('Error fetching users:', err);
@@ -43,10 +46,11 @@ const StudentManagement = () => {
         fetchUsers();
     }, []);
 
-    const handleDelete = async (userId, userName) => {
+    const handleDelete = async (userId, userRole, userName) => {
         if (window.confirm(`Are you sure you want to permanently delete the account for ${userName}? This action cannot be undone.`)) {
             try {
-                await axiosInstance.delete(`/students/${userId}`);
+                const endpoint = userRole === 'alumni' ? `/alumni/${userId}` : `/students/${userId}`;
+                await axiosInstance.delete(endpoint);
                 setUsers(users.filter(user => user._id !== userId));
             } catch (err) {
                 console.error('Error deleting user:', err);
@@ -55,14 +59,15 @@ const StudentManagement = () => {
         }
     };
 
-    const handleToggleStatus = async (userId, currentStatus) => {
+    const handleToggleStatus = async (userId, userRole, currentStatus) => {
         const newStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
         if (window.confirm(`Are you sure you want to ${newStatus === 'Active' ? 'activate' : 'deactivate'} this account?`)) {
             try {
-                const response = await axiosInstance.put(`/students/${userId}/status`, { status: newStatus });
-                if (response.data && response.data.student) {
+                const endpoint = userRole === 'alumni' ? `/alumni/${userId}/status` : `/students/${userId}/status`;
+                const response = await axiosInstance.put(endpoint, { status: newStatus });
+                if (response.data) {
                     setUsers(users.map(user => 
-                        user._id === userId ? { ...user, status: response.data.student.status } : user
+                        user._id === userId ? { ...user, status: response.data.student?.status || response.data.alumni?.status } : user
                     ));
                 }
             } catch (err) {
@@ -85,14 +90,18 @@ const StudentManagement = () => {
         setAddError(null);
         setAdding(true);
         try {
-            const response = await axiosInstance.post('/students', formData);
-            // Add new student to the top of the list
-            setUsers([response.data.student, ...users]);
+            const endpoint = activeTab === 'alumni' ? '/alumni' : '/students';
+            const payload = { ...formData, role: activeTab };
+            const response = await axiosInstance.post(endpoint, payload);
+            
+            const newUser = response.data.student || response.data.alumni;
+            // Add new user to the top of the list
+            setUsers([newUser, ...users]);
             setShowModal(false);
             setFormData({ firstName: '', lastName: '', email: '', password: '' });
         } catch (err) {
-            console.error('Error adding student:', err);
-            setAddError(err.response?.data?.message || 'Failed to add student. Please check the details and try again.');
+            console.error('Error adding user:', err);
+            setAddError(err.response?.data?.message || 'Failed to add user. Please check the details and try again.');
         } finally {
             setAdding(false);
         }
@@ -180,15 +189,13 @@ const StudentManagement = () => {
                         </div>
 
                         {/* Add Button */}
-                        {activeTab === 'student' && (
-                            <button 
-                                onClick={() => setShowModal(true)}
-                                className="flex items-center justify-center gap-2 rounded-md bg-[#6c4df6] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#5a3ed9] transition-all shadow-sm"
-                            >
-                                <Plus size={16} />
-                                Add New Student
-                            </button>
-                        )}
+                        <button 
+                            onClick={() => setShowModal(true)}
+                            className="flex items-center justify-center gap-2 rounded-md bg-[#6c4df6] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#5a3ed9] transition-all shadow-sm"
+                        >
+                            <Plus size={16} />
+                            Add New {activeTab === 'student' ? 'Student' : 'Alumni'}
+                        </button>
                     </div>
 
                     <div className="overflow-x-auto">
@@ -234,7 +241,7 @@ const StudentManagement = () => {
                                             <td className="px-8 py-4 text-right">
                                                 <div className="flex justify-end gap-2">
                                                     <button
-                                                        onClick={() => handleToggleStatus(user._id, user.status || 'Active')}
+                                                        onClick={() => handleToggleStatus(user._id, user.role || 'student', user.status || 'Active')}
                                                         className={`min-w-[90px] rounded-full px-4 py-2 text-[11px] font-bold text-white text-center transition-colors shadow-sm ${
                                                             (user.status || 'Active') === 'Active'
                                                                 ? 'bg-orange-500 hover:bg-orange-600'
@@ -244,7 +251,7 @@ const StudentManagement = () => {
                                                         {(user.status || 'Active') === 'Active' ? 'Deactivate' : 'Activate'}
                                                     </button>
                                                     <button
-                                                        onClick={() => handleDelete(user._id, `${user.firstName} ${user.lastName}`)}
+                                                        onClick={() => handleDelete(user._id, user.role || 'student', `${user.firstName} ${user.lastName}`)}
                                                         className="min-w-[80px] rounded-full bg-[#fce8e8] px-4 py-2 text-[11px] font-bold text-red-600 text-center hover:bg-red-600 hover:text-white transition-colors shadow-sm border border-red-100"
                                                     >
                                                         Delete
@@ -310,7 +317,7 @@ const StudentManagement = () => {
                         <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-gray-100">
                             <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-[#F9FAFF]">
                                 <div>
-                                    <h3 className="text-xl font-bold text-gray-800">Add New Student</h3>
+                                    <h3 className="text-xl font-bold text-gray-800">Add New {activeTab === 'student' ? 'Student' : 'Alumni'}</h3>
                                     <p className="text-xs text-gray-500 mt-1">Register a new mobile user</p>
                                 </div>
                                 <button
@@ -397,7 +404,7 @@ const StudentManagement = () => {
                                         {adding ? (
                                             <><i className="fa-solid fa-spinner fa-spin mr-2"></i> Registering...</>
                                         ) : (
-                                            'Register Student'
+                                            'Register ' + (activeTab === 'student' ? 'Student' : 'Alumni')
                                         )}
                                     </button>
                                 </div>
