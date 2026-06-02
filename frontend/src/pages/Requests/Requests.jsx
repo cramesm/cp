@@ -36,8 +36,10 @@ const Requests = () => {
     // Helper for Status Badge Styling
     const getStatusStyle = (status) => {
         switch (status?.toLowerCase()) {
-            case 'processing': return 'bg-[#E1FFEB] text-[#28A745]';
-            case 'pending': return 'bg-[#FFFDE1] text-[#D2C300]';
+            case 'released': return 'bg-[#E1FFEB] text-[#28A745]';
+            case 'pending': return 'bg-[#FFF9DB] text-[#D4A017]';
+            case 'rejected': return 'bg-[#FFE1E1] text-[#DC3545]';
+            case 'in process': return 'bg-[#DBEAFE] text-[#2563EB]';
             default: return 'bg-gray-100 text-gray-600';
         }
     };
@@ -57,7 +59,7 @@ const Requests = () => {
             const matchesDate = (!start || reqDate >= start) && (!end || reqDate <= end);
 
             return matchesSearch && matchesStatus && matchesType && matchesDate;
-        });
+        }).sort((a, b) => new Date(b.dateRequested) - new Date(a.dateRequested));
     }, [requests, searchTerm, filterStatus, filterType, startDate, endDate]);
 
     // Pagination Logic
@@ -74,7 +76,7 @@ const Requests = () => {
 
     // Dynamic Dropdown Options
     const documentTypes = ['All Document', ...new Set(requests.map(r => r.documentType))];
-    const statuses = ['All Status', 'Processing', 'Pending', 'Approved', 'Rejected'];
+    const statuses = ['All Status', 'Pending', 'In Process', 'Released', 'Rejected'];
 
     return (
         <Layout>
@@ -175,7 +177,7 @@ const Requests = () => {
                                             <td className="px-8 py-5 text-[13px] text-gray-700">{req.documentType}</td>
                                             <td className="px-8 py-5 text-[13px] text-gray-700">{formattedDate}</td>
                                             <td className="px-8 py-5">
-                                                <span className={`px-4 py-1 rounded text-[10px] font-bold uppercase ${getStatusStyle(req.status)}`}>
+                                                <span className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${getStatusStyle(req.status)}`}>
                                                     {req.status}
                                                 </span>
                                             </td>
