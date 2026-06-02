@@ -114,7 +114,8 @@ router.put('/:id', protect, async (req, res) => {
                 }
                 await Notification.create({
                     message,
-                    isRead: false
+                    isRead: false,
+                    email: request.email || ''
                 });
             } catch (err) {
                 console.error('Failed to create request status update notification:', err);
@@ -203,6 +204,7 @@ router.post('/', protect, async (req, res) => {
       purpose: req.body.purpose || '',
       otherPurpose: req.body.otherPurpose || '',
       quantity: req.body.quantity || 1,
+      email: req.user.email || ''
     });
 
     // Log the activity
