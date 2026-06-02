@@ -10,6 +10,9 @@ const getBaseURL = () => {
 
 const API = axios.create({
   baseURL: getBaseURL(),
+    headers: {
+    "ngrok-skip-browser-warning": "true", 
+  },
 });
 
 API.interceptors.request.use((config) => {
