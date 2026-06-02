@@ -71,9 +71,9 @@ const CONTRACT_ABI = [
 
 class BlockchainService {
     constructor() {
-        this.rpcUrl = process.env.BLOCKCHAIN_RPC_URL || 'http://127.0.0.1:8545';
+        this.rpcUrl = process.env.BLOCKCHAIN_RPC_URL || process.env.BESU_RPC_URL || 'http://127.0.0.1:8545';
         this.contractAddress = process.env.CONTRACT_ADDRESS || '0x5FbDB2315678afecb367f032d93F642f64180aa3';
-        this.privateKey = process.env.BLOCKCHAIN_PRIVATE_KEY;
+        this.privateKey = process.env.BLOCKCHAIN_PRIVATE_KEY || process.env.SERVER_WALLET_PRIVATE_KEY;
         this.isFallbackMode = true;
         this.provider = null;
         this.contract = null;
