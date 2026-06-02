@@ -168,10 +168,20 @@ router.put('/:id/verify', protect, async (req, res) => {
     // Sync to Request Collection
     if (status === 'Completed') {
       const Request = require('../models/Request');
-      await Request.findOneAndUpdate(
+      const updatedReq = await Request.findOneAndUpdate(
         { requestId: transaction.requestId },
-        { status: 'In Process' }
+        { status: 'In Process' },
+        { new: true }
       );
+      
+      if (updatedReq) {
+        const Notification = require('../models/Notification');
+        await Notification.create({
+          message: `Your request #${updatedReq.requestId} for ${updatedReq.documentType} is now In Process!`,
+          isRead: false,
+          email: updatedReq.email || ''
+        });
+      }
     }
 
     // Log the verification activity

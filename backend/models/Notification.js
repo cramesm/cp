@@ -5,6 +5,10 @@ const notificationSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  email: {
+    type: String,
+    default: ''
+  },
   isRead: {
     type: Boolean,
     default: false
