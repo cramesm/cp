@@ -64,34 +64,46 @@ const AdminLogin = () => {
 
                     {/* Error Box */}
                     {error && (
-                        <div className="bg-red-50 border border-red-200 text-red-600 px-3 py-2 rounded-md text-xs mb-4 flex items-center gap-2">
+                        <div className="bg-red-50 border border-red-200 text-red-600 px-3 py-2 rounded-md text-xs mb-4 flex items-center gap-2" role="alert">
                             <i className="fa-solid fa-circle-exclamation"></i>
                             {error}
                         </div>
                     )}
 
-                    <input
-                        type="email"
-                        placeholder="Email"
-                        className="w-full p-2.5 mb-[15px] border border-[#ccc] rounded-[10px] shadow-[0_0_20px_rgba(0,0,0,0.1)] focus:outline-none focus:border-[#213448] text-sm"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        disabled={isLoading}
-                    />
-
-                    <div className="relative w-full">
+                    <div className="mb-[15px]">
+                        <label htmlFor="login-email" className="sr-only">Email Address</label>
                         <input
+                            id="login-email"
+                            type="email"
+                            placeholder="Email"
+                            className="w-full p-2.5 border border-[#ccc] rounded-[10px] shadow-[0_0_20px_rgba(0,0,0,0.1)] focus:outline-none focus:border-[#213448] text-sm"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            disabled={isLoading}
+                            autoComplete="email"
+                        />
+                    </div>
+
+                    <div className="relative w-full mb-[15px]">
+                        <label htmlFor="login-password" className="sr-only">Password</label>
+                        <input
+                            id="login-password"
                             type={showPassword ? 'text' : 'password'}
                             placeholder="Password"
-                            className="w-full p-2.5 mb-[15px] border border-[#ccc] rounded-[10px] shadow-[0_0_20px_rgba(0,0,0,0.1)] focus:outline-none focus:border-[#213448] text-sm"
+                            className="w-full p-2.5 border border-[#ccc] rounded-[10px] shadow-[0_0_20px_rgba(0,0,0,0.1)] focus:outline-none focus:border-[#213448] text-sm"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             disabled={isLoading}
+                            autoComplete="current-password"
                         />
-                        <i
-                            className={`fa-solid absolute right-[15px] top-1/2 -translate-y-[100%] text-[#777] cursor-pointer text-sm hover:text-[#333] ${showPassword ? 'fa-eye' : 'fa-eye-slash'}`}
+                        <button
+                            type="button"
+                            className="absolute right-[15px] top-1/2 -translate-y-1/2 text-[#777] text-sm hover:text-[#333] bg-transparent border-none cursor-pointer p-0"
                             onClick={() => setShowPassword(!showPassword)}
-                        ></i>
+                            aria-label={showPassword ? 'Hide password' : 'Show password'}
+                        >
+                            <i className={`fa-solid ${showPassword ? 'fa-eye' : 'fa-eye-slash'}`}></i>
+                        </button>
                     </div>
 
                     <Link to="/forgot-password" size="xs" className="text-right block text-[10px] text-[#73A9D4] no-underline mb-4 hover:underline">Forgot Password?</Link>
@@ -115,9 +127,13 @@ const AdminLogin = () => {
                     <p className="text-[10px] text-gray-400 text-center mb-2 uppercase tracking-wider font-semibold">Demo Accounts</p>
 
                     <div
-                        className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 mb-2 cursor-pointer hover:bg-blue-100 transition-colors"
+                        className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 mb-2 cursor-pointer hover:bg-blue-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
                         onClick={() => { setEmail('admin@verifitor.com'); setPassword('admin123'); }}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setEmail('admin@verifitor.com'); setPassword('admin123'); } }}
                         title="Click to auto-fill"
+                        role="button"
+                        tabIndex={0}
+                        aria-label="Auto-fill Registrar Admin demo credentials"
                     >
                         <p className="text-[11px] font-semibold text-blue-800 mb-0.5 flex items-center gap-1.5">
                             <i className="fa-solid fa-user-tie text-[10px]"></i> Registrar (Admin)
@@ -126,9 +142,13 @@ const AdminLogin = () => {
                     </div>
 
                     <div
-                        className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 cursor-pointer hover:bg-amber-100 transition-colors"
+                        className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 cursor-pointer hover:bg-amber-100 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400"
                         onClick={() => { setEmail('sysadmin@verifitor.com'); setPassword('sysadmin123'); }}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setEmail('sysadmin@verifitor.com'); setPassword('sysadmin123'); } }}
                         title="Click to auto-fill"
+                        role="button"
+                        tabIndex={0}
+                        aria-label="Auto-fill Super Admin demo credentials"
                     >
                         <p className="text-[11px] font-semibold text-amber-800 mb-0.5 flex items-center gap-1.5">
                             <i className="fa-solid fa-shield-halved text-[10px]"></i> Super Admin

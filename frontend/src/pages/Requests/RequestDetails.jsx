@@ -26,7 +26,9 @@ const RequestDetails = () => {
     const [uploadedFile, setUploadedFile] = useState(null);
     const [documentData, setDocumentData] = useState(null);
     const [rejectionReason, setRejectionReason] = useState('');
+    const [manualRejectionReason, setManualRejectionReason] = useState('');
     const [showRejectForm, setShowRejectForm] = useState(false);
+    const [paymentAction, setPaymentAction] = useState('Completed');
     const [confirmConfig, setConfirmConfig] = useState(null);
 
     // Blockchain Data State
@@ -37,17 +39,22 @@ const RequestDetails = () => {
     });
     const [blockchainResult, setBlockchainResult] = useState(null);
 
+    // Bug 4: Double-click guard using a ref-like flag
+    let isExecuting = false;
     const showConfirm = ({ title, message, onConfirm, type = 'info', confirmText = 'Confirm', cancelText = 'Cancel' }) => {
         setConfirmConfig({
             title,
             message,
             onConfirm: async () => {
+                if (isExecuting) return; // Bug 4: prevent double-click
+                isExecuting = true;
                 setConfirmConfig(prev => ({ ...prev, isLoading: true }));
                 try {
                     await onConfirm();
                 } catch (err) {
                     console.error(err);
                 } finally {
+                    isExecuting = false;
                     setConfirmConfig(null);
                 }
             },
@@ -104,7 +111,11 @@ const RequestDetails = () => {
     const handleStatusUpdate = async (newStatus) => {
         setActionLoading(true);
         try {
-            await api.put(`/requests/${id}`, { status: newStatus });
+            const updatePayload = { status: newStatus };
+            if (newStatus === 'Rejected') {
+                updatePayload.rejectionReason = rejectionReason === 'others' ? manualRejectionReason : rejectionReason;
+            }
+            await api.put(`/requests/${id}`, updatePayload);
             await fetchData();
             if (newStatus === 'Rejected') setShowRejectForm(false);
         } catch (err) {
@@ -156,12 +167,9 @@ const RequestDetails = () => {
             });
             setDocumentData(res.data);
 
-            if (!res.data.isBlockchainEligible) {
-                await api.put(`/requests/${id}`, { status: "Released" });
-                setCurrentStep(3); // Non-blockchain finishes at step 3 visually
-            } else {
-                setCurrentStep(3); // Blockchain moves to Secure step
-            }
+            // Bug 5: Both blockchain and non-blockchain docs now go to step 3 for confirmation
+            // Non-blockchain docs show a "Finalize" confirmation, blockchain shows "Secure on Blockchain"
+            setCurrentStep(3);
             await fetchData();
         } catch (err) {
             console.error(err);
@@ -243,9 +251,37 @@ const RequestDetails = () => {
                     </div>
 
                     {status === 'Rejected' && (
-                        <div className="bg-red-50 p-6 rounded-2xl border border-red-200 mb-8">
-                            <h3 className="text-red-700 font-bold text-lg mb-2">Request Rejected</h3>
-                            <p className="text-red-600">This document request has been rejected and requires no further action.</p>
+                        <div className="bg-red-50 p-6 rounded-2xl border border-red-200 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div>
+                                <h3 className="text-red-700 font-bold text-lg mb-2">Request Rejected</h3>
+                                <p className="text-red-600 mb-2">This document request has been rejected and requires no further action.</p>
+                                {requestData.rejectionReason && (
+                                    <p className="text-red-800 bg-red-100/50 p-3 rounded-lg border border-red-100 text-sm">
+                                        <span className="font-bold">Reason:</span> {
+                                            requestData.rejectionReason === 'incomplete' ? 'Incomplete Requirements' :
+                                            requestData.rejectionReason === 'invalid' ? 'Invalid Information' :
+                                            requestData.rejectionReason === 'unpaid' ? 'Payment Issue' :
+                                            requestData.rejectionReason
+                                        }
+                                    </p>
+                                )}
+                            </div>
+                            {isSuperAdmin && (
+                                <button
+                                    className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-xl font-bold transition-all shadow-sm whitespace-nowrap shrink-0"
+                                    onClick={() => showConfirm({
+                                        title: 'Re-open Request',
+                                        message: 'Are you sure you want to re-open this rejected request? The status will be changed back to "In Process".',
+                                        type: 'warning',
+                                        onConfirm: async () => {
+                                            await api.put(`/requests/${id}`, { status: 'In Process', forceOverride: true });
+                                            await fetchData();
+                                        }
+                                    })}
+                                >
+                                    Super Admin: Re-open
+                                </button>
+                            )}
                         </div>
                     )}
 
@@ -340,25 +376,28 @@ const RequestDetails = () => {
                                                 </div>
 
                                                 {paymentTx.status === 'Pending Verification' && (
-                                                    <div className="p-4 bg-slate-50 flex gap-4 border-t border-slate-200">
+                                                    <div className="p-4 bg-slate-50 flex flex-col sm:flex-row gap-4 border-t border-slate-200">
+                                                        <select
+                                                            className="flex-1 py-3 px-4 border border-slate-200 rounded-xl outline-none focus:border-blue-500 text-sm font-bold text-slate-700 bg-white"
+                                                            value={paymentAction}
+                                                            onChange={(e) => setPaymentAction(e.target.value)}
+                                                            disabled={!hasProcessingAccess}
+                                                        >
+                                                            <option value="Completed">Approve Payment</option>
+                                                            <option value="Needs Update">Needs Update (Wrong/Blurry Receipt)</option>
+                                                            <option value="Rejected">Reject Completely (Fraud/Invalid)</option>
+                                                        </select>
                                                         <button
-                                                            className="flex-1 py-3 text-red-500 border border-red-200 font-bold text-sm hover:bg-red-50 rounded-xl transition-all"
+                                                            className={`flex-[1] text-white py-3 px-6 rounded-xl font-bold text-sm transition-all shadow-md ${!hasProcessingAccess ? 'bg-slate-300 shadow-none' : paymentAction === 'Completed' ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-100' : 'bg-red-600 hover:bg-red-700 shadow-red-100'}`}
                                                             onClick={() => showConfirm({
-                                                                title: 'Reject Payment',
-                                                                message: 'Are you sure you want to reject this payment receipt?',
-                                                                type: 'danger',
-                                                                onConfirm: () => handleVerifyPayment('Needs Update')
+                                                                title: 'Confirm Payment Action',
+                                                                message: `Are you sure you want to ${paymentAction === 'Completed' ? 'approve' : paymentAction === 'Needs Update' ? 'request an update for' : 'reject'} this payment?`,
+                                                                type: paymentAction === 'Completed' ? 'info' : 'warning',
+                                                                onConfirm: () => handleVerifyPayment(paymentAction)
                                                             })}
                                                             disabled={actionLoading || !hasProcessingAccess}
                                                         >
-                                                            Reject Payment
-                                                        </button>
-                                                        <button
-                                                            className={`flex-[2] text-white py-3 rounded-xl font-bold text-sm transition-all shadow-md ${!hasProcessingAccess ? 'bg-slate-300 shadow-none' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-100'}`}
-                                                            onClick={() => handleVerifyPayment('Completed')}
-                                                            disabled={actionLoading || !hasProcessingAccess}
-                                                        >
-                                                            {actionLoading ? 'Approving...' : 'Approve & Proceed'}
+                                                            {actionLoading ? 'Processing...' : 'Confirm Action'}
                                                         </button>
                                                     </div>
                                                 )}
@@ -372,7 +411,7 @@ const RequestDetails = () => {
                                         )}
 
                                         <div className="pt-6 border-t border-slate-100 flex flex-col gap-4">
-                                            {(!paymentTx || paymentTx.status !== 'Completed') && !showRejectForm && (
+                                            {(!paymentTx || paymentTx.status !== 'Completed') && !showRejectForm && isSuperAdmin && (
                                                 <div className="flex justify-end">
                                                     <button
                                                         className="bg-slate-100 text-slate-700 hover:bg-slate-200 px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 transition-colors disabled:opacity-50"
@@ -381,13 +420,12 @@ const RequestDetails = () => {
                                                             message: 'Are you sure you want to bypass the payment verification step and forcefully start processing this request?',
                                                             type: 'warning',
                                                             onConfirm: async () => {
-                                                                await api.put(`/requests/${id}`, { status: 'In Process' });
+                                                                await api.put(`/requests/${id}`, { status: 'In Process', forceOverride: true });
                                                                 setCurrentStep(2);
                                                             }
                                                         })}
-                                                        disabled={!hasProcessingAccess}
                                                     >
-                                                        Admin Override: Force Proceed <ChevronRight size={16} />
+                                                        Super Admin Override: Force Proceed <ChevronRight size={16} />
                                                     </button>
                                                 </div>
                                             )}
@@ -404,12 +442,22 @@ const RequestDetails = () => {
                                                         <option value="incomplete">Incomplete Requirements</option>
                                                         <option value="invalid">Invalid Information</option>
                                                         <option value="unpaid">Payment Issue</option>
+                                                        <option value="others">Others (Please specify)</option>
                                                     </select>
+                                                    {rejectionReason === 'others' && (
+                                                        <textarea
+                                                            className="w-full py-3 px-4 bg-white border border-red-200 rounded-lg outline-none focus:border-red-500 mb-4 text-sm"
+                                                            placeholder="Please type the specific reason for rejection..."
+                                                            rows="3"
+                                                            value={manualRejectionReason}
+                                                            onChange={(e) => setManualRejectionReason(e.target.value)}
+                                                        ></textarea>
+                                                    )}
                                                     <div className="flex gap-2">
-                                                        <button className="flex-1 py-2 text-slate-500 font-bold hover:bg-red-100 rounded-lg" onClick={() => setShowRejectForm(false)}>Cancel</button>
+                                                        <button className="flex-1 py-2 text-slate-500 font-bold hover:bg-red-100 rounded-lg" onClick={() => { setShowRejectForm(false); setRejectionReason(''); setManualRejectionReason(''); }}>Cancel</button>
                                                         <button
                                                             className="flex-1 bg-red-600 text-white py-2 rounded-lg font-bold hover:bg-red-700 disabled:opacity-50"
-                                                            disabled={!rejectionReason || actionLoading}
+                                                            disabled={!rejectionReason || (rejectionReason === 'others' && !manualRejectionReason.trim()) || actionLoading}
                                                             onClick={() => handleStatusUpdate('Rejected')}
                                                         >Confirm Reject</button>
                                                     </div>
@@ -419,7 +467,8 @@ const RequestDetails = () => {
                                                     <button
                                                         className="text-slate-400 hover:text-red-500 font-bold text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                                                         onClick={() => setShowRejectForm(true)}
-                                                        disabled={!hasProcessingAccess}
+                                                        disabled={!hasProcessingAccess || status === 'In Process'}
+                                                        title={status === 'In Process' ? 'Cannot reject a request that is already In Process. Use the stepper to continue processing.' : ''}
                                                     >
                                                         <Trash2 size={16} /> Reject Request
                                                     </button>
@@ -464,10 +513,10 @@ const RequestDetails = () => {
                                     </div>
                                 )}
 
-                                {/* Step 3 Content */}
-                                {currentStep === 3 && isBlockchainEligible && (
+                                {/* Step 3 Content — now handles BOTH blockchain and non-blockchain */}
+                                {currentStep === 3 && status !== 'Released' && (
                                     <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 animate-in fade-in slide-in-from-right-4 duration-300">
-                                        <h2 className="text-2xl font-bold text-slate-800 mb-2">Secure & Finalize</h2>
+                                        <h2 className="text-2xl font-bold text-slate-800 mb-2">{isBlockchainEligible ? 'Secure & Finalize' : 'Finalize & Release'}</h2>
 
                                         {isBlockchainEligible && (
                                             <div>
@@ -581,6 +630,24 @@ const RequestDetails = () => {
                                                 Return to Requests
                                             </button>
                                         </div>
+                                        {isSuperAdmin && (
+                                            <div className="mt-8 pt-6 border-t border-slate-100">
+                                                <button
+                                                    className="text-slate-500 hover:text-amber-600 font-bold text-sm flex items-center justify-center gap-2 w-full transition-colors"
+                                                    onClick={() => showConfirm({
+                                                        title: 'Revert Status',
+                                                        message: 'Are you sure you want to revert this completed request back to "In Process"? You can re-upload documents if needed.',
+                                                        type: 'warning',
+                                                        onConfirm: async () => {
+                                                            await api.put(`/requests/${id}`, { status: 'In Process', forceOverride: true });
+                                                            await fetchData();
+                                                        }
+                                                    })}
+                                                >
+                                                    <AlertCircle size={16} /> Super Admin: Revert to "In Process"
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>

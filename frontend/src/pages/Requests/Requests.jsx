@@ -56,6 +56,7 @@ const Requests = () => {
             const reqDate = new Date(req.dateRequested);
             const start = startDate ? new Date(startDate) : null;
             const end = endDate ? new Date(endDate) : null;
+            if (end) end.setHours(23, 59, 59, 999); // Include the entire end day
             const matchesDate = (!start || reqDate >= start) && (!end || reqDate <= end);
 
             return matchesSearch && matchesStatus && matchesType && matchesDate;

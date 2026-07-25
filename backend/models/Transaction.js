@@ -50,7 +50,7 @@ const transactionSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['Pending Verification', 'Completed', 'Needs Update', 'Rejected'],
+    enum: ['Pending Verification', 'Completed', 'Needs Update', 'Rejected', 'Refunded'],
     default: 'Pending Verification'
   },
   verifiedBy: {

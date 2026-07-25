@@ -28,8 +28,12 @@ const requestSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['Pending', 'In Process', 'Approved', 'Released', 'Rejected'],
+    enum: ['Pending', 'In Process', 'Released', 'Rejected'],
     default: 'Pending'
+  },
+  rejectionReason: {
+    type: String,
+    default: ''
   },
   documentType: {
     type: String,

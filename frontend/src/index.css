@@ -17,6 +17,18 @@ body {
   background-color: #f2f2f2;
 }
 
+/* Toast slide-in animation */
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(2rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 @media print {
   .no-print, .sidebar, .top-nav, button {
     display: none !important;

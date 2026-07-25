@@ -147,9 +147,9 @@ router.post('/', protect, async (req, res) => {
 router.put('/:id/verify', protect, async (req, res) => {
   try {
     const { status, adminRemarks } = req.body;
-    const allowedStatuses = ['Completed', 'Needs Update', 'Rejected'];
+    const allowedStatuses = ['Completed', 'Needs Update', 'Rejected', 'Pending Verification', 'Refunded'];
     if (!allowedStatuses.includes(status)) {
-      return res.status(400).json({ message: 'Invalid status. Allowed: Completed, Needs Update, Rejected' });
+      return res.status(400).json({ message: 'Invalid status. Allowed: Completed, Needs Update, Rejected, Pending Verification, Refunded' });
     }
 
     const transaction = await Transaction.findOneAndUpdate(
@@ -165,9 +165,11 @@ router.put('/:id/verify', protect, async (req, res) => {
 
     if (!transaction) return res.status(404).json({ message: 'Transaction not found' });
 
+    const Request = require('../models/Request');
+    const Notification = require('../models/Notification');
+
     // Sync to Request Collection
     if (status === 'Completed') {
-      const Request = require('../models/Request');
       const updatedReq = await Request.findOneAndUpdate(
         { requestId: transaction.requestId },
         { status: 'In Process' },
@@ -175,9 +177,25 @@ router.put('/:id/verify', protect, async (req, res) => {
       );
       
       if (updatedReq) {
-        const Notification = require('../models/Notification');
         await Notification.create({
           message: `Your request #${updatedReq.requestId} for ${updatedReq.documentType} is now In Process!`,
+          isRead: false,
+          email: updatedReq.email || ''
+        });
+      }
+    }
+
+    // Bug 2 fix: Cascade payment rejection to linked Request
+    if (status === 'Rejected') {
+      const updatedReq = await Request.findOneAndUpdate(
+        { requestId: transaction.requestId, status: 'Pending' },
+        { status: 'Rejected', rejectionReason: 'Payment Issue' },
+        { new: true }
+      );
+
+      if (updatedReq) {
+        await Notification.create({
+          message: `Your request #${updatedReq.requestId} for ${updatedReq.documentType} was rejected. Reason: Payment Issue`,
           isRead: false,
           email: updatedReq.email || ''
         });
@@ -219,6 +237,131 @@ router.put('/:id/reupload', upload.single('receiptImage'), async (req, res) => {
     res.json(transaction);
   } catch (error) {
     res.status(500).json({ message: 'Error re-uploading receipt' });
+  }
+});
+
+// ====== REFUND REQUEST ENDPOINTS ======
+const Refund = require('../models/Refund');
+
+// Mobile: Submit a refund request
+router.post('/refund-request', async (req, res) => {
+  try {
+    const { transactionId, requestId, studentName, studentEmail, amount, reason, otherReason } = req.body;
+
+    if (!transactionId || !reason) {
+      return res.status(400).json({ success: false, message: 'Transaction ID and reason are required' });
+    }
+
+    // Verify the transaction exists
+    const transaction = await Transaction.findOne({ transactionId });
+    if (!transaction) {
+      return res.status(404).json({ success: false, message: 'Transaction not found' });
+    }
+
+    // Prevent duplicate refund requests for the same transaction
+    const existingRefund = await Refund.findOne({ transactionId, status: 'Pending' });
+    if (existingRefund) {
+      return res.status(400).json({ success: false, message: 'A pending refund request already exists for this transaction' });
+    }
+
+    const count = await Refund.countDocuments();
+    const refundId = `RFD-${Date.now().toString(36).toUpperCase()}-${(count + 1).toString().padStart(4, '0')}`;
+
+    const refund = await Refund.create({
+      refundId,
+      transactionId,
+      requestId: requestId || transaction.requestId || '',
+      studentName: studentName || transaction.payerName || transaction.name || 'Unknown',
+      studentEmail: studentEmail || transaction.payerEmail || '',
+      amount: amount || transaction.amount || '0.00',
+      reason,
+      otherReason: reason === 'Other' ? (otherReason || '') : ''
+    });
+
+    // Notify registrar staff about the refund request
+    const Notification = require('../models/Notification');
+    await Notification.create({
+      message: `New refund request (${refundId}) from ${refund.studentName} for ₱${refund.amount} — Reason: ${reason === 'Other' ? otherReason : reason}`,
+      isRead: false
+    });
+
+    res.status(201).json({ success: true, message: 'Refund request submitted', refund });
+  } catch (error) {
+    console.error('Refund request error:', error);
+    res.status(500).json({ success: false, message: 'Error submitting refund request', error: error.message });
+  }
+});
+
+// Admin: Get all refund requests (with optional status filter)
+router.get('/refunds', protect, async (req, res) => {
+  try {
+    const query = {};
+    if (req.query.status && req.query.status !== 'All') {
+      query.status = req.query.status;
+    }
+    const refunds = await Refund.find(query).sort({ createdAt: -1 });
+    res.json(refunds);
+  } catch (error) {
+    console.error('Error fetching refunds:', error);
+    res.status(500).json({ message: 'Error fetching refund requests' });
+  }
+});
+
+// Admin: Process (approve/reject) a refund request
+router.put('/refunds/:id/process', protect, async (req, res) => {
+  try {
+    const { status, adminRemarks } = req.body;
+    if (!['Approved', 'Rejected'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid status. Must be Approved or Rejected.' });
+    }
+
+    const refund = await Refund.findOneAndUpdate(
+      { refundId: req.params.id },
+      {
+        status,
+        adminRemarks: adminRemarks || '',
+        processedBy: req.user.email || req.user.name || 'Admin',
+        processedAt: new Date()
+      },
+      { new: true }
+    );
+
+    if (!refund) return res.status(404).json({ message: 'Refund request not found' });
+
+    // If approved, mark the original transaction as Refunded
+    if (status === 'Approved') {
+      await Transaction.findOneAndUpdate(
+        { transactionId: refund.transactionId },
+        { status: 'Refunded', adminRemarks: `Refund approved (${refund.refundId}). ${adminRemarks || ''}`.trim() }
+      );
+    }
+
+    // Notify the student
+    const Notification = require('../models/Notification');
+    const statusMessage = status === 'Approved'
+      ? `Your refund request (${refund.refundId}) for ₱${refund.amount} has been approved!`
+      : `Your refund request (${refund.refundId}) was rejected. ${adminRemarks ? 'Reason: ' + adminRemarks : ''}`;
+
+    await Notification.create({
+      message: statusMessage,
+      isRead: false,
+      email: refund.studentEmail || ''
+    });
+
+    // Log the activity
+    await ActivityLog.create({
+      userEmail: req.user.email,
+      userName: req.user.name || 'Admin',
+      action: `Refund ${status}`,
+      type: 'Refund',
+      status: 'Successful',
+      details: `${status} refund ${refund.refundId} for transaction ${refund.transactionId}. Amount: ₱${refund.amount}. Remarks: ${adminRemarks || 'None'}`
+    });
+
+    res.json({ success: true, refund });
+  } catch (error) {
+    console.error('Process refund error:', error);
+    res.status(500).json({ message: 'Error processing refund request' });
   }
 });
 

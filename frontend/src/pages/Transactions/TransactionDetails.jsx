@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '../../components/Layout';
 import api from '../../api';
-import { ArrowLeft, CheckCircle, XCircle, Clock, Image as ImageIcon, Eye, CreditCard, AlertCircle, User, FileText, RefreshCw } from 'lucide-react';
+import { ArrowLeft, CheckCircle, XCircle, Clock, Image as ImageIcon, Eye, CreditCard, AlertCircle, User, FileText, RefreshCw, Edit3 } from 'lucide-react';
 
 const API_BASE = (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : '') || 'http://127.0.0.1:5000';
 
@@ -12,6 +12,29 @@ const TransactionDetails = () => {
     const [txData, setTxData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [zoomedImage, setZoomedImage] = useState(false);
+    
+    const userRole = localStorage.getItem('userRole') || 'registrar';
+    const isSuperAdmin = userRole === 'super admin';
+    const [isEditingStatus, setIsEditingStatus] = useState(false);
+    const [newStatus, setNewStatus] = useState('');
+    const [actionLoading, setActionLoading] = useState(false);
+
+    const handleUpdateStatus = async () => {
+        if (!newStatus) return;
+        if (!window.confirm(`Are you sure you want to force update this payment to "${newStatus}"?`)) return;
+        
+        setActionLoading(true);
+        try {
+            await api.put(`/transactions/${txData.transactionId}/verify`, { status: newStatus });
+            const res = await api.get(`/transactions/${id}`);
+            setTxData(res.data);
+            setIsEditingStatus(false);
+        } catch (err) {
+            alert(err.response?.data?.message || 'Failed to update transaction status');
+        } finally {
+            setActionLoading(false);
+        }
+    };
 
     useEffect(() => {
         const fetchTransaction = async () => {
@@ -72,6 +95,7 @@ const TransactionDetails = () => {
             case 'Pending Verification': return { style: 'text-[#857A00] bg-[#FCF7B0]', icon: <Clock size={14} /> };
             case 'Needs Update': return { style: 'text-[#A32A2A] bg-[#FFC1C1]', icon: <RefreshCw size={14} /> };
             case 'Rejected': return { style: 'text-[#F04438] bg-[#FFD1D1]', icon: <XCircle size={14} /> };
+            case 'Refunded': return { style: 'text-[#7C3AED] bg-[#E8D5F5]', icon: <RefreshCw size={14} /> };
             default: return { style: 'text-gray-600 bg-gray-100', icon: <Clock size={14} /> };
         }
     };
@@ -230,7 +254,52 @@ const TransactionDetails = () => {
                                         <p className="text-[12px] font-bold uppercase text-gray-500">Current Status</p>
                                         <p className="text-[14px] font-bold text-gray-800">{txData.status}</p>
                                     </div>
+                                    {isSuperAdmin && !isEditingStatus && (
+                                        <button 
+                                            onClick={() => {
+                                                setNewStatus(txData.status);
+                                                setIsEditingStatus(true);
+                                            }}
+                                            className="ml-auto text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                                        >
+                                            <Edit3 size={12} /> Edit
+                                        </button>
+                                    )}
                                 </div>
+
+                                {/* Super Admin Status Edit Mode */}
+                                {isSuperAdmin && isEditingStatus && (
+                                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 mt-3 animate-in fade-in">
+                                        <p className="text-xs font-bold text-blue-800 mb-2 uppercase tracking-wide">Super Admin Override</p>
+                                        <select 
+                                            className="w-full p-2 border border-blue-200 rounded-md text-sm mb-3 outline-none"
+                                            value={newStatus}
+                                            onChange={(e) => setNewStatus(e.target.value)}
+                                        >
+                                            <option value="Pending Verification">Pending Verification</option>
+                                            <option value="Completed">Completed</option>
+                                            <option value="Needs Update">Needs Update</option>
+                                            <option value="Rejected">Rejected</option>
+                                            <option value="Refunded">Refunded</option>
+                                        </select>
+                                        <div className="flex gap-2">
+                                            <button 
+                                                className="flex-1 py-2 text-xs font-bold text-gray-500 hover:bg-blue-100 rounded-md transition-colors"
+                                                onClick={() => setIsEditingStatus(false)}
+                                                disabled={actionLoading}
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button 
+                                                className="flex-1 py-2 text-xs font-bold bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+                                                onClick={handleUpdateStatus}
+                                                disabled={actionLoading}
+                                            >
+                                                {actionLoading ? 'Updating...' : 'Force Update'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
 
                                 {/* Verified By */}
                                 {txData.verifiedBy && (
@@ -276,6 +345,44 @@ const TransactionDetails = () => {
                                         )}
                                     </div>
                                 </div>
+
+                                {/* Bug 7: Re-upload receipt when Needs Update */}
+                                {txData.status === 'Needs Update' && (
+                                    <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
+                                        <p className="text-[11px] font-bold text-amber-700 uppercase tracking-wider mb-2">Re-upload Receipt</p>
+                                        <p className="text-[12px] text-amber-600 mb-3">This payment needs an updated receipt. Upload a corrected image below.</p>
+                                        <input
+                                            type="file"
+                                            id="receiptReupload"
+                                            className="hidden"
+                                            accept="image/png,image/jpg,image/jpeg"
+                                            onChange={async (e) => {
+                                                if (!e.target.files || !e.target.files[0]) return;
+                                                const formData = new FormData();
+                                                formData.append('receiptImage', e.target.files[0]);
+                                                setActionLoading(true);
+                                                try {
+                                                    const res = await api.put(`/transactions/${txData.transactionId}/reupload`, formData, {
+                                                        headers: { 'Content-Type': 'multipart/form-data' }
+                                                    });
+                                                    setTxData(res.data);
+                                                    alert('Receipt re-uploaded successfully! Status reset to Pending Verification.');
+                                                } catch (err) {
+                                                    alert('Failed to re-upload receipt.');
+                                                } finally {
+                                                    setActionLoading(false);
+                                                }
+                                            }}
+                                        />
+                                        <button
+                                            onClick={() => document.getElementById('receiptReupload').click()}
+                                            disabled={actionLoading}
+                                            className="w-full py-2 bg-amber-600 text-white rounded-md font-bold text-xs uppercase hover:bg-amber-700 transition-colors disabled:opacity-50"
+                                        >
+                                            {actionLoading ? 'Uploading...' : 'Choose & Upload New Receipt'}
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

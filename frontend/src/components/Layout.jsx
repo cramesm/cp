@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
+import Breadcrumb from './Breadcrumb';
 
 const Layout = ({ children }) => {
     const [menuOpen, setMenuOpen] = useState(false);
@@ -133,6 +134,11 @@ const Layout = ({ children }) => {
 
     return (
         <div className="flex min-h-screen bg-[#e9e9e9]">
+            {/* Skip to content link for accessibility */}
+            <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[9999] focus:bg-white focus:text-[#2f3947] focus:px-4 focus:py-2 focus:rounded-lg focus:shadow-lg focus:text-sm focus:font-bold">
+                Skip to main content
+            </a>
+
             {/* Mobile Backdrop overlay */}
             {isMobileOpen && (
                 <div
@@ -159,7 +165,7 @@ const Layout = ({ children }) => {
                     )}
                 </div>
 
-                <nav className="flex-1 px-3 py-5 overflow-y-auto">
+                <nav className="flex-1 px-3 py-5 overflow-y-auto" aria-label="Main navigation">
                     <ul className="list-none p-0 m-0 flex flex-col gap-2">
                         {menuItems.map((item) => (
                             <li key={item.path}>
@@ -194,8 +200,10 @@ const Layout = ({ children }) => {
                     <div className="flex items-center gap-3">
                         <button
                             onClick={handleToggle}
-                            className="text-white hover:bg-[#5a7c98] p-2 rounded-lg transition-colors cursor-pointer focus:outline-none flex items-center justify-center"
+                            className="text-white hover:bg-[#5a7c98] p-2 rounded-lg transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-white/50 flex items-center justify-center"
                             title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+                            aria-label={isCollapsed ? "Expand sidebar navigation" : "Collapse sidebar navigation"}
+                            aria-expanded={!isCollapsed}
                         >
                             <i className={`fa-solid ${isCollapsed ? 'fa-bars' : 'fa-outdent'} text-lg`}></i>
                         </button>
@@ -209,6 +217,7 @@ const Layout = ({ children }) => {
                             type="button"
                             onClick={() => navigate('/notifications')}
                             className="text-white text-[18px] hover:opacity-80 transition"
+                            aria-label="View notifications"
                         >
                             <i className="fa-regular fa-bell"></i>
                         </button>
@@ -217,6 +226,9 @@ const Layout = ({ children }) => {
                             type="button"
                             onClick={toggleMenu}
                             className="text-white text-[20px] hover:opacity-80 transition"
+                            aria-label="User menu"
+                            aria-expanded={menuOpen}
+                            aria-haspopup="true"
                         >
                             <i className="fa-solid fa-circle-user"></i>
                         </button>
@@ -225,10 +237,12 @@ const Layout = ({ children }) => {
                             className={`absolute right-0 top-[42px] bg-white shadow-lg rounded-xl flex-col min-w-[180px] z-[10000] overflow-hidden transition-all duration-200 ${
                                 menuOpen ? 'flex opacity-100 translate-y-0' : 'hidden opacity-0 -translate-y-2'
                             }`}
+                            role="menu"
                         >
                             <NavLink
                                 to="/profile/info"
                                 className="text-[#333] px-[18px] py-3 no-underline text-sm border-b border-[#eee] transition-all hover:bg-[#f1f3f5]"
+                                role="menuitem"
                             >
                                 Profile Information
                             </NavLink>
@@ -237,6 +251,7 @@ const Layout = ({ children }) => {
                                 type="button"
                                 onClick={handleLogout}
                                 className="text-[#333] px-[18px] py-3 text-sm text-left bg-transparent border-none w-full cursor-pointer transition-all hover:bg-[#f1f3f5]"
+                                role="menuitem"
                             >
                                 Logout
                             </button>
@@ -244,7 +259,8 @@ const Layout = ({ children }) => {
                     </div>
                 </header>
 
-                <main className="flex-1 w-full bg-[#f8fafc]">
+                <main id="main-content" className="flex-1 w-full bg-[#f8fafc]">
+                    <Breadcrumb />
                     {children}
                 </main>
             </div>

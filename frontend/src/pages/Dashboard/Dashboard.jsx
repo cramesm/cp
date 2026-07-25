@@ -98,11 +98,19 @@ const Dashboard = () => {
                             <p className="text-[28px] font-bold text-[#2F3640] m-0">{stats.inProcessRequests || 0}</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-[15px] bg-white rounded-[15px] p-[18px] shadow-[0_6px_15px_rgba(0,0,0,0.08)]">
-                        <i className="fa-solid fa-circle-check text-[26px]"></i>
+                    <div 
+                        onClick={() => navigate('/transactions')}
+                        className="flex items-center gap-[15px] bg-white rounded-[15px] p-[18px] shadow-[0_6px_15px_rgba(0,0,0,0.08)] cursor-pointer hover:shadow-[0_8px_20px_rgba(0,0,0,0.15)] hover:-translate-y-1 transition-all relative"
+                    >
+                        {stats.pendingRefunds > 0 && (
+                            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full shadow-md animate-bounce">
+                                {stats.pendingRefunds}
+                            </span>
+                        )}
+                        <i className="fa-solid fa-hand-holding-dollar text-[26px]"></i>
                         <div>
-                            <h4 className="text-[14px] text-[#666] mb-[10px] font-normal">Approved Requests</h4>
-                            <p className="text-[28px] font-bold text-[#2F3640] m-0">{stats.approvedRequests || 0}</p>
+                            <h4 className="text-[14px] text-[#666] mb-[10px] font-normal">Pending Refunds</h4>
+                            <p className="text-[28px] font-bold text-[#2F3640] m-0">{stats.pendingRefunds || 0}</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-[15px] bg-white rounded-[15px] p-[18px] shadow-[0_6px_15px_rgba(0,0,0,0.08)]">
@@ -182,7 +190,7 @@ const Dashboard = () => {
                                         </td>
                                         <td className="py-3 px-5 text-[14px] text-black border-b border-[#eaeaea] align-middle">{req.dateRequested}</td>
                                         <td className="py-3 px-5 text-[14px] text-black border-b border-[#eaeaea] align-middle text-right">
-                                            <button className="bg-[#2c3e50] text-white border-none py-2 px-[18px] rounded-[10px] text-[13px] font-medium hover:bg-[#1a252f]">View</button>
+                                            <button onClick={() => navigate(`/requests/${req.requestId}`)} className="bg-[#2c3e50] text-white border-none py-2 px-[18px] rounded-[10px] text-[13px] font-medium hover:bg-[#1a252f] cursor-pointer">View</button>
                                         </td>
                                     </tr>
                                 ))

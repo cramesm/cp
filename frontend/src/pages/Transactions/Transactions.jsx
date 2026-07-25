@@ -2,13 +2,21 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../../components/Layout';
 import api from '../../api';
-import { X, ZoomIn, CheckCircle, Image as ImageIcon, Send, AlertCircle, RefreshCw, Receipt, Eye } from 'lucide-react';
+import { X, ZoomIn, CheckCircle, Image as ImageIcon, Send, AlertCircle, RefreshCw, Receipt, Eye, XCircle, Undo2 } from 'lucide-react';
 
 const API_BASE = (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : '') || 'http://127.0.0.1:5000';
 
 const Transactions = () => {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('payments'); // 'payments' | 'refunds'
+
+  // Refund states
+  const [refunds, setRefunds] = useState([]);
+  const [refundsLoading, setRefundsLoading] = useState(false);
+  const [selectedRefund, setSelectedRefund] = useState(null);
+  const [refundRemarks, setRefundRemarks] = useState('');
+  const [refundActionLoading, setRefundActionLoading] = useState(false);
 
   // Filter States
   const [searchTerm, setSearchTerm] = useState('');
@@ -39,8 +47,21 @@ const Transactions = () => {
     }
   };
 
+  const fetchRefunds = async () => {
+    setRefundsLoading(true);
+    try {
+      const res = await api.get('/transactions/refunds');
+      setRefunds(res.data || []);
+    } catch (error) {
+      console.error("Error fetching refunds:", error);
+    } finally {
+      setRefundsLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchTransactions();
+    fetchRefunds();
   }, []);
 
   const triggerToast = (message, type = 'info') => {
@@ -55,18 +76,24 @@ const Transactions = () => {
     }
 
     try {
+      const statusMap = {
+        'Approve': 'Completed',
+        'Needs Update': 'Needs Update',
+        'Reject': 'Rejected'
+      };
+
       await api.put(`/transactions/${selectedTx.transactionId}/verify`, {
-        status: type === 'Approve' ? 'Completed' : 'Needs Update',
+        status: statusMap[type],
         adminRemarks: adminNote
       });
 
-      triggerToast(
-        type === 'Approve'
-          ? `Payment approved for ${selectedTx.name}.`
-          : `Update requested for ${selectedTx.name}.`,
-        'success'
-      );
+      const messages = {
+        'Approve': `Payment approved for ${selectedTx.name}.`,
+        'Needs Update': `Update requested for ${selectedTx.name}.`,
+        'Reject': `Payment rejected for ${selectedTx.name}.`
+      };
 
+      triggerToast(messages[type], 'success');
       setSelectedTx(null);
       setAdminNote('');
       setError('');
@@ -77,7 +104,29 @@ const Transactions = () => {
     }
   };
 
-  // Filter Logic
+  // Refund processing
+  const handleProcessRefund = async (refundId, status) => {
+    if (refundActionLoading) return; // guard against double-clicks
+    setRefundActionLoading(true);
+    try {
+      await api.put(`/transactions/refunds/${refundId}/process`, {
+        status,
+        adminRemarks: refundRemarks
+      });
+      triggerToast(`Refund ${status.toLowerCase()} successfully.`, 'success');
+      setSelectedRefund(null);
+      setRefundRemarks('');
+      fetchRefunds();
+      fetchTransactions(); // Refresh in case transaction status changed
+    } catch (err) {
+      console.error('Refund processing error:', err);
+      triggerToast('Failed to process refund. Please try again.', 'error');
+    } finally {
+      setRefundActionLoading(false);
+    }
+  };
+
+  // Filter Logic — Bug 8 fix: end date set to end-of-day
   const filteredTransactions = useMemo(() => {
     return transactions.filter((tx) => {
       const matchesSearch =
@@ -92,6 +141,7 @@ const Transactions = () => {
       const txDate = new Date(tx.date);
       const start = startDate ? new Date(startDate) : null;
       const end = endDate ? new Date(endDate) : null;
+      if (end) end.setHours(23, 59, 59, 999); // Bug 8: include entire end day
       const matchesDate = (!start || txDate >= start) && (!end || txDate <= end);
 
       return matchesSearch && matchesStatus && matchesMode && matchesDate;
@@ -109,7 +159,9 @@ const Transactions = () => {
   }, [searchTerm, filterStatus, filterPaymentMode, startDate, endDate, entriesPerPage]);
 
   const paymentModes = ['All Modes', 'GCash', 'Maya', 'GoThyme', 'Other Online Payment'];
-  const statuses = ['All Status', 'Pending Verification', 'Completed', 'Needs Update', 'Rejected'];
+  const statuses = ['All Status', 'Pending Verification', 'Completed', 'Needs Update', 'Rejected', 'Refunded'];
+
+  const pendingRefundCount = refunds.filter(r => r.status === 'Pending').length;
 
   return (
     <Layout>
@@ -123,183 +175,287 @@ const Transactions = () => {
           </div>
         )}
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+        {/* Tab Bar */}
+        <div className="flex items-center gap-1 mb-6">
+          <button
+            onClick={() => setActiveTab('payments')}
+            className={`px-6 py-3 rounded-t-lg text-sm font-bold transition-all ${
+              activeTab === 'payments'
+                ? 'bg-white text-[#1D2D44] border border-b-0 border-gray-200 shadow-sm'
+                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+            }`}
+          >
+            All Payments
+          </button>
+          <button
+            onClick={() => setActiveTab('refunds')}
+            className={`px-6 py-3 rounded-t-lg text-sm font-bold transition-all relative ${
+              activeTab === 'refunds'
+                ? 'bg-white text-[#1D2D44] border border-b-0 border-gray-200 shadow-sm'
+                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+            }`}
+          >
+            Refund Requests
+            {pendingRefundCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full shadow-md">
+                {pendingRefundCount}
+              </span>
+            )}
+          </button>
+        </div>
 
-          {/* Top Controls Section */}
-          <div className="p-6 border-b border-gray-100">
-            <div className="flex flex-wrap items-center justify-between gap-6">
-              <div className="flex items-center gap-3 flex-1 max-md">
-                <div className="flex items-center gap-2 text-[14px] text-[#7E84A3]">
-                  <span>Show</span>
-                  <select
-                    className="appearance-none bg-white border border-[#DDE2EF] rounded-[6px] px-3 py-1 pr-8 outline-none text-[#4D5E80] cursor-pointer transition-all hover:border-gray-400"
-                    value={entriesPerPage}
-                    onChange={(e) => setEntriesPerPage(Number(e.target.value))}
-                  >
-                    <option value={10}>10</option>
-                    <option value={25}>25</option>
-                    <option value={50}>50</option>
-                  </select>
-                  <span>entries</span>
+        {/* ====== PAYMENTS TAB ====== */}
+        {activeTab === 'payments' && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+
+            {/* Top Controls Section */}
+            <div className="p-6 border-b border-gray-100">
+              <div className="flex flex-wrap items-center justify-between gap-6">
+                <div className="flex items-center gap-3 flex-1 max-md">
+                  <div className="flex items-center gap-2 text-[14px] text-[#7E84A3]">
+                    <span>Show</span>
+                    <select
+                      className="appearance-none bg-white border border-[#DDE2EF] rounded-[6px] px-3 py-1 pr-8 outline-none text-[#4D5E80] cursor-pointer transition-all hover:border-gray-400"
+                      value={entriesPerPage}
+                      onChange={(e) => setEntriesPerPage(Number(e.target.value))}
+                    >
+                      <option value={10}>10</option>
+                      <option value={25}>25</option>
+                      <option value={50}>50</option>
+                    </select>
+                    <span>entries</span>
+                  </div>
+                  <input
+                    type="text"
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-[#1D2D44]"
+                    placeholder="Search by ID, Name, or Payer..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
                 </div>
-                <input
-                  type="text"
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-[#1D2D44]"
-                  placeholder="Search by ID, Name, or Payer..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
 
-              <div className="flex items-center gap-4">
-                <select
-                  value={filterPaymentMode}
-                  onChange={(e) => setFilterPaymentMode(e.target.value)}
-                  className="border border-gray-300 rounded px-2 py-2 text-sm bg-white min-w-[120px] outline-none"
-                >
-                  {paymentModes.map(m => <option key={m}>{m}</option>)}
-                </select>
-                <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  className="border border-gray-300 rounded px-2 py-2 text-sm bg-white min-w-[140px] outline-none"
-                >
-                  {statuses.map(s => <option key={s}>{s}</option>)}
-                </select>
-                <input
-                  type="date"
-                  className="border border-gray-300 rounded px-2 py-2 text-sm text-gray-500 outline-none"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                />
-                <input
-                  type="date"
-                  className="border border-gray-300 rounded px-2 py-2 text-sm text-gray-500 outline-none"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                />
+                <div className="flex items-center gap-4">
+                  <select
+                    value={filterPaymentMode}
+                    onChange={(e) => setFilterPaymentMode(e.target.value)}
+                    className="border border-gray-300 rounded px-2 py-2 text-sm bg-white min-w-[120px] outline-none"
+                  >
+                    {paymentModes.map(m => <option key={m}>{m}</option>)}
+                  </select>
+                  <select
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    className="border border-gray-300 rounded px-2 py-2 text-sm bg-white min-w-[140px] outline-none"
+                  >
+                    {statuses.map(s => <option key={s}>{s}</option>)}
+                  </select>
+                  <input
+                    type="date"
+                    className="border border-gray-300 rounded px-2 py-2 text-sm text-gray-500 outline-none"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                  />
+                  <input
+                    type="date"
+                    className="border border-gray-300 rounded px-2 py-2 text-sm text-gray-500 outline-none"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                  />
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="text-[13px] text-gray-800 border-b border-gray-200 uppercase font-bold">
-                  <th className="px-6 py-4">Payment ID</th>
-                  <th className="px-6 py-4">Request ID</th>
-                  <th className="px-6 py-4">Payer Name</th>
-                  <th className="px-6 py-4">Type</th>
-                  <th className="px-6 py-4">Amount</th>
-                  <th className="px-6 py-4">Mode</th>
-                  <th className="px-6 py-4">Date</th>
-                  <th className="px-6 py-4 text-center">Status</th>
-                  <th className="px-6 py-4 text-center">Action</th>
-                </tr>
-              </thead>
-              <tbody className="text-[13px]">
-                {loading ? (
-                  <tr><td colSpan="9" className="px-6 py-20 text-center text-gray-400 italic">Loading payments...</td></tr>
-                ) : paginatedTransactions.length > 0 ? (
-                  paginatedTransactions.map((tx, idx) => {
-                    const txDate = new Date(tx.date);
-                    const formattedDate = txDate.toLocaleDateString('en-US', {
-                      year: 'numeric', month: '2-digit', day: '2-digit'
-                    });
-                    return (
-                      <tr key={tx._id || idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-[#F9FAFF]'}>
-                        <td className="px-6 py-4 text-gray-600 font-mono">{tx.transactionId}</td>
-                        <td className="px-6 py-4 text-gray-600">{tx.requestId}</td>
-                        <td className="px-6 py-4 font-bold text-gray-800">{tx.payerName || tx.name}</td>
-                        <td className="px-6 py-4 text-gray-600">{tx.documentType}</td>
-                        <td className="px-6 py-4 text-gray-700 font-semibold">₱{tx.amount || '0.00'}</td>
-                        <td className="px-6 py-4">
-                          <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${getPaymentModeStyle(tx.paymentMode)}`}>
-                            {tx.paymentMode}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-gray-600">{formattedDate}</td>
-                        <td className="px-6 py-4">
-                          <div className="flex justify-center">
-                            <span className={`min-w-[120px] text-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${getStatusStyle(tx.status)}`}>
-                              {tx.status}
+            {/* Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="text-[13px] text-gray-800 border-b border-gray-200 uppercase font-bold">
+                    <th className="px-6 py-4">Payment ID</th>
+                    <th className="px-6 py-4">Request ID</th>
+                    <th className="px-6 py-4">Payer Name</th>
+                    <th className="px-6 py-4">Type</th>
+                    <th className="px-6 py-4">Amount</th>
+                    <th className="px-6 py-4">Mode</th>
+                    <th className="px-6 py-4">Date</th>
+                    <th className="px-6 py-4 text-center">Status</th>
+                    <th className="px-6 py-4 text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="text-[13px]">
+                  {loading ? (
+                    <tr><td colSpan="9" className="px-6 py-20 text-center text-gray-400 italic">Loading payments...</td></tr>
+                  ) : paginatedTransactions.length > 0 ? (
+                    paginatedTransactions.map((tx, idx) => {
+                      const txDate = new Date(tx.date);
+                      const formattedDate = txDate.toLocaleDateString('en-US', {
+                        year: 'numeric', month: '2-digit', day: '2-digit'
+                      });
+                      return (
+                        <tr key={tx._id || idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-[#F9FAFF]'}>
+                          <td className="px-6 py-4 text-gray-600 font-mono">{tx.transactionId}</td>
+                          <td className="px-6 py-4 text-gray-600">{tx.requestId}</td>
+                          <td className="px-6 py-4 font-bold text-gray-800">{tx.payerName || tx.name}</td>
+                          <td className="px-6 py-4 text-gray-600">{tx.documentType}</td>
+                          <td className="px-6 py-4 text-gray-700 font-semibold">₱{tx.amount || '0.00'}</td>
+                          <td className="px-6 py-4">
+                            <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${getPaymentModeStyle(tx.paymentMode)}`}>
+                              {tx.paymentMode}
                             </span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          <div className="flex justify-center gap-2">
-                            {tx.status === 'Pending Verification' ? (
+                          </td>
+                          <td className="px-6 py-4 text-gray-600">{formattedDate}</td>
+                          <td className="px-6 py-4">
+                            <div className="flex justify-center">
+                              <span className={`min-w-[120px] text-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${getStatusStyle(tx.status)}`}>
+                                {tx.status}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <div className="flex justify-center gap-2">
+                              {tx.status === 'Pending Verification' ? (
+                                <button
+                                  onClick={() => { setSelectedTx(tx); setAdminNote(''); setError(''); }}
+                                  className="min-w-[120px] py-2 rounded-full text-[11px] font-bold bg-[#1D2D44] text-white shadow-md hover:bg-[#152030] transition-all flex items-center justify-center gap-1.5"
+                                >
+                                  <Receipt size={13} /> Verify Receipt
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => navigate(`/transactions/${tx.transactionId}`)}
+                                  className="min-w-[120px] py-2 rounded-full text-[11px] font-bold bg-[#E5E7EB] text-gray-700 hover:bg-gray-300 transition-all flex items-center justify-center gap-1.5"
+                                >
+                                  <Eye size={13} /> View Details
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    <tr>
+                      <td colSpan="9" className="px-6 py-20 text-center text-[#99AAB5] italic text-[16px]">
+                        No payments found matching your filters.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            <div className="bg-white p-6 border-t border-gray-100 flex justify-center gap-2">
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                className={`text-xs px-2 ${currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-black hover:underline cursor-pointer'}`}
+              >
+                Previous
+              </button>
+
+              {Array.from({ length: totalPages }).map((_, idx) => {
+                const pageNumber = idx + 1;
+                if (pageNumber === 1 || pageNumber === totalPages || (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)) {
+                  return (
+                    <button
+                      key={pageNumber}
+                      onClick={() => setCurrentPage(pageNumber)}
+                      className={`w-8 h-8 rounded text-xs transition-colors ${currentPage === pageNumber
+                        ? 'bg-[#2f3947] text-white font-bold'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                    >
+                      {pageNumber}
+                    </button>
+                  );
+                } else if (pageNumber === currentPage - 2 || pageNumber === currentPage + 2) {
+                  return <span key={pageNumber} className="text-gray-400 mt-2 text-xs">...</span>;
+                }
+                return null;
+              })}
+
+              <button
+                disabled={currentPage === totalPages || totalPages === 0}
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                className={`text-xs px-2 ${currentPage === totalPages || totalPages === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-black hover:underline cursor-pointer'}`}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ====== REFUND REQUESTS TAB ====== */}
+        {activeTab === 'refunds' && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="text-[13px] text-gray-800 border-b border-gray-200 uppercase font-bold">
+                    <th className="px-6 py-4">Refund ID</th>
+                    <th className="px-6 py-4">Transaction ID</th>
+                    <th className="px-6 py-4">Student Name</th>
+                    <th className="px-6 py-4">Amount</th>
+                    <th className="px-6 py-4">Reason</th>
+                    <th className="px-6 py-4">Date Submitted</th>
+                    <th className="px-6 py-4 text-center">Status</th>
+                    <th className="px-6 py-4 text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="text-[13px]">
+                  {refundsLoading ? (
+                    <tr><td colSpan="8" className="px-6 py-20 text-center text-gray-400 italic">Loading refund requests...</td></tr>
+                  ) : refunds.length > 0 ? (
+                    refunds.map((refund, idx) => {
+                      const refundDate = new Date(refund.createdAt);
+                      const formattedDate = refundDate.toLocaleDateString('en-US', {
+                        year: 'numeric', month: '2-digit', day: '2-digit'
+                      });
+                      return (
+                        <tr key={refund._id || idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-[#F9FAFF]'}>
+                          <td className="px-6 py-4 text-gray-600 font-mono">{refund.refundId}</td>
+                          <td className="px-6 py-4 text-gray-600 font-mono">{refund.transactionId}</td>
+                          <td className="px-6 py-4 font-bold text-gray-800">{refund.studentName}</td>
+                          <td className="px-6 py-4 text-gray-700 font-semibold">₱{refund.amount || '0.00'}</td>
+                          <td className="px-6 py-4 text-gray-600">{refund.reason === 'Other' ? refund.otherReason : refund.reason}</td>
+                          <td className="px-6 py-4 text-gray-600">{formattedDate}</td>
+                          <td className="px-6 py-4">
+                            <div className="flex justify-center">
+                              <span className={`min-w-[100px] text-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${getRefundStatusStyle(refund.status)}`}>
+                                {refund.status}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            {refund.status === 'Pending' ? (
                               <button
-                                onClick={() => { setSelectedTx(tx); setAdminNote(''); setError(''); }}
-                                className="min-w-[120px] py-2 rounded-full text-[11px] font-bold bg-[#1D2D44] text-white shadow-md hover:bg-[#152030] transition-all flex items-center justify-center gap-1.5"
+                                onClick={() => { setSelectedRefund(refund); setRefundRemarks(''); }}
+                                className="min-w-[100px] py-2 rounded-full text-[11px] font-bold bg-[#1D2D44] text-white shadow-md hover:bg-[#152030] transition-all flex items-center justify-center gap-1.5 mx-auto"
                               >
-                                <Receipt size={13} /> Verify Receipt
+                                <Eye size={13} /> Review
                               </button>
                             ) : (
-                              <button
-                                onClick={() => navigate(`/transactions/${tx.transactionId}`)}
-                                className="min-w-[120px] py-2 rounded-full text-[11px] font-bold bg-[#E5E7EB] text-gray-700 hover:bg-gray-300 transition-all flex items-center justify-center gap-1.5"
-                              >
-                                <Eye size={13} /> View Details
-                              </button>
+                              <span className="text-xs text-gray-400 italic">
+                                {refund.status === 'Approved' ? 'Approved' : 'Rejected'}
+                                {refund.processedBy && ` by ${refund.processedBy.split('@')[0]}`}
+                              </span>
                             )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr>
-                    <td colSpan="9" className="px-6 py-20 text-center text-[#99AAB5] italic text-[16px]">
-                      No payments found matching your filters.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    <tr>
+                      <td colSpan="8" className="px-6 py-20 text-center text-[#99AAB5] italic text-[16px]">
+                        No refund requests found.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-
-          {/* Pagination */}
-          <div className="bg-white p-6 border-t border-gray-100 flex justify-center gap-2">
-            <button
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              className={`text-xs px-2 ${currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-black hover:underline cursor-pointer'}`}
-            >
-              Previous
-            </button>
-
-            {Array.from({ length: totalPages }).map((_, idx) => {
-              const pageNumber = idx + 1;
-              if (pageNumber === 1 || pageNumber === totalPages || (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)) {
-                return (
-                  <button
-                    key={pageNumber}
-                    onClick={() => setCurrentPage(pageNumber)}
-                    className={`w-8 h-8 rounded text-xs transition-colors ${currentPage === pageNumber
-                      ? 'bg-[#2f3947] text-white font-bold'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
-                  >
-                    {pageNumber}
-                  </button>
-                );
-              } else if (pageNumber === currentPage - 2 || pageNumber === currentPage + 2) {
-                return <span key={pageNumber} className="text-gray-400 mt-2 text-xs">...</span>;
-              }
-              return null;
-            })}
-
-            <button
-              disabled={currentPage === totalPages || totalPages === 0}
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              className={`text-xs px-2 ${currentPage === totalPages || totalPages === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-black hover:underline cursor-pointer'}`}
-            >
-              Next
-            </button>
-          </div>
-        </div>
+        )}
 
         {/* ====== RECEIPT VERIFICATION MODAL ====== */}
         {selectedTx && (
@@ -394,7 +550,7 @@ const Transactions = () => {
                     <textarea
                       className={`w-full h-32 p-4 border rounded-xl text-sm outline-none transition-all resize-none ${error ? 'border-red-500 bg-red-50' : 'border-gray-200 focus:border-[#1D2D44]'
                         }`}
-                      placeholder="Enter remarks (required for requesting updates)..."
+                      placeholder="Enter remarks (required for requesting updates or rejections)..."
                       value={adminNote}
                       onChange={(e) => { setAdminNote(e.target.value); setError(''); }}
                     />
@@ -407,15 +563,21 @@ const Transactions = () => {
                 </div>
               </div>
 
-              {/* Modal Footer */}
+              {/* Modal Footer — Bug 9 fix: Added Reject button */}
               <div className="p-6 bg-gray-50 border-t flex justify-between items-center">
                 <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded text-[10px] font-bold uppercase tracking-wider">
                   Pending Verification
                 </span>
                 <div className="flex gap-3">
                   <button
+                    onClick={() => handleVerifyAction('Reject')}
+                    className="px-5 py-2.5 rounded-full border-2 border-red-500 text-red-500 font-bold text-xs uppercase hover:bg-red-50 transition-all tracking-widest flex items-center gap-2"
+                  >
+                    <XCircle size={14} /> Reject
+                  </button>
+                  <button
                     onClick={() => handleVerifyAction('Needs Update')}
-                    className="px-6 py-2.5 rounded-full border-2 border-red-500 text-red-500 font-bold text-xs uppercase hover:bg-red-50 transition-all tracking-widest flex items-center gap-2"
+                    className="px-5 py-2.5 rounded-full border-2 border-amber-500 text-amber-600 font-bold text-xs uppercase hover:bg-amber-50 transition-all tracking-widest flex items-center gap-2"
                   >
                     <RefreshCw size={14} /> Request Update
                   </button>
@@ -423,7 +585,86 @@ const Transactions = () => {
                     onClick={() => handleVerifyAction('Approve')}
                     className="px-8 py-2.5 rounded-full bg-[#1D2D44] text-white font-bold text-xs uppercase hover:bg-[#152030] shadow-md flex items-center gap-2 tracking-widest"
                   >
-                    <Send size={14} /> Approve Payment
+                    <Send size={14} /> Approve
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ====== REFUND REVIEW MODAL ====== */}
+        {selectedRefund && (
+          <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden">
+
+              <div className="bg-[#1D2D44] p-6 text-white flex justify-between items-center">
+                <div>
+                  <h3 className="text-xl font-bold">Review Refund Request</h3>
+                  <p className="text-xs opacity-70 mt-1 uppercase tracking-widest font-semibold">
+                    {selectedRefund.refundId}
+                  </p>
+                </div>
+                <button onClick={() => setSelectedRefund(null)} className="hover:bg-white/10 p-2 rounded-full transition-colors">
+                  <X size={24} />
+                </button>
+              </div>
+
+              <div className="p-6">
+                <div className="bg-[#F9FAFF] p-5 rounded-xl border border-[#DDE2EF] mb-6">
+                  <h4 className="text-[11px] font-bold text-[#1D2D44] uppercase mb-4 tracking-wider">Refund Details</h4>
+                  <div className="space-y-3 text-sm text-gray-600 font-medium">
+                    <div className="flex justify-between">
+                      <span>Student</span>
+                      <span className="font-bold text-gray-800">{selectedRefund.studentName}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Email</span>
+                      <span className="text-gray-700">{selectedRefund.studentEmail || 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Transaction ID</span>
+                      <span className="font-mono text-gray-700">{selectedRefund.transactionId}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Amount</span>
+                      <span className="font-bold text-[#1D2D44]">₱{selectedRefund.amount}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Reason</span>
+                      <span className="text-gray-700">{selectedRefund.reason === 'Other' ? selectedRefund.otherReason : selectedRefund.reason}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Submitted</span>
+                      <span className="text-gray-700">{new Date(selectedRefund.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <label className="block text-[11px] font-bold text-gray-500 uppercase mb-2 tracking-wider">
+                  Admin Remarks
+                </label>
+                <textarea
+                  className="w-full h-24 p-4 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#1D2D44] resize-none mb-4"
+                  placeholder="Add remarks (optional for approval, recommended for rejection)..."
+                  value={refundRemarks}
+                  onChange={(e) => setRefundRemarks(e.target.value)}
+                />
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => handleProcessRefund(selectedRefund.refundId, 'Rejected')}
+                    disabled={refundActionLoading}
+                    className="flex-1 py-3 rounded-xl border-2 border-red-500 text-red-500 font-bold text-sm uppercase hover:bg-red-50 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    <XCircle size={16} /> Reject Refund
+                  </button>
+                  <button
+                    onClick={() => handleProcessRefund(selectedRefund.refundId, 'Approved')}
+                    disabled={refundActionLoading}
+                    className="flex-1 py-3 rounded-xl bg-green-600 text-white font-bold text-sm uppercase hover:bg-green-700 shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    <CheckCircle size={16} /> Approve Refund
                   </button>
                 </div>
               </div>
@@ -449,12 +690,23 @@ const Transactions = () => {
   );
 };
 
-// Helper: Status Badge Styles
+// Helper: Status Badge Styles (updated with Refunded)
 function getStatusStyle(status) {
   switch (status) {
     case 'Pending Verification': return 'bg-[#FCF7B0] text-[#857A00]';
     case 'Completed': return 'bg-[#C6E7FF] text-[#2D6A8E]';
     case 'Needs Update': return 'bg-[#FFC1C1] text-[#A32A2A]';
+    case 'Rejected': return 'bg-[#FFD1D1] text-[#F04438]';
+    case 'Refunded': return 'bg-[#E8D5F5] text-[#7C3AED]';
+    default: return 'bg-gray-100 text-gray-600';
+  }
+}
+
+// Helper: Refund Status Styles
+function getRefundStatusStyle(status) {
+  switch (status) {
+    case 'Pending': return 'bg-[#FCF7B0] text-[#857A00]';
+    case 'Approved': return 'bg-[#C6FFD5] text-[#1B7A2E]';
     case 'Rejected': return 'bg-[#FFD1D1] text-[#F04438]';
     default: return 'bg-gray-100 text-gray-600';
   }

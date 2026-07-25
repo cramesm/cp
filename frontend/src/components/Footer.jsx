@@ -49,7 +49,7 @@ const Footer = () => {
             </h3>
             <div className="space-y-0.5">
               <p className="text-gray-400 text-xs">Verified on:</p>
-              <p className="text-white font-semibold">January 22, 2026 - 10:45 PM</p>
+              <p className="text-white font-semibold">{new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} - {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</p>
             </div>
             
             <div className="flex flex-col md:items-end space-y-2 pt-1">

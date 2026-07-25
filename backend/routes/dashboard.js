@@ -6,20 +6,23 @@ const Notification = require('../models/Notification');
 
 router.get('/stats', async (req, res) => {
   try {
+    const Refund = require('../models/Refund');
     const totalRequests = await Request.countDocuments();
     const pendingRequests = await Request.countDocuments({ status: 'Pending' });
     const inProcessRequests = await Request.countDocuments({ status: 'In Process' });
-    const approvedRequests = await Request.countDocuments({ status: 'Approved' });
+    const rejectedRequests = await Request.countDocuments({ status: 'Rejected' });
     const releasedRequests = await Request.countDocuments({ status: 'Released' });
     const blockchainTransactions = await Transaction.countDocuments();
+    const pendingRefunds = await Refund.countDocuments({ status: 'Pending' });
 
     res.json({
       totalRequests,
       pendingRequests,
       inProcessRequests,
-      approvedRequests,
+      rejectedRequests,
       releasedRequests,
-      blockchainTransactions
+      blockchainTransactions,
+      pendingRefunds
     });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching stats' });

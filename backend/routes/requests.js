@@ -86,11 +86,19 @@ router.get('/', async (req, res) => {
 // Update a request (Logged)
 router.put('/:id', protect, async (req, res) => {
     try {
-        const { status, name, documentHash } = req.body;
+        const { status, name, documentHash, forceOverride, rejectionReason } = req.body;
+
+        // Force override (payment bypass) requires super admin role
+        if (forceOverride && req.user.role !== 'super admin') {
+            return res.status(403).json({ message: 'Only super admins can perform force overrides.' });
+        }
+
         const updateData = {};
         if (status) updateData.status = status;
         if (name) updateData.name = name;
         if (documentHash !== undefined) updateData.documentHash = documentHash;
+        if (rejectionReason !== undefined) updateData.rejectionReason = rejectionReason;
+        if (status === 'In Process') updateData.rejectionReason = ''; // Clear reason if reopened
 
         const request = await Request.findOneAndUpdate(
             { requestId: req.params.id },
@@ -100,14 +108,17 @@ router.put('/:id', protect, async (req, res) => {
 
         if (!request) return res.status(404).json({ message: 'Request not found' });
 
-        // Log activity
+        // Log activity — distinguish force overrides
+        const actionLabel = forceOverride ? 'Force Override' : 'Update Request';
         await ActivityLog.create({
             userEmail: req.user.email,
             userName: req.user.name || 'User',
-            action: 'Update Request',
+            action: actionLabel,
             type: '------',
             status: 'Successful',
-            details: `Updated request ${req.params.id} status to ${status || 'unchanged'}`
+            details: forceOverride
+                ? `[SUPER ADMIN] Bypassed verification for request ${req.params.id}, status set to ${status}`
+                : `Updated request ${req.params.id} status to ${status || 'unchanged'}`
         });
 
         // Auto-notify student about request status update
@@ -117,7 +128,14 @@ router.put('/:id', protect, async (req, res) => {
                 let message = `Your request #${request.requestId} for ${request.documentType} is now ${status}!`;
                 if (status === 'Released') {
                     message = `Your request #${request.requestId} for ${request.documentType} is ready for pickup!`;
+                } else if (status === 'Rejected' && request.rejectionReason) {
+                    const readableReason = request.rejectionReason === 'incomplete' ? 'Incomplete Requirements' :
+                                           request.rejectionReason === 'invalid' ? 'Invalid Information' :
+                                           request.rejectionReason === 'unpaid' ? 'Payment Issue' :
+                                           request.rejectionReason;
+                    message = `Your request #${request.requestId} for ${request.documentType} was rejected. Reason: ${readableReason}`;
                 }
+                
                 await Notification.create({
                     message,
                     isRead: false,
