@@ -25,7 +25,7 @@ const StudentController = {
     // Add a new student
     addStudent: async (req, res) => {
         try {
-            const { firstName, lastName, email, password } = req.body;
+            const { firstName, lastName, email, password, programLevel } = req.body;
 
             if (!firstName || !lastName || !email || !password) {
                 return res.status(HttpStatus.BAD_REQUEST).json({ 
@@ -52,6 +52,7 @@ const StudentController = {
                 email,
                 password,
                 studentId,
+                programLevel: programLevel || 'Bachelors',
                 role: 'student'
             });
 

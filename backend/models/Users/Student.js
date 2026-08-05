@@ -44,9 +44,14 @@ const studentSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  programLevel: {
+    type: String,
+    enum: ['Bachelors', 'Masters', 'Doctorate'],
+    default: 'Bachelors'
+  },
   status: {
     type: String,
-    enum: ['Active', 'Inactive'],
+    enum: ['Active', 'Inactive', 'Stopped'],
     default: 'Inactive'
   }
 }, { timestamps: true });

@@ -9,6 +9,8 @@ const StudentManagement = () => {
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [activeTab, setActiveTab] = useState('student'); // 'student' or 'alumni'
+    const [filterProgram, setFilterProgram] = useState('All');
+    const [filterStatus, setFilterStatus] = useState('All');
     
     // Pagination
     const [entriesPerPage, setEntriesPerPage] = useState(10);
@@ -20,7 +22,8 @@ const StudentManagement = () => {
         firstName: '',
         lastName: '',
         email: '',
-        password: ''
+        password: '',
+        programLevel: 'Bachelors'
     });
     const [adding, setAdding] = useState(false);
     const [addError, setAddError] = useState(null);
@@ -60,8 +63,13 @@ const StudentManagement = () => {
     };
 
     const handleToggleStatus = async (userId, userRole, currentStatus) => {
-        const newStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
-        if (window.confirm(`Are you sure you want to ${newStatus === 'Active' ? 'activate' : 'deactivate'} this account?`)) {
+        const cStatus = currentStatus || 'Active';
+        let newStatus = 'Active';
+        if (cStatus === 'Active') newStatus = 'Inactive';
+        else if (cStatus === 'Inactive') newStatus = 'Stopped';
+        else if (cStatus === 'Stopped') newStatus = 'Active';
+
+        if (window.confirm(`Are you sure you want to change this account's status to ${newStatus}?`)) {
             try {
                 const endpoint = userRole === 'alumni' ? `/v1/alumni/${userId}/status` : `/v1/students/${userId}/status`;
                 const response = await axiosInstance.put(endpoint, { status: newStatus });
@@ -98,7 +106,7 @@ const StudentManagement = () => {
             // Add new user to the top of the list
             setUsers([newUser, ...users]);
             setShowModal(false);
-            setFormData({ firstName: '', lastName: '', email: '', password: '' });
+            setFormData({ firstName: '', lastName: '', email: '', password: '', programLevel: 'Bachelors' });
         } catch (err) {
             console.error('Error adding user:', err);
             setAddError(err.response?.data?.message || 'Failed to add user. Please check the details and try again.');
@@ -113,14 +121,22 @@ const StudentManagement = () => {
             if (!roleMatch) return false;
 
             const search = searchTerm.toLowerCase();
-            return (
+            const matchesSearch = (
                 (user.firstName && user.firstName.toLowerCase().includes(search)) ||
                 (user.lastName && user.lastName.toLowerCase().includes(search)) ||
                 (user.email && user.email.toLowerCase().includes(search)) ||
                 (user.studentId && user.studentId.toLowerCase().includes(search))
             );
+
+            const userStatus = user.status || 'Active';
+            const matchesStatus = filterStatus === 'All' || userStatus === filterStatus;
+            
+            const userProgram = user.programLevel || 'Bachelors';
+            const matchesProgram = activeTab === 'alumni' || filterProgram === 'All' || userProgram === filterProgram;
+
+            return matchesSearch && matchesStatus && matchesProgram;
         });
-    }, [users, activeTab, searchTerm]);
+    }, [users, activeTab, searchTerm, filterStatus, filterProgram]);
 
     const totalPages = Math.ceil(filteredUsers.length / entriesPerPage);
     const paginatedUsers = filteredUsers.slice(
@@ -130,7 +146,7 @@ const StudentManagement = () => {
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchTerm, activeTab, entriesPerPage]);
+    }, [searchTerm, activeTab, entriesPerPage, filterStatus, filterProgram]);
 
     return (
         <Layout>
@@ -186,6 +202,32 @@ const StudentManagement = () => {
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
                             </div>
+                            
+                            {/* Filters */}
+                            <div className="flex gap-3">
+                                {activeTab === 'student' && (
+                                    <select 
+                                        value={filterProgram}
+                                        onChange={e => setFilterProgram(e.target.value)}
+                                        className="rounded-md border border-gray-300 py-2 px-3 text-xs outline-none focus:border-[#1D2D44] bg-white cursor-pointer shadow-sm text-gray-700 font-bold"
+                                    >
+                                        <option value="All">All Programs</option>
+                                        <option value="Bachelors">Bachelors</option>
+                                        <option value="Masters">Masters</option>
+                                        <option value="Doctorate">Doctorate</option>
+                                    </select>
+                                )}
+                                <select 
+                                    value={filterStatus}
+                                    onChange={e => setFilterStatus(e.target.value)}
+                                    className="rounded-md border border-gray-300 py-2 px-3 text-xs outline-none focus:border-[#1D2D44] bg-white cursor-pointer shadow-sm text-gray-700 font-bold"
+                                >
+                                    <option value="All">All Statuses</option>
+                                    <option value="Active">Active</option>
+                                    <option value="Inactive">Inactive</option>
+                                    <option value="Stopped">Stopped</option>
+                                </select>
+                            </div>
                         </div>
 
                         {/* Add Button */}
@@ -205,6 +247,7 @@ const StudentManagement = () => {
                                     <th className="px-8 py-5">Name</th>
                                     <th className="px-8 py-5">{activeTab === 'student' ? 'School Email' : 'Email'}</th>
                                     <th className="px-8 py-5">Student ID</th>
+                                    {activeTab === 'student' && <th className="px-8 py-5">Program</th>}
                                     <th className="px-8 py-5">Joined Date</th>
                                     <th className="px-8 py-5 text-center">Status</th>
                                     <th className="px-8 py-5 text-right">Action</th>
@@ -226,14 +269,19 @@ const StudentManagement = () => {
                                             <td className="px-8 py-4 font-mono text-gray-500">
                                                 {user.studentId ? user.studentId : 'N/A'}
                                             </td>
+                                            {activeTab === 'student' && (
+                                                <td className="px-8 py-4 text-gray-600 font-medium">
+                                                    {user.programLevel || 'Bachelors'}
+                                                </td>
+                                            )}
                                             <td className="px-8 py-4 text-gray-600">
                                                 {new Date(user.createdAt).toLocaleDateString()}
                                             </td>
                                             <td className="px-8 py-4 text-center">
                                                 <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${
-                                                    user.status === 'Active' 
+                                                    (user.status || 'Active') === 'Active' 
                                                         ? 'bg-green-100 text-green-700' 
-                                                        : 'bg-red-100 text-red-700'
+                                                        : (user.status === 'Stopped' ? 'bg-gray-200 text-gray-600' : 'bg-red-100 text-red-700')
                                                 }`}>
                                                     {user.status || 'Active'}
                                                 </span>
@@ -245,10 +293,10 @@ const StudentManagement = () => {
                                                         className={`min-w-[90px] rounded-full px-4 py-2 text-[11px] font-bold text-white text-center transition-colors shadow-sm ${
                                                             (user.status || 'Active') === 'Active'
                                                                 ? 'bg-orange-500 hover:bg-orange-600'
-                                                                : 'bg-green-500 hover:bg-green-600'
+                                                                : (user.status === 'Inactive' ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600')
                                                         }`}
                                                     >
-                                                        {(user.status || 'Active') === 'Active' ? 'Deactivate' : 'Activate'}
+                                                        {(user.status || 'Active') === 'Active' ? 'Deactivate' : (user.status === 'Inactive' ? 'Stop' : 'Activate')}
                                                     </button>
                                                     <button
                                                         onClick={() => handleDelete(user._id, user.role || 'student', `${user.firstName} ${user.lastName}`)}
@@ -386,6 +434,21 @@ const StudentManagement = () => {
                                             placeholder="Assign a secure password"
                                         />
                                     </div>
+                                    {activeTab === 'student' && (
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Program Level</label>
+                                            <select
+                                                name="programLevel"
+                                                value={formData.programLevel}
+                                                onChange={handleInputChange}
+                                                className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6c4df6] focus:border-transparent bg-gray-50 focus:bg-white transition-all cursor-pointer"
+                                            >
+                                                <option value="Bachelors">Bachelors</option>
+                                                <option value="Masters">Masters</option>
+                                                <option value="Doctorate">Doctorate</option>
+                                            </select>
+                                        </div>
+                                    )}
                                 </div>
                                 
                                 <div className="mt-8 flex justify-end gap-3 pt-4 border-t border-gray-100">

@@ -11,8 +11,11 @@ const Requests = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('All Status');
     const [filterType, setFilterType] = useState('All Document');
+    const [filterUserRole, setFilterUserRole] = useState('All');
+    const [filterProgram, setFilterProgram] = useState('All');
+    const [filterUserStatus, setFilterUserStatus] = useState('All');
     const [startDate, setStartDate] = useState('');
-    const [endDate, setEndDate] = useState('');
+    const [endDate, setEndDate] = useState(new Date().toLocaleDateString('en-CA'));
     const [entriesPerPage, setEntriesPerPage] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
 
@@ -21,8 +24,38 @@ const Requests = () => {
     useEffect(() => {
         const fetchRequests = async () => {
             try {
-                const res = await api.get('/requests');
-                setRequests(res.data || []);
+                const [reqRes, stuRes, alumRes] = await Promise.all([
+                    api.get('/requests'),
+                    api.get('/v1/students').catch(() => ({ data: { data: [] } })),
+                    api.get('/v1/alumni').catch(() => ({ data: { data: [] } }))
+                ]);
+                
+                const users = [...(stuRes.data?.data || []), ...(alumRes.data?.data || [])];
+                const userMap = {};
+                users.forEach(u => {
+                    if (u.email) userMap[u.email] = u;
+                });
+
+                const enrichedRequests = (reqRes.data || []).map(req => {
+                    const user = userMap[req.email] || {};
+                    return {
+                        ...req,
+                        userRole: user.role || 'student',
+                        programLevel: user.programLevel || 'Bachelors',
+                        userStatus: user.status || 'Active'
+                    };
+                });
+
+                setRequests(enrichedRequests);
+                if (enrichedRequests.length > 0) {
+                    setStartDate(prev => {
+                        if (!prev) {
+                            const oldest = new Date(Math.min(...enrichedRequests.map(req => new Date(req.dateRequested))));
+                            return oldest.toLocaleDateString('en-CA');
+                        }
+                        return prev;
+                    });
+                }
             } catch (error) {
                 console.error("Error fetching requests:", error);
             } finally {
@@ -52,6 +85,10 @@ const Requests = () => {
             const matchesStatus = filterStatus === 'All Status' || req.status === filterStatus;
             const matchesType = filterType === 'All Document' || req.documentType === filterType;
 
+            const matchesRole = filterUserRole === 'All' || (req.userRole || '').toLowerCase() === filterUserRole.toLowerCase();
+            const matchesProgram = filterProgram === 'All' || req.programLevel === filterProgram;
+            const matchesUserStatus = filterUserStatus === 'All' || req.userStatus === filterUserStatus;
+
             // Date Logic
             const reqDate = new Date(req.dateRequested);
             const start = startDate ? new Date(startDate) : null;
@@ -59,9 +96,9 @@ const Requests = () => {
             if (end) end.setHours(23, 59, 59, 999); // Include the entire end day
             const matchesDate = (!start || reqDate >= start) && (!end || reqDate <= end);
 
-            return matchesSearch && matchesStatus && matchesType && matchesDate;
+            return matchesSearch && matchesStatus && matchesType && matchesDate && matchesRole && matchesProgram && matchesUserStatus;
         }).sort((a, b) => new Date(b.dateRequested) - new Date(a.dateRequested));
-    }, [requests, searchTerm, filterStatus, filterType, startDate, endDate]);
+    }, [requests, searchTerm, filterStatus, filterType, filterUserRole, filterProgram, filterUserStatus, startDate, endDate]);
 
     // Pagination Logic
     const totalPages = Math.ceil(filteredRequests.length / entriesPerPage);
@@ -73,7 +110,7 @@ const Requests = () => {
     // Reset to page 1 if filters change
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchTerm, filterStatus, filterType, startDate, endDate, entriesPerPage]);
+    }, [searchTerm, filterStatus, filterType, filterUserRole, filterProgram, filterUserStatus, startDate, endDate, entriesPerPage]);
 
     // Dynamic Dropdown Options
     const documentTypes = ['All Document', ...new Set(requests.map(r => r.documentType))];
@@ -113,6 +150,26 @@ const Requests = () => {
                         </form>
                     </div>
 
+                    <div className="grid grid-cols-3 gap-6 items-end mb-6">
+                        <FilterDropdown 
+                            label="User Type:" 
+                            value={filterUserRole} 
+                            onChange={setFilterUserRole} 
+                            options={['All', 'Student', 'Alumni']} 
+                        />
+                        <FilterDropdown 
+                            label="Program Level:" 
+                            value={filterProgram} 
+                            onChange={setFilterProgram} 
+                            options={['All', 'Bachelors', 'Masters', 'Doctorate']} 
+                        />
+                        <FilterDropdown 
+                            label="Account Status:" 
+                            value={filterUserStatus} 
+                            onChange={setFilterUserStatus} 
+                            options={['All', 'Active', 'Inactive', 'Stopped']} 
+                        />
+                    </div>
                     <div className="grid grid-cols-4 gap-6 items-end">
                         <FilterDropdown 
                             label="Document Type:" 
@@ -127,19 +184,19 @@ const Requests = () => {
                             options={statuses} 
                         />
                         <div className="flex flex-col gap-1.5">
-                            <label className="text-sm font-bold text-gray-700">Start Date:</label>
+                            <label className="text-sm font-bold text-[#1D2D44]">Start Date:</label>
                             <input 
                                 type="date" 
-                                className="border border-gray-300 rounded px-3 py-2 text-sm text-gray-500 outline-none"
+                                className="border border-gray-300 rounded-md px-3 py-2 text-sm text-[#1D2D44] font-medium outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44] transition-all bg-white shadow-sm"
                                 value={startDate}
                                 onChange={(e) => setStartDate(e.target.value)}
                             />
                         </div>
                         <div className="flex flex-col gap-1.5">
-                            <label className="text-sm font-bold text-gray-700">End Date:</label>
+                            <label className="text-sm font-bold text-[#1D2D44]">End Date:</label>
                             <input 
                                 type="date" 
-                                className="border border-gray-300 rounded px-3 py-2 text-sm text-gray-500 outline-none"
+                                className="border border-gray-300 rounded-md px-3 py-2 text-sm text-[#1D2D44] font-medium outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44] transition-all bg-white shadow-sm"
                                 value={endDate}
                                 onChange={(e) => setEndDate(e.target.value)}
                             />
@@ -249,11 +306,11 @@ const Requests = () => {
 function FilterDropdown({ label, value, onChange, options }) {
     return (
         <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-bold text-gray-700">{label}</label>
+            <label className="text-sm font-bold text-[#1D2D44]">{label}</label>
             <select 
                 value={value} 
                 onChange={(e) => onChange(e.target.value)}
-                className="border border-gray-300 rounded px-3 py-2 text-sm text-gray-500 bg-white cursor-pointer outline-none focus:border-gray-400"
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm text-[#1D2D44] font-medium bg-white cursor-pointer outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44] transition-all shadow-sm"
             >
                 {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
             </select>

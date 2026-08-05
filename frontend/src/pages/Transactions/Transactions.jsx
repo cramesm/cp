@@ -22,8 +22,11 @@ const Transactions = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterPaymentMode, setFilterPaymentMode] = useState('All Modes');
   const [filterStatus, setFilterStatus] = useState('All Status');
+  const [filterUserRole, setFilterUserRole] = useState('All');
+  const [filterProgram, setFilterProgram] = useState('All');
+  const [filterUserStatus, setFilterUserStatus] = useState('All');
   const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [endDate, setEndDate] = useState(new Date().toLocaleDateString('en-CA'));
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -40,6 +43,15 @@ const Transactions = () => {
     try {
       const res = await api.get('/transactions');
       setTransactions(res.data || []);
+      if (res.data && res.data.length > 0) {
+        setStartDate(prev => {
+          if (!prev) {
+            const oldest = new Date(Math.min(...res.data.map(t => new Date(t.date))));
+            return oldest.toLocaleDateString('en-CA');
+          }
+          return prev;
+        });
+      }
     } catch (error) {
       console.error("Error fetching transactions:", error);
     } finally {
@@ -59,7 +71,22 @@ const Transactions = () => {
     }
   };
 
+  const [userMap, setUserMap] = useState({});
+
   useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const [stuRes, alumRes] = await Promise.all([
+          api.get('/v1/students').catch(() => ({ data: { data: [] } })),
+          api.get('/v1/alumni').catch(() => ({ data: { data: [] } }))
+        ]);
+        const users = [...(stuRes.data?.data || []), ...(alumRes.data?.data || [])];
+        const map = {};
+        users.forEach(u => { if (u.email) map[u.email] = u; });
+        setUserMap(map);
+      } catch (err) { console.error('Error fetching users:', err); }
+    };
+    fetchUsers();
     fetchTransactions();
     fetchRefunds();
   }, []);
@@ -138,15 +165,24 @@ const Transactions = () => {
       const matchesStatus = filterStatus === 'All Status' || tx.status === filterStatus;
       const matchesMode = filterPaymentMode === 'All Modes' || tx.paymentMode === filterPaymentMode;
 
+      const user = userMap[tx.payerEmail] || {};
+      const userRole = user.role || 'student';
+      const programLevel = user.programLevel || 'Bachelors';
+      const userStatus = user.status || 'Active';
+
+      const matchesRole = filterUserRole === 'All' || userRole.toLowerCase() === filterUserRole.toLowerCase();
+      const matchesProgram = filterProgram === 'All' || programLevel === filterProgram;
+      const matchesUserStatus = filterUserStatus === 'All' || userStatus === filterUserStatus;
+
       const txDate = new Date(tx.date);
       const start = startDate ? new Date(startDate) : null;
       const end = endDate ? new Date(endDate) : null;
       if (end) end.setHours(23, 59, 59, 999); // Bug 8: include entire end day
       const matchesDate = (!start || txDate >= start) && (!end || txDate <= end);
 
-      return matchesSearch && matchesStatus && matchesMode && matchesDate;
+      return matchesSearch && matchesStatus && matchesMode && matchesDate && matchesRole && matchesProgram && matchesUserStatus;
     });
-  }, [transactions, searchTerm, filterStatus, filterPaymentMode, startDate, endDate]);
+  }, [transactions, searchTerm, filterStatus, filterPaymentMode, filterUserRole, filterProgram, filterUserStatus, startDate, endDate, userMap]);
 
   const totalPages = Math.ceil(filteredTransactions.length / entriesPerPage);
   const paginatedTransactions = filteredTransactions.slice(
@@ -156,7 +192,7 @@ const Transactions = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, filterStatus, filterPaymentMode, startDate, endDate, entriesPerPage]);
+  }, [searchTerm, filterStatus, filterPaymentMode, filterUserRole, filterProgram, filterUserStatus, startDate, endDate, entriesPerPage]);
 
   const paymentModes = ['All Modes', 'GCash', 'Maya', 'GoThyme', 'Other Online Payment'];
   const statuses = ['All Status', 'Pending Verification', 'Completed', 'Needs Update', 'Rejected', 'Refunded'];
@@ -210,7 +246,7 @@ const Transactions = () => {
 
             {/* Top Controls Section */}
             <div className="p-6 border-b border-gray-100">
-              <div className="flex flex-wrap items-center justify-between gap-6">
+              <div className="flex flex-wrap items-center justify-between gap-6 pb-4 border-b border-gray-100 mb-4">
                 <div className="flex items-center gap-3 flex-1 max-md">
                   <div className="flex items-center gap-2 text-[14px] text-[#7E84A3]">
                     <span>Show</span>
@@ -234,33 +270,73 @@ const Transactions = () => {
                   />
                 </div>
 
+                <div className="flex items-center gap-3">
+                  <select
+                    value={filterUserRole}
+                    onChange={(e) => setFilterUserRole(e.target.value)}
+                    className="border border-gray-300 rounded px-2 py-2 text-sm bg-white min-w-[120px] outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44]"
+                  >
+                    <option value="All">All Users</option>
+                    <option value="Student">Student</option>
+                    <option value="Alumni">Alumni</option>
+                  </select>
+                  <select
+                    value={filterProgram}
+                    onChange={(e) => setFilterProgram(e.target.value)}
+                    className="border border-gray-300 rounded px-2 py-2 text-sm bg-white min-w-[120px] outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44]"
+                  >
+                    <option value="All">All Programs</option>
+                    <option value="Bachelors">Bachelors</option>
+                    <option value="Masters">Masters</option>
+                    <option value="Doctorate">Doctorate</option>
+                  </select>
+                  <select
+                    value={filterUserStatus}
+                    onChange={(e) => setFilterUserStatus(e.target.value)}
+                    className="border border-gray-300 rounded px-2 py-2 text-sm bg-white min-w-[120px] outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44]"
+                  >
+                    <option value="All">All Statuses</option>
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                    <option value="Stopped">Stopped</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-end gap-6">
                 <div className="flex items-center gap-4">
                   <select
                     value={filterPaymentMode}
                     onChange={(e) => setFilterPaymentMode(e.target.value)}
-                    className="border border-gray-300 rounded px-2 py-2 text-sm bg-white min-w-[120px] outline-none"
+                    className="border border-gray-300 rounded px-2 py-2 text-sm bg-white min-w-[120px] outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44]"
                   >
                     {paymentModes.map(m => <option key={m}>{m}</option>)}
                   </select>
                   <select
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}
-                    className="border border-gray-300 rounded px-2 py-2 text-sm bg-white min-w-[140px] outline-none"
+                    className="border border-gray-300 rounded px-2 py-2 text-sm bg-white min-w-[140px] outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44]"
                   >
                     {statuses.map(s => <option key={s}>{s}</option>)}
                   </select>
-                  <input
-                    type="date"
-                    className="border border-gray-300 rounded px-2 py-2 text-sm text-gray-500 outline-none"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                  />
-                  <input
-                    type="date"
-                    className="border border-gray-300 rounded px-2 py-2 text-sm text-gray-500 outline-none"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                  />
+                  <div className="flex items-center gap-2">
+                    <label className="text-[13px] font-bold text-gray-500">Start:</label>
+                    <input
+                      type="date"
+                      className="border border-gray-300 rounded-md px-3 py-1.5 text-sm text-[#1D2D44] font-medium outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44] transition-all bg-white shadow-sm"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <label className="text-[13px] font-bold text-gray-500">End:</label>
+                    <input
+                      type="date"
+                      className="border border-gray-300 rounded-md px-3 py-1.5 text-sm text-[#1D2D44] font-medium outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44] transition-all bg-white shadow-sm"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -394,7 +470,7 @@ const Transactions = () => {
                   <tr className="text-[13px] text-gray-800 border-b border-gray-200 uppercase font-bold">
                     <th className="px-6 py-4">Refund ID</th>
                     <th className="px-6 py-4">Transaction ID</th>
-                    <th className="px-6 py-4">Student Name</th>
+                    <th className="px-6 py-4">Name</th>
                     <th className="px-6 py-4">Amount</th>
                     <th className="px-6 py-4">Reason</th>
                     <th className="px-6 py-4">Date Submitted</th>
