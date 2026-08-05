@@ -7,9 +7,9 @@ const ProfileInfo = () => {
     const navigate = useNavigate();
     const [user, setUser] = useState({
         name: 'John Dela Cruz',
-        username: 'john.123',
         email: 'john@email.com',
-        role: 'Registrar Administrator'
+        role: 'Registrar Administrator',
+        profilePic: ''
     });
 
     // Sync with localStorage so the display reflects edits made in the other page
@@ -19,9 +19,9 @@ const ProfileInfo = () => {
             setUser(prev => ({
                 ...prev,
                 name: storedUser.name || prev.name,
-                username: storedUser.username || prev.username,
                 email: storedUser.email || prev.email,
-                role: storedUser.role || prev.role
+                role: storedUser.role || prev.role,
+                profilePic: storedUser.profilePic || prev.profilePic
             }));
         }
     }, []);
@@ -46,7 +46,11 @@ const ProfileInfo = () => {
                             {/* Avatar Section */}
                             <div className="flex-shrink-0">
                                 <div className="w-48 h-48 rounded-full bg-[#1D2D44] flex items-center justify-center overflow-hidden border-4 border-white shadow-lg">
-                                    <User size={100} color="white" strokeWidth={1.5} />
+                                    {user.profilePic ? (
+                                        <img src={user.profilePic.startsWith('http') ? user.profilePic : `http://localhost:5000${user.profilePic}`} alt="Profile" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <User size={100} color="white" strokeWidth={1.5} />
+                                    )}
                                 </div>
                             </div>
 
@@ -54,9 +58,6 @@ const ProfileInfo = () => {
                             <div className="flex-1 grid grid-cols-[150px_1fr] gap-y-6 text-[15px]">
                                 <span className="text-gray-500 font-medium">Name:</span>
                                 <span className="text-gray-800">{user.name}</span>
-
-                                <span className="text-gray-500 font-medium">Username:</span>
-                                <span className="text-gray-800">{user.username}</span>
 
                                 <span className="text-gray-500 font-medium">Email:</span>
                                 <span className="text-gray-800 underline decoration-gray-200">{user.email}</span>

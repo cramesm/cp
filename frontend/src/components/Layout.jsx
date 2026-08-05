@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import Breadcrumb from './Breadcrumb';
 
 const Layout = ({ children }) => {
@@ -147,28 +148,28 @@ const Layout = ({ children }) => {
                 ></div>
             )}
 
-            <aside className={`fixed top-0 left-0 min-h-screen bg-[#2f3947] flex flex-col z-[1000] shadow-lg sidebar transition-all duration-300 
-                ${isMobileOpen ? 'translate-x-0 w-[230px]' : '-translate-x-full md:translate-x-0'} 
-                ${isCollapsed ? 'md:w-[70px]' : 'md:w-[230px]'}
+            <aside className={`fixed top-0 left-0 min-h-screen bg-[#2f3947] border-r border-[#1a232f] flex flex-col z-[1000] shadow-2xl sidebar transition-all duration-300 
+                ${isMobileOpen ? 'translate-x-0 w-[260px]' : '-translate-x-full md:translate-x-0'} 
+                ${isCollapsed ? 'md:w-[80px]' : 'md:w-[260px]'}
             `}>
-                <div className={`h-[60px] bg-[#f4f6f8] flex items-center justify-center border-b border-[#d9d9d9] overflow-hidden transition-all duration-300 ${isCollapsed ? 'px-2' : 'px-4'}`}>
+                <div className={`h-[72px] bg-[#f4f6f8] flex items-center justify-center border-b border-[#d9d9d9] overflow-hidden transition-all duration-300 ${isCollapsed ? 'px-2' : 'px-6'}`}>
                     {isCollapsed ? (
-                        <div className="w-[40px] h-[40px] rounded-lg bg-[#2f3947] flex items-center justify-center flex-shrink-0 transition-all duration-300">
-                            <span className="text-white font-bold text-lg" style={{ fontFamily: "'League Spartan', sans-serif" }}>V</span>
+                        <div className="w-[48px] h-[48px] rounded-xl bg-[#2f3947] flex items-center justify-center flex-shrink-0 shadow-sm transition-all duration-300">
+                            <span className="text-white font-bold text-xl tracking-tight">V</span>
                         </div>
                     ) : (
                         <img
                             src="/assets/verifitorlogo.png"
                             alt="Verifitor"
-                            className="h-[42px] object-contain transition-all duration-300"
+                            className="h-[46px] object-contain transition-all duration-300"
                         />
                     )}
                 </div>
 
-                <nav className="flex-1 px-3 py-5 overflow-y-auto" aria-label="Main navigation">
-                    <ul className="list-none p-0 m-0 flex flex-col gap-2">
+                <nav className="flex-1 px-4 py-6 overflow-y-auto" aria-label="Main navigation">
+                    <ul className="list-none p-0 m-0 flex flex-col gap-3">
                         {menuItems.map((item) => (
-                            <li key={item.path}>
+                            <li key={item.path} className="relative">
                                 <NavLink
                                     to={item.path}
                                     end={item.path === '/dashboard'}
@@ -179,15 +180,26 @@ const Layout = ({ children }) => {
                                         }
                                     }}
                                     className={({ isActive }) =>
-                                        `flex items-center ${isCollapsed ? 'justify-center mx-0.5 px-0 py-3' : 'gap-3 px-3 py-3'} rounded-md transition-all duration-300 ${
+                                        `relative flex items-center z-10 ${isCollapsed ? 'justify-center mx-1 px-0 py-3.5' : 'gap-4 px-4 py-3.5'} rounded-xl transition-colors duration-200 ${
                                             isActive
-                                                ? 'bg-[#f1f1f1] text-[#1f1f1f] font-medium'
-                                                : 'text-white hover:bg-[#3a4555]'
+                                                ? 'text-[#1f1f1f] font-semibold'
+                                                : 'text-[#9ba4b5] hover:text-white hover:bg-[#3a4555]'
                                         }`
                                     }
                                 >
-                                    <i className={`${item.icon} ${isCollapsed ? 'text-[16px]' : 'text-[13px]'} transition-all duration-300`}></i>
-                                    {!isCollapsed && <span className="text-[14px] transition-opacity duration-300">{item.label}</span>}
+                                    {({ isActive }) => (
+                                        <>
+                                            {isActive && (
+                                                <motion.div
+                                                    layoutId="activeTab"
+                                                    className="absolute inset-0 bg-[#f1f1f1] rounded-xl -z-10 shadow-sm"
+                                                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                                />
+                                            )}
+                                            <i className={`${item.icon} ${isCollapsed ? 'text-[18px]' : 'text-[16px]'} transition-all duration-300 ${isActive ? 'text-[#1f1f1f]' : ''}`}></i>
+                                            {!isCollapsed && <span className="text-[15px] tracking-wide transition-opacity duration-300">{item.label}</span>}
+                                        </>
+                                    )}
                                 </NavLink>
                             </li>
                         ))}
@@ -195,37 +207,38 @@ const Layout = ({ children }) => {
                 </nav>
             </aside>
 
-            <div className={`flex flex-col w-full ${isCollapsed ? 'md:ml-[70px] md:w-[calc(100%-70px)]' : 'md:ml-[230px] md:w-[calc(100%-230px)]'} transition-all duration-300 main-content`}>
-                <header className="flex items-center justify-between px-5 bg-[#6f8faa] sticky top-0 z-[999] h-[60px] shadow-sm top-nav">
-                    <div className="flex items-center gap-3">
+            <div className={`flex flex-col w-full ${isCollapsed ? 'md:ml-[80px] md:w-[calc(100%-80px)]' : 'md:ml-[260px] md:w-[calc(100%-260px)]'} transition-all duration-300 main-content`}>
+                <header className="flex items-center justify-between px-8 bg-[#6f8faa]/95 backdrop-blur-md sticky top-0 z-[990] h-[72px] border-b border-[#5a7c98] top-nav shadow-sm">
+                    <div className="flex items-center gap-6">
                         <button
                             onClick={handleToggle}
-                            className="text-white hover:bg-[#5a7c98] p-2 rounded-lg transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-white/50 flex items-center justify-center"
+                            className="text-white hover:bg-[#5a7c98] p-2.5 rounded-xl transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-white/50 flex items-center justify-center"
                             title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
                             aria-label={isCollapsed ? "Expand sidebar navigation" : "Collapse sidebar navigation"}
                             aria-expanded={!isCollapsed}
                         >
-                            <i className={`fa-solid ${isCollapsed ? 'fa-bars' : 'fa-outdent'} text-lg`}></i>
+                            <i className={`fa-solid ${isCollapsed ? 'fa-bars-staggered' : 'fa-outdent'} text-lg`}></i>
                         </button>
-                        <h2 className="text-white text-[20px] font-semibold m-0 uppercase tracking-tight">
+                        <h2 className="text-white text-[22px] font-bold m-0 tracking-tight">
                             {getPageTitle()}
                         </h2>
                     </div>
 
-                    <div className="flex items-center gap-5 relative" ref={dropdownRef}>
+                    <div className="flex items-center gap-6 relative" ref={dropdownRef}>
                         <button
                             type="button"
                             onClick={() => navigate('/notifications')}
-                            className="text-white text-[18px] hover:opacity-80 transition"
+                            className="text-white hover:opacity-80 text-[20px] transition-opacity relative"
                             aria-label="View notifications"
                         >
                             <i className="fa-regular fa-bell"></i>
+                            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#6f8faa]"></span>
                         </button>
 
                         <button
                             type="button"
                             onClick={toggleMenu}
-                            className="text-white text-[20px] hover:opacity-80 transition"
+                            className="flex items-center justify-center w-10 h-10 rounded-full bg-[#f4f6f8] text-[#2f3947] text-[20px] hover:bg-white transition-all shadow-sm"
                             aria-label="User menu"
                             aria-expanded={menuOpen}
                             aria-haspopup="true"
@@ -234,34 +247,45 @@ const Layout = ({ children }) => {
                         </button>
 
                         <div
-                            className={`absolute right-0 top-[42px] bg-white shadow-lg rounded-xl flex-col min-w-[180px] z-[10000] overflow-hidden transition-all duration-200 ${
-                                menuOpen ? 'flex opacity-100 translate-y-0' : 'hidden opacity-0 -translate-y-2'
+                            className={`absolute right-0 top-[56px] bg-white shadow-soft border border-slate-100 rounded-2xl flex-col min-w-[200px] z-[10000] overflow-hidden transition-all duration-200 origin-top-right ${
+                                menuOpen ? 'flex opacity-100 scale-100' : 'hidden opacity-0 scale-95'
                             }`}
                             role="menu"
                         >
+                            <div className="px-5 py-3 border-b border-slate-100 bg-slate-50">
+                                <p className="text-sm font-bold text-slate-800 capitalize">{userRole}</p>
+                                <p className="text-xs text-slate-500">verifitor.com</p>
+                            </div>
+                            
                             <NavLink
                                 to="/profile/info"
-                                className="text-[#333] px-[18px] py-3 no-underline text-sm border-b border-[#eee] transition-all hover:bg-[#f1f3f5]"
+                                className="text-slate-700 px-5 py-3 no-underline text-sm font-medium transition-colors hover:bg-slate-50 hover:text-brand-600 flex items-center gap-3"
                                 role="menuitem"
                             >
-                                Profile Information
+                                <i className="fa-regular fa-id-badge"></i> Profile Info
                             </NavLink>
 
                             <button
                                 type="button"
                                 onClick={handleLogout}
-                                className="text-[#333] px-[18px] py-3 text-sm text-left bg-transparent border-none w-full cursor-pointer transition-all hover:bg-[#f1f3f5]"
+                                className="text-red-600 px-5 py-3 text-sm font-medium text-left bg-transparent border-t border-slate-100 w-full cursor-pointer transition-colors hover:bg-red-50 flex items-center gap-3"
                                 role="menuitem"
                             >
-                                Logout
+                                <i className="fa-solid fa-arrow-right-from-bracket"></i> Logout
                             </button>
                         </div>
                     </div>
                 </header>
 
-                <main id="main-content" className="flex-1 w-full bg-[#f8fafc]">
+                <main id="main-content" className="flex-1 w-full bg-slate-50 p-6 md:p-8">
                     <Breadcrumb />
-                    {children}
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3 }}
+                    >
+                        {children}
+                    </motion.div>
                 </main>
             </div>
         </div>

@@ -105,7 +105,6 @@ const alumniRoutes = require('./routes/alumni');
 
 console.log('Routes imported successfully');
 
-// Mount Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/requests', requestRoutes);
@@ -118,10 +117,10 @@ app.use('/api/registrars', registrarRoutes);
 app.use('/api/verify', verifyRoutes);
 app.use('/api/tor', torRoutes);
 app.use('/api/documents', documentRoutes);
-app.use('/api/students', studentRoutes);
+app.use('/api/v1/students', studentRoutes); // V1 Migration
 app.use('/api/diploma', diplomaRoutes);
 app.use('/api/requests', documentUploadRoutes);
-app.use('/api/alumni', alumniRoutes);
+app.use('/api/v1/alumni', alumniRoutes); // V1 Migration
 
 console.log('Routes mounted successfully');
 

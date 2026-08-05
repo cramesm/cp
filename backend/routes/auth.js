@@ -339,7 +339,14 @@ router.put('/profile', protect, async (req, res) => {
     else userModel = Student;
 
     const updateData = {};
-    if (name) updateData.name = name;
+    if (name) {
+      updateData.name = name;
+      if (req.user.role === 'student' || req.user.role === 'alumni') {
+        const parts = name.trim().split(' ');
+        updateData.firstName = parts[0];
+        updateData.lastName = parts.slice(1).join(' ') || ' ';
+      }
+    }
     if (firstName) updateData.firstName = firstName;
     if (lastName) updateData.lastName = lastName;
     if (profilePic) updateData.profilePic = profilePic;

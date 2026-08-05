@@ -1,16 +1,24 @@
 const Student = require('../models/Users/Student');
 const mongoose = require('mongoose');
+const { HttpStatus } = require('../config/constants');
 
 const StudentController = {
     // Get all students
     getAllStudents: async (req, res) => {
         try {
-            // Find all students, sorted by newest first
             const students = await Student.find().sort({ createdAt: -1 });
-            res.status(200).json(students);
+            res.status(HttpStatus.OK).json({
+                success: true,
+                message: 'Students retrieved successfully',
+                data: students
+            });
         } catch (error) {
             console.error('Error fetching students:', error);
-            res.status(500).json({ message: 'Failed to fetch students', error: error.message });
+            res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ 
+                success: false, 
+                message: 'Failed to fetch students', 
+                data: error.message 
+            });
         }
     },
 
@@ -19,19 +27,23 @@ const StudentController = {
         try {
             const { firstName, lastName, email, password } = req.body;
 
-            // Validate required fields
             if (!firstName || !lastName || !email || !password) {
-                return res.status(400).json({ message: 'Please provide all required fields (firstName, lastName, email, password)' });
+                return res.status(HttpStatus.BAD_REQUEST).json({ 
+                    success: false, 
+                    message: 'Please provide all required fields (firstName, lastName, email, password)',
+                    data: null
+                });
             }
 
-            // Check if student with email already exists
             const existingStudent = await Student.findOne({ email });
             if (existingStudent) {
-                return res.status(400).json({ message: 'A user with this email already exists' });
+                return res.status(HttpStatus.BAD_REQUEST).json({ 
+                    success: false, 
+                    message: 'A user with this email already exists',
+                    data: null
+                });
             }
 
-            // Generate a random studentId if not provided (optional, since it's unique in schema we should probably create one if it's not typed, but let's leave it blank or generate a random one to avoid unique constraints if missing. Or we can just let schema handle it if it's not strictly required in req body)
-            // The Student schema has studentId as unique, so we should generate a placeholder one if empty, or just omit it if it's not required. Wait, unique: true means nulls can cause issues if there are multiple nulls.
             const studentId = `STU-${Date.now().toString().slice(-6)}`;
 
             const newStudent = new Student({
@@ -45,14 +57,21 @@ const StudentController = {
 
             await newStudent.save();
 
-            // Omit password from response
             const studentResponse = newStudent.toObject();
             delete studentResponse.password;
 
-            res.status(201).json({ message: 'Student successfully added', student: studentResponse });
+            res.status(HttpStatus.CREATED).json({ 
+                success: true, 
+                message: 'Student successfully added', 
+                data: studentResponse 
+            });
         } catch (error) {
             console.error('Error adding student:', error);
-            res.status(500).json({ message: 'Failed to add student', error: error.message });
+            res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ 
+                success: false, 
+                message: 'Failed to add student', 
+                data: error.message 
+            });
         }
     },
 
@@ -62,19 +81,35 @@ const StudentController = {
             const { id } = req.params;
             
             if (!mongoose.Types.ObjectId.isValid(id)) {
-                return res.status(400).json({ message: 'Invalid student ID' });
+                return res.status(HttpStatus.BAD_REQUEST).json({ 
+                    success: false, 
+                    message: 'Invalid student ID', 
+                    data: null 
+                });
             }
 
             const deletedStudent = await Student.findByIdAndDelete(id);
 
             if (!deletedStudent) {
-                return res.status(404).json({ message: 'Student not found' });
+                return res.status(HttpStatus.NOT_FOUND).json({ 
+                    success: false, 
+                    message: 'Student not found', 
+                    data: null 
+                });
             }
 
-            res.status(200).json({ message: 'Student successfully deleted', student: deletedStudent });
+            res.status(HttpStatus.OK).json({ 
+                success: true, 
+                message: 'Student successfully deleted', 
+                data: deletedStudent 
+            });
         } catch (error) {
             console.error('Error deleting student:', error);
-            res.status(500).json({ message: 'Failed to delete student', error: error.message });
+            res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ 
+                success: false, 
+                message: 'Failed to delete student', 
+                data: error.message 
+            });
         }
     },
 
@@ -85,11 +120,19 @@ const StudentController = {
             const { status } = req.body;
 
             if (!mongoose.Types.ObjectId.isValid(id)) {
-                return res.status(400).json({ message: 'Invalid student ID' });
+                return res.status(HttpStatus.BAD_REQUEST).json({ 
+                    success: false, 
+                    message: 'Invalid student ID', 
+                    data: null 
+                });
             }
 
             if (!['Active', 'Inactive'].includes(status)) {
-                return res.status(400).json({ message: 'Invalid status' });
+                return res.status(HttpStatus.BAD_REQUEST).json({ 
+                    success: false, 
+                    message: 'Invalid status', 
+                    data: null 
+                });
             }
 
             const updatedStudent = await Student.findByIdAndUpdate(
@@ -99,13 +142,25 @@ const StudentController = {
             );
 
             if (!updatedStudent) {
-                return res.status(404).json({ message: 'Student not found' });
+                return res.status(HttpStatus.NOT_FOUND).json({ 
+                    success: false, 
+                    message: 'Student not found', 
+                    data: null 
+                });
             }
 
-            res.status(200).json({ message: 'Student status updated successfully', student: updatedStudent });
+            res.status(HttpStatus.OK).json({ 
+                success: true, 
+                message: 'Student status updated successfully', 
+                data: updatedStudent 
+            });
         } catch (error) {
             console.error('Error updating student status:', error);
-            res.status(500).json({ message: 'Failed to update student status', error: error.message });
+            res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ 
+                success: false, 
+                message: 'Failed to update student status', 
+                data: error.message 
+            });
         }
     }
 };

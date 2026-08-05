@@ -229,11 +229,14 @@ const RequestDetails = () => {
         <Layout>
             <div className="flex flex-col min-h-screen bg-[#f8fafc] font-sans">
                 <div className="max-w-6xl mx-auto w-full p-8 flex-grow">
-                    {/* Breadcrumb */}
-                    <div className="flex items-center gap-2 text-[12px] mb-6 text-slate-500 uppercase tracking-widest font-bold">
-                        <span className="cursor-pointer hover:text-blue-600 transition-colors" onClick={() => navigate('/requests')}>Requests</span>
-                        <ChevronRight size={14} />
-                        <span className="text-blue-600">Document Processing</span>
+                    {/* Top Navigation */}
+                    <div className="mb-6">
+                        <button 
+                            onClick={() => navigate('/requests')}
+                            className="flex items-center gap-2 text-slate-700 hover:text-blue-600 hover:bg-white font-bold bg-slate-100 px-4 py-2 rounded-xl border border-slate-200 shadow-sm transition-all text-sm"
+                        >
+                            <ChevronRight size={16} className="rotate-180" /> Back to Document Requests
+                        </button>
                     </div>
 
                     <div className="flex items-center justify-between mb-8">
@@ -251,7 +254,7 @@ const RequestDetails = () => {
                     </div>
 
                     {status === 'Rejected' && (
-                        <div className="bg-red-50 p-6 rounded-2xl border border-red-200 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="bg-red-50 p-6 rounded-2xl border border-red-200 mb-8 flex flex-col md:flex-row md:items-start justify-between gap-4">
                             <div>
                                 <h3 className="text-red-700 font-bold text-lg mb-2">Request Rejected</h3>
                                 <p className="text-red-600 mb-2">This document request has been rejected and requires no further action.</p>
@@ -266,22 +269,30 @@ const RequestDetails = () => {
                                     </p>
                                 )}
                             </div>
-                            {isSuperAdmin && (
+                            <div className="flex flex-col gap-2 shrink-0">
+                                {isSuperAdmin && (
+                                    <button
+                                        className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-xl font-bold transition-all shadow-sm whitespace-nowrap"
+                                        onClick={() => showConfirm({
+                                            title: 'Re-open Request',
+                                            message: 'Are you sure you want to re-open this rejected request? The status will be changed back to "In Process".',
+                                            type: 'warning',
+                                            onConfirm: async () => {
+                                                await api.put(`/requests/${id}`, { status: 'In Process', forceOverride: true });
+                                                await fetchData();
+                                            }
+                                        })}
+                                    >
+                                        Super Admin: Re-open
+                                    </button>
+                                )}
                                 <button
-                                    className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-xl font-bold transition-all shadow-sm whitespace-nowrap shrink-0"
-                                    onClick={() => showConfirm({
-                                        title: 'Re-open Request',
-                                        message: 'Are you sure you want to re-open this rejected request? The status will be changed back to "In Process".',
-                                        type: 'warning',
-                                        onConfirm: async () => {
-                                            await api.put(`/requests/${id}`, { status: 'In Process', forceOverride: true });
-                                            await fetchData();
-                                        }
-                                    })}
+                                    className="bg-slate-800 hover:bg-slate-900 text-white px-6 py-2 rounded-xl font-bold transition-all shadow-sm whitespace-nowrap"
+                                    onClick={() => navigate('/requests')}
                                 >
-                                    Super Admin: Re-open
+                                    Return to Requests
                                 </button>
-                            )}
+                            </div>
                         </div>
                     )}
 

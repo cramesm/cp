@@ -29,10 +29,10 @@ const StudentManagement = () => {
         try {
             setLoading(true);
             const [studentsRes, alumniRes] = await Promise.all([
-                axiosInstance.get('/students'),
-                axiosInstance.get('/alumni').catch(() => ({ data: [] }))
+                axiosInstance.get('/v1/students'),
+                axiosInstance.get('/v1/alumni').catch(() => ({ data: { data: [] } }))
             ]);
-            setUsers([...studentsRes.data, ...alumniRes.data]);
+            setUsers([...studentsRes.data.data, ...alumniRes.data.data]);
             setError(null);
         } catch (err) {
             console.error('Error fetching users:', err);
@@ -49,7 +49,7 @@ const StudentManagement = () => {
     const handleDelete = async (userId, userRole, userName) => {
         if (window.confirm(`Are you sure you want to permanently delete the account for ${userName}? This action cannot be undone.`)) {
             try {
-                const endpoint = userRole === 'alumni' ? `/alumni/${userId}` : `/students/${userId}`;
+                const endpoint = userRole === 'alumni' ? `/v1/alumni/${userId}` : `/v1/students/${userId}`;
                 await axiosInstance.delete(endpoint);
                 setUsers(users.filter(user => user._id !== userId));
             } catch (err) {
@@ -63,11 +63,11 @@ const StudentManagement = () => {
         const newStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
         if (window.confirm(`Are you sure you want to ${newStatus === 'Active' ? 'activate' : 'deactivate'} this account?`)) {
             try {
-                const endpoint = userRole === 'alumni' ? `/alumni/${userId}/status` : `/students/${userId}/status`;
+                const endpoint = userRole === 'alumni' ? `/v1/alumni/${userId}/status` : `/v1/students/${userId}/status`;
                 const response = await axiosInstance.put(endpoint, { status: newStatus });
-                if (response.data) {
+                if (response.data && response.data.data) {
                     setUsers(users.map(user => 
-                        user._id === userId ? { ...user, status: response.data.student?.status || response.data.alumni?.status } : user
+                        user._id === userId ? { ...user, status: response.data.data.status } : user
                     ));
                 }
             } catch (err) {
@@ -90,11 +90,11 @@ const StudentManagement = () => {
         setAddError(null);
         setAdding(true);
         try {
-            const endpoint = activeTab === 'alumni' ? '/alumni' : '/students';
+            const endpoint = activeTab === 'alumni' ? '/v1/alumni' : '/v1/students';
             const payload = { ...formData, role: activeTab };
             const response = await axiosInstance.post(endpoint, payload);
             
-            const newUser = response.data.student || response.data.alumni;
+            const newUser = response.data.data;
             // Add new user to the top of the list
             setUsers([newUser, ...users]);
             setShowModal(false);

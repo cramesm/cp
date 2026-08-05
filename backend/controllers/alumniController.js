@@ -1,16 +1,24 @@
 const Alumni = require('../models/Users/Alumni');
 const mongoose = require('mongoose');
+const { HttpStatus } = require('../config/constants');
 
 const AlumniController = {
     // Get all alumni
     getAllAlumni: async (req, res) => {
         try {
-            // Find all alumni, sorted by newest first
             const alumni = await Alumni.find().sort({ createdAt: -1 });
-            res.status(200).json(alumni);
+            res.status(HttpStatus.OK).json({
+                success: true,
+                message: 'Alumni retrieved successfully',
+                data: alumni
+            });
         } catch (error) {
             console.error('Error fetching alumni:', error);
-            res.status(500).json({ message: 'Failed to fetch alumni', error: error.message });
+            res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ 
+                success: false, 
+                message: 'Failed to fetch alumni', 
+                data: error.message 
+            });
         }
     },
 
@@ -19,15 +27,21 @@ const AlumniController = {
         try {
             const { firstName, lastName, email, password } = req.body;
 
-            // Validate required fields
             if (!firstName || !lastName || !email || !password) {
-                return res.status(400).json({ message: 'Please provide all required fields (firstName, lastName, email, password)' });
+                return res.status(HttpStatus.BAD_REQUEST).json({ 
+                    success: false, 
+                    message: 'Please provide all required fields (firstName, lastName, email, password)',
+                    data: null
+                });
             }
 
-            // Check if alumni with email already exists
             const existingAlumni = await Alumni.findOne({ email });
             if (existingAlumni) {
-                return res.status(400).json({ message: 'A user with this email already exists' });
+                return res.status(HttpStatus.BAD_REQUEST).json({ 
+                    success: false, 
+                    message: 'A user with this email already exists',
+                    data: null
+                });
             }
 
             const studentId = `ALU-${Date.now().toString().slice(-6)}`;
@@ -43,14 +57,21 @@ const AlumniController = {
 
             await newAlumni.save();
 
-            // Omit password from response
             const alumniResponse = newAlumni.toObject();
             delete alumniResponse.password;
 
-            res.status(201).json({ message: 'Alumni successfully added', alumni: alumniResponse });
+            res.status(HttpStatus.CREATED).json({ 
+                success: true, 
+                message: 'Alumni successfully added', 
+                data: alumniResponse 
+            });
         } catch (error) {
             console.error('Error adding alumni:', error);
-            res.status(500).json({ message: 'Failed to add alumni', error: error.message });
+            res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ 
+                success: false, 
+                message: 'Failed to add alumni', 
+                data: error.message 
+            });
         }
     },
 
@@ -60,19 +81,35 @@ const AlumniController = {
             const { id } = req.params;
             
             if (!mongoose.Types.ObjectId.isValid(id)) {
-                return res.status(400).json({ message: 'Invalid alumni ID' });
+                return res.status(HttpStatus.BAD_REQUEST).json({ 
+                    success: false, 
+                    message: 'Invalid alumni ID', 
+                    data: null 
+                });
             }
 
             const deletedAlumni = await Alumni.findByIdAndDelete(id);
 
             if (!deletedAlumni) {
-                return res.status(404).json({ message: 'Alumni not found' });
+                return res.status(HttpStatus.NOT_FOUND).json({ 
+                    success: false, 
+                    message: 'Alumni not found', 
+                    data: null 
+                });
             }
 
-            res.status(200).json({ message: 'Alumni successfully deleted', alumni: deletedAlumni });
+            res.status(HttpStatus.OK).json({ 
+                success: true, 
+                message: 'Alumni successfully deleted', 
+                data: deletedAlumni 
+            });
         } catch (error) {
             console.error('Error deleting alumni:', error);
-            res.status(500).json({ message: 'Failed to delete alumni', error: error.message });
+            res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ 
+                success: false, 
+                message: 'Failed to delete alumni', 
+                data: error.message 
+            });
         }
     },
 
@@ -83,11 +120,19 @@ const AlumniController = {
             const { status } = req.body;
 
             if (!mongoose.Types.ObjectId.isValid(id)) {
-                return res.status(400).json({ message: 'Invalid alumni ID' });
+                return res.status(HttpStatus.BAD_REQUEST).json({ 
+                    success: false, 
+                    message: 'Invalid alumni ID', 
+                    data: null 
+                });
             }
 
             if (!['Active', 'Inactive'].includes(status)) {
-                return res.status(400).json({ message: 'Invalid status' });
+                return res.status(HttpStatus.BAD_REQUEST).json({ 
+                    success: false, 
+                    message: 'Invalid status', 
+                    data: null 
+                });
             }
 
             const updatedAlumni = await Alumni.findByIdAndUpdate(
@@ -97,13 +142,25 @@ const AlumniController = {
             );
 
             if (!updatedAlumni) {
-                return res.status(404).json({ message: 'Alumni not found' });
+                return res.status(HttpStatus.NOT_FOUND).json({ 
+                    success: false, 
+                    message: 'Alumni not found', 
+                    data: null 
+                });
             }
 
-            res.status(200).json({ message: 'Alumni status updated successfully', alumni: updatedAlumni });
+            res.status(HttpStatus.OK).json({ 
+                success: true, 
+                message: 'Alumni status updated successfully', 
+                data: updatedAlumni 
+            });
         } catch (error) {
             console.error('Error updating alumni status:', error);
-            res.status(500).json({ message: 'Failed to update alumni status', error: error.message });
+            res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ 
+                success: false, 
+                message: 'Failed to update alumni status', 
+                data: error.message 
+            });
         }
     }
 };
