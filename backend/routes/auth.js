@@ -3,15 +3,12 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const { protect } = require('../middleware/authMiddleware');
-const multer = require('multer');
-const path = require('path');
 
 const Student = require('../models/Users/Student');
 const Alumni = require('../models/Users/Alumni');
 const SuperAdmin = require('../models/Users/SuperAdmin');
 const Registrar = require('../models/Registrar');
 const ActivityLog = require('../models/ActivityLog');
-const fs = require('fs');
 
 // In-memory OTP store: { email: { otp, expiresAt, modelName } }
 const otpStore = {};
@@ -385,80 +382,6 @@ router.put('/change-password', protect, async (req, res) => {
     res.json({ message: 'Password updated successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Error updating password' });
-  }
-});
-
-// --- Multer Configuration for Profile Photos ---
-const profileUploadDir = path.join(__dirname, '..', 'uploads', 'profiles');
-if (!fs.existsSync(profileUploadDir)) {
-    fs.mkdirSync(profileUploadDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, profileUploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    cb(null, `profile-${uniqueSuffix}${ext}`);
-  }
-});
-
-const uploadProfile = multer({
-  storage,
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = ['image/png', 'image/jpg', 'image/jpeg'];
-    if (allowedTypes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only PNG, JPG and JPEG image files are allowed.'), false);
-    }
-  },
-  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
-});
-
-// @route   POST /api/auth/profile/photo
-// @desc    Upload profile photo
-router.post('/profile/photo', protect, uploadProfile.single('photo'), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ success: false, message: 'No photo uploaded' });
-    }
-
-    let userModel;
-    const role = (req.user.role || '').toLowerCase();
-    if (role === 'super admin') userModel = SuperAdmin;
-    else if (role.includes('registrar')) userModel = Registrar;
-    else if (role === 'alumni') userModel = Alumni;
-    else userModel = Student;
-
-    const profilePicUrl = `/uploads/profiles/${req.file.filename}`;
-
-    const updatedUser = await userModel.findByIdAndUpdate(
-      req.user.id,
-      { profilePic: profilePicUrl },
-      { new: true }
-    );
-
-    res.status(201).json({
-      success: true,
-      message: 'Profile photo updated successfully',
-      profile: {
-        email: updatedUser.email,
-        profilePic: updatedUser.profilePic,
-        name: updatedUser.name || `${updatedUser.firstName || ''} ${updatedUser.lastName || ''}`.trim(),
-        firstName: updatedUser.firstName,
-        lastName: updatedUser.lastName,
-        studentId: updatedUser.studentId,
-        course: updatedUser.course,
-        yearLevel: updatedUser.yearLevel,
-        phoneNumber: updatedUser.phoneNumber
-      }
-    });
-  } catch (error) {
-    console.error('Profile photo upload error:', error);
-    res.status(500).json({ success: false, message: 'Error uploading profile photo' });
   }
 });
 
