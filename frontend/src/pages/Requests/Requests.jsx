@@ -167,7 +167,7 @@ const Requests = () => {
                             label="Account Status:" 
                             value={filterUserStatus} 
                             onChange={setFilterUserStatus} 
-                            options={['All', 'Active', 'Inactive', 'Stopped']} 
+                            options={['All', 'Active', 'Inactive']} 
                         />
                     </div>
                     <div className="grid grid-cols-4 gap-6 items-end">

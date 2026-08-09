@@ -66,7 +66,7 @@ const Profile = () => {
     const handleConfirmAll = async () => {
         setSaving(true);
         
-        if (!user.name.trim()) {
+        if (!user.name || !user.name.trim()) {
             triggerToast("Name is required", "error");
             setSaving(false);
             return;

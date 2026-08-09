@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import Layout from '../../components/Layout';
 import { Search, Plus } from 'lucide-react';
 import axiosInstance from '../../components/config/axiosConfig';
+import ConfirmModal from '../../components/ConfirmModal';
 
 const StudentManagement = () => {
     const [users, setUsers] = useState([]);
@@ -23,10 +24,38 @@ const StudentManagement = () => {
         lastName: '',
         email: '',
         password: '',
+        studentId: '',
         programLevel: 'Bachelors'
     });
     const [adding, setAdding] = useState(false);
     const [addError, setAddError] = useState(null);
+
+    // Confirm Modal
+    const [confirmConfig, setConfirmConfig] = useState(null);
+    let isExecuting = false;
+    const showConfirm = ({ title, message, onConfirm, type = 'info', confirmText = 'Confirm', cancelText = 'Cancel' }) => {
+        setConfirmConfig({
+            title,
+            message,
+            onConfirm: async () => {
+                if (isExecuting) return;
+                isExecuting = true;
+                setConfirmConfig(prev => ({ ...prev, isLoading: true }));
+                try {
+                    await onConfirm();
+                } catch (err) {
+                    console.error(err);
+                } finally {
+                    isExecuting = false;
+                    setConfirmConfig(null);
+                }
+            },
+            type,
+            confirmText,
+            cancelText,
+            isLoading: false
+        });
+    };
 
     const fetchUsers = async () => {
         try {
@@ -49,40 +78,46 @@ const StudentManagement = () => {
         fetchUsers();
     }, []);
 
-    const handleDelete = async (userId, userRole, userName) => {
-        if (window.confirm(`Are you sure you want to permanently delete the account for ${userName}? This action cannot be undone.`)) {
-            try {
-                const endpoint = userRole === 'alumni' ? `/v1/alumni/${userId}` : `/v1/students/${userId}`;
-                await axiosInstance.delete(endpoint);
-                setUsers(users.filter(user => user._id !== userId));
-            } catch (err) {
-                console.error('Error deleting user:', err);
-                alert('Failed to delete the user. Please try again later.');
+    const handleDelete = (userId, userRole, userName) => {
+        showConfirm({
+            title: 'Delete User',
+            message: `Are you sure you want to permanently delete the account for ${userName}? This action cannot be undone.`,
+            type: 'danger',
+            confirmText: 'Delete',
+            onConfirm: async () => {
+                try {
+                    const endpoint = userRole === 'alumni' ? `/v1/alumni/${userId}` : `/v1/students/${userId}`;
+                    await axiosInstance.delete(endpoint);
+                    setUsers(prev => prev.filter(user => user._id !== userId));
+                } catch (err) {
+                    console.error('Error deleting user:', err);
+                    alert('Failed to delete the user. Please try again later.');
+                }
             }
-        }
+        });
     };
 
-    const handleToggleStatus = async (userId, userRole, currentStatus) => {
-        const cStatus = currentStatus || 'Active';
-        let newStatus = 'Active';
-        if (cStatus === 'Active') newStatus = 'Inactive';
-        else if (cStatus === 'Inactive') newStatus = 'Stopped';
-        else if (cStatus === 'Stopped') newStatus = 'Active';
-
-        if (window.confirm(`Are you sure you want to change this account's status to ${newStatus}?`)) {
-            try {
-                const endpoint = userRole === 'alumni' ? `/v1/alumni/${userId}/status` : `/v1/students/${userId}/status`;
-                const response = await axiosInstance.put(endpoint, { status: newStatus });
-                if (response.data && response.data.data) {
-                    setUsers(users.map(user => 
-                        user._id === userId ? { ...user, status: response.data.data.status } : user
-                    ));
+    const handleStatusChange = (userId, userRole, newStatus) => {
+        showConfirm({
+            title: 'Change Status',
+            message: `Are you sure you want to change this account's status to ${newStatus}?`,
+            type: 'warning',
+            confirmText: 'Change',
+            onConfirm: async () => {
+                try {
+                    const endpoint = userRole === 'alumni' ? `/v1/alumni/${userId}/status` : `/v1/students/${userId}/status`;
+                    const response = await axiosInstance.put(endpoint, { status: newStatus });
+                    if (response.data && response.data.data) {
+                        setUsers(prev => prev.map(user => 
+                            user._id === userId ? { ...user, status: response.data.data.status } : user
+                        ));
+                    }
+                } catch (err) {
+                    console.error('Error updating status:', err);
+                    alert('Failed to update account status. Please try again later.');
                 }
-            } catch (err) {
-                console.error('Error updating status:', err);
-                alert('Failed to update account status. Please try again later.');
             }
-        }
+        });
     };
 
     const handleInputChange = (e) => {
@@ -106,7 +141,7 @@ const StudentManagement = () => {
             // Add new user to the top of the list
             setUsers([newUser, ...users]);
             setShowModal(false);
-            setFormData({ firstName: '', lastName: '', email: '', password: '', programLevel: 'Bachelors' });
+            setFormData({ firstName: '', lastName: '', email: '', password: '', studentId: '', programLevel: 'Bachelors' });
         } catch (err) {
             console.error('Error adding user:', err);
             setAddError(err.response?.data?.message || 'Failed to add user. Please check the details and try again.');
@@ -150,7 +185,14 @@ const StudentManagement = () => {
 
     return (
         <Layout>
-            <div className="p-8 bg-[#f8fafc] min-h-screen relative">
+            {confirmConfig && (
+                <ConfirmModal 
+                    {...confirmConfig} 
+                    isOpen={!!confirmConfig} 
+                    onClose={() => !confirmConfig.isLoading && setConfirmConfig(null)} 
+                />
+            )}
+            <div className="p-8 bg-[#F8F9FA] min-h-[calc(100vh-64px)] font-sans relative">
                 <div className="mb-6">
                     <h1 className="text-2xl font-bold text-gray-800">User Management</h1>
                     <p className="text-sm text-gray-500">View and manage registered mobile app users.</p>
@@ -278,31 +320,35 @@ const StudentManagement = () => {
                                                 {new Date(user.createdAt).toLocaleDateString()}
                                             </td>
                                             <td className="px-8 py-4 text-center">
-                                                <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${
-                                                    (user.status || 'Active') === 'Active' 
-                                                        ? 'bg-green-100 text-green-700' 
-                                                        : (user.status === 'Stopped' ? 'bg-gray-200 text-gray-600' : 'bg-red-100 text-red-700')
-                                                }`}>
-                                                    {user.status || 'Active'}
-                                                </span>
+                                                <div className="relative inline-block min-w-[100px]">
+                                                    <select
+                                                        value={user.status || 'Active'}
+                                                        onChange={(e) => handleStatusChange(user._id, user.role || 'student', e.target.value)}
+                                                        className={`w-full appearance-none rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wide outline-none cursor-pointer text-center transition-all shadow-sm focus:ring-2 focus:ring-offset-1 focus:ring-gray-300 ${
+                                                            (user.status || 'Active') === 'Active'
+                                                                ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                                                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                                        }`}
+                                                        style={{ WebkitAppearance: 'none', MozAppearance: 'none' }}
+                                                    >
+                                                        <option value="Active" className="text-gray-700 font-bold bg-white">ACTIVE</option>
+                                                        <option value="Inactive" className="text-gray-700 font-bold bg-white">INACTIVE</option>
+                                                    </select>
+                                                    <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center">
+                                                        <i className={`fa-solid fa-chevron-down text-[8px] ${
+                                                            (user.status || 'Active') === 'Active' ? 'text-green-700' : 'text-gray-700'
+                                                        }`}></i>
+                                                    </div>
+                                                </div>
                                             </td>
                                             <td className="px-8 py-4 text-right">
                                                 <div className="flex justify-end gap-2">
                                                     <button
-                                                        onClick={() => handleToggleStatus(user._id, user.role || 'student', user.status || 'Active')}
-                                                        className={`min-w-[90px] rounded-full px-4 py-2 text-[11px] font-bold text-white text-center transition-colors shadow-sm ${
-                                                            (user.status || 'Active') === 'Active'
-                                                                ? 'bg-orange-500 hover:bg-orange-600'
-                                                                : (user.status === 'Inactive' ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600')
-                                                        }`}
-                                                    >
-                                                        {(user.status || 'Active') === 'Active' ? 'Deactivate' : (user.status === 'Inactive' ? 'Stop' : 'Activate')}
-                                                    </button>
-                                                    <button
                                                         onClick={() => handleDelete(user._id, user.role || 'student', `${user.firstName} ${user.lastName}`)}
-                                                        className="min-w-[80px] rounded-full bg-[#fce8e8] px-4 py-2 text-[11px] font-bold text-red-600 text-center hover:bg-red-600 hover:text-white transition-colors shadow-sm border border-red-100"
+                                                        className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center text-red-600 hover:bg-red-600 hover:text-white transition-all shadow-sm border border-red-100 group"
+                                                        title="Delete User"
                                                     >
-                                                        Delete
+                                                        <i className="fa-regular fa-trash-can group-hover:scale-110 transition-transform"></i>
                                                     </button>
                                                 </div>
                                             </td>
@@ -410,17 +456,31 @@ const StudentManagement = () => {
                                             />
                                         </div>
                                     </div>
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">School Email</label>
-                                        <input
-                                            type="email"
-                                            name="email"
-                                            value={formData.email}
-                                            onChange={handleInputChange}
-                                            required
-                                            className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6c4df6] focus:border-transparent bg-gray-50 focus:bg-white transition-all"
-                                            placeholder="student@school.edu"
-                                        />
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">School Email</label>
+                                            <input
+                                                type="email"
+                                                name="email"
+                                                value={formData.email}
+                                                onChange={handleInputChange}
+                                                required
+                                                className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6c4df6] focus:border-transparent bg-gray-50 focus:bg-white transition-all"
+                                                placeholder="student@school.edu"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Student ID</label>
+                                            <input
+                                                type="text"
+                                                name="studentId"
+                                                value={formData.studentId}
+                                                onChange={handleInputChange}
+                                                required
+                                                className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6c4df6] focus:border-transparent bg-gray-50 focus:bg-white transition-all"
+                                                placeholder="e.g. 2021-00001"
+                                            />
+                                        </div>
                                     </div>
                                     <div>
                                         <label className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Password</label>

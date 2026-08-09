@@ -143,8 +143,8 @@ const Dashboard = () => {
                                 {recentData.transactions?.length > 0 ? (
                                     recentData.transactions.map((tx, idx) => (
                                         <tr key={idx} className="last:border-none">
-                                            <td className="py-3 px-5 text-[14px] text-black border-b border-[#eaeaea] align-middle">{tx.requestId}</td>
-                                            <td className="py-3 px-5 text-[14px] text-black border-b border-[#eaeaea] align-middle tracking-[0.5px] truncate">{tx.transactionHash}</td>
+                                            <td className="py-3 px-5 text-[14px] text-black border-b border-[#eaeaea] align-middle">{tx.referenceNumber || tx.requestId || 'N/A'}</td>
+                                            <td className="py-3 px-5 text-[14px] text-black border-b border-[#eaeaea] align-middle tracking-[0.5px] truncate">{tx.blockchainTxHash || tx.transactionHash || 'Pending...'}</td>
                                         </tr>
                                     ))
                                 ) : (

@@ -7,6 +7,7 @@ const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [entriesPerPage, setEntriesPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
   const [toast, setToast] = useState({ show: false, message: '', type: 'error' });
 
   // Filter States
@@ -60,6 +61,16 @@ const Notifications = () => {
       return matchesSearch && matchesStatus && matchesDate;
     });
   }, [notifications, searchTerm, filterStatus, startDate, endDate]);
+
+  const totalPages = Math.ceil(filteredNotifications.length / entriesPerPage);
+  const paginatedNotifications = filteredNotifications.slice(
+    (currentPage - 1) * entriesPerPage,
+    currentPage * entriesPerPage
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterStatus, startDate, endDate, entriesPerPage]);
 
   return (
     <Layout>
@@ -150,8 +161,8 @@ const Notifications = () => {
               <tbody className="text-[13px]">
                 {loading ? (
                   <tr><td colSpan="3" className="py-24 text-center text-gray-400 italic">Connecting to server...</td></tr>
-                ) : filteredNotifications.length > 0 ? (
-                    filteredNotifications.map((n, idx) => (
+                ) : paginatedNotifications.length > 0 ? (
+                    paginatedNotifications.map((n, idx) => (
                         <tr key={n._id || idx} className={`transition-colors ${idx % 2 !== 0 ? 'bg-[#F9FAFF]' : 'bg-white hover:bg-gray-50'}`}>
                             <td className="py-5 px-8">
                                 <div className="flex items-center gap-3">
@@ -172,9 +183,21 @@ const Notifications = () => {
 
           {/* Pagination */}
           <div className="flex justify-center items-center py-6 border-t border-gray-100 gap-2">
-            <button className="text-gray-400 hover:text-black text-xs px-2">Previous</button>
-            <button className="w-8 h-8 bg-[#1D2D44] text-white rounded font-bold text-xs">1</button>
-            <button className="text-gray-400 hover:text-black text-xs px-2">Next</button>
+            <button 
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className={`text-xs px-2 ${currentPage === 1 ? 'text-gray-300' : 'text-gray-400 hover:text-black cursor-pointer'}`}
+            >
+                Previous
+            </button>
+            <button className="w-8 h-8 bg-[#1D2D44] text-white rounded font-bold text-xs">{currentPage}</button>
+            <button 
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages || totalPages === 0}
+                className={`text-xs px-2 ${currentPage === totalPages || totalPages === 0 ? 'text-gray-300' : 'text-gray-400 hover:text-black cursor-pointer'}`}
+            >
+                Next
+            </button>
           </div>
         </div>
       </div>

@@ -3,6 +3,7 @@ import Layout from '../../components/Layout';
 import { Link } from 'react-router-dom';
 import { Search, Plus } from 'lucide-react';
 import api from '../../api';
+import ConfirmModal from '../../components/ConfirmModal';
 
 const ManageRegistrar = () => {
   const [registrars, setRegistrars] = useState([]);
@@ -10,6 +11,33 @@ const ManageRegistrar = () => {
   const [search, setSearch] = useState('');
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Confirm Modal
+  const [confirmConfig, setConfirmConfig] = useState(null);
+  let isExecuting = false;
+  const showConfirm = ({ title, message, onConfirm, type = 'info', confirmText = 'Confirm', cancelText = 'Cancel' }) => {
+      setConfirmConfig({
+          title,
+          message,
+          onConfirm: async () => {
+              if (isExecuting) return;
+              isExecuting = true;
+              setConfirmConfig(prev => ({ ...prev, isLoading: true }));
+              try {
+                  await onConfirm();
+              } catch (err) {
+                  console.error(err);
+              } finally {
+                  isExecuting = false;
+                  setConfirmConfig(null);
+              }
+          },
+          type,
+          confirmText,
+          cancelText,
+          isLoading: false
+      });
+  };
 
   // Fetch registrars from API
   useEffect(() => {
@@ -26,23 +54,29 @@ const ManageRegistrar = () => {
     fetchRegistrars();
   }, []);
 
-  const handleToggleStatus = async (registrarId, currentStatus) => {
+  const handleToggleStatus = (registrarId, currentStatus) => {
     const newStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
-    if (window.confirm(`Are you sure you want to ${newStatus === 'Active' ? 'activate' : 'deactivate'} this account?`)) {
-        try {
-            const response = await api.put(`/registrars/${registrarId}`, { status: newStatus });
-            if (response.data) {
-                setRegistrars(registrars.map(reg => 
-                    (reg._id === registrarId || reg.registrarId === registrarId) 
-                        ? { ...reg, status: response.data.status } 
-                        : reg
-                ));
+    showConfirm({
+        title: newStatus === 'Active' ? 'Activate Account' : 'Deactivate Account',
+        message: `Are you sure you want to ${newStatus === 'Active' ? 'activate' : 'deactivate'} this account?`,
+        type: newStatus === 'Active' ? 'success' : 'warning',
+        confirmText: newStatus === 'Active' ? 'Activate' : 'Deactivate',
+        onConfirm: async () => {
+            try {
+                const response = await api.put(`/registrars/${registrarId}`, { status: newStatus });
+                if (response.data) {
+                    setRegistrars(prev => prev.map(reg => 
+                        (reg._id === registrarId || reg.registrarId === registrarId) 
+                            ? { ...reg, status: response.data.status } 
+                            : reg
+                    ));
+                }
+            } catch (err) {
+                console.error('Error updating status:', err);
+                alert('Failed to update account status. Please try again later.');
             }
-        } catch (err) {
-            console.error('Error updating status:', err);
-            alert('Failed to update account status. Please try again later.');
         }
-    }
+    });
   };
 
   const filteredRegistrars = useMemo(() => {
@@ -63,7 +97,14 @@ const ManageRegistrar = () => {
 
   return (
     <Layout>
-      <div className="p-8 bg-[#f8fafc] min-h-screen">
+      {confirmConfig && (
+          <ConfirmModal 
+              {...confirmConfig} 
+              isOpen={!!confirmConfig} 
+              onClose={() => !confirmConfig.isLoading && setConfirmConfig(null)} 
+          />
+      )}
+      <div className="p-8 bg-[#f8fafc] min-h-screen relative">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-800">Manage Staff</h1>
           <p className="text-sm text-gray-500">View and manage staff accounts.</p>

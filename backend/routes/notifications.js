@@ -12,6 +12,16 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Mark all as read
+router.put('/mark-all-read', async (req, res) => {
+  try {
+    await Notification.updateMany({ isRead: false }, { isRead: true });
+    res.json({ message: 'All notifications marked as read' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating notifications' });
+  }
+});
+
 // Mark as read
 router.put('/:id/read', async (req, res) => {
   try {

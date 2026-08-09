@@ -298,11 +298,12 @@ router.post('/reset-password', async (req, res) => {
 router.get('/profile', protect, async (req, res) => {
   try {
     let user = null;
-    if (req.user.role === 'super admin') {
+    const role = (req.user.role || '').toLowerCase();
+    if (role === 'super admin') {
       user = await SuperAdmin.findById(req.user.id);
-    } else if (req.user.role === 'registrar') {
+    } else if (role.includes('registrar')) {
       user = await Registrar.findById(req.user.id);
-    } else if (req.user.role === 'alumni') {
+    } else if (role === 'alumni') {
       user = await Alumni.findById(req.user.id);
     } else {
       user = await Student.findById(req.user.id);
@@ -333,9 +334,10 @@ router.put('/profile', protect, async (req, res) => {
     const { name, firstName, lastName, profilePic, course, yearLevel, phoneNumber } = req.body;
     
     let userModel;
-    if (req.user.role === 'super admin') userModel = SuperAdmin;
-    else if (req.user.role === 'registrar') userModel = Registrar;
-    else if (req.user.role === 'alumni') userModel = Alumni;
+    const role = (req.user.role || '').toLowerCase();
+    if (role === 'super admin') userModel = SuperAdmin;
+    else if (role.includes('registrar')) userModel = Registrar;
+    else if (role === 'alumni') userModel = Alumni;
     else userModel = Student;
 
     const updateData = {};
@@ -366,9 +368,10 @@ router.put('/change-password', protect, async (req, res) => {
     const { currentPassword, newPassword } = req.body;
     
     let userModel;
-    if (req.user.role === 'super admin') userModel = SuperAdmin;
-    else if (req.user.role === 'registrar') userModel = Registrar;
-    else if (req.user.role === 'alumni') userModel = Alumni;
+    const role = (req.user.role || '').toLowerCase();
+    if (role === 'super admin') userModel = SuperAdmin;
+    else if (role.includes('registrar')) userModel = Registrar;
+    else if (role === 'alumni') userModel = Alumni;
     else userModel = Student;
 
     const user = await userModel.findById(req.user.id);
@@ -418,9 +421,10 @@ router.post('/profile/photo', protect, uploadProfile.single('photo'), async (req
     }
 
     let userModel;
-    if (req.user.role === 'super admin') userModel = SuperAdmin;
-    else if (req.user.role === 'registrar') userModel = Registrar;
-    else if (req.user.role === 'alumni') userModel = Alumni;
+    const role = (req.user.role || '').toLowerCase();
+    if (role === 'super admin') userModel = SuperAdmin;
+    else if (role.includes('registrar')) userModel = Registrar;
+    else if (role === 'alumni') userModel = Alumni;
     else userModel = Student;
 
     const profilePicUrl = `/uploads/profiles/${req.file.filename}`;

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '../../components/Layout';
 import api from '../../api';
 import { ArrowLeft, CheckCircle, XCircle, Clock, Image as ImageIcon, Eye, CreditCard, AlertCircle, User, FileText, RefreshCw, Edit3 } from 'lucide-react';
+import ConfirmModal from '../../components/ConfirmModal';
 
 const API_BASE = (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : '') || 'http://127.0.0.1:5000';
 
@@ -19,21 +20,54 @@ const TransactionDetails = () => {
     const [newStatus, setNewStatus] = useState('');
     const [actionLoading, setActionLoading] = useState(false);
 
-    const handleUpdateStatus = async () => {
+    // Confirm Modal
+    const [confirmConfig, setConfirmConfig] = useState(null);
+    let isExecuting = false;
+    const showConfirm = ({ title, message, onConfirm, type = 'info', confirmText = 'Confirm', cancelText = 'Cancel' }) => {
+        setConfirmConfig({
+            title,
+            message,
+            onConfirm: async () => {
+                if (isExecuting) return;
+                isExecuting = true;
+                setConfirmConfig(prev => ({ ...prev, isLoading: true }));
+                try {
+                    await onConfirm();
+                } catch (err) {
+                    console.error(err);
+                } finally {
+                    isExecuting = false;
+                    setConfirmConfig(null);
+                }
+            },
+            type,
+            confirmText,
+            cancelText,
+            isLoading: false
+        });
+    };
+
+    const handleUpdateStatus = () => {
         if (!newStatus) return;
-        if (!window.confirm(`Are you sure you want to force update this payment to "${newStatus}"?`)) return;
-        
-        setActionLoading(true);
-        try {
-            await api.put(`/transactions/${txData.transactionId}/verify`, { status: newStatus });
-            const res = await api.get(`/transactions/${id}`);
-            setTxData(res.data);
-            setIsEditingStatus(false);
-        } catch (err) {
-            alert(err.response?.data?.message || 'Failed to update transaction status');
-        } finally {
-            setActionLoading(false);
-        }
+        showConfirm({
+            title: 'Update Payment Status',
+            message: `Are you sure you want to force update this payment to "${newStatus}"?`,
+            type: 'warning',
+            confirmText: 'Update',
+            onConfirm: async () => {
+                setActionLoading(true);
+                try {
+                    await api.put(`/transactions/${txData.transactionId}/verify`, { status: newStatus });
+                    const res = await api.get(`/transactions/${id}`);
+                    setTxData(res.data);
+                    setIsEditingStatus(false);
+                } catch (err) {
+                    alert(err.response?.data?.message || 'Failed to update transaction status');
+                } finally {
+                    setActionLoading(false);
+                }
+            }
+        });
     };
 
     useEffect(() => {
@@ -119,7 +153,14 @@ const TransactionDetails = () => {
 
     return (
         <Layout>
-            <div className="p-8 bg-[#F8FAFC] min-h-screen font-sans">
+            {confirmConfig && (
+                <ConfirmModal 
+                    {...confirmConfig} 
+                    isOpen={!!confirmConfig} 
+                    onClose={() => !confirmConfig.isLoading && setConfirmConfig(null)} 
+                />
+            )}
+            <div className="p-8 bg-[#F8F9FA] min-h-[calc(100vh-64px)] font-sans relative">
 
                 {/* Header */}
                 <div className="max-w-[1100px] mx-auto mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">

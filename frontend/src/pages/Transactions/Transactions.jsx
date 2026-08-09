@@ -691,7 +691,7 @@ const Transactions = () => {
                   <h4 className="text-[11px] font-bold text-[#1D2D44] uppercase mb-4 tracking-wider">Refund Details</h4>
                   <div className="space-y-3 text-sm text-gray-600 font-medium">
                     <div className="flex justify-between">
-                      <span>Student</span>
+                      <span>Name</span>
                       <span className="font-bold text-gray-800">{selectedRefund.studentName}</span>
                     </div>
                     <div className="flex justify-between">
