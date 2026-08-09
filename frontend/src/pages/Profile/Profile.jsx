@@ -11,11 +11,8 @@ const Profile = () => {
     const [user, setUser] = useState({
         name: '',
         email: '',
-        role: '',
-        profilePic: ''
+        role: ''
     });
-    
-    const fileInputRef = useRef(null);
 
     // Password State
     const [passwords, setPasswords] = useState({
@@ -51,8 +48,7 @@ const Profile = () => {
                 setUser({
                     name: res.data.name || '',
                     email: res.data.email || '',
-                    role: res.data.role || '',
-                    profilePic: res.data.profilePic || ''
+                    role: res.data.role || ''
                 });
             } catch (err) {
                 console.error("Error fetching profile:", err);
@@ -122,27 +118,6 @@ const Profile = () => {
         }
     };
 
-    const handleFileChange = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        
-        const formData = new FormData();
-        formData.append('photo', file);
-        
-        try {
-            const res = await api.post('/auth/profile/photo', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
-            setUser(prev => ({ ...prev, profilePic: res.data.profile.profilePic }));
-            triggerToast("Profile photo updated successfully!", "success");
-            
-            const stored = JSON.parse(localStorage.getItem('adminUser') || '{}');
-            localStorage.setItem('adminUser', JSON.stringify({ ...stored, profilePic: res.data.profile.profilePic }));
-        } catch (err) {
-            triggerToast(err.response?.data?.message || 'Failed to upload photo', "error");
-        }
-    };
-
     if (loading) return <Layout><div className="p-8 flex items-center justify-center">Loading Profile Data...</div></Layout>;
 
     return (
@@ -174,23 +149,6 @@ const Profile = () => {
                             </div>
                             
                             <div className="flex flex-col md:flex-row gap-12">
-                                <div className="flex flex-col items-center w-full md:w-48">
-                                    <div className="relative group">
-                                        <div className="w-32 h-32 bg-[#F1F5F9] rounded-full mb-4 overflow-hidden border-4 border-white shadow-md flex items-center justify-center relative">
-                                            {user.profilePic ? (
-                                                <img src={user.profilePic.startsWith('http') ? user.profilePic : `http://localhost:5000${user.profilePic}`} alt="Profile" className="w-full h-full object-cover" />
-                                            ) : (
-                                                <User size={80} className="text-gray-300" />
-                                            )}
-                                        </div>
-                                        <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/png, image/jpeg, image/jpg" />
-                                        <button onClick={() => fileInputRef.current?.click()} className="absolute bottom-4 right-0 bg-[#1D2D44] text-white p-2 rounded-full shadow-lg hover:scale-110 transition-transform">
-                                            <Camera size={16} />
-                                        </button>
-                                    </div>
-                                    <span onClick={() => fileInputRef.current?.click()} className="text-[#1D2D44] font-bold text-[12px] cursor-pointer hover:underline uppercase tracking-wide">Change Photo</span>
-                                </div>
-
                                 <div className="flex-1 space-y-5">
                                     <div className="flex flex-col md:flex-row md:items-center">
                                         <label className="w-32 text-sm font-bold text-gray-600">Name:</label>

@@ -24,6 +24,10 @@ const registrarSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  profilePic: {
+    type: String,
+    default: ''
+  },
   status: {
     type: String,
     enum: ['Active', 'Inactive'],

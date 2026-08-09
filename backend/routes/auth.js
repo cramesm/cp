@@ -11,6 +11,7 @@ const Alumni = require('../models/Users/Alumni');
 const SuperAdmin = require('../models/Users/SuperAdmin');
 const Registrar = require('../models/Registrar');
 const ActivityLog = require('../models/ActivityLog');
+const fs = require('fs');
 
 // In-memory OTP store: { email: { otp, expiresAt, modelName } }
 const otpStore = {};
@@ -388,9 +389,14 @@ router.put('/change-password', protect, async (req, res) => {
 });
 
 // --- Multer Configuration for Profile Photos ---
+const profileUploadDir = path.join(__dirname, '..', 'uploads', 'profiles');
+if (!fs.existsSync(profileUploadDir)) {
+    fs.mkdirSync(profileUploadDir, { recursive: true });
+}
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, '..', 'uploads', 'profiles'));
+    cb(null, profileUploadDir);
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
