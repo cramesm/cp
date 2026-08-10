@@ -14,19 +14,35 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-      imgSrc: ["'self'", "data:", "https://res.cloudinary.com", "https://*.mongodb.net"],
+      scriptSrc: ["'self'", "https://apis.google.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"], // Left unsafe-inline to prevent total style breakage
+      imgSrc: ["'self'", "data:", "https://res.cloudinary.com"],
       connectSrc: ["'self'", "http://localhost:5000", "https://verifitor-api.vercel.app"],
       fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
       frameAncestors: ["'none'"],
+      objectSrc: ["'none'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"]
     },
   },
-  crossOriginEmbedderPolicy: false, // Set to false to prevent breaking some integrations unless strictly needed
+  crossOriginEmbedderPolicy: false, 
   crossOriginOpenerPolicy: { policy: "same-origin" }
 }));
 
-app.use(cors());
+const allowedOrigins = [
+  'http://localhost:5173',
+  process.env.FRONTEND_URL || 'https://verifitor-web.vercel.app' // Fallback to assumed vercel url
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  }
+}));
 app.use(express.json());
 
 // Request logger
