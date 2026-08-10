@@ -31,13 +31,12 @@ app.use(helmet({
 
 // Allow CORS dynamically for all Vercel environments
 const corsOptions = {
-  origin: true, // This automatically reflects the requesting origin perfectly
+  origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 };
 
-app.options('*', cors(corsOptions)); // Explicitly handle all preflight requests
 app.use(cors(corsOptions));
 app.use(express.json());
 
