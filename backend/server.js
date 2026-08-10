@@ -4,9 +4,27 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const mongoose = require('mongoose');
+const helmet = require('helmet');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Apply Helmet Security Headers
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      imgSrc: ["'self'", "data:", "https://res.cloudinary.com", "https://*.mongodb.net"],
+      connectSrc: ["'self'", "http://localhost:5000", "https://verifitor-api.vercel.app"],
+      fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
+      frameAncestors: ["'none'"],
+    },
+  },
+  crossOriginEmbedderPolicy: false, // Set to false to prevent breaking some integrations unless strictly needed
+  crossOriginOpenerPolicy: { policy: "same-origin" }
+}));
 
 app.use(cors());
 app.use(express.json());
