@@ -29,23 +29,16 @@ app.use(helmet({
   crossOriginOpenerPolicy: { policy: "same-origin" }
 }));
 
-const allowedOrigins = [
-  'http://localhost:5173',
-  process.env.FRONTEND_URL
-];
+// Allow CORS dynamically for all Vercel environments
+const corsOptions = {
+  origin: true, // This automatically reflects the requesting origin perfectly
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+};
 
-app.use(cors({
-  origin: function (origin, callback) {
-    // Allow if no origin (e.g. curl), or matches exact allowed origin, or ends with vercel.app (for preview URLs)
-    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
-      callback(null, true);
-    } else {
-      // Instead of throwing an error which might cause Express to 500, just return false so CORS blocks it cleanly
-      callback(null, false);
-    }
-  },
-  credentials: true
-}));
+app.options('*', cors(corsOptions)); // Explicitly handle all preflight requests
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Request logger
