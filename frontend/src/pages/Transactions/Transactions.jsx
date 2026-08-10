@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Layout from '../../components/Layout';
 import api from '../../api';
 import { X, ZoomIn, CheckCircle, Image as ImageIcon, Send, AlertCircle, RefreshCw, Receipt, Eye, XCircle, Undo2 } from 'lucide-react';
@@ -7,9 +7,10 @@ import { X, ZoomIn, CheckCircle, Image as ImageIcon, Send, AlertCircle, RefreshC
 const API_BASE = (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : '') || 'http://127.0.0.1:5000';
 
 const Transactions = () => {
+  const [searchParams] = useSearchParams();
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('payments'); // 'payments' | 'refunds'
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'payments'); // 'payments' | 'refunds'
 
   // Refund states
   const [refunds, setRefunds] = useState([]);
@@ -197,7 +198,7 @@ const Transactions = () => {
   const paymentModes = ['All Modes', 'GCash', 'Maya', 'GoThyme', 'Other Online Payment'];
   const statuses = ['All Status', 'Pending Verification', 'Completed', 'Needs Update', 'Rejected', 'Refunded'];
 
-  const pendingRefundCount = refunds.filter(r => r.status === 'Pending').length;
+  const pendingRefundCount = refunds.filter(r => r.status?.toLowerCase() === 'pending').length;
 
   return (
     <Layout>
@@ -232,11 +233,6 @@ const Transactions = () => {
             }`}
           >
             Refund Requests
-            {pendingRefundCount > 0 && (
-              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full shadow-md">
-                {pendingRefundCount}
-              </span>
-            )}
           </button>
         </div>
 
@@ -491,7 +487,7 @@ const Transactions = () => {
                         <tr key={refund._id || idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-[#F9FAFF]'}>
                           <td className="px-6 py-4 text-gray-600 font-mono">{refund.refundId}</td>
                           <td className="px-6 py-4 text-gray-600 font-mono">{refund.transactionId}</td>
-                          <td className="px-6 py-4 font-bold text-gray-800">{refund.studentName}</td>
+                          <td className="px-6 py-4 font-bold text-gray-800">{refund.studentName || refund.payerName || 'Unknown'}</td>
                           <td className="px-6 py-4 text-gray-700 font-semibold">₱{refund.amount || '0.00'}</td>
                           <td className="px-6 py-4 text-gray-600">{refund.reason === 'Other' ? refund.otherReason : refund.reason}</td>
                           <td className="px-6 py-4 text-gray-600">{formattedDate}</td>
@@ -503,7 +499,7 @@ const Transactions = () => {
                             </div>
                           </td>
                           <td className="px-6 py-4 text-center">
-                            {refund.status === 'Pending' ? (
+                            {refund.status?.toLowerCase() === 'pending' ? (
                               <button
                                 onClick={() => { setSelectedRefund(refund); setRefundRemarks(''); }}
                                 className="min-w-[100px] py-2 rounded-full text-[11px] font-bold bg-[#1D2D44] text-white shadow-md hover:bg-[#152030] transition-all flex items-center justify-center gap-1.5 mx-auto"
@@ -780,10 +776,10 @@ function getStatusStyle(status) {
 
 // Helper: Refund Status Styles
 function getRefundStatusStyle(status) {
-  switch (status) {
-    case 'Pending': return 'bg-[#FCF7B0] text-[#857A00]';
-    case 'Approved': return 'bg-[#C6FFD5] text-[#1B7A2E]';
-    case 'Rejected': return 'bg-[#FFD1D1] text-[#F04438]';
+  switch (status?.toLowerCase()) {
+    case 'pending': return 'bg-[#FCF7B0] text-[#857A00]';
+    case 'approved': return 'bg-[#C6FFD5] text-[#1B7A2E]';
+    case 'rejected': return 'bg-[#FFD1D1] text-[#F04438]';
     default: return 'bg-gray-100 text-gray-600';
   }
 }

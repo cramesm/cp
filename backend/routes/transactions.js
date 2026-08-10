@@ -66,6 +66,26 @@ router.get('/receipt', async (req, res) => {
   }
 });
 
+// ====== REFUND REQUEST ENDPOINTS ======
+const Refund = require('../models/Refund');
+
+// Admin: Get all refund requests (with optional status filter)
+// IMPORTANT: This must be defined BEFORE the /:id route below,
+// otherwise Express treats "refunds" as a transaction ID.
+router.get('/refunds', protect, async (req, res) => {
+  try {
+    const query = {};
+    if (req.query.status && req.query.status !== 'All') {
+      query.status = req.query.status;
+    }
+    const refunds = await Refund.find(query).sort({ createdAt: -1 });
+    res.json(refunds);
+  } catch (error) {
+    console.error('Error fetching refunds:', error);
+    res.status(500).json({ message: 'Error fetching refund requests' });
+  }
+});
+
 // Get a single transaction by transactionId
 router.get('/:id', async (req, res) => {
   try {
@@ -240,8 +260,6 @@ router.put('/:id/reupload', upload.single('receiptImage'), async (req, res) => {
   }
 });
 
-// ====== REFUND REQUEST ENDPOINTS ======
-const Refund = require('../models/Refund');
 
 // Mobile: Submit a refund request
 router.post('/refund-request', async (req, res) => {
@@ -291,22 +309,6 @@ router.post('/refund-request', async (req, res) => {
     res.status(500).json({ success: false, message: 'Error submitting refund request', error: error.message });
   }
 });
-
-// Admin: Get all refund requests (with optional status filter)
-router.get('/refunds', protect, async (req, res) => {
-  try {
-    const query = {};
-    if (req.query.status && req.query.status !== 'All') {
-      query.status = req.query.status;
-    }
-    const refunds = await Refund.find(query).sort({ createdAt: -1 });
-    res.json(refunds);
-  } catch (error) {
-    console.error('Error fetching refunds:', error);
-    res.status(500).json({ message: 'Error fetching refund requests' });
-  }
-});
-
 // Admin: Process (approve/reject) a refund request
 router.put('/refunds/:id/process', protect, async (req, res) => {
   try {

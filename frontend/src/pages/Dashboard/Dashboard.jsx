@@ -99,7 +99,7 @@ const Dashboard = () => {
                         </div>
                     </div>
                     <div 
-                        onClick={() => navigate('/transactions')}
+                        onClick={() => navigate('/transactions?tab=refunds')}
                         className="flex items-center gap-[15px] bg-white rounded-[15px] p-[18px] shadow-[0_6px_15px_rgba(0,0,0,0.08)] cursor-pointer hover:shadow-[0_8px_20px_rgba(0,0,0,0.15)] hover:-translate-y-1 transition-all relative"
                     >
                         {stats.pendingRefunds > 0 && (

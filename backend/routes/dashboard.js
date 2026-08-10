@@ -14,7 +14,7 @@ router.get('/stats', async (req, res) => {
     const rejectedRequests = await Request.countDocuments({ status: 'Rejected' });
     const releasedRequests = await Request.countDocuments({ status: 'Released' });
     const blockchainTransactions = await Blockchain_Transaction.countDocuments();
-    const pendingRefunds = await Refund.countDocuments({ status: 'Pending' });
+    const pendingRefunds = await Refund.countDocuments({ status: { $regex: /^pending$/i } });
 
     res.json({
       totalRequests,
