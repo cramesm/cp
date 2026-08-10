@@ -26,7 +26,10 @@ function VerifyTransaction() {
             );
 
             setResult(response.data);
-            triggerToast("Verification completed successfully.", 'success');
+            triggerToast(
+                response.data.message || (response.data.verified ? 'Verification completed successfully.' : 'Verification failed.'),
+                response.data.verified ? 'success' : 'error'
+            );
         } catch (error) {
             setResult(null);
             triggerToast(error.response?.data?.message || "Verification failed", 'error');

@@ -1,22 +1,3 @@
-node_modules/
-dist/
-build/
-*.log
-*_out.txt
-.vscode/
-.DS_Store
-.claude/
-
-# Config files
-*.config.js
-config.json
-settings.json
-.env.local
-
-# Uploads
-backend/uploads/
-
-
 # Environment variables
 .env
 .env.*

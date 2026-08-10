@@ -9,15 +9,47 @@ const createReferenceNumber = () => {
     return `TXN-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
 };
 
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const getUserIdentifier = (reqUser) => {
+    if (!reqUser) return null;
+    return reqUser.id || reqUser._id || reqUser.userId || null;
+};
+
+const buildStoredBlockchainRecord = (transaction, errorMessage) => ({
+    referenceNumber: transaction.referenceNumber,
+    typeOfDocument: transaction.typeOfDocument,
+    nameOfStudent: transaction.nameOfStudent,
+    studentIDNumber: transaction.studentIDNumber,
+    nameOfSchool: transaction.nameOfSchool,
+    yearGraduated: String(transaction.yearGraduated),
+    recordedBy: transaction.createdByEmail || '',
+    timestamp: transaction.createdAt ? String(Math.floor(new Date(transaction.createdAt).getTime() / 1000)) : '0',
+    exists: Boolean(transaction.blockchainTxHash || transaction.blockchainStatus === 'Recorded'),
+    fallback: true,
+    error: errorMessage,
+});
+
 const TransactionController = {
 
     /* CREATE TRANSACTION */
     createTransaction: async (req, res) => {
         try {
             const { typeOfDocument, nameOfStudent, studentIDNumber, nameOfSchool, yearGraduated } = req.body;
+            const userId = getUserIdentifier(req.user);
+
+            if (!userId) {
+                return res.status(401).json({ message: "User session is invalid" });
+            }
+
+            if (!mongoose.isValidObjectId(userId)) {
+                console.warn("Invalid user identifier for blockchain transaction creation:", userId);
+                return res.status(401).json({ message: "User session is invalid" });
+            }
+
             const referenceNumber = createReferenceNumber();
             const transaction = await BlockchainTransaction.create({
-                user: new mongoose.Types.ObjectId(req.user.id),
+                user: new mongoose.Types.ObjectId(userId),
                 referenceNumber,
                 typeOfDocument,
                 nameOfStudent,
@@ -83,18 +115,19 @@ const TransactionController = {
     /* GET USER'S TRANSACTIONS */
 getMyTransactions: async (req, res) => {
     try {
-        console.log("=== getMyTransactions DEBUG ===");
-        console.log("req.user:", req.user);
-        console.log("req.user.id:", req.user.id);
+        const userId = getUserIdentifier(req.user);
 
-        const userId = new mongoose.Types.ObjectId(req.user.id);
-        console.log("userId as ObjectId:", userId);
+        if (!userId) {
+            return res.status(401).json({ message: "User session is invalid" });
+        }
 
-       const query = req.user.role === 'super admin' ? {} : { user: userId };
-    const transactions = await BlockchainTransaction.find(query).sort({ createdAt: -1 });
+        if (!mongoose.isValidObjectId(userId)) {
+            console.warn("Invalid user identifier for fetching blockchain transactions:", userId);
+            return res.json([]);
+        }
 
-        console.log("Transactions found:", transactions.length);
-        console.log("Sample user field in DB:", transactions[0]?.user);
+        const query = req.user.role === 'super admin' ? {} : { user: new mongoose.Types.ObjectId(userId) };
+        const transactions = await BlockchainTransaction.find(query).sort({ createdAt: -1 });
 
         return res.json(transactions);
         } catch (error) {
@@ -122,10 +155,25 @@ getMyTransactions: async (req, res) => {
                 referenceNumber
             );
 
+            if (blockchainRecord.error && transaction.blockchainStatus === 'Recorded') {
+                const storedBlockchainRecord = buildStoredBlockchainRecord(
+                    transaction,
+                    blockchainRecord.error
+                );
+
+                return res.json({
+                    databaseRecord: transaction,
+                    blockchainRecord: storedBlockchainRecord,
+                    verified: true,
+                    message: 'Verified from stored blockchain record because live contract verification is unavailable.',
+                });
+            }
+
             return res.json({
                 databaseRecord: transaction,
                 blockchainRecord,
                 verified: blockchainRecord.exists,
+                message: blockchainRecord.error || undefined,
             });
         } catch (error) {
             return res.status(500).json({
@@ -138,9 +186,23 @@ getMyTransactions: async (req, res) => {
     /* VERIFY TRANSACTION BY STUDENT ID NUMBER */
     verifyTransactionByStudentID: async (req, res) => {
         try {
-            const { studentIDNumber } = req.params;
+            const studentIDNumber = (req.params.studentIDNumber || '').trim();
 
-            const transaction = await BlockchainTransaction.findOne({ studentIDNumber });
+            if (!studentIDNumber) {
+                return res.status(400).json({
+                    message: "Student ID number is required",
+                });
+            }
+
+            const normalizedStudentId = escapeRegex(studentIDNumber);
+            const transaction = await BlockchainTransaction.findOne({
+                $or: [
+                    { studentIDNumber: studentIDNumber },
+                    { studentIDNumber: new RegExp(`^${normalizedStudentId}$`, 'i') },
+                    { studentSONumber: studentIDNumber },
+                    { studentSONumber: new RegExp(`^${normalizedStudentId}$`, 'i') },
+                ],
+            }).sort({ createdAt: -1 });
 
             if (!transaction) {
                 return res.status(404).json({
@@ -152,10 +214,25 @@ getMyTransactions: async (req, res) => {
                 transaction.referenceNumber
             );
 
+            if (blockchainRecord.error && transaction.blockchainStatus === 'Recorded') {
+                const storedBlockchainRecord = buildStoredBlockchainRecord(
+                    transaction,
+                    blockchainRecord.error
+                );
+
+                return res.json({
+                    databaseRecord: transaction,
+                    blockchainRecord: storedBlockchainRecord,
+                    verified: true,
+                    message: 'Verified from stored blockchain record because live contract verification is unavailable.',
+                });
+            }
+
             return res.json({
                 databaseRecord: transaction,
                 blockchainRecord,
                 verified: blockchainRecord.exists,
+                message: blockchainRecord.error || undefined,
             });
         } catch (error) {
             return res.status(500).json({
