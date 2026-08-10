@@ -31,17 +31,20 @@ app.use(helmet({
 
 const allowedOrigins = [
   'http://localhost:5173',
-  process.env.FRONTEND_URL || 'https://verifitor-web.vercel.app' // Fallback to assumed vercel url
+  process.env.FRONTEND_URL
 ];
 
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
+    // Allow if no origin (e.g. curl), or matches exact allowed origin, or ends with vercel.app (for preview URLs)
+    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      // Instead of throwing an error which might cause Express to 500, just return false so CORS blocks it cleanly
+      callback(null, false);
     }
-  }
+  },
+  credentials: true
 }));
 app.use(express.json());
 
