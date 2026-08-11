@@ -483,11 +483,15 @@ const Transactions = () => {
                       const formattedDate = refundDate.toLocaleDateString('en-US', {
                         year: 'numeric', month: '2-digit', day: '2-digit'
                       });
+                      
+                      const relatedTx = transactions.find(t => t.transactionId === refund.transactionId || t._id === refund.transactionId);
+                      const displayName = refund.accountName || refund.studentName || relatedTx?.payerName || relatedTx?.name || 'Unknown';
+
                       return (
                         <tr key={refund._id || idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-[#F9FAFF]'}>
-                          <td className="px-6 py-4 text-gray-600 font-mono">{refund.refundId}</td>
+                          <td className="px-6 py-4 text-gray-600 font-mono">{refund.refundId || refund._id}</td>
                           <td className="px-6 py-4 text-gray-600 font-mono">{refund.transactionId}</td>
-                          <td className="px-6 py-4 font-bold text-gray-800">{refund.studentName || refund.payerName || 'Unknown'}</td>
+                          <td className="px-6 py-4 font-bold text-gray-800">{displayName}</td>
                           <td className="px-6 py-4 text-gray-700 font-semibold">₱{refund.amount || '0.00'}</td>
                           <td className="px-6 py-4 text-gray-600">{refund.reason === 'Other' ? refund.otherReason : refund.reason}</td>
                           <td className="px-6 py-4 text-gray-600">{formattedDate}</td>
@@ -688,15 +692,41 @@ const Transactions = () => {
                   <div className="space-y-3 text-sm text-gray-600 font-medium">
                     <div className="flex justify-between">
                       <span>Name</span>
-                      <span className="font-bold text-gray-800">{selectedRefund.studentName}</span>
+                      <span className="font-bold text-gray-800">
+                        {selectedRefund.accountName || 
+                         selectedRefund.studentName || 
+                         transactions.find(t => t.transactionId === selectedRefund.transactionId || t._id === selectedRefund.transactionId)?.payerName || 
+                         transactions.find(t => t.transactionId === selectedRefund.transactionId || t._id === selectedRefund.transactionId)?.name || 
+                         'Unknown'}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Email</span>
-                      <span className="text-gray-700">{selectedRefund.studentEmail || 'N/A'}</span>
+                      <span className="text-gray-700">{selectedRefund.email || selectedRefund.studentEmail || 'N/A'}</span>
                     </div>
-                    <div className="flex justify-between">
+                    {userMap[selectedRefund.email || selectedRefund.studentEmail] && (
+                      <>
+                        <div className="flex justify-between">
+                          <span>User Type</span>
+                          <span className="text-gray-700 capitalize">{userMap[selectedRefund.email || selectedRefund.studentEmail].role || 'Student'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Program</span>
+                          <span className="text-gray-700">{userMap[selectedRefund.email || selectedRefund.studentEmail].programLevel || 'N/A'}</span>
+                        </div>
+                      </>
+                    )}
+                    <div className="flex justify-between border-t border-gray-100 pt-3 mt-3">
                       <span>Transaction ID</span>
                       <span className="font-mono text-gray-700">{selectedRefund.transactionId}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Document Type</span>
+                      <span className="font-semibold text-[#1D2D44]">
+                        {selectedRefund.docName || 
+                         transactions.find(t => t.transactionId === selectedRefund.transactionId || t._id === selectedRefund.transactionId)?.documentType || 
+                         'N/A'}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Amount</span>
