@@ -25,7 +25,7 @@ const AlumniController = {
     // Add a new alumni
     addAlumni: async (req, res) => {
         try {
-            const { firstName, lastName, email, password } = req.body;
+            const { firstName, lastName, email, password, studentId } = req.body;
 
             if (!firstName || !lastName || !email || !password) {
                 return res.status(HttpStatus.BAD_REQUEST).json({ 
@@ -44,14 +44,14 @@ const AlumniController = {
                 });
             }
 
-            const studentId = `ALU-${Date.now().toString().slice(-6)}`;
+            const finalStudentId = studentId || `ALU-${Date.now().toString().slice(-6)}`;
 
             const newAlumni = new Alumni({
                 firstName,
                 lastName,
                 email,
                 password,
-                studentId,
+                studentId: finalStudentId,
                 role: 'alumni'
             });
 
@@ -159,6 +159,54 @@ const AlumniController = {
             res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ 
                 success: false, 
                 message: 'Failed to update alumni status', 
+                data: error.message 
+            });
+        }
+    },
+
+    // Update alumni profile (Ownership check applied)
+    updateAlumniProfile: async (req, res) => {
+        try {
+            const { id } = req.params;
+            
+            // SECURITY: Ownership check or Super Admin override
+            if (req.user.id !== id && req.user.role !== 'super admin') {
+                return res.status(HttpStatus.FORBIDDEN).json({
+                    success: false,
+                    message: 'Unauthorized: You can only edit your own profile',
+                    data: null
+                });
+            }
+
+            const { firstName, lastName, email } = req.body;
+
+            const updatedAlumni = await Alumni.findByIdAndUpdate(
+                id,
+                { firstName, lastName, email },
+                { new: true, runValidators: true }
+            );
+
+            if (!updatedAlumni) {
+                return res.status(HttpStatus.NOT_FOUND).json({ 
+                    success: false, 
+                    message: 'Alumni not found', 
+                    data: null 
+                });
+            }
+
+            const alumniResponse = updatedAlumni.toObject();
+            delete alumniResponse.password;
+
+            res.status(HttpStatus.OK).json({ 
+                success: true, 
+                message: 'Profile updated successfully', 
+                data: alumniResponse 
+            });
+        } catch (error) {
+            console.error('Error updating profile:', error);
+            res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ 
+                success: false, 
+                message: 'Failed to update profile', 
                 data: error.message 
             });
         }

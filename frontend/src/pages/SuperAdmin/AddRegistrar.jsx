@@ -272,19 +272,6 @@ export default function AddRegistrar() {
                 </div>
                 <div className="space-y-5">
                   <div className="flex flex-col gap-2">
-                    <label className="text-[12px] font-bold text-gray-500 uppercase tracking-tight">Account Role</label>
-                    <select
-                      name="role"
-                      value={formData.role}
-                      onChange={handleInputChange}
-                      className="w-full bg-white border border-gray-300 rounded-lg p-3 text-sm outline-none focus:border-[#1D2D44] transition-all"
-                    >
-                      <option value="Registrar Staff">Registrar Staff</option>
-                      <option value="Super Admin">Super Admin</option>
-                    </select>
-                  </div>
-
-                  <div className="flex flex-col gap-2">
                     <label className="text-[12px] font-bold text-gray-500 uppercase tracking-tight">Specific Responsibility (Optional)</label>
                     <textarea
                       placeholder="e.g. Handles Transcript of Records..."

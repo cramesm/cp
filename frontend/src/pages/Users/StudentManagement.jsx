@@ -563,7 +563,7 @@ const StudentManagement = () => {
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">School Email</label>
+                                            <label className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">{activeTab === 'student' ? 'School Email' : 'Email'}</label>
                                             <input
                                                 type="email"
                                                 name="email"
@@ -571,7 +571,7 @@ const StudentManagement = () => {
                                                 onChange={handleInputChange}
                                                 required
                                                 className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6c4df6] focus:border-transparent bg-gray-50 focus:bg-white transition-all"
-                                                placeholder="student@school.edu"
+                                                placeholder={activeTab === 'student' ? "student@school.edu" : "alumni@email.com"}
                                             />
                                         </div>
                                         <div>
@@ -579,11 +579,12 @@ const StudentManagement = () => {
                                             <input
                                                 type="text"
                                                 name="studentId"
-                                                value={formData.studentId}
+                                                value={activeTab === 'alumni' ? 'Auto-generated' : formData.studentId}
                                                 onChange={handleInputChange}
-                                                required
-                                                className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6c4df6] focus:border-transparent bg-gray-50 focus:bg-white transition-all"
-                                                placeholder="e.g. 2021-00001"
+                                                required={activeTab === 'student'}
+                                                disabled={activeTab === 'alumni'}
+                                                className={`w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6c4df6] focus:border-transparent transition-all ${activeTab === 'alumni' ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-gray-50 focus:bg-white'}`}
+                                                placeholder={activeTab === 'student' ? "e.g. 2021-00001" : "Auto-generated"}
                                             />
                                         </div>
                                     </div>

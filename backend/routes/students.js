@@ -15,4 +15,7 @@ router.delete('/:id', protect, superAdminOnly, StudentController.deleteStudent);
 // Route to update student status (Super Admin only)
 router.put('/:id/status', protect, superAdminOnly, StudentController.updateStudentStatus);
 
+// Route for a student to update their own profile (Ownership check inside controller)
+router.put('/:id/profile', protect, StudentController.updateStudentProfile);
+
 module.exports = router;

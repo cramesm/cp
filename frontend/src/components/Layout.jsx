@@ -55,7 +55,7 @@ const Layout = ({ children }) => {
             case '/blockchain':
                 return 'Blockchain Management';
             case '/manage-registrar':
-                return 'Super Administrators';
+                return 'Manage Registrars';
             case '/manage-users':
                 return 'User Management';
             case '/manage-registrar/add':
