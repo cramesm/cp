@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../../components/Layout';
 import ConfirmModal from '../../components/ConfirmModal';
-import { ChevronRight, User, Trash2, Edit3, X, CheckCircle, Lock, AlertTriangle, RefreshCw } from 'lucide-react';
+import { ChevronRight, User, Trash2, Edit3, X, CheckCircle, Lock, AlertTriangle, RefreshCw, Eye, EyeOff } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../../api';
 
@@ -369,17 +369,28 @@ function InfoInput({ label, name, value, onChange }) {
 }
 
 function PasswordInput({ label, name, value, onChange }) {
+  const [showPassword, setShowPassword] = useState(false);
+
   return (
     <div className="flex flex-col gap-2">
       <label className="text-[11px] font-bold text-[#1D2D44] uppercase tracking-wider">{label}</label>
-      <input
-        type="password"
-        name={name}
-        value={value}
-        onChange={onChange}
-        className="w-full bg-white border border-blue-200 rounded-lg p-3 text-sm outline-none focus:border-[#1D2D44] transition-all"
-        placeholder="••••••••"
-      />
+      <div className="relative">
+        <input
+          type={showPassword ? 'text' : 'password'}
+          name={name}
+          value={value}
+          onChange={onChange}
+          className="w-full bg-white border border-blue-200 rounded-lg p-3 pr-10 text-sm outline-none focus:border-[#1D2D44] transition-all"
+          placeholder="••••••••"
+        />
+        <button
+          type="button"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+          onClick={() => setShowPassword(!showPassword)}
+        >
+          {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+        </button>
+      </div>
     </div>
   );
 }

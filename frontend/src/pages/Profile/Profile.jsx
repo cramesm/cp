@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '../../components/Layout';
 import ConfirmModal from '../../components/ConfirmModal';
 import api from '../../api';
-import { User, ShieldCheck, Save, X, Camera, CheckCircle, AlertCircle } from 'lucide-react';
+import { User, ShieldCheck, Save, X, Camera, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 const Profile = () => {
     const navigate = useNavigate();
@@ -14,6 +14,10 @@ const Profile = () => {
         email: '',
         role: ''
     });
+
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     // Password State
     const [passwords, setPasswords] = useState({
@@ -245,36 +249,63 @@ const Profile = () => {
                             <div className="max-w-md space-y-5">
                                 <div className="flex flex-col gap-1.5">
                                     <label className="text-sm font-bold text-[#1D2D44]">Current Password</label>
-                                    <input 
-                                        type="password" 
-                                        name="current" 
-                                        placeholder="••••••••"
-                                        value={passwords.current} 
-                                        onChange={handlePasswordChange} 
-                                        className="w-full border border-gray-300 rounded-md px-4 py-2.5 text-sm outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44] transition-all bg-white" 
-                                    />
+                                    <div className="relative">
+                                        <input 
+                                            type={showCurrentPassword ? 'text' : 'password'}
+                                            name="current" 
+                                            placeholder="••••••••"
+                                            value={passwords.current} 
+                                            onChange={handlePasswordChange} 
+                                            className="w-full border border-gray-300 rounded-md px-4 py-2.5 pr-10 text-sm outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44] transition-all bg-white" 
+                                        />
+                                        <button 
+                                            type="button"
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                                            onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                                        >
+                                            {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                        </button>
+                                    </div>
                                 </div>
                                 <div className="flex flex-col gap-1.5">
                                     <label className="text-sm font-bold text-[#1D2D44]">New Password</label>
-                                    <input 
-                                        type="password" 
-                                        name="newGroup" 
-                                        placeholder="New Password"
-                                        value={passwords.newGroup} 
-                                        onChange={handlePasswordChange} 
-                                        className="w-full border border-gray-300 rounded-md px-4 py-2.5 text-sm outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44] transition-all bg-white" 
-                                    />
+                                    <div className="relative">
+                                        <input 
+                                            type={showNewPassword ? 'text' : 'password'}
+                                            name="newGroup" 
+                                            placeholder="New Password"
+                                            value={passwords.newGroup} 
+                                            onChange={handlePasswordChange} 
+                                            className="w-full border border-gray-300 rounded-md px-4 py-2.5 pr-10 text-sm outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44] transition-all bg-white" 
+                                        />
+                                        <button 
+                                            type="button"
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                                            onClick={() => setShowNewPassword(!showNewPassword)}
+                                        >
+                                            {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                        </button>
+                                    </div>
                                 </div>
                                 <div className="flex flex-col gap-1.5">
                                     <label className="text-sm font-bold text-[#1D2D44]">Confirm New Password</label>
-                                    <input 
-                                        type="password" 
-                                        name="confirm" 
-                                        placeholder="Confirm New Password"
-                                        value={passwords.confirm} 
-                                        onChange={handlePasswordChange} 
-                                        className="w-full border border-gray-300 rounded-md px-4 py-2.5 text-sm outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44] transition-all bg-white" 
-                                    />
+                                    <div className="relative">
+                                        <input 
+                                            type={showConfirmPassword ? 'text' : 'password'}
+                                            name="confirm" 
+                                            placeholder="Confirm New Password"
+                                            value={passwords.confirm} 
+                                            onChange={handlePasswordChange} 
+                                            className="w-full border border-gray-300 rounded-md px-4 py-2.5 pr-10 text-sm outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44] transition-all bg-white" 
+                                        />
+                                        <button 
+                                            type="button"
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                        >
+                                            {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                        </button>
+                                    </div>
                                 </div>
                                 
                                 <div className="pt-4 border-t border-gray-100">
