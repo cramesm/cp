@@ -754,20 +754,32 @@ const Transactions = () => {
                 />
 
                 <div className="flex gap-3">
-                  <button
-                    onClick={() => handleProcessRefund(selectedRefund.refundId, 'Rejected')}
-                    disabled={refundActionLoading}
-                    className="flex-1 py-3 rounded-xl border-2 border-red-500 text-red-500 font-bold text-sm uppercase hover:bg-red-50 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                  >
-                    <XCircle size={16} /> Reject Refund
-                  </button>
-                  <button
-                    onClick={() => handleProcessRefund(selectedRefund.refundId, 'Approved')}
-                    disabled={refundActionLoading}
-                    className="flex-1 py-3 rounded-xl bg-green-600 text-white font-bold text-sm uppercase hover:bg-green-700 shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
-                  >
-                    <CheckCircle size={16} /> Approve Refund
-                  </button>
+                  {selectedRefund.status === 'Pending' ? (
+                    <>
+                      <button
+                        onClick={() => handleProcessRefund(selectedRefund.refundId || selectedRefund._id, 'Rejected')}
+                        disabled={refundActionLoading}
+                        className="flex-1 py-3 rounded-xl border-2 border-red-500 text-red-500 font-bold text-sm uppercase hover:bg-red-50 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                      >
+                        <XCircle size={16} /> Reject Refund
+                      </button>
+                      <button
+                        onClick={() => handleProcessRefund(selectedRefund.refundId || selectedRefund._id, 'Approved')}
+                        disabled={refundActionLoading}
+                        className="flex-1 py-3 rounded-xl bg-green-600 text-white font-bold text-sm uppercase hover:bg-green-700 shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
+                      >
+                        <CheckCircle size={16} /> Approve Refund
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => handleProcessRefund(selectedRefund.refundId || selectedRefund._id, 'Pending')}
+                      disabled={refundActionLoading}
+                      className="flex-1 py-3 rounded-xl border-2 border-orange-500 text-orange-600 font-bold text-sm uppercase hover:bg-orange-50 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      <Undo2 size={16} /> Revert to Pending
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

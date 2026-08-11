@@ -313,12 +313,18 @@ router.post('/refund-request', async (req, res) => {
 router.put('/refunds/:id/process', protect, async (req, res) => {
   try {
     const { status, adminRemarks } = req.body;
-    if (!['Approved', 'Rejected'].includes(status)) {
-      return res.status(400).json({ message: 'Invalid status. Must be Approved or Rejected.' });
+    if (!['Approved', 'Rejected', 'Pending'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid status. Must be Approved, Rejected, or Pending.' });
+    }
+
+    const mongoose = require('mongoose');
+    let query = { refundId: req.params.id };
+    if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+      query = { $or: [{ refundId: req.params.id }, { _id: req.params.id }] };
     }
 
     const refund = await Refund.findOneAndUpdate(
-      { refundId: req.params.id },
+      query,
       {
         status,
         adminRemarks: adminRemarks || '',
@@ -334,20 +340,25 @@ router.put('/refunds/:id/process', protect, async (req, res) => {
     if (status === 'Approved') {
       await Transaction.findOneAndUpdate(
         { transactionId: refund.transactionId },
-        { status: 'Refunded', adminRemarks: `Refund approved (${refund.refundId}). ${adminRemarks || ''}`.trim() }
+        { status: 'Refunded', adminRemarks: `Refund approved (${refund.refundId || refund._id}). ${adminRemarks || ''}`.trim() }
+      );
+    } else if (status === 'Pending') {
+      await Transaction.findOneAndUpdate(
+        { transactionId: refund.transactionId },
+        { status: 'Completed', adminRemarks: `Refund reverted to pending. ${adminRemarks || ''}`.trim() }
       );
     }
 
     // Notify the student
     const Notification = require('../models/Notification');
     const statusMessage = status === 'Approved'
-      ? `Your refund request (${refund.refundId}) for ₱${refund.amount} has been approved!`
-      : `Your refund request (${refund.refundId}) was rejected. ${adminRemarks ? 'Reason: ' + adminRemarks : ''}`;
+      ? `Your refund request for ₱${refund.amount} has been approved!`
+      : `Your refund request was rejected. ${adminRemarks ? 'Reason: ' + adminRemarks : ''}`;
 
     await Notification.create({
       message: statusMessage,
       isRead: false,
-      email: refund.studentEmail || ''
+      email: refund.email || refund.studentEmail || ''
     });
 
     // Log the activity

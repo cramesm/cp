@@ -38,6 +38,18 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
+const SuperAdminRoute = ({ children }) => {
+  const token = localStorage.getItem('token');
+  const userRole = localStorage.getItem('userRole');
+  if (!token) {
+    return <Navigate to="/" replace />;
+  }
+  if (userRole !== 'super admin') {
+    return <Navigate to="/dashboard" replace />;
+  }
+  return children;
+};
+
 function App() {
   return (
     <Router>
@@ -74,12 +86,12 @@ function App() {
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
         {/* Super Admin / Registrar Management - Protected */}
-        <Route path="/manage-registrar" element={<ProtectedRoute><ManageRegistrar /></ProtectedRoute>} />
-        <Route path="/manage-registrar/add" element={<ProtectedRoute><AddRegistrar /></ProtectedRoute>} />
-        <Route path="/manage-registrar/details/:id" element={<ProtectedRoute><RegistrarInformation /></ProtectedRoute>} />
-        <Route path="/manage-users" element={<ProtectedRoute><StudentManagement /></ProtectedRoute>} />
+        <Route path="/manage-registrar" element={<SuperAdminRoute><ManageRegistrar /></SuperAdminRoute>} />
+        <Route path="/manage-registrar/add" element={<SuperAdminRoute><AddRegistrar /></SuperAdminRoute>} />
+        <Route path="/manage-registrar/details/:id" element={<SuperAdminRoute><RegistrarInformation /></SuperAdminRoute>} />
+        <Route path="/manage-users" element={<SuperAdminRoute><StudentManagement /></SuperAdminRoute>} />
         
-        <Route path="/activity-logs" element={<ProtectedRoute><ActivityLogs /></ProtectedRoute>} />
+        <Route path="/activity-logs" element={<SuperAdminRoute><ActivityLogs /></SuperAdminRoute>} />
 
         {/* Public Validation Page (QR Scans go straight to /verify/results) */}
         <Route path="/verify" element={<Navigate to="/" replace />} />
