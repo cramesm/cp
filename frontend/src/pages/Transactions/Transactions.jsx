@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Layout from '../../components/Layout';
+import ConfirmModal from '../../components/ConfirmModal';
 import api from '../../api';
 import { X, ZoomIn, CheckCircle, Image as ImageIcon, Send, AlertCircle, RefreshCw, Receipt, Eye, XCircle, Undo2 } from 'lucide-react';
 
@@ -18,6 +19,7 @@ const Transactions = () => {
   const [selectedRefund, setSelectedRefund] = useState(null);
   const [refundRemarks, setRefundRemarks] = useState('');
   const [refundActionLoading, setRefundActionLoading] = useState(false);
+  const [refundConfirmModal, setRefundConfirmModal] = useState({ isOpen: false, refundId: null, status: null });
 
   // Filter States
   const [searchTerm, setSearchTerm] = useState('');
@@ -133,8 +135,13 @@ const Transactions = () => {
   };
 
   // Refund processing
-  const handleProcessRefund = async (refundId, status) => {
-    if (refundActionLoading) return; // guard against double-clicks
+  const handleProcessRefund = (refundId, status) => {
+    setRefundConfirmModal({ isOpen: true, refundId, status });
+  };
+
+  const executeProcessRefund = async () => {
+    const { refundId, status } = refundConfirmModal;
+    if (!refundId || refundActionLoading) return;
     setRefundActionLoading(true);
     try {
       await api.put(`/transactions/refunds/${refundId}/process`, {
@@ -151,6 +158,7 @@ const Transactions = () => {
       triggerToast('Failed to process refund. Please try again.', 'error');
     } finally {
       setRefundActionLoading(false);
+      setRefundConfirmModal({ isOpen: false, refundId: null, status: null });
     }
   };
 
@@ -799,6 +807,19 @@ const Transactions = () => {
             />
           </div>
         )}
+
+        <ConfirmModal
+          isOpen={refundConfirmModal.isOpen}
+          onClose={() => !refundActionLoading && setRefundConfirmModal({ isOpen: false, refundId: null, status: null })}
+          onConfirm={executeProcessRefund}
+          title={`Confirm ${refundConfirmModal.status}`}
+          message={`Are you sure you want to ${refundConfirmModal.status === 'Pending' ? 'revert this refund to pending' : refundConfirmModal.status === 'Approved' ? 'approve this refund' : 'reject this refund'}?`}
+          confirmText={refundConfirmModal.status === 'Pending' ? 'Revert to Pending' : `Yes, ${refundConfirmModal.status}`}
+          cancelText="Cancel"
+          type={refundConfirmModal.status === 'Rejected' ? 'danger' : refundConfirmModal.status === 'Approved' ? 'success' : 'warning'}
+          isLoading={refundActionLoading}
+        />
+
       </div>
     </Layout>
   );
