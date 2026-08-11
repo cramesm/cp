@@ -1,6 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { SlidersHorizontal, ArrowDownAZ, ArrowUpZA } from 'lucide-react';
 import Layout from '../../components/Layout';
+import FilterDrawer from '../../components/FilterDrawer';
+import ActiveFilterChips from '../../components/ActiveFilterChips';
 import api from '../../api';
 
 const Requests = () => {
@@ -18,6 +21,8 @@ const Requests = () => {
     const [endDate, setEndDate] = useState(new Date().toLocaleDateString('en-CA'));
     const [entriesPerPage, setEntriesPerPage] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
+    const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
+    const [sortConfig, setSortConfig] = useState({ key: 'dateRequested', direction: 'desc' });
 
     const navigate = useNavigate();
 
@@ -97,7 +102,23 @@ const Requests = () => {
             const matchesDate = (!start || reqDate >= start) && (!end || reqDate <= end);
 
             return matchesSearch && matchesStatus && matchesType && matchesDate && matchesRole && matchesProgram && matchesUserStatus;
-        }).sort((a, b) => new Date(b.dateRequested) - new Date(a.dateRequested));
+        }).sort((a, b) => {
+            let valA = a[sortConfig.key];
+            let valB = b[sortConfig.key];
+            
+            // Special handling for nested or specific types
+            if (sortConfig.key === 'dateRequested') {
+                valA = new Date(valA).getTime();
+                valB = new Date(valB).getTime();
+            } else if (sortConfig.key === 'name') {
+                valA = valA ? valA.toLowerCase() : '';
+                valB = valB ? valB.toLowerCase() : '';
+            }
+
+            if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
+            if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
+            return 0;
+        });
     }, [requests, searchTerm, filterStatus, filterType, filterUserRole, filterProgram, filterUserStatus, startDate, endDate]);
 
     // Pagination Logic
@@ -110,7 +131,7 @@ const Requests = () => {
     // Reset to page 1 if filters change
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchTerm, filterStatus, filterType, filterUserRole, filterProgram, filterUserStatus, startDate, endDate, entriesPerPage]);
+    }, [searchTerm, filterStatus, filterType, filterUserRole, filterProgram, filterUserStatus, startDate, endDate, entriesPerPage, sortConfig]);
 
     // Dynamic Dropdown Options
     const documentTypes = ['All Document', ...new Set(requests.map(r => r.documentType))];
@@ -136,73 +157,124 @@ const Requests = () => {
                             </select> 
                             entries
                         </div>
-                        <form onSubmit={(e) => { e.preventDefault(); document.activeElement?.blur(); }} className="flex gap-0">
+                        <form onSubmit={(e) => { e.preventDefault(); document.activeElement?.blur(); }} className="flex gap-2">
                             <input 
                                 type="text" 
                                 placeholder="Search by name or action..." 
-                                className="border border-gray-300 rounded-l px-4 py-2 w-80 text-sm focus:outline-none focus:ring-1 focus:ring-slate-400"
+                                className="border border-gray-300 rounded px-4 py-2 w-80 text-sm focus:outline-none focus:ring-1 focus:ring-slate-400"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
-                            <button type="submit" className="bg-[#20354D] text-white px-8 py-2 rounded-r font-bold text-sm hover:bg-slate-800 transition-colors">
+                            <button type="submit" className="bg-[#20354D] text-white px-6 py-2 rounded font-bold text-sm hover:bg-slate-800 transition-colors">
                                 Search
+                            </button>
+                            <button 
+                                type="button"
+                                onClick={() => setIsFilterDrawerOpen(true)}
+                                className="bg-gray-100 text-gray-700 px-4 py-2 rounded font-bold text-sm hover:bg-gray-200 transition-colors flex items-center gap-2 border border-gray-200"
+                            >
+                                <SlidersHorizontal size={16} /> Filters & Sort
                             </button>
                         </form>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-6 items-end mb-6">
-                        <FilterDropdown 
-                            label="User Type:" 
-                            value={filterUserRole} 
-                            onChange={setFilterUserRole} 
-                            options={['All', 'Student', 'Alumni']} 
-                        />
-                        <FilterDropdown 
-                            label="Program Level:" 
-                            value={filterProgram} 
-                            onChange={setFilterProgram} 
-                            options={['All', 'Bachelors', 'Masters', 'Doctorate']} 
-                        />
-                        <FilterDropdown 
-                            label="Account Status:" 
-                            value={filterUserStatus} 
-                            onChange={setFilterUserStatus} 
-                            options={['All', 'Active', 'Inactive']} 
-                        />
-                    </div>
-                    <div className="grid grid-cols-4 gap-6 items-end">
-                        <FilterDropdown 
-                            label="Document Type:" 
-                            value={filterType} 
-                            onChange={setFilterType} 
-                            options={documentTypes} 
-                        />
-                        <FilterDropdown 
-                            label="Status:" 
-                            value={filterStatus} 
-                            onChange={setFilterStatus} 
-                            options={statuses} 
-                        />
-                        <div className="flex flex-col gap-1.5">
-                            <label className="text-sm font-bold text-[#1D2D44]">Start Date:</label>
-                            <input 
-                                type="date" 
-                                className="border border-gray-300 rounded-md px-3 py-2 text-sm text-[#1D2D44] font-medium outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44] transition-all bg-white shadow-sm"
-                                value={startDate}
-                                onChange={(e) => setStartDate(e.target.value)}
-                            />
-                        </div>
-                        <div className="flex flex-col gap-1.5">
-                            <label className="text-sm font-bold text-[#1D2D44]">End Date:</label>
-                            <input 
-                                type="date" 
-                                className="border border-gray-300 rounded-md px-3 py-2 text-sm text-[#1D2D44] font-medium outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44] transition-all bg-white shadow-sm"
-                                value={endDate}
-                                onChange={(e) => setEndDate(e.target.value)}
-                            />
-                        </div>
-                    </div>
+                    <ActiveFilterChips 
+                        filters={[
+                            { label: 'Role', value: filterUserRole, key: 'filterUserRole' },
+                            { label: 'Program', value: filterProgram, key: 'filterProgram' },
+                            { label: 'User Status', value: filterUserStatus, key: 'filterUserStatus' },
+                            { label: 'Doc Type', value: filterType, key: 'filterType' },
+                            { label: 'Status', value: filterStatus, key: 'filterStatus' },
+                            { label: 'From', value: startDate, key: 'startDate' },
+                            { label: 'To', value: endDate, key: 'endDate' },
+                        ]}
+                        onRemove={(key) => {
+                            if (key === 'filterUserRole') setFilterUserRole('All');
+                            if (key === 'filterProgram') setFilterProgram('All');
+                            if (key === 'filterUserStatus') setFilterUserStatus('All');
+                            if (key === 'filterType') setFilterType('All Document');
+                            if (key === 'filterStatus') setFilterStatus('All Status');
+                            if (key === 'startDate') setStartDate('');
+                            if (key === 'endDate') setEndDate('');
+                        }}
+                    />
                 </div>
+
+                {/* Filter Drawer */}
+                <FilterDrawer 
+                    isOpen={isFilterDrawerOpen} 
+                    onClose={() => setIsFilterDrawerOpen(false)}
+                    onClearAll={() => {
+                        setFilterUserRole('All');
+                        setFilterProgram('All');
+                        setFilterUserStatus('All');
+                        setFilterType('All Document');
+                        setFilterStatus('All Status');
+                        setStartDate('');
+                        setEndDate('');
+                        setSortConfig({ key: 'dateRequested', direction: 'desc' });
+                    }}
+                >
+                    <div className="flex flex-col gap-4">
+                        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">Sorting</h3>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-sm font-bold text-[#1D2D44]">Sort By:</label>
+                                <select 
+                                    className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#1D2D44] bg-white"
+                                    value={sortConfig.key}
+                                    onChange={(e) => setSortConfig({ ...sortConfig, key: e.target.value })}
+                                >
+                                    <option value="dateRequested">Date Requested</option>
+                                    <option value="name">Name</option>
+                                    <option value="status">Status</option>
+                                    <option value="documentType">Document Type</option>
+                                </select>
+                            </div>
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-sm font-bold text-[#1D2D44]">Order:</label>
+                                <button 
+                                    onClick={() => setSortConfig({ ...sortConfig, direction: sortConfig.direction === 'asc' ? 'desc' : 'asc' })}
+                                    className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white flex items-center justify-between hover:bg-gray-50 transition-colors"
+                                >
+                                    {sortConfig.direction === 'asc' ? 'Ascending' : 'Descending'}
+                                    {sortConfig.direction === 'asc' ? <ArrowUpZA size={16} className="text-gray-500"/> : <ArrowDownAZ size={16} className="text-gray-500"/>}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="border-t border-gray-100 my-2"></div>
+
+                        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">Filtering</h3>
+                        
+                        <FilterDropdown label="Document Type:" value={filterType} onChange={setFilterType} options={documentTypes} />
+                        <FilterDropdown label="Status:" value={filterStatus} onChange={setFilterStatus} options={statuses} />
+                        <FilterDropdown label="User Type:" value={filterUserRole} onChange={setFilterUserRole} options={['All', 'Student', 'Alumni']} />
+                        <FilterDropdown label="Program Level:" value={filterProgram} onChange={setFilterProgram} options={['All', 'Bachelors', 'Masters', 'Doctorate']} />
+                        <FilterDropdown label="Account Status:" value={filterUserStatus} onChange={setFilterUserStatus} options={['All', 'Active', 'Inactive']} />
+                        
+                        <div className="grid grid-cols-2 gap-3 mt-2">
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-sm font-bold text-[#1D2D44]">Start Date:</label>
+                                <input 
+                                    type="date" 
+                                    className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#1D2D44] bg-white"
+                                    value={startDate}
+                                    onChange={(e) => setStartDate(e.target.value)}
+                                />
+                            </div>
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-sm font-bold text-[#1D2D44]">End Date:</label>
+                                <input 
+                                    type="date" 
+                                    className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#1D2D44] bg-white"
+                                    value={endDate}
+                                    onChange={(e) => setEndDate(e.target.value)}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </FilterDrawer>
 
                 {/* --- TABLE SECTION --- */}
                 <div className="bg-white shadow-sm border border-gray-200 overflow-hidden">

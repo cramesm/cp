@@ -1,7 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import Layout from '../../components/Layout';
 import api from '../../api';
-import { AlertCircle, Info, X, Search } from 'lucide-react';
+import { AlertCircle, Info, X, Search, SlidersHorizontal, ArrowDownAZ, ArrowUpZA } from 'lucide-react';
+import FilterDrawer from '../../components/FilterDrawer';
+import ActiveFilterChips from '../../components/ActiveFilterChips';
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
@@ -15,6 +17,8 @@ const Notifications = () => {
   const [filterStatus, setFilterStatus] = useState('All Status');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
+  const [sortConfig, setSortConfig] = useState({ key: 'date', direction: 'desc' });
 
   useEffect(() => {
     fetchNotifications();
@@ -59,8 +63,23 @@ const Notifications = () => {
       const matchesDate = (!start || notifDate >= start) && (!end || notifDate <= end);
 
       return matchesSearch && matchesStatus && matchesDate;
+    }).sort((a, b) => {
+        let valA = a[sortConfig.key];
+        let valB = b[sortConfig.key];
+        
+        if (sortConfig.key === 'date') {
+            valA = new Date(valA).getTime();
+            valB = new Date(valB).getTime();
+        } else if (sortConfig.key === 'status') {
+            valA = a.isRead ? 1 : 0;
+            valB = b.isRead ? 1 : 0;
+        }
+
+        if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
     });
-  }, [notifications, searchTerm, filterStatus, startDate, endDate]);
+  }, [notifications, searchTerm, filterStatus, startDate, endDate, sortConfig]);
 
   const totalPages = Math.ceil(filteredNotifications.length / entriesPerPage);
   const paginatedNotifications = filteredNotifications.slice(
@@ -93,10 +112,10 @@ const Notifications = () => {
           
           {/* Unified Filter Row */}
           <div className="p-6 border-b border-gray-100">
-            <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-4">
               
-              {/* Show Entries & Search */}
-              <div className="flex items-center gap-4 flex-1">
+              {/* Show Entries & Search & Filters */}
+              <div className="flex items-center gap-4 flex-1 w-full md:w-auto">
                 <div className="flex items-center gap-2 text-[14px] text-[#7E84A3] whitespace-nowrap">
                   <span>Show</span>
                   <select 
@@ -121,32 +140,113 @@ const Notifications = () => {
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
+                <button 
+                    onClick={() => setIsFilterDrawerOpen(true)}
+                    className="bg-gray-100 text-gray-700 px-4 py-2 rounded font-bold text-xs hover:bg-gray-200 transition-colors flex items-center gap-2 border border-gray-200"
+                >
+                    <SlidersHorizontal size={14} /> Filters & Sort
+                </button>
               </div>
 
-              {/* Status & Dates & Actions (Single Line) */}
-              <div className="flex items-center gap-3">
-                <select 
-                    value={filterStatus} 
-                    onChange={(e) => setFilterStatus(e.target.value)} 
-                    className="border border-gray-300 rounded-md px-3 py-2 text-xs outline-none bg-white min-w-[110px]"
-                >
-                  <option>All Status</option><option>Unread</option><option>Read</option>
-                </select>
-
-                <input type="date" className="border border-gray-300 rounded-md px-3 py-1.5 text-xs text-gray-500 outline-none" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-                <input type="date" className="border border-gray-300 rounded-md px-3 py-1.5 text-xs text-gray-500 outline-none" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-                
-                <div className="flex gap-2 ml-2">
-                    <button onClick={fetchNotifications} className="bg-[#E5E7EB] text-gray-700 px-5 py-2 rounded-md font-bold text-[12px] hover:bg-gray-200 transition-colors">
-                        Retry
-                    </button>
-                    <button onClick={handleMarkAllRead} className="bg-[#1D2D44] text-white px-5 py-2 rounded-md font-bold text-[12px] hover:bg-[#152030] transition-all whitespace-nowrap">
-                        Mark all read
-                    </button>
-                </div>
+              {/* Actions */}
+              <div className="flex gap-2 w-full md:w-auto justify-end">
+                  <button onClick={fetchNotifications} className="bg-[#E5E7EB] text-gray-700 px-5 py-2 rounded-md font-bold text-[12px] hover:bg-gray-200 transition-colors">
+                      Retry
+                  </button>
+                  <button onClick={handleMarkAllRead} className="bg-[#1D2D44] text-white px-5 py-2 rounded-md font-bold text-[12px] hover:bg-[#152030] transition-all whitespace-nowrap">
+                      Mark all read
+                  </button>
               </div>
             </div>
+
+            <ActiveFilterChips 
+                filters={[
+                    { label: 'Status', value: filterStatus, key: 'filterStatus' },
+                    { label: 'From', value: startDate, key: 'startDate' },
+                    { label: 'To', value: endDate, key: 'endDate' },
+                ]}
+                onRemove={(key) => {
+                    if (key === 'filterStatus') setFilterStatus('All Status');
+                    if (key === 'startDate') setStartDate('');
+                    if (key === 'endDate') setEndDate('');
+                }}
+            />
           </div>
+
+          {/* Filter Drawer */}
+          <FilterDrawer 
+              isOpen={isFilterDrawerOpen} 
+              onClose={() => setIsFilterDrawerOpen(false)}
+              onClearAll={() => {
+                  setFilterStatus('All Status');
+                  setStartDate('');
+                  setEndDate('');
+                  setSortConfig({ key: 'date', direction: 'desc' });
+              }}
+          >
+              <div className="flex flex-col gap-4">
+                  <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">Sorting</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-1.5">
+                          <label className="text-sm font-bold text-[#1D2D44]">Sort By:</label>
+                          <select 
+                              className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#1D2D44] bg-white"
+                              value={sortConfig.key}
+                              onChange={(e) => setSortConfig({ ...sortConfig, key: e.target.value })}
+                          >
+                              <option value="date">Date</option>
+                              <option value="status">Status</option>
+                          </select>
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                          <label className="text-sm font-bold text-[#1D2D44]">Order:</label>
+                          <button 
+                              onClick={() => setSortConfig({ ...sortConfig, direction: sortConfig.direction === 'asc' ? 'desc' : 'asc' })}
+                              className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white flex items-center justify-between hover:bg-gray-50 transition-colors"
+                          >
+                              {sortConfig.direction === 'asc' ? 'Ascending' : 'Descending'}
+                              {sortConfig.direction === 'asc' ? <ArrowUpZA size={16} className="text-gray-500"/> : <ArrowDownAZ size={16} className="text-gray-500"/>}
+                          </button>
+                      </div>
+                  </div>
+
+                  <div className="border-t border-gray-100 my-2"></div>
+
+                  <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">Filtering</h3>
+                  
+                  <div className="flex flex-col gap-1.5">
+                      <label className="text-sm font-bold text-[#1D2D44]">Status:</label>
+                      <select 
+                          value={filterStatus} 
+                          onChange={(e) => setFilterStatus(e.target.value)} 
+                          className="border border-gray-300 rounded-md px-3 py-2 text-sm outline-none bg-white"
+                      >
+                        <option>All Status</option><option>Unread</option><option>Read</option>
+                      </select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 mt-2">
+                      <div className="flex flex-col gap-1.5">
+                          <label className="text-sm font-bold text-[#1D2D44]">Start Date:</label>
+                          <input 
+                              type="date" 
+                              className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#1D2D44] bg-white"
+                              value={startDate}
+                              onChange={(e) => setStartDate(e.target.value)}
+                          />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                          <label className="text-sm font-bold text-[#1D2D44]">End Date:</label>
+                          <input 
+                              type="date" 
+                              className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#1D2D44] bg-white"
+                              value={endDate}
+                              onChange={(e) => setEndDate(e.target.value)}
+                          />
+                      </div>
+                  </div>
+              </div>
+          </FilterDrawer>
 
           {/* Table */}
           <div className="overflow-x-auto min-h-[450px]">

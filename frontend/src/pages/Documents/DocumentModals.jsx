@@ -202,7 +202,7 @@ export const TORUploadModal = ({ onClose, onSuccess }) => {
 
     const handleFile = (file) => {
         if (!file || !file.name.endsWith('.csv')) {
-            alert('Please select a CSV file');
+            setUploadResult({ type: 'error', message: 'Please select a valid CSV spreadsheet to upload.' });
             return;
         }
         setSelectedFile(file);
@@ -320,7 +320,7 @@ export const DiplomaUploadModal = ({ onClose, onSuccess }) => {
 
     const handleFile = (file) => {
         if (!file || !file.name.endsWith('.csv')) {
-            alert('Please select a CSV file');
+            setUploadResult({ type: 'error', message: 'Please select a valid CSV spreadsheet to upload.' });
             return;
         }
         setSelectedFile(file);

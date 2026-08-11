@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronRight, FileText, Upload, CheckCircle2, AlertCircle, ShieldCheck, Printer, FileSearch, Trash2, Shield, Search } from 'lucide-react';
 import Layout from '../../components/Layout';
 import ConfirmModal from '../../components/ConfirmModal';
+import FeedbackModal from '../../components/FeedbackModal';
 import api from '../../api';
 
 const API_BASE = (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : '') || 'http://127.0.0.1:5000';
@@ -65,6 +66,12 @@ const RequestDetails = () => {
         });
     };
 
+    // Feedback Modal
+    const [feedbackConfig, setFeedbackConfig] = useState(null);
+    const showFeedback = ({ title, message, type = 'error' }) => {
+        setFeedbackConfig({ title, message, type });
+    };
+
     const fetchData = async () => {
         try {
             const res = await api.get('/requests');
@@ -119,7 +126,11 @@ const RequestDetails = () => {
             await fetchData();
             if (newStatus === 'Rejected') setShowRejectForm(false);
         } catch (err) {
-            alert(err.response?.data?.message || 'Update failed');
+            showFeedback({
+                title: 'Update Failed',
+                message: 'Oops! We couldn\'t update the status of this request right now. Please try again.',
+                type: 'error'
+            });
         } finally {
             setActionLoading(false);
         }
@@ -139,7 +150,11 @@ const RequestDetails = () => {
             if (status === 'Completed') setCurrentStep(2);
         } catch (err) {
             console.error(err);
-            alert('Failed to verify payment');
+            showFeedback({
+                title: 'Payment Verification Failed',
+                message: 'We were unable to verify this payment. Please check your connection and try again.',
+                type: 'error'
+            });
         } finally {
             setActionLoading(false);
         }
@@ -149,7 +164,11 @@ const RequestDetails = () => {
         if (!e.target.files || e.target.files.length === 0) return;
         const file = e.target.files[0];
         if (file.type !== 'application/pdf') {
-            alert("Only PDF files are allowed.");
+            showFeedback({
+                title: 'Invalid File Type',
+                message: 'Please select a PDF document. Other file types are not supported.',
+                type: 'info'
+            });
             return;
         }
         setUploadedFile(file);
@@ -173,7 +192,11 @@ const RequestDetails = () => {
             await fetchData();
         } catch (err) {
             console.error(err);
-            alert('Failed to upload document. Please ensure it is a valid PDF.');
+            showFeedback({
+                title: 'Upload Failed',
+                message: 'We couldn\'t upload your document. Please ensure it is a valid PDF and try again.',
+                type: 'error'
+            });
         } finally {
             setActionLoading(false);
         }
@@ -205,7 +228,11 @@ const RequestDetails = () => {
             setCurrentStep(4);
             await fetchData();
         } catch (err) {
-            alert(err.response?.data?.message || 'Failed to secure document');
+            showFeedback({
+                title: 'Failed to Finalize',
+                message: 'Oops! We ran into an issue while securing this document. Please try again later.',
+                type: 'error'
+            });
         } finally {
             setActionLoading(false);
         }
@@ -677,6 +704,14 @@ const RequestDetails = () => {
                     confirmText={confirmConfig.confirmText}
                     cancelText={confirmConfig.cancelText}
                     isLoading={confirmConfig.isLoading}
+                />
+            )}
+            {/* Feedback Modal */}
+            {feedbackConfig && (
+                <FeedbackModal 
+                    {...feedbackConfig} 
+                    isOpen={!!feedbackConfig} 
+                    onClose={() => setFeedbackConfig(null)} 
                 />
             )}
         </Layout>

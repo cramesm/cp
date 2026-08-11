@@ -4,6 +4,7 @@ import Layout from '../../components/Layout';
 import api from '../../api';
 import { ArrowLeft, CheckCircle, XCircle, Clock, Image as ImageIcon, Eye, CreditCard, AlertCircle, User, FileText, RefreshCw, Edit3 } from 'lucide-react';
 import ConfirmModal from '../../components/ConfirmModal';
+import FeedbackModal from '../../components/FeedbackModal';
 
 const API_BASE = (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : '') || 'http://127.0.0.1:5000';
 
@@ -47,6 +48,12 @@ const TransactionDetails = () => {
         });
     };
 
+    // Feedback Modal
+    const [feedbackConfig, setFeedbackConfig] = useState(null);
+    const showFeedback = ({ title, message, type = 'error' }) => {
+        setFeedbackConfig({ title, message, type });
+    };
+
     const handleUpdateStatus = () => {
         if (!newStatus) return;
         showConfirm({
@@ -62,7 +69,11 @@ const TransactionDetails = () => {
                     setTxData(res.data);
                     setIsEditingStatus(false);
                 } catch (err) {
-                    alert(err.response?.data?.message || 'Failed to update transaction status');
+                    showFeedback({
+                        title: 'Update Failed',
+                        message: 'We hit a snag updating this transaction\'s status. Please check your connection and try again.',
+                        type: 'error'
+                    });
                 } finally {
                     setActionLoading(false);
                 }
@@ -407,9 +418,17 @@ const TransactionDetails = () => {
                                                         headers: { 'Content-Type': 'multipart/form-data' }
                                                     });
                                                     setTxData(res.data);
-                                                    alert('Receipt re-uploaded successfully! Status reset to Pending Verification.');
+                                                    showFeedback({
+                                                        title: 'Receipt Re-uploaded',
+                                                        message: 'The receipt has been successfully re-uploaded. The status is now set to Pending Verification.',
+                                                        type: 'success'
+                                                    });
                                                 } catch (err) {
-                                                    alert('Failed to re-upload receipt.');
+                                                    showFeedback({
+                                                        title: 'Upload Failed',
+                                                        message: 'We couldn\'t upload the new receipt. Please try again.',
+                                                        type: 'error'
+                                                    });
                                                 } finally {
                                                     setActionLoading(false);
                                                 }
@@ -441,6 +460,15 @@ const TransactionDetails = () => {
                             className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl"
                         />
                     </div>
+                )}
+
+                {/* Feedback Modal */}
+                {feedbackConfig && (
+                    <FeedbackModal 
+                        {...feedbackConfig} 
+                        isOpen={!!feedbackConfig} 
+                        onClose={() => setFeedbackConfig(null)} 
+                    />
                 )}
             </div>
         </Layout>

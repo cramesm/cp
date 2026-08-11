@@ -2,8 +2,10 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Layout from '../../components/Layout';
 import ConfirmModal from '../../components/ConfirmModal';
+import FilterDrawer from '../../components/FilterDrawer';
+import ActiveFilterChips from '../../components/ActiveFilterChips';
 import api from '../../api';
-import { X, ZoomIn, CheckCircle, Image as ImageIcon, Send, AlertCircle, RefreshCw, Receipt, Eye, XCircle, Undo2 } from 'lucide-react';
+import { X, ZoomIn, CheckCircle, Image as ImageIcon, Send, AlertCircle, RefreshCw, Receipt, Eye, XCircle, Undo2, SlidersHorizontal, ArrowDownAZ, ArrowUpZA } from 'lucide-react';
 
 const API_BASE = (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : '') || 'http://127.0.0.1:5000';
 
@@ -32,6 +34,8 @@ const Transactions = () => {
   const [endDate, setEndDate] = useState(new Date().toLocaleDateString('en-CA'));
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
+  const [sortConfig, setSortConfig] = useState({ key: 'date', direction: 'desc' });
 
   // Modal & Toast States
   const [selectedTx, setSelectedTx] = useState(null);
@@ -190,8 +194,24 @@ const Transactions = () => {
       const matchesDate = (!start || txDate >= start) && (!end || txDate <= end);
 
       return matchesSearch && matchesStatus && matchesMode && matchesDate && matchesRole && matchesProgram && matchesUserStatus;
+    }).sort((a, b) => {
+      let valA = a[sortConfig.key];
+      let valB = b[sortConfig.key];
+      
+      // Special handling for nested or specific types
+      if (sortConfig.key === 'date') {
+          valA = new Date(valA).getTime();
+          valB = new Date(valB).getTime();
+      } else if (sortConfig.key === 'name' || sortConfig.key === 'payerName') {
+          valA = valA ? valA.toLowerCase() : '';
+          valB = valB ? valB.toLowerCase() : '';
+      }
+
+      if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
     });
-  }, [transactions, searchTerm, filterStatus, filterPaymentMode, filterUserRole, filterProgram, filterUserStatus, startDate, endDate, userMap]);
+  }, [transactions, searchTerm, filterStatus, filterPaymentMode, filterUserRole, filterProgram, filterUserStatus, startDate, endDate, userMap, sortConfig]);
 
   const totalPages = Math.ceil(filteredTransactions.length / entriesPerPage);
   const paginatedTransactions = filteredTransactions.slice(
@@ -243,14 +263,12 @@ const Transactions = () => {
             Refund Requests
           </button>
         </div>
-
         {/* ====== PAYMENTS TAB ====== */}
         {activeTab === 'payments' && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-
             {/* Top Controls Section */}
             <div className="p-6 border-b border-gray-100">
-              <div className="flex flex-wrap items-center justify-between gap-6 pb-4 border-b border-gray-100 mb-4">
+              <div className="flex flex-wrap items-center justify-between gap-6 pb-4 mb-4">
                 <div className="flex items-center gap-3 flex-1 max-md">
                   <div className="flex items-center gap-2 text-[14px] text-[#7E84A3]">
                     <span>Show</span>
@@ -267,83 +285,175 @@ const Transactions = () => {
                   </div>
                   <input
                     type="text"
-                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-[#1D2D44]"
+                    className="w-full max-w-md border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-[#1D2D44]"
                     placeholder="Search by ID, Name, or Payer..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <select
-                    value={filterUserRole}
-                    onChange={(e) => setFilterUserRole(e.target.value)}
-                    className="border border-gray-300 rounded px-2 py-2 text-sm bg-white min-w-[120px] outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44]"
+                  <button 
+                    type="button"
+                    onClick={() => setIsFilterDrawerOpen(true)}
+                    className="bg-gray-100 text-gray-700 px-4 py-2 rounded font-bold text-sm hover:bg-gray-200 transition-colors flex items-center gap-2 border border-gray-200"
                   >
-                    <option value="All">All Users</option>
-                    <option value="Student">Student</option>
-                    <option value="Alumni">Alumni</option>
-                  </select>
-                  <select
-                    value={filterProgram}
-                    onChange={(e) => setFilterProgram(e.target.value)}
-                    className="border border-gray-300 rounded px-2 py-2 text-sm bg-white min-w-[120px] outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44]"
-                  >
-                    <option value="All">All Programs</option>
-                    <option value="Bachelors">Bachelors</option>
-                    <option value="Masters">Masters</option>
-                    <option value="Doctorate">Doctorate</option>
-                  </select>
-                  <select
-                    value={filterUserStatus}
-                    onChange={(e) => setFilterUserStatus(e.target.value)}
-                    className="border border-gray-300 rounded px-2 py-2 text-sm bg-white min-w-[120px] outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44]"
-                  >
-                    <option value="All">All Statuses</option>
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                    <option value="Stopped">Stopped</option>
-                  </select>
+                    <SlidersHorizontal size={16} /> Filters & Sort
+                  </button>
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center justify-end gap-6">
-                <div className="flex items-center gap-4">
-                  <select
-                    value={filterPaymentMode}
-                    onChange={(e) => setFilterPaymentMode(e.target.value)}
-                    className="border border-gray-300 rounded px-2 py-2 text-sm bg-white min-w-[120px] outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44]"
-                  >
-                    {paymentModes.map(m => <option key={m}>{m}</option>)}
-                  </select>
-                  <select
-                    value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value)}
-                    className="border border-gray-300 rounded px-2 py-2 text-sm bg-white min-w-[140px] outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44]"
-                  >
-                    {statuses.map(s => <option key={s}>{s}</option>)}
-                  </select>
-                  <div className="flex items-center gap-2">
-                    <label className="text-[13px] font-bold text-gray-500">Start:</label>
-                    <input
-                      type="date"
-                      className="border border-gray-300 rounded-md px-3 py-1.5 text-sm text-[#1D2D44] font-medium outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44] transition-all bg-white shadow-sm"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                    />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <label className="text-[13px] font-bold text-gray-500">End:</label>
-                    <input
-                      type="date"
-                      className="border border-gray-300 rounded-md px-3 py-1.5 text-sm text-[#1D2D44] font-medium outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44] transition-all bg-white shadow-sm"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                    />
-                  </div>
-                </div>
-              </div>
+              <ActiveFilterChips 
+                  filters={[
+                      { label: 'Role', value: filterUserRole, key: 'filterUserRole' },
+                      { label: 'Program', value: filterProgram, key: 'filterProgram' },
+                      { label: 'User Status', value: filterUserStatus, key: 'filterUserStatus' },
+                      { label: 'Payment Mode', value: filterPaymentMode, key: 'filterPaymentMode' },
+                      { label: 'Status', value: filterStatus, key: 'filterStatus' },
+                      { label: 'From', value: startDate, key: 'startDate' },
+                      { label: 'To', value: endDate, key: 'endDate' },
+                  ]}
+                  onRemove={(key) => {
+                      if (key === 'filterUserRole') setFilterUserRole('All');
+                      if (key === 'filterProgram') setFilterProgram('All');
+                      if (key === 'filterUserStatus') setFilterUserStatus('All');
+                      if (key === 'filterPaymentMode') setFilterPaymentMode('All Modes');
+                      if (key === 'filterStatus') setFilterStatus('All Status');
+                      if (key === 'startDate') setStartDate('');
+                      if (key === 'endDate') setEndDate('');
+                  }}
+              />
             </div>
+
+            {/* Filter Drawer */}
+            <FilterDrawer 
+                isOpen={isFilterDrawerOpen} 
+                onClose={() => setIsFilterDrawerOpen(false)}
+                onClearAll={() => {
+                    setFilterUserRole('All');
+                    setFilterProgram('All');
+                    setFilterUserStatus('All');
+                    setFilterPaymentMode('All Modes');
+                    setFilterStatus('All Status');
+                    setStartDate('');
+                    setEndDate('');
+                    setSortConfig({ key: 'date', direction: 'desc' });
+                }}
+            >
+                <div className="flex flex-col gap-4">
+                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">Sorting</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-sm font-bold text-[#1D2D44]">Sort By:</label>
+                            <select 
+                                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#1D2D44] bg-white"
+                                value={sortConfig.key}
+                                onChange={(e) => setSortConfig({ ...sortConfig, key: e.target.value })}
+                            >
+                                <option value="date">Date</option>
+                                <option value="name">Requestor Name</option>
+                                <option value="payerName">Payer Name</option>
+                                <option value="status">Status</option>
+                                <option value="paymentMode">Payment Mode</option>
+                            </select>
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-sm font-bold text-[#1D2D44]">Order:</label>
+                            <button 
+                                onClick={() => setSortConfig({ ...sortConfig, direction: sortConfig.direction === 'asc' ? 'desc' : 'asc' })}
+                                className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white flex items-center justify-between hover:bg-gray-50 transition-colors"
+                            >
+                                {sortConfig.direction === 'asc' ? 'Ascending' : 'Descending'}
+                                {sortConfig.direction === 'asc' ? <ArrowUpZA size={16} className="text-gray-500"/> : <ArrowDownAZ size={16} className="text-gray-500"/>}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="border-t border-gray-100 my-2"></div>
+
+                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">Filtering</h3>
+                    
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-sm font-bold text-[#1D2D44]">Payment Mode:</label>
+                      <select
+                        value={filterPaymentMode}
+                        onChange={(e) => setFilterPaymentMode(e.target.value)}
+                        className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white outline-none focus:border-[#1D2D44]"
+                      >
+                        {paymentModes.map(mode => <option key={mode} value={mode}>{mode}</option>)}
+                      </select>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-sm font-bold text-[#1D2D44]">Status:</label>
+                      <select
+                        value={filterStatus}
+                        onChange={(e) => setFilterStatus(e.target.value)}
+                        className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white outline-none focus:border-[#1D2D44]"
+                      >
+                        {statuses.map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-sm font-bold text-[#1D2D44]">User Role:</label>
+                      <select
+                        value={filterUserRole}
+                        onChange={(e) => setFilterUserRole(e.target.value)}
+                        className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white outline-none focus:border-[#1D2D44]"
+                      >
+                        <option value="All">All Users</option>
+                        <option value="Student">Student</option>
+                        <option value="Alumni">Alumni</option>
+                      </select>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-sm font-bold text-[#1D2D44]">Program Level:</label>
+                      <select
+                        value={filterProgram}
+                        onChange={(e) => setFilterProgram(e.target.value)}
+                        className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white outline-none focus:border-[#1D2D44]"
+                      >
+                        <option value="All">All Programs</option>
+                        <option value="Bachelors">Bachelors</option>
+                        <option value="Masters">Masters</option>
+                        <option value="Doctorate">Doctorate</option>
+                      </select>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-sm font-bold text-[#1D2D44]">User Status:</label>
+                      <select
+                        value={filterUserStatus}
+                        onChange={(e) => setFilterUserStatus(e.target.value)}
+                        className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white outline-none focus:border-[#1D2D44]"
+                      >
+                        <option value="All">All Statuses</option>
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                      </select>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3 mt-2">
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-sm font-bold text-[#1D2D44]">Start Date:</label>
+                            <input 
+                                type="date" 
+                                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#1D2D44] bg-white"
+                                value={startDate}
+                                onChange={(e) => setStartDate(e.target.value)}
+                            />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-sm font-bold text-[#1D2D44]">End Date:</label>
+                            <input 
+                                type="date" 
+                                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#1D2D44] bg-white"
+                                value={endDate}
+                                onChange={(e) => setEndDate(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                </div>
+            </FilterDrawer>
 
             {/* Table */}
             <div className="overflow-x-auto">

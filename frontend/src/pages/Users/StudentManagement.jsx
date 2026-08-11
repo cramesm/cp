@@ -1,8 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import Layout from '../../components/Layout';
-import { Search, Plus } from 'lucide-react';
+import { Search, Plus, SlidersHorizontal, ArrowDownAZ, ArrowUpZA } from 'lucide-react';
+import FilterDrawer from '../../components/FilterDrawer';
+import ActiveFilterChips from '../../components/ActiveFilterChips';
 import axiosInstance from '../../components/config/axiosConfig';
 import ConfirmModal from '../../components/ConfirmModal';
+import FeedbackModal from '../../components/FeedbackModal';
 
 const StudentManagement = () => {
     const [users, setUsers] = useState([]);
@@ -16,6 +19,8 @@ const StudentManagement = () => {
     // Pagination
     const [entriesPerPage, setEntriesPerPage] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
+    const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
+    const [sortConfig, setSortConfig] = useState({ key: 'createdAt', direction: 'desc' });
 
     // Modal state
     const [showModal, setShowModal] = useState(false);
@@ -57,6 +62,12 @@ const StudentManagement = () => {
         });
     };
 
+    // Feedback Modal
+    const [feedbackConfig, setFeedbackConfig] = useState(null);
+    const showFeedback = ({ title, message, type = 'error' }) => {
+        setFeedbackConfig({ title, message, type });
+    };
+
     const fetchUsers = async () => {
         try {
             setLoading(true);
@@ -91,7 +102,11 @@ const StudentManagement = () => {
                     setUsers(prev => prev.filter(user => user._id !== userId));
                 } catch (err) {
                     console.error('Error deleting user:', err);
-                    alert('Failed to delete the user. Please try again later.');
+                    showFeedback({
+                        title: 'Error Deleting User',
+                        message: 'Oops! We couldn\'t delete this user right now. Please try again later.',
+                        type: 'error'
+                    });
                 }
             }
         });
@@ -114,7 +129,11 @@ const StudentManagement = () => {
                     }
                 } catch (err) {
                     console.error('Error updating status:', err);
-                    alert('Failed to update account status. Please try again later.');
+                    showFeedback({
+                        title: 'Update Failed',
+                        message: 'We couldn\'t update the account status. Please try again later.',
+                        type: 'error'
+                    });
                 }
             }
         });
@@ -170,8 +189,27 @@ const StudentManagement = () => {
             const matchesProgram = activeTab === 'alumni' || filterProgram === 'All' || userProgram === filterProgram;
 
             return matchesSearch && matchesStatus && matchesProgram;
+        }).sort((a, b) => {
+            let valA = a[sortConfig.key];
+            let valB = b[sortConfig.key];
+            
+            // Special handling for nested or specific types
+            if (sortConfig.key === 'createdAt') {
+                valA = new Date(valA || Date.now()).getTime();
+                valB = new Date(valB || Date.now()).getTime();
+            } else if (sortConfig.key === 'firstName') {
+                valA = valA ? valA.toLowerCase() : '';
+                valB = valB ? valB.toLowerCase() : '';
+            } else if (sortConfig.key === 'email') {
+                valA = valA ? valA.toLowerCase() : '';
+                valB = valB ? valB.toLowerCase() : '';
+            }
+
+            if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
+            if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
+            return 0;
         });
-    }, [users, activeTab, searchTerm, filterStatus, filterProgram]);
+    }, [users, activeTab, searchTerm, filterStatus, filterProgram, sortConfig]);
 
     const totalPages = Math.ceil(filteredUsers.length / entriesPerPage);
     const paginatedUsers = filteredUsers.slice(
@@ -231,38 +269,113 @@ const StudentManagement = () => {
                 <div className="rounded-xl bg-white shadow-sm border border-gray-100 overflow-hidden">
                     
                     {/* Header Section */}
-                    <div className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between border-b border-gray-100">
-                        <div className="flex items-center gap-6">
-                            {/* Search Bar */}
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
-                                <input
-                                    type="text"
-                                    placeholder="Search users..."
-                                    className="w-64 rounded-md border border-gray-300 py-2 pl-9 pr-4 text-xs outline-none focus:border-[#1D2D44]"
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                />
+                    <div className="flex flex-col gap-4 p-6 border-b border-gray-100">
+                        <div className="flex items-center justify-between gap-6">
+                            <div className="flex items-center gap-3">
+                                {/* Search Bar */}
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                                    <input
+                                        type="text"
+                                        placeholder="Search users..."
+                                        className="w-64 rounded-md border border-gray-300 py-2 pl-9 pr-4 text-xs outline-none focus:border-[#1D2D44]"
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                    />
+                                </div>
+                                <button 
+                                    onClick={() => setIsFilterDrawerOpen(true)}
+                                    className="bg-gray-100 text-gray-700 px-4 py-2 rounded font-bold text-xs hover:bg-gray-200 transition-colors flex items-center gap-2 border border-gray-200"
+                                >
+                                    <SlidersHorizontal size={14} /> Filters & Sort
+                                </button>
                             </div>
+                            {/* Add Button */}
+                            <button 
+                                onClick={() => setShowModal(true)}
+                                className="flex items-center justify-center gap-2 rounded-md bg-[#6c4df6] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#5a3ed9] transition-all shadow-sm"
+                            >
+                                <Plus size={16} />
+                                Add New {activeTab === 'student' ? 'Student' : 'Alumni'}
+                            </button>
+                        </div>
+
+                        <ActiveFilterChips 
+                            filters={[
+                                { label: 'Program', value: activeTab === 'student' ? filterProgram : null, key: 'filterProgram' },
+                                { label: 'Status', value: filterStatus, key: 'filterStatus' },
+                            ]}
+                            onRemove={(key) => {
+                                if (key === 'filterProgram') setFilterProgram('All');
+                                if (key === 'filterStatus') setFilterStatus('All');
+                            }}
+                        />
+                    </div>
+
+                    {/* Filter Drawer */}
+                    <FilterDrawer 
+                        isOpen={isFilterDrawerOpen} 
+                        onClose={() => setIsFilterDrawerOpen(false)}
+                        onClearAll={() => {
+                            setFilterProgram('All');
+                            setFilterStatus('All');
+                            setSortConfig({ key: 'createdAt', direction: 'desc' });
+                        }}
+                    >
+                        <div className="flex flex-col gap-4">
+                            <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">Sorting</h3>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-sm font-bold text-[#1D2D44]">Sort By:</label>
+                                    <select 
+                                        className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#1D2D44] bg-white"
+                                        value={sortConfig.key}
+                                        onChange={(e) => setSortConfig({ ...sortConfig, key: e.target.value })}
+                                    >
+                                        <option value="createdAt">Joined Date</option>
+                                        <option value="firstName">Name</option>
+                                        <option value="email">Email</option>
+                                        <option value="status">Status</option>
+                                    </select>
+                                </div>
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-sm font-bold text-[#1D2D44]">Order:</label>
+                                    <button 
+                                        onClick={() => setSortConfig({ ...sortConfig, direction: sortConfig.direction === 'asc' ? 'desc' : 'asc' })}
+                                        className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white flex items-center justify-between hover:bg-gray-50 transition-colors"
+                                    >
+                                        {sortConfig.direction === 'asc' ? 'Ascending' : 'Descending'}
+                                        {sortConfig.direction === 'asc' ? <ArrowUpZA size={16} className="text-gray-500"/> : <ArrowDownAZ size={16} className="text-gray-500"/>}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="border-t border-gray-100 my-2"></div>
+
+                            <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">Filtering</h3>
                             
-                            {/* Filters */}
-                            <div className="flex gap-3">
-                                {activeTab === 'student' && (
+                            {activeTab === 'student' && (
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-sm font-bold text-[#1D2D44]">Program Level:</label>
                                     <select 
                                         value={filterProgram}
                                         onChange={e => setFilterProgram(e.target.value)}
-                                        className="rounded-md border border-gray-300 py-2 px-3 text-xs outline-none focus:border-[#1D2D44] bg-white cursor-pointer shadow-sm text-gray-700 font-bold"
+                                        className="rounded-md border border-gray-300 py-2 px-3 text-sm outline-none focus:border-[#1D2D44] bg-white cursor-pointer shadow-sm text-gray-700"
                                     >
                                         <option value="All">All Programs</option>
                                         <option value="Bachelors">Bachelors</option>
                                         <option value="Masters">Masters</option>
                                         <option value="Doctorate">Doctorate</option>
                                     </select>
-                                )}
+                                </div>
+                            )}
+
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-sm font-bold text-[#1D2D44]">Status:</label>
                                 <select 
                                     value={filterStatus}
                                     onChange={e => setFilterStatus(e.target.value)}
-                                    className="rounded-md border border-gray-300 py-2 px-3 text-xs outline-none focus:border-[#1D2D44] bg-white cursor-pointer shadow-sm text-gray-700 font-bold"
+                                    className="rounded-md border border-gray-300 py-2 px-3 text-sm outline-none focus:border-[#1D2D44] bg-white cursor-pointer shadow-sm text-gray-700"
                                 >
                                     <option value="All">All Statuses</option>
                                     <option value="Active">Active</option>
@@ -271,16 +384,7 @@ const StudentManagement = () => {
                                 </select>
                             </div>
                         </div>
-
-                        {/* Add Button */}
-                        <button 
-                            onClick={() => setShowModal(true)}
-                            className="flex items-center justify-center gap-2 rounded-md bg-[#6c4df6] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#5a3ed9] transition-all shadow-sm"
-                        >
-                            <Plus size={16} />
-                            Add New {activeTab === 'student' ? 'Student' : 'Alumni'}
-                        </button>
-                    </div>
+                    </FilterDrawer>
 
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
@@ -534,6 +638,15 @@ const StudentManagement = () => {
                             </form>
                         </div>
                     </div>
+                )}
+
+                {/* Feedback Modal */}
+                {feedbackConfig && (
+                    <FeedbackModal 
+                        {...feedbackConfig} 
+                        isOpen={!!feedbackConfig} 
+                        onClose={() => setFeedbackConfig(null)} 
+                    />
                 )}
             </div>
         </Layout>

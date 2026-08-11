@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Upload, FileText, Search, Filter, Trash2, Eye, FolderOpen, AlertCircle, CheckCircle2, X, FileUp, Plus, Download } from 'lucide-react';
 import Layout from '../../components/Layout';
 import ConfirmModal from '../../components/ConfirmModal';
+import FeedbackModal from '../../components/FeedbackModal';
 import api from '../../api';
 import { CreateDocumentModal, TORUploadModal, DiplomaUploadModal } from './DocumentModals';
 
@@ -29,6 +30,10 @@ const DocumentManagement = () => {
     const [showDiplomaUploadModal, setShowDiplomaUploadModal] = useState(false);
     const [prefillData, setPrefillData] = useState(null);
     const [confirmConfig, setConfirmConfig] = useState(null);
+    const [feedbackConfig, setFeedbackConfig] = useState(null);
+    const showFeedback = ({ title, message, type = 'error' }) => {
+        setFeedbackConfig({ title, message, type });
+    };
     const userRole = localStorage.getItem('userRole');
     const [searchParams, setSearchParams] = useSearchParams();
 
@@ -132,7 +137,11 @@ const DocumentManagement = () => {
                     }
                     fetchAll();
                 } catch (error) {
-                    alert(error.response?.data?.message || 'Error deleting');
+                    showFeedback({
+                        title: 'Delete Failed',
+                        message: 'We couldn\'t delete this document right now. Please try again.',
+                        type: 'error'
+                    });
                 } finally {
                     setConfirmConfig(null);
                 }
@@ -155,7 +164,11 @@ const DocumentManagement = () => {
             link.remove();
             window.URL.revokeObjectURL(url);
         } catch (error) {
-            alert('Error downloading PDF');
+            showFeedback({
+                title: 'Download Failed',
+                message: 'There was an issue downloading your PDF. Please try again.',
+                type: 'error'
+            });
         }
     };
 
@@ -403,6 +416,15 @@ const DocumentManagement = () => {
                     cancelText={confirmConfig?.cancelText}
                     isLoading={confirmConfig?.isLoading}
                 />
+                
+                {/* Feedback Modal */}
+                {feedbackConfig && (
+                    <FeedbackModal 
+                        {...feedbackConfig} 
+                        isOpen={!!feedbackConfig} 
+                        onClose={() => setFeedbackConfig(null)} 
+                    />
+                )}
             </div>
         </Layout>
     );

@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Search, Plus } from 'lucide-react';
 import api from '../../api';
 import ConfirmModal from '../../components/ConfirmModal';
+import FeedbackModal from '../../components/FeedbackModal';
 
 const ManageRegistrar = () => {
   const [registrars, setRegistrars] = useState([]);
@@ -37,6 +38,12 @@ const ManageRegistrar = () => {
           cancelText,
           isLoading: false
       });
+  };
+
+  // Feedback Modal
+  const [feedbackConfig, setFeedbackConfig] = useState(null);
+  const showFeedback = ({ title, message, type = 'error' }) => {
+      setFeedbackConfig({ title, message, type });
   };
 
   // Fetch registrars from API
@@ -73,7 +80,11 @@ const ManageRegistrar = () => {
                 }
             } catch (err) {
                 console.error('Error updating status:', err);
-                alert('Failed to update account status. Please try again later.');
+                showFeedback({
+                    title: 'Update Failed',
+                    message: 'We were unable to update the registrar\'s account status. Please try again.',
+                    type: 'error'
+                });
             }
         }
     });
@@ -253,6 +264,14 @@ const ManageRegistrar = () => {
           </div>
         </div>
       </div>
+      {/* Feedback Modal */}
+      {feedbackConfig && (
+          <FeedbackModal 
+              {...feedbackConfig} 
+              isOpen={!!feedbackConfig} 
+              onClose={() => setFeedbackConfig(null)} 
+          />
+      )}
     </Layout>
   );
 };

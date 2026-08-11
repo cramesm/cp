@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../../components/Layout';
+import ConfirmModal from '../../components/ConfirmModal';
 import api from '../../api';
 import { User, ShieldCheck, Save, X, Camera, CheckCircle, AlertCircle } from 'lucide-react';
 
@@ -24,8 +25,34 @@ const Profile = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
-    // Toast State
     const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
+    // Confirm Modal State
+    const [confirmConfig, setConfirmConfig] = useState(null);
+    let isExecuting = false;
+    const showConfirm = ({ title, message, onConfirm, type = 'info', confirmText = 'Confirm' }) => {
+        setConfirmConfig({
+            title,
+            message,
+            onConfirm: async () => {
+                if (isExecuting) return;
+                isExecuting = true;
+                setConfirmConfig(prev => ({ ...prev, isLoading: true }));
+                try {
+                    await onConfirm();
+                } catch (err) {
+                    console.error(err);
+                } finally {
+                    isExecuting = false;
+                    setConfirmConfig(null);
+                }
+            },
+            type,
+            confirmText,
+            cancelText: 'Cancel',
+            isLoading: false
+        });
+    };
 
     const triggerToast = (message, type = 'success') => {
         setToast({ show: true, message, type });
@@ -59,63 +86,67 @@ const Profile = () => {
         fetchProfile();
     }, []);
 
-    const handleConfirmAll = async () => {
-        setSaving(true);
-        
+    const handleUpdateProfile = () => {
         if (!user.name || !user.name.trim()) {
             triggerToast("Name is required", "error");
-            setSaving(false);
             return;
         }
 
-        try {
-            // 1. Password Validation & Update if provided
-            if (passwords.newGroup || passwords.current) {
-                if (!passwords.current) {
-                    triggerToast("Current password is required to change password", "error");
+        showConfirm({
+            title: 'Update Profile Details',
+            message: 'Are you sure you want to update your profile information?',
+            type: 'info',
+            confirmText: 'Update Profile',
+            onConfirm: async () => {
+                setSaving(true);
+                try {
+                    await api.put('/auth/profile', { name: user.name });
+                    localStorage.setItem('adminUser', JSON.stringify(user));
+                    triggerToast("Profile details updated successfully!", "success");
+                } catch (err) {
+                    triggerToast(err.response?.data?.message || 'Failed to update profile.', "error");
+                } finally {
                     setSaving(false);
-                    return;
                 }
-                if (!passwords.newGroup) {
-                    triggerToast("New password is required", "error");
-                    setSaving(false);
-                    return;
-                }
-                if (passwords.newGroup !== passwords.confirm) {
-                    triggerToast("New passwords do not match!", "error");
-                    setSaving(false);
-                    return;
-                }
-                
-                await api.put('/auth/change-password', {
-                    currentPassword: passwords.current,
-                    newPassword: passwords.newGroup
-                });
             }
+        });
+    };
 
-            // 2. Profile Details Update
-            await api.put('/auth/profile', { 
-                name: user.name, 
-                // profilePic: user.profilePic // (omitted as image upload isn't fully set up)
-            });
-
-            // Update in local instance
-            localStorage.setItem('adminUser', JSON.stringify(user));
-            
-            // 3. Show Toast success
-            triggerToast("Changes are saved successfully!", "success");
-            setPasswords({ current: '', newGroup: '', confirm: '' });
-
-            // 4. Navigate back after delay
-            setTimeout(() => {
-                navigate('/profile/info');
-            }, 2000);
-
-        } catch (err) {
-            triggerToast(err.response?.data?.message || 'Failed to update profile.', "error");
-        } finally {
-            setSaving(false);
+    const handleUpdatePassword = () => {
+        if (!passwords.current) {
+            triggerToast("Current password is required to change password", "error");
+            return;
         }
+        if (!passwords.newGroup) {
+            triggerToast("New password is required", "error");
+            return;
+        }
+        if (passwords.newGroup !== passwords.confirm) {
+            triggerToast("New passwords do not match!", "error");
+            return;
+        }
+
+        showConfirm({
+            title: 'Change Password',
+            message: 'Are you sure you want to change your password? You will use this new password next time you log in.',
+            type: 'warning',
+            confirmText: 'Change Password',
+            onConfirm: async () => {
+                setSaving(true);
+                try {
+                    await api.put('/auth/change-password', {
+                        currentPassword: passwords.current,
+                        newPassword: passwords.newGroup
+                    });
+                    triggerToast("Password changed successfully!", "success");
+                    setPasswords({ current: '', newGroup: '', confirm: '' });
+                } catch (err) {
+                    triggerToast(err.response?.data?.message || 'Failed to change password.', "error");
+                } finally {
+                    setSaving(false);
+                }
+            }
+        });
     };
 
     if (loading) return <Layout><div className="p-8 flex items-center justify-center">Loading Profile Data...</div></Layout>;
@@ -137,8 +168,19 @@ const Profile = () => {
                     </div>
                 )}
 
+                {/* Confirm Modal */}
+                {confirmConfig && (
+                    <ConfirmModal 
+                        {...confirmConfig} 
+                        isOpen={!!confirmConfig} 
+                        onClose={() => !confirmConfig.isLoading && setConfirmConfig(null)} 
+                    />
+                )}
+
                 <div className="max-w-[900px] mx-auto">
-                    <h3 className="text-[22px] font-bold mb-6 text-[#1D2D44]">Edit Admin Profile</h3>
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-[22px] font-bold text-[#1D2D44]">Edit Admin Profile</h3>
+                    </div>
 
                     {/* --- BASIC INFORMATION CARD --- */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
@@ -149,31 +191,43 @@ const Profile = () => {
                             </div>
                             
                             <div className="flex flex-col md:flex-row gap-12">
-                                <div className="flex-1 space-y-5">
-                                    <div className="flex flex-col md:flex-row md:items-center">
-                                        <label className="w-32 text-sm font-bold text-gray-600">Name:</label>
+                                <div className="flex-1 space-y-6">
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-sm font-bold text-[#1D2D44]">Full Name</label>
                                         <input 
                                             type="text" 
                                             name="name" 
                                             value={user.name} 
                                             onChange={handleProfileChange} 
-                                            className="flex-1 border border-gray-300 rounded-md px-4 py-2 text-sm outline-none focus:border-[#1D2D44] transition-all" 
+                                            className="w-full max-w-md border border-gray-300 rounded-md px-4 py-2.5 text-sm outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44] transition-all bg-white" 
                                         />
                                     </div>
-                                    <div className="flex flex-col md:flex-row md:items-center">
-                                        <label className="w-32 text-sm font-bold text-gray-600">Email:</label>
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-sm font-bold text-[#1D2D44]">Email Address (Cannot be changed)</label>
                                         <input 
                                             type="email" 
                                             name="email" 
                                             value={user.email} 
                                             disabled 
                                             title="Email cannot be changed"
-                                            className="flex-1 border border-gray-300 bg-gray-50 text-gray-500 rounded-md px-4 py-2 text-sm outline-none cursor-not-allowed" 
+                                            className="w-full max-w-md border border-gray-200 bg-gray-50 text-gray-500 rounded-md px-4 py-2.5 text-sm outline-none cursor-not-allowed" 
                                         />
                                     </div>
-                                    <div className="flex flex-col md:flex-row md:items-center">
-                                        <label className="w-32 text-sm font-bold text-gray-600">Role:</label>
-                                        <span className="text-sm text-[#1D2D44] font-bold px-1 uppercase tracking-widest">{user.role}</span>
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-sm font-bold text-[#1D2D44]">Role</label>
+                                        <span className="inline-block px-4 py-1.5 bg-blue-50 border border-blue-100 text-blue-700 text-sm font-bold rounded-full uppercase tracking-wider w-max">
+                                            {user.role}
+                                        </span>
+                                    </div>
+                                    
+                                    <div className="pt-4 border-t border-gray-100">
+                                        <button 
+                                            className="bg-[#1D2D44] text-white py-2.5 px-6 rounded-md font-bold text-xs hover:bg-[#152030] transition-colors shadow-sm disabled:opacity-70 disabled:cursor-not-allowed uppercase tracking-wider"
+                                            onClick={handleUpdateProfile}
+                                            disabled={saving}
+                                        >
+                                            {saving ? 'Updating...' : 'Update Profile Details'}
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -188,62 +242,54 @@ const Profile = () => {
                                 <h4 className="text-[18px] font-bold">Security & Password</h4>
                             </div>
                             
-                            <div className="max-w-xl space-y-5">
-                                <div className="flex flex-col md:flex-row md:items-center">
-                                    <label className="w-40 text-sm font-bold text-gray-600">Current Password:</label>
+                            <div className="max-w-md space-y-5">
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-sm font-bold text-[#1D2D44]">Current Password</label>
                                     <input 
                                         type="password" 
                                         name="current" 
                                         placeholder="••••••••"
                                         value={passwords.current} 
                                         onChange={handlePasswordChange} 
-                                        className="flex-1 border border-gray-300 rounded-md px-4 py-2 text-sm outline-none focus:border-[#1D2D44]" 
+                                        className="w-full border border-gray-300 rounded-md px-4 py-2.5 text-sm outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44] transition-all bg-white" 
                                     />
                                 </div>
-                                <div className="flex flex-col md:flex-row md:items-center">
-                                    <label className="w-40 text-sm font-bold text-gray-600">New Password:</label>
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-sm font-bold text-[#1D2D44]">New Password</label>
                                     <input 
                                         type="password" 
                                         name="newGroup" 
                                         placeholder="New Password"
                                         value={passwords.newGroup} 
                                         onChange={handlePasswordChange} 
-                                        className="flex-1 border border-gray-300 rounded-md px-4 py-2 text-sm outline-none focus:border-[#1D2D44]" 
+                                        className="w-full border border-gray-300 rounded-md px-4 py-2.5 text-sm outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44] transition-all bg-white" 
                                     />
                                 </div>
-                                <div className="flex flex-col md:flex-row md:items-center">
-                                    <label className="w-40 text-sm font-bold text-gray-600">Confirm Password:</label>
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-sm font-bold text-[#1D2D44]">Confirm New Password</label>
                                     <input 
                                         type="password" 
                                         name="confirm" 
                                         placeholder="Confirm New Password"
                                         value={passwords.confirm} 
                                         onChange={handlePasswordChange} 
-                                        className="flex-1 border border-gray-300 rounded-md px-4 py-2 text-sm outline-none focus:border-[#1D2D44]" 
+                                        className="w-full border border-gray-300 rounded-md px-4 py-2.5 text-sm outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44] transition-all bg-white" 
                                     />
+                                </div>
+                                
+                                <div className="pt-4 border-t border-gray-100">
+                                    <button 
+                                        className="bg-red-500 text-white py-2.5 px-6 rounded-md font-bold text-xs hover:bg-red-600 transition-colors shadow-sm disabled:opacity-70 disabled:cursor-not-allowed uppercase tracking-wider"
+                                        onClick={handleUpdatePassword}
+                                        disabled={saving}
+                                    >
+                                        {saving ? 'Updating...' : 'Change Password'}
+                                    </button>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* --- GLOBAL ACTIONS --- */}
-                    <div className="flex justify-end gap-3 mt-8">
-                        <button 
-                            className="bg-white border border-gray-300 text-gray-600 py-2.5 px-8 rounded-full font-bold text-[12px] hover:bg-gray-50 transition-colors uppercase tracking-wide"
-                            onClick={() => navigate(-1)}
-                            disabled={saving}
-                        >
-                            Cancel
-                        </button>
-                        <button 
-                            className="bg-[#1D2D44] text-white py-2.5 px-10 rounded-full font-bold text-[12px] disabled:opacity-75 disabled:cursor-not-allowed hover:bg-[#152030] transition-all shadow-lg active:scale-95 flex items-center gap-2 uppercase tracking-widest"
-                            onClick={handleConfirmAll}
-                            disabled={saving}
-                        >
-                            <Save size={16} />
-                            {saving ? 'Saving...' : 'Confirm Changes'}
-                        </button>
-                    </div>
                 </div>
             </div>
         </Layout>
