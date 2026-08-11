@@ -81,8 +81,8 @@ function App() {
         
         <Route path="/activity-logs" element={<ProtectedRoute><ActivityLogs /></ProtectedRoute>} />
 
-        {/* Public Validation Page */}
-        <Route path="/verify" element={<ValidationLanding />} />
+        {/* Public Validation Page (QR Scans go straight to /verify/results) */}
+        <Route path="/verify" element={<Navigate to="/" replace />} />
         <Route path="/verify/results" element={<ValidationResults />} />
 
         {/* Catch-all redirect */}
