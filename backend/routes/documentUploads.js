@@ -55,7 +55,7 @@ router.post('/:id/upload', protect, upload.single('document'), async (req, res) 
             }
 
             // Generate QR Code
-            const validationUrl = `${FRONTEND_URL}/validation?ref=${documentHash}`;
+            const validationUrl = `${FRONTEND_URL}/verify/results?hash=${documentHash}`;
             const qrCodeBuffer = await QRCode.toBuffer(validationUrl, {
                 errorCorrectionLevel: 'H',
                 margin: 1,
