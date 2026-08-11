@@ -200,7 +200,7 @@ router.post('/:id/generate', protect, registrarOrSuperAdmin, async (req, res) =>
         const pdfFilename = `${tor.torId}-${tor.studentId}.pdf`;
         const pdfPath = path.join(pdfDir, pdfFilename);
 
-        const frontendUrl = req.get('origin') || process.env.FRONTEND_URL || 'http://localhost:5173';
+        const frontendUrl = process.env.FRONTEND_URL || req.get('origin') || 'http://localhost:5173';
         await generateTORPdf(tor, pdfPath, frontendUrl);
 
         tor.pdfPath = pdfFilename;

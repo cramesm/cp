@@ -169,7 +169,7 @@ router.post('/:id/generate', protect, registrarOrSuperAdmin, async (req, res) =>
         const pdfFilename = `${diploma.diplomaId}-${diploma.studentId}.pdf`;
         const pdfPath = path.join(pdfDir, pdfFilename);
 
-        const frontendUrl = req.get('origin') || process.env.FRONTEND_URL || 'http://localhost:5173';
+        const frontendUrl = process.env.FRONTEND_URL || req.get('origin') || 'http://localhost:5173';
         await generateDiplomaPdf(diploma, pdfPath, frontendUrl);
 
         diploma.pdfPath = pdfFilename;
