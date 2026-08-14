@@ -4,7 +4,7 @@ import api from '../../api';
 
 // Import local assets
 import loginImage from '../../assets/verifitor-login.png';
-import smallLogo from '../../assets/logo-verifitor.png';
+import smallLogo from '../../assets/verifitor_logo.png';
 
 const AdminLogin = () => {
     const [email, setEmail] = useState('');
