@@ -240,7 +240,8 @@ router.put('/:id/reupload', upload.single('receiptImage'), async (req, res) => {
   try {
     const updateData = { status: 'Pending Verification', adminRemarks: '' };
     if (req.file) {
-      updateData.receiptImage = `/uploads/receipts/${req.file.filename}`;
+      const uploadResult = await uploadStream(req.file.buffer, 'receipts');
+      updateData.receiptImage = uploadResult.secure_url;
     }
 
     const transaction = await Transaction.findOneAndUpdate(

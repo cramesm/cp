@@ -253,7 +253,7 @@ const TransactionDetails = () => {
                                 <FileText size={16} /> Uploaded Payment Receipt
                             </h4>
                             <div className="bg-[#F9FAFF] border border-dashed border-gray-200 rounded-xl p-6">
-                                {(txData.imageUrl || txData.receiptImage) ? (
+                                {(txData.imageUrl || txData.receiptImage) && !(txData.imageUrl || txData.receiptImage).includes('undefined') ? (
                                     <div className="flex flex-col items-center gap-4">
                                         <img
                                             src={(txData.imageUrl || txData.receiptImage).startsWith('http') ? (txData.imageUrl || txData.receiptImage) : `${API_BASE}${txData.receiptImage}`}
@@ -273,7 +273,7 @@ const TransactionDetails = () => {
                                         <div className="bg-gray-200 p-4 rounded-full text-gray-400">
                                             <ImageIcon size={32} />
                                         </div>
-                                        <p className="text-[14px] font-bold text-gray-400">No receipt image uploaded</p>
+                                        <p className="text-[14px] font-bold text-gray-400">No valid receipt image uploaded</p>
                                     </div>
                                 )}
                             </div>
