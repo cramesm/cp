@@ -55,33 +55,13 @@ const AdminLogin = () => {
 
     return (
         <div className="min-h-screen flex font-sans bg-[#F5F6F8]">
-            {/* Left Column - Branding */}
-            <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between bg-[#426487] overflow-hidden">
-                {/* Background Image */}
-                <div className="absolute inset-0 bg-[url('/assets/verifitor_bgimage.png')] bg-cover bg-center mix-blend-overlay opacity-80"></div>
-
-                {/* Logo Icon Top Left */}
-                <div className="p-8 z-10 relative">
-                    <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg overflow-hidden p-2">
-                        <img src={smallLogo} className="w-full h-full object-contain object-left" alt="Icon" />
-                    </div>
-                </div>
-
-                {/* Hero Text */}
-                <div className="px-12 z-10 pt-4 pb-8 relative">
-                    <h1 className="text-white text-[42px] font-extrabold leading-[1.2] tracking-wide shadow-sm">
-                        INOVATION IN EVERY<br />CREDENTIALS
-                    </h1>
-                </div>
-
-                {/* Illustration/Image */}
-                <div className="flex-grow flex items-end justify-center px-12 z-10 relative">
-                    <img 
-                        src={loginImage} 
-                        alt="Verifitor Platform Preview" 
-                        className="max-w-[90%] h-auto object-contain drop-shadow-2xl translate-y-4"
-                    />
-                </div>
+            {/* Left Column - Branding (Entirely from the provided image) */}
+            <div className="hidden lg:flex lg:w-1/2 relative p-4">
+                <img 
+                    src={loginImage} 
+                    alt="Verifitor Login Design" 
+                    className="w-full h-full object-cover rounded-2xl shadow-xl"
+                />
             </div>
 
             {/* Right Column - Login Form */}
