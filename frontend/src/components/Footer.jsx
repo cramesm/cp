@@ -1,8 +1,6 @@
 import React from 'react';
 
 const Footer = () => {
-  const currentYear = new Date().getFullYear();
-
   return (
     // Reduced vertical padding from py-16 to py-10 for a more compact height
     <footer className="bg-[#3d5a73] text-gray-300 py-10 px-6 md:px-12 mt-auto">
@@ -20,11 +18,6 @@ const Footer = () => {
             <p className="text-gray-300 font-light leading-5">
               VerifiTOR: A Blockchain Integrated Mobile and Web System for Authenticating and Processing Transcript of Records Requests
             </p>
-            <div className="pt-1 space-y-0.5">
-              <p className="font-bold text-white italic">© {currentYear} University, Registrar's Office</p>
-              <p className="text-gray-400 text-[11px]">Inquiries: registrar@university.edu.ph</p>
-              <p className="text-gray-400 text-[11px]">Hotline: (02) 1234-5678</p>
-            </div>
           </div>
 
           {/* Column 2: Disclaimer */}

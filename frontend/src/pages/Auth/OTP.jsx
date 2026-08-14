@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
+import api from '../../api';
 
 const OTP = () => {
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -8,6 +9,8 @@ const OTP = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const email = location.state?.email || '';
+    const [message, setMessage] = useState('');
+    const [error, setError] = useState('');
 
     const handleChange = (index, e) => {
         const value = e.target.value;
@@ -30,17 +33,38 @@ const OTP = () => {
         }
     };
 
-    const handleVerify = (e) => {
+    const handleVerify = async (e) => {
         e.preventDefault();
+        setMessage('');
+        setError('');
         const otpCode = otp.join('');
         if (otpCode.length < 6) {
             setShowModal(true);
             return;
         }
 
-        // Normally verify OTP via API here. 
-        // We'll simulate success and navigate to change password.
-        navigate('/change-password', { state: { email, otp: otpCode } });
+        try {
+            const response = await api.post('/auth/verify-otp', { email, otp: otpCode });
+            if (response.data.success) {
+                navigate('/change-password', { state: { resetToken: response.data.resetToken } });
+            }
+        } catch (err) {
+            setError(err.response?.data?.message || 'Invalid or expired OTP.');
+        }
+    };
+
+    const handleResendOTP = async (e) => {
+        e.preventDefault();
+        setMessage('');
+        setError('');
+        try {
+            const response = await api.post('/auth/forgot-password', { email });
+            if (response.data.success) {
+                setMessage('OTP has been resent to your email.');
+            }
+        } catch (err) {
+            setError(err.response?.data?.message || 'Failed to resend OTP.');
+        }
     };
 
     return (
@@ -49,6 +73,9 @@ const OTP = () => {
                 <h2 className="text-[26px] font-bold text-black mb-10">Verify OTP</h2>
                 
                 <p className="text-left text-[14px] text-[#333] mb-[15px] pl-[5px]">Enter OTP Code sent to {email}</p>
+                
+                {error && <p className="text-red-500 text-[12px] mb-[10px] text-left">{error}</p>}
+                {message && <p className="text-green-500 text-[12px] mb-[10px] text-left">{message}</p>}
 
                 <form onSubmit={handleVerify} id="otp-form">
                     <div className="flex justify-between gap-2.5 mb-[30px]">
@@ -72,7 +99,7 @@ const OTP = () => {
                     </div>
                 </form>
 
-                <Link to="#" className="block text-[13px] text-[#5d7b9d] no-underline font-medium hover:underline">Resend OTP</Link>
+                <Link to="#" onClick={handleResendOTP} className="block text-[13px] text-[#5d7b9d] no-underline font-medium hover:underline mt-4">Resend OTP</Link>
             </div>
 
             {showModal && (

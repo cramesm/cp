@@ -253,10 +253,10 @@ const TransactionDetails = () => {
                                 <FileText size={16} /> Uploaded Payment Receipt
                             </h4>
                             <div className="bg-[#F9FAFF] border border-dashed border-gray-200 rounded-xl p-6">
-                                {txData.receiptImage ? (
+                                {(txData.imageUrl || txData.receiptImage) ? (
                                     <div className="flex flex-col items-center gap-4">
                                         <img
-                                            src={txData.receiptImage.startsWith('http') ? txData.receiptImage : `${API_BASE}${txData.receiptImage}`}
+                                            src={(txData.imageUrl || txData.receiptImage).startsWith('http') ? (txData.imageUrl || txData.receiptImage) : `${API_BASE}${txData.receiptImage}`}
                                             alt="Payment Receipt"
                                             className="max-h-[400px] object-contain rounded-lg shadow-sm cursor-pointer hover:shadow-md transition-shadow"
                                             onClick={() => setZoomedImage(true)}
@@ -449,13 +449,13 @@ const TransactionDetails = () => {
                 </div>
 
                 {/* Image Zoom Overlay */}
-                {zoomedImage && txData.receiptImage && (
+                {zoomedImage && (txData.imageUrl || txData.receiptImage) && (
                     <div
                         className="fixed inset-0 z-[1001] bg-black/80 flex items-center justify-center cursor-zoom-out"
                         onClick={() => setZoomedImage(false)}
                     >
                         <img
-                            src={txData.receiptImage.startsWith('http') ? txData.receiptImage : `${API_BASE}${txData.receiptImage}`}
+                            src={(txData.imageUrl || txData.receiptImage).startsWith('http') ? (txData.imageUrl || txData.receiptImage) : `${API_BASE}${txData.receiptImage}`}
                             alt="Receipt Zoomed"
                             className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl"
                         />

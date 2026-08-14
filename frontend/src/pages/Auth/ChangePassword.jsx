@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import api from '../../api';
 
 const ChangePassword = () => {
     const [password, setPassword] = useState('');
@@ -8,12 +9,14 @@ const ChangePassword = () => {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [modal, setModal] = useState({ show: false, title: '', message: '' });
     const navigate = useNavigate();
+    const location = useLocation();
+    const resetToken = location.state?.resetToken;
 
     const validatePassword = (pwd) => {
         return pwd.length >= 8; // simplified validation for this step
     };
 
-    const handleSave = (e) => {
+    const handleSave = async (e) => {
         e.preventDefault();
 
         if (password !== confirmPassword) {
@@ -33,10 +36,32 @@ const ChangePassword = () => {
             });
             return;
         }
+        
+        if (!resetToken) {
+            setModal({
+                show: true,
+                title: 'Error',
+                message: 'Missing reset token. Please restart the password reset process.'
+            });
+            return;
+        }
 
-        // Normally, call API to save new password here.
-        // On success:
-        navigate('/login', { state: { message: 'Password reset successful. Please login.' } });
+        try {
+            const response = await api.post('/auth/reset-password', {
+                resetToken,
+                newPassword: password
+            });
+
+            if (response.data.success) {
+                navigate('/login', { state: { message: 'Password reset successful. Please login.' } });
+            }
+        } catch (err) {
+            setModal({
+                show: true,
+                title: 'Error',
+                message: err.response?.data?.message || 'Failed to reset password. Please try again.'
+            });
+        }
     };
 
     return (

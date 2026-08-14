@@ -5,18 +5,10 @@ const path = require('path');
 const Transaction = require('../models/Transaction');
 const ActivityLog = require('../models/ActivityLog');
 const { protect } = require('../middleware/authMiddleware');
+const { uploadStream } = require('../utils/cloudinary');
 
 // --- Multer Configuration for Receipt Uploads ---
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, '..', 'uploads', 'receipts'));
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    cb(null, `receipt-${uniqueSuffix}${ext}`);
-  }
-});
+const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
   const allowedTypes = ['image/png', 'image/jpg', 'image/jpeg'];
@@ -106,7 +98,11 @@ router.post('/upload-receipt', upload.single('receiptImage'), async (req, res) =
     const count = await Transaction.countDocuments();
     const transactionId = `TXN-${Date.now().toString(36).toUpperCase()}-${(count + 1).toString().padStart(4, '0')}`;
 
-    const receiptImage = req.file ? `/uploads/receipts/${req.file.filename}` : '';
+    let receiptImage = '';
+    if (req.file) {
+      const uploadResult = await uploadStream(req.file.buffer, 'receipts');
+      receiptImage = uploadResult.secure_url;
+    }
 
     const newTx = await Transaction.create({
       transactionId,

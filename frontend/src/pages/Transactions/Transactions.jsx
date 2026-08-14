@@ -685,10 +685,10 @@ const Transactions = () => {
                       </span>
                     )}
                   </h4>
-                  <div className="bg-[#F8FAFC] border-2 border-dashed border-gray-200 rounded-xl p-4 flex justify-center items-center min-h-[320px] overflow-auto">
-                    {selectedTx.receiptImage ? (
+                  <div className="relative group overflow-hidden rounded-lg bg-gray-50 flex items-center justify-center border border-gray-100 min-h-[320px]">
+                    {(selectedTx.imageUrl || selectedTx.receiptImage) ? (
                       <img
-                        src={selectedTx.receiptImage.startsWith('http') ? selectedTx.receiptImage : `${API_BASE}${selectedTx.receiptImage}`}
+                        src={(selectedTx.imageUrl || selectedTx.receiptImage).startsWith('http') ? (selectedTx.imageUrl || selectedTx.receiptImage) : `${API_BASE}${selectedTx.receiptImage}`}
                         alt="Receipt"
                         className={`rounded-lg shadow-sm transition-all duration-300 ${zoomedImage ? 'max-w-none w-auto' : 'max-h-[300px] object-contain'}`}
                         onError={(e) => {
@@ -697,8 +697,8 @@ const Transactions = () => {
                         }}
                       />
                     ) : null}
-                    <div className={`flex-col items-center text-gray-400 ${selectedTx.receiptImage ? 'hidden' : 'flex'}`}>
-                      <ImageIcon size={48} className="mb-2" />
+                    <div className={`flex-col items-center text-gray-400 ${(selectedTx.imageUrl || selectedTx.receiptImage) ? 'hidden' : 'flex'}`}>
+                      <ImageIcon size={48} className="mb-2 opacity-50" />
                       <span className="text-xs font-bold text-center">No receipt image uploaded</span>
                     </div>
                   </div>
@@ -757,7 +757,7 @@ const Transactions = () => {
                 </div>
               </div>
 
-              {/* Modal Footer — Bug 9 fix: Added Reject button */}
+              {/* Modal Footer */}
               <div className="p-6 bg-gray-50 border-t flex justify-between items-center">
                 <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded text-[10px] font-bold uppercase tracking-wider">
                   Pending Verification
@@ -905,15 +905,15 @@ const Transactions = () => {
         )}
 
         {/* ====== ZOOMED IMAGE OVERLAY ====== */}
-        {zoomedImage && selectedTx?.receiptImage && (
-          <div
-            className="fixed inset-0 z-[1001] bg-black/80 flex items-center justify-center cursor-zoom-out"
-            onClick={() => setZoomedImage(false)}
-          >
-            <img
-              src={selectedTx.receiptImage.startsWith('http') ? selectedTx.receiptImage : `${API_BASE}${selectedTx.receiptImage}`}
-              alt="Receipt Zoomed"
-              className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl"
+        {zoomedImage && (selectedTx?.imageUrl || selectedTx?.receiptImage) && (
+          <div className="fixed inset-0 bg-black/90 z-[10000] flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in" onClick={() => setZoomedImage(false)}>
+            <button className="absolute top-6 right-6 text-white/70 hover:text-white transition-colors">
+              <X size={32} />
+            </button>
+            <img 
+              src={(selectedTx.imageUrl || selectedTx.receiptImage).startsWith('http') ? (selectedTx.imageUrl || selectedTx.receiptImage) : `${API_BASE}${selectedTx.receiptImage}`} 
+              alt="Receipt Zoomed" 
+              className="max-w-[90vw] max-h-[90vh] object-contain rounded animate-scale-up shadow-2xl"
             />
           </div>
         )}

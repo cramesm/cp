@@ -50,9 +50,18 @@ export default function ActivityLogs() {
       const matchesStatus = filterStatus === 'All Status' || log.status === filterStatus;
 
       const logDate = new Date(log.timestamp);
-      const start = startDate ? new Date(startDate) : null;
-      const end = endDate ? new Date(endDate) : null;
-      const matchesDate = (!start || logDate >= start) && (!end || logDate <= end);
+      
+      let matchesDate = true;
+      if (startDate) {
+        const [year, month, day] = startDate.split('-');
+        const start = new Date(year, month - 1, day, 0, 0, 0, 0);
+        matchesDate = matchesDate && (logDate >= start);
+      }
+      if (endDate) {
+        const [year, month, day] = endDate.split('-');
+        const end = new Date(year, month - 1, day, 23, 59, 59, 999);
+        matchesDate = matchesDate && (logDate <= end);
+      }
 
       return matchesSearch && matchesUser && matchesAction && matchesType && matchesStatus && matchesDate;
     });
@@ -165,11 +174,14 @@ export default function ActivityLogs() {
                   paginatedLogs.map((log, index) => {
                     const logDate = new Date(log.timestamp);
                     const timeStr = logDate.toLocaleTimeString('en-US', { hour12: false });
-                    const dateStr = logDate.toISOString().split('T')[0];
+                    const day = String(logDate.getDate()).padStart(2, '0');
+                    const month = String(logDate.getMonth() + 1).padStart(2, '0');
+                    const year = logDate.getFullYear();
+                    const dateStr = `${day}/${month}/${year}`;
                     return (
                       <tr key={log._id || index} className={`transition-colors ${index % 2 !== 0 ? 'bg-[#F9FAFF]' : 'bg-white hover:bg-gray-50'}`}>
                         <td className="py-4 px-6 font-mono text-gray-500">{timeStr}</td>
-                        <td className="py-4 px-2 text-gray-600">{dateStr.split('-').reverse().join('/')}</td>
+                        <td className="py-4 px-2 text-gray-600">{dateStr}</td>
                         <td className="py-4 px-2 font-semibold text-gray-800">{log.userName}</td>
                         <td className="py-4 px-2 font-medium text-gray-600">{log.action}</td>
                         <td className="py-4 px-2 text-gray-500">{log.type}</td>
