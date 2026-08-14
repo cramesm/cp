@@ -74,77 +74,116 @@ const ChangePassword = () => {
     };
 
     return (
-        <div className="font-sans bg-[#f2f2f2] m-0 p-0 bg-[url('/assets/verifitor_bgimage.png')] bg-cover bg-center bg-no-repeat h-screen flex items-center justify-center">
-            <div className="bg-white w-[420px] px-[40px] py-[50px] rounded-[15px] text-center shadow-[0_10px_25px_rgba(0,0,0,0.15)] relative">
-                <h2 className="text-2xl font-bold text-black mb-10">Reset Password</h2>
+        <div className="min-h-screen flex font-sans bg-[#F5F6F8]">
+            {/* Left Column */}
+            <div className="hidden lg:flex lg:w-1/2 relative p-4">
+                <img 
+                    src="/assets/verifitor-login.png" 
+                    alt="Verifitor Login Design" 
+                    className="w-full h-full object-cover rounded-2xl shadow-xl"
+                    onError={(e) => { e.target.src = '../../assets/verifitor-login.png' }}
+                />
+            </div>
+
+            {/* Right Column */}
+            <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-8 sm:p-12 bg-[#F2F2F2] relative">
                 
-                <form onSubmit={handleSave} id="reset-form">
+                {/* Back Arrow */}
+                <button 
+                    onClick={() => navigate('/login')}
+                    className="absolute top-8 left-8 w-10 h-10 border border-gray-400 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors"
+                >
+                    <i className="fa-solid fa-arrow-left"></i>
+                </button>
+
+                <div className="w-full max-w-[400px]">
+                    {/* Logo Header */}
+                    <div className="mb-8 flex justify-center">
+                        <img src="/assets/verifitor_logo.png" alt="Verifitor Logo" className="w-[85%] max-w-[350px] object-contain drop-shadow-md" onError={(e) => { e.target.src = '../../assets/verifitor_logo.png' }} />
+                    </div>
+
+                    <h2 className="text-[32px] font-black text-center text-[#000000] mb-2">RESET PASSWORD</h2>
+                    <p className="text-center text-[13px] text-[#333333] font-normal mb-8">Enter your new password below</p>
                     
-                    <div className="text-left mb-[25px]">
-                        <label htmlFor="new-password" className="block text-[14px] font-medium text-[#333] mb-2">New Password</label>
-                        <div className="relative w-full">
-                            <input 
-                                type={showPassword ? "text" : "password"} 
-                                id="new-password" 
-                                className="w-full pl-[15px] pr-[40px] py-[12px] border border-[#dcdcdc] rounded-lg text-[14px] outline-none bg-white shadow-[0_2px_4px_rgba(0,0,0,0.05)] transition-colors duration-300 focus:border-[#213448]" 
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required 
-                            />
-                            <i 
-                                className={`fa-solid ${showPassword ? 'fa-eye' : 'fa-eye-slash'} absolute right-[15px] top-1/2 -translate-y-1/2 text-[#777] cursor-pointer text-[14px] hover:text-[#333]`}
-                                onClick={() => setShowPassword(!showPassword)}
-                            ></i>
-                        </div>
-                    </div>
-
-                    <div className="text-left mb-[25px]">
-                        <label htmlFor="confirm-password" className="block text-[14px] font-medium text-[#333] mb-2">Confirm Password</label>
-                        <div className="relative w-full">
-                            <input 
-                                type={showConfirmPassword ? "text" : "password"} 
-                                id="confirm-password" 
-                                className="w-full pl-[15px] pr-[40px] py-[12px] border border-[#dcdcdc] rounded-lg text-[14px] outline-none bg-white shadow-[0_2px_4px_rgba(0,0,0,0.05)] transition-colors duration-300 focus:border-[#213448]" 
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                required 
-                            />
-                            <i 
-                                className={`fa-solid ${showConfirmPassword ? 'fa-eye' : 'fa-eye-slash'} absolute right-[15px] top-1/2 -translate-y-1/2 text-[#777] cursor-pointer text-[14px] hover:text-[#333]`}
-                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                            ></i>
-                        </div>
-                    </div>
-
-                    <div className="mt-[35px]">
-                        <button type="submit" className="w-full bg-[#213448] text-white border-none py-[12px] px-[30px] rounded-lg font-semibold text-[14px] cursor-pointer transition-all duration-300 hover:bg-[#1a252f] hover:-translate-y-0.5">Save New Password</button>
-                    </div>
-                </form>
-
-                {modal.show && (
-                    <div id="error-modal" className="fixed top-0 left-0 w-full h-full bg-black/50 z-[1000] flex justify-center items-center">
-                        <div className="bg-white w-[320px] p-[30px] rounded-xl text-center shadow-[0_10px_25px_rgba(0,0,0,0.2)]">
-                            <div className={`text-[40px] mb-[15px] ${modal.type === 'success' ? 'text-green-500' : 'text-[#e74c3c]'}`}>
-                                <i className={`fa-solid ${modal.type === 'success' ? 'fa-check-circle' : 'fa-triangle-exclamation'}`}></i>
+                    <form onSubmit={handleSave} id="reset-form" className="flex flex-col items-center w-full">
+                        <div className="w-full space-y-6 mb-6">
+                            <div className="relative">
+                                <input 
+                                    type={showPassword ? "text" : "password"} 
+                                    id="new-password" 
+                                    placeholder="New Password"
+                                    className="w-full px-4 py-3.5 bg-white border border-gray-300 rounded-md text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-[#213448] shadow-sm pr-12" 
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required 
+                                />
+                                <button
+                                    type="button"
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors focus:outline-none"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                >
+                                    <i className={`fa-solid ${showPassword ? 'fa-eye' : 'fa-eye-slash'} text-lg`}></i>
+                                </button>
                             </div>
-                            <h3 className="m-0 mb-2.5 text-[#333] text-[18px]">{modal.title}</h3>
-                            <p id="modal-message" className="text-[#666] text-[14px] mb-[25px] leading-relaxed">{modal.message}</p>
-                            <button 
-                                className="bg-[#213448] text-white border-none py-[10px] px-[30px] rounded-lg font-semibold cursor-pointer w-full transition-colors duration-200 hover:bg-[#1a252f]" 
-                                onClick={() => {
-                                    setModal({ show: false, title: '', message: '', type: 'error' });
-                                    if (modal.type === 'success') {
-                                        navigate('/login');
-                                    }
-                                }}
-                            >
-                                {modal.type === 'success' ? 'Go to Login' : 'Try Again'}
+
+                            <div className="relative">
+                                <input 
+                                    type={showConfirmPassword ? "text" : "password"} 
+                                    id="confirm-password" 
+                                    placeholder="Confirm Password"
+                                    className="w-full px-4 py-3.5 bg-white border border-gray-300 rounded-md text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-[#213448] shadow-sm pr-12" 
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    required 
+                                />
+                                <button
+                                    type="button"
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors focus:outline-none"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                >
+                                    <i className={`fa-solid ${showConfirmPassword ? 'fa-eye' : 'fa-eye-slash'} text-lg`}></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="w-full flex justify-center mb-4">
+                            <button type="submit" className="w-[80%] py-3 bg-[#243547] text-white rounded-md font-bold text-[16px] tracking-wide shadow-md flex justify-center items-center hover:bg-[#1a2634] transition-colors">
+                                Reset Password
                             </button>
                         </div>
-                    </div>
-                )}
+                    </form>
 
+                    <div className="text-center mt-2">
+                        <Link to="/login" className="block text-[13px] text-[#73A9D4] font-medium hover:underline">
+                            Back to Login
+                        </Link>
+                    </div>
+                </div>
             </div>
+
+            {/* Modal */}
+            {modal.show && (
+                <div id="error-modal" className="fixed top-0 left-0 w-full h-full bg-black/50 z-[1000] flex justify-center items-center">
+                    <div className="bg-white w-[320px] p-[30px] rounded-xl text-center shadow-[0_10px_25px_rgba(0,0,0,0.2)]">
+                        <div className={`text-[40px] mb-[15px] ${modal.type === 'success' ? 'text-green-500' : 'text-[#e74c3c]'}`}>
+                            <i className={`fa-solid ${modal.type === 'success' ? 'fa-check-circle' : 'fa-triangle-exclamation'}`}></i>
+                        </div>
+                        <h3 className="m-0 mb-2.5 text-[#333] text-[18px]">{modal.title}</h3>
+                        <p id="modal-message" className="text-[#666] text-[14px] mb-[25px] leading-relaxed">{modal.message}</p>
+                        <button 
+                            className="bg-[#213448] text-white border-none py-[10px] px-[30px] rounded-lg font-semibold cursor-pointer w-full transition-colors duration-200 hover:bg-[#1a252f]" 
+                            onClick={() => {
+                                setModal({ show: false, title: '', message: '', type: 'error' });
+                                if (modal.type === 'success') {
+                                    navigate('/login');
+                                }
+                            }}
+                        >
+                            {modal.type === 'success' ? 'Go to Login' : 'Try Again'}
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

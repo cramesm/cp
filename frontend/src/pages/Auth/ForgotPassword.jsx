@@ -26,45 +26,68 @@ const ForgotPassword = () => {
     };
 
     return (
-        <div className="font-sans bg-[#f2f2f2] m-0 p-0 bg-[url('/assets/verifitor_bgimage.png')] bg-cover bg-center bg-no-repeat h-screen flex items-center justify-center">
-            <div className="bg-white w-[420px] px-[30px] py-[40px] rounded-[15px] text-center shadow-[0_10px_25px_rgba(0,0,0,0.15)]">
-                <div className="mb-5">
-                    <img src="/assets/verifitorlogo.png" alt="Verifitor" className="w-[160px] block mx-auto" />
-                </div>
+        <div className="min-h-screen flex font-sans bg-[#F5F6F8]">
+            {/* Left Column */}
+            <div className="hidden lg:flex lg:w-1/2 relative p-4">
+                <img 
+                    src="/assets/verifitor-login.png" 
+                    alt="Verifitor Login Design" 
+                    className="w-full h-full object-cover rounded-2xl shadow-xl"
+                    onError={(e) => { e.target.src = '../../assets/verifitor-login.png' }}
+                />
+            </div>
 
-                <h2 className="text-2xl font-bold text-black mb-[15px]">Forgot Password</h2>
+            {/* Right Column */}
+            <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-8 sm:p-12 bg-[#F2F2F2] relative">
                 
-                <p className="text-[13px] text-[#666] leading-relaxed mb-[30px] px-5">
-                    Enter your registered email address to receive a One-Time Password (OTP).
-                </p>
+                {/* Back Arrow */}
+                <button 
+                    onClick={() => navigate('/login')}
+                    className="absolute top-8 left-8 w-10 h-10 border border-gray-400 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors"
+                >
+                    <i className="fa-solid fa-arrow-left"></i>
+                </button>
 
-                <div className="text-left">
-                    <form onSubmit={handleSendOTP}>
-                        <div className="mb-[25px]">
-                            <label htmlFor="email" className="block text-[14px] font-medium text-[#333] mb-2">Email Address</label>
-                            {error && <p className="text-red-500 text-[12px] mb-[5px]">{error}</p>}
+                <div className="w-full max-w-[400px]">
+                    {/* Logo Header */}
+                    <div className="mb-8 flex justify-center">
+                        <img src="/assets/verifitor_logo.png" alt="Verifitor Logo" className="w-[85%] max-w-[350px] object-contain drop-shadow-md" onError={(e) => { e.target.src = '../../assets/verifitor_logo.png' }} />
+                    </div>
+
+                    <h2 className="text-[32px] font-black text-center text-[#000000] mb-2">FORGOT PASSWORD</h2>
+                    <p className="text-center text-[13px] text-[#333333] font-normal mb-8">
+                        Enter your registered email address to receive a One-Time Password (OTP).
+                    </p>
+
+                    <form onSubmit={handleSendOTP} className="flex flex-col items-center w-full">
+                        <div className="w-full mb-6">
+                            {error && <p className="text-red-500 text-[12px] mb-[10px] text-center bg-red-50 py-2 rounded-md">{error}</p>}
                             <input 
                                 type="email" 
                                 id="email" 
-                                placeholder="Email" 
-                                className="w-full px-[15px] py-[12px] border border-[#e0e0e0] rounded-lg text-[14px] outline-none bg-white transition-colors duration-300 focus:border-[#2c3e50] placeholder:text-[#bbb]" 
+                                placeholder="Enter your email" 
+                                className="w-full px-4 py-3.5 bg-white border border-gray-300 rounded-md text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-[#213448] shadow-sm"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required 
                             />
                         </div>
 
-                        <div className="mb-[15px] text-center">
+                        <div className="w-full flex justify-center mb-4">
                             <button 
                                 type="submit" 
-                                className="bg-[#213448] text-white border-none py-2.5 px-[25px] rounded-lg font-semibold text-[14px] cursor-pointer transition-all duration-300 hover:bg-[#1a252f] hover:-translate-y-0.5"
+                                className="w-[80%] py-3 bg-[#243547] text-white rounded-md font-bold text-[16px] tracking-wide shadow-md flex justify-center items-center hover:bg-[#1a2634] transition-colors"
                             >
                                 Send OTP
                             </button>
                         </div>
                     </form>
 
-                    <Link to="/login" className="inline-block text-[13px] text-[#5d7b9d] no-underline font-medium transition-colors duration-300 hover:text-[#213448] hover:underline mx-auto text-center w-full">Back to Login</Link>
+                    <div className="text-center mt-2">
+                        <Link to="/login" className="block text-[13px] text-[#73A9D4] font-medium hover:underline">
+                            Back to Login
+                        </Link>
+                    </div>
                 </div>
             </div>
         </div>

@@ -68,40 +68,76 @@ const OTP = () => {
     };
 
     return (
-        <div className="font-sans bg-[#f2f2f2] m-0 p-0 bg-[url('/assets/verifitor_bgimage.png')] bg-cover bg-center bg-no-repeat h-screen flex items-center justify-center">
-            <div className="bg-white w-[450px] px-[40px] py-[60px] rounded-[15px] text-center shadow-[0_10px_25px_rgba(0,0,0,0.15)] relative">
-                <h2 className="text-[26px] font-bold text-black mb-10">Verify OTP</h2>
-                
-                <p className="text-left text-[14px] text-[#333] mb-[15px] pl-[5px]">Enter OTP Code sent to {email}</p>
-                
-                {error && <p className="text-red-500 text-[12px] mb-[10px] text-left">{error}</p>}
-                {message && <p className="text-green-500 text-[12px] mb-[10px] text-left">{message}</p>}
-
-                <form onSubmit={handleVerify} id="otp-form">
-                    <div className="flex justify-between gap-2.5 mb-[30px]">
-                        {otp.map((digit, idx) => (
-                            <input
-                                key={idx}
-                                ref={(el) => (inputRefs.current[idx] = el)}
-                                type="text"
-                                maxLength="1"
-                                className="w-[50px] h-[55px] border border-[#dcdcdc] rounded-lg text-center text-2xl font-semibold text-[#333] outline-none bg-white shadow-[0_2px_5px_rgba(0,0,0,0.05)] transition-colors duration-300 focus:border-[#213448] focus:shadow-[0_0_0_2px_rgba(33,52,72,0.1)]"
-                                inputMode="numeric"
-                                value={digit}
-                                onChange={(e) => handleChange(idx, e)}
-                                onKeyDown={(e) => handleKeyDown(idx, e)}
-                            />
-                        ))}
-                    </div>
-
-                    <div className="mb-[15px]">
-                        <button type="submit" className="bg-[#213448] text-white border-none py-2.5 px-[25px] rounded-lg font-semibold text-[14px] cursor-pointer transition-all duration-300 hover:bg-[#1a252f]">Verify</button>
-                    </div>
-                </form>
-
-                <Link to="#" onClick={handleResendOTP} className="block text-[13px] text-[#5d7b9d] no-underline font-medium hover:underline mt-4">Resend OTP</Link>
+        <div className="min-h-screen flex font-sans bg-[#F5F6F8]">
+            {/* Left Column */}
+            <div className="hidden lg:flex lg:w-1/2 relative p-4">
+                <img 
+                    src="/assets/verifitor-login.png" 
+                    alt="Verifitor Login Design" 
+                    className="w-full h-full object-cover rounded-2xl shadow-xl"
+                    onError={(e) => { e.target.src = '../../assets/verifitor-login.png' }}
+                />
             </div>
 
+            {/* Right Column */}
+            <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-8 sm:p-12 bg-[#F2F2F2] relative">
+                
+                {/* Back Arrow */}
+                <button 
+                    onClick={() => navigate('/login')}
+                    className="absolute top-8 left-8 w-10 h-10 border border-gray-400 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors"
+                >
+                    <i className="fa-solid fa-arrow-left"></i>
+                </button>
+
+                <div className="w-full max-w-[400px]">
+                    {/* Logo Header */}
+                    <div className="mb-8 flex justify-center">
+                        <img src="/assets/verifitor_logo.png" alt="Verifitor Logo" className="w-[85%] max-w-[350px] object-contain drop-shadow-md" onError={(e) => { e.target.src = '../../assets/verifitor_logo.png' }} />
+                    </div>
+
+                    <h2 className="text-[32px] font-black text-center text-[#000000] mb-2">VERIFY OTP</h2>
+                    <p className="text-center text-[13px] text-[#333333] font-normal mb-8">Enter your One-Time Password (OTP)</p>
+                    
+                    {error && <p className="text-red-500 text-[12px] mb-4 text-center bg-red-50 py-2 rounded-md">{error}</p>}
+                    {message && <p className="text-green-500 text-[12px] mb-4 text-center bg-green-50 py-2 rounded-md">{message}</p>}
+
+                    <form onSubmit={handleVerify} id="otp-form" className="flex flex-col items-center w-full">
+                        <div className="flex justify-center gap-2 sm:gap-3 mb-8 w-full">
+                            {otp.map((digit, idx) => (
+                                <input
+                                    key={idx}
+                                    ref={(el) => (inputRefs.current[idx] = el)}
+                                    type="text"
+                                    maxLength="1"
+                                    className="w-[45px] h-[55px] sm:w-[50px] sm:h-[60px] border border-gray-300 rounded-lg text-center text-2xl font-semibold text-[#333] outline-none bg-white shadow-sm transition-colors duration-300 focus:border-[#213448] focus:ring-1 focus:ring-[#213448]"
+                                    inputMode="numeric"
+                                    value={digit}
+                                    onChange={(e) => handleChange(idx, e)}
+                                    onKeyDown={(e) => handleKeyDown(idx, e)}
+                                />
+                            ))}
+                        </div>
+
+                        <div className="w-full flex justify-center mb-4">
+                            <button type="submit" className="w-[80%] py-3 bg-[#243547] text-white rounded-md font-bold text-[16px] tracking-wide shadow-md flex justify-center items-center gap-2 hover:bg-[#1a2634] transition-colors">
+                                Verify OTP
+                            </button>
+                        </div>
+                    </form>
+
+                    <div className="text-center space-y-2 mt-2">
+                        <button onClick={handleResendOTP} className="block w-full text-[13px] text-[#73A9D4] font-medium hover:underline focus:outline-none">
+                            Resend OTP
+                        </button>
+                        <Link to="/login" className="block text-[13px] text-[#73A9D4] font-medium hover:underline mt-2">
+                            Back to Login
+                        </Link>
+                    </div>
+                </div>
+            </div>
+
+            {/* Error Modal */}
             {showModal && (
                 <div id="error-modal" className="fixed top-0 left-0 w-full h-full bg-black/50 z-[1000] flex justify-center items-center">
                     <div className="bg-white w-[320px] p-[30px] rounded-xl text-center shadow-[0_10px_25px_rgba(0,0,0,0.2)]">
