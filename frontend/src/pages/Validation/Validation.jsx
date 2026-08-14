@@ -167,10 +167,6 @@ const Validation = () => {
                                       <span className="font-semibold text-gray-800 font-mono text-xs">#{verificationData.blockchainRecord.blockNumber}</span>
                                     </div>
                                     <div className="flex justify-between items-center">
-                                      <span className="text-xs font-bold text-gray-400 uppercase tracking-tight">Mining Nonce:</span>
-                                      <span className="font-semibold text-gray-800 font-mono text-xs">{verificationData.blockchainRecord.nonce || 'N/A'}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center">
                                       <span className="text-xs font-bold text-gray-400 uppercase tracking-tight">EVM Smart Contract:</span>
                                       <span className="font-mono text-[9px] text-gray-500 overflow-hidden text-ellipsis max-w-[180px]" title={verificationData.blockchainRecord.contractAddress}>{verificationData.blockchainRecord.contractAddress || '0x5FbDB2315678afecb367f032d93F642f64180aa3'}</span>
                                     </div>

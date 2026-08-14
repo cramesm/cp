@@ -7,7 +7,7 @@ const ChangePassword = () => {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const [modal, setModal] = useState({ show: false, title: '', message: '' });
+    const [modal, setModal] = useState({ show: false, title: '', message: '', type: 'error' });
     const navigate = useNavigate();
     const location = useLocation();
     const resetToken = location.state?.resetToken;
@@ -23,7 +23,8 @@ const ChangePassword = () => {
             setModal({
                 show: true,
                 title: 'Password Mismatch',
-                message: 'The entered passwords do not match. Please try again.'
+                message: 'The entered passwords do not match. Please try again.',
+                type: 'error'
             });
             return;
         }
@@ -32,7 +33,8 @@ const ChangePassword = () => {
             setModal({
                 show: true,
                 title: 'Weak Password',
-                message: 'Password must be at least 8 characters long.'
+                message: 'Password must be at least 8 characters long.',
+                type: 'error'
             });
             return;
         }
@@ -41,7 +43,8 @@ const ChangePassword = () => {
             setModal({
                 show: true,
                 title: 'Error',
-                message: 'Missing reset token. Please restart the password reset process.'
+                message: 'Missing reset token. Please restart the password reset process.',
+                type: 'error'
             });
             return;
         }
@@ -53,13 +56,19 @@ const ChangePassword = () => {
             });
 
             if (response.data.success) {
-                navigate('/login', { state: { message: 'Password reset successful. Please login.' } });
+                setModal({
+                    show: true,
+                    title: 'Success',
+                    message: 'Your password has been changed successfully.',
+                    type: 'success'
+                });
             }
         } catch (err) {
             setModal({
                 show: true,
                 title: 'Error',
-                message: err.response?.data?.message || 'Failed to reset password. Please try again.'
+                message: err.response?.data?.message || 'Failed to reset password. Please try again.',
+                type: 'error'
             });
         }
     };
@@ -115,12 +124,22 @@ const ChangePassword = () => {
                 {modal.show && (
                     <div id="error-modal" className="fixed top-0 left-0 w-full h-full bg-black/50 z-[1000] flex justify-center items-center">
                         <div className="bg-white w-[320px] p-[30px] rounded-xl text-center shadow-[0_10px_25px_rgba(0,0,0,0.2)]">
-                            <div className="text-[40px] text-[#e74c3c] mb-[15px]">
-                                <i className="fa-solid fa-triangle-exclamation"></i>
+                            <div className={`text-[40px] mb-[15px] ${modal.type === 'success' ? 'text-green-500' : 'text-[#e74c3c]'}`}>
+                                <i className={`fa-solid ${modal.type === 'success' ? 'fa-check-circle' : 'fa-triangle-exclamation'}`}></i>
                             </div>
                             <h3 className="m-0 mb-2.5 text-[#333] text-[18px]">{modal.title}</h3>
                             <p id="modal-message" className="text-[#666] text-[14px] mb-[25px] leading-relaxed">{modal.message}</p>
-                            <button className="bg-[#213448] text-white border-none py-[10px] px-[30px] rounded-lg font-semibold cursor-pointer w-full transition-colors duration-200 hover:bg-[#1a252f]" onClick={() => setModal({ show: false, title: '', message: '' })}>Try Again</button>
+                            <button 
+                                className="bg-[#213448] text-white border-none py-[10px] px-[30px] rounded-lg font-semibold cursor-pointer w-full transition-colors duration-200 hover:bg-[#1a252f]" 
+                                onClick={() => {
+                                    setModal({ show: false, title: '', message: '', type: 'error' });
+                                    if (modal.type === 'success') {
+                                        navigate('/login');
+                                    }
+                                }}
+                            >
+                                {modal.type === 'success' ? 'Go to Login' : 'Try Again'}
+                            </button>
                         </div>
                     </div>
                 )}
