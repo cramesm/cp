@@ -80,12 +80,7 @@ const Validation = () => {
                       <p className="text-lg opacity-90 font-light mb-6">
                         This {verificationData?.documentType || 'Document'} is authentic and has been successfully verified {isBlockchainEligible ? 'on the blockchain' : 'on our secure database registry'}
                       </p>
-                      <button 
-                        onClick={() => navigate('/verify')}
-                        className="inline-flex items-center gap-2 bg-white/20 hover:bg-white/30 px-6 py-2 rounded-full text-sm font-bold transition-all border border-white/10"
-                      >
-                        <ShieldCheck size={16} /> New Verification
-                      </button>
+
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -199,12 +194,7 @@ const Validation = () => {
                 <div className="bg-[#c0392b] text-white rounded-2xl p-10 mb-10 text-center shadow-lg shadow-red-100">
                   <h1 className="text-3xl lg:text-4xl font-bold mb-3 uppercase tracking-tight">Status: Invalid / Not Found / Tampered</h1>
                   <p className="text-lg opacity-90 font-light mb-6">This transcript of record is invalid, has been altered, or does not exist in our records</p>
-                  <button 
-                    onClick={() => navigate('/verify')}
-                    className="inline-flex items-center gap-2 bg-white/20 hover:bg-white/30 px-6 py-2 rounded-full text-sm font-bold transition-all border border-white/10"
-                  >
-                    <ShieldCheck size={16} /> Try Another Document
-                  </button>
+
                 </div>
 
                 {/* Warning Card */}

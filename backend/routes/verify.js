@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Request = require('../models/Request');
 const Transaction = require('../models/Transaction');
+const BlockchainTransaction = require('../blockchain_essentials/modelBC/blockchainTransactionModel');
 const TOR = require('../models/TOR');
 const Diploma = require('../models/Diploma');
 const Document = require('../models/Document');
@@ -22,7 +23,10 @@ router.get('/:hash', async (req, res) => {
         
         if (request) {
             // Check for blockchain record
-            const transaction = await Transaction.findOne({ requestId: request.requestId });
+            const blockchainTx = await BlockchainTransaction.findOne({ 
+                studentIDNumber: request.studentId 
+            }).sort({ createdAt: -1 });
+
             return res.json({
                 success: true,
                 data: {
@@ -31,9 +35,12 @@ router.get('/:hash', async (req, res) => {
                     status: request.status,
                     documentType: request.documentType || 'Document',
                     issuedDate: request.updatedAt,
-                    blockchainRecord: transaction ? {
-                        txID: transaction.transactionId,
-                        date: transaction.date
+                    blockchainRecord: blockchainTx ? {
+                        txID: blockchainTx.referenceNumber,
+                        date: blockchainTx.createdAt,
+                        status: blockchainTx.blockchainStatus,
+                        txHash: blockchainTx.blockchainTxHash,
+                        blockNumber: blockchainTx.blockchainBlockNumber
                     } : null
                 }
             });
@@ -42,7 +49,10 @@ router.get('/:hash', async (req, res) => {
         // 2. Try to find in TOR
         const tor = await TOR.findOne({ torId: hash });
         if (tor) {
-            const transaction = await Transaction.findOne({ requestId: tor.torId });
+            const blockchainTx = await BlockchainTransaction.findOne({ 
+                studentIDNumber: tor.studentId 
+            }).sort({ createdAt: -1 });
+
             return res.json({
                 success: true,
                 data: {
@@ -51,9 +61,12 @@ router.get('/:hash', async (req, res) => {
                     status: tor.status === 'Finalized' ? 'Released' : tor.status,
                     documentType: 'Transcript of Records',
                     issuedDate: tor.updatedAt,
-                    blockchainRecord: transaction ? {
-                        txID: transaction.transactionId,
-                        date: transaction.date
+                    blockchainRecord: blockchainTx ? {
+                        txID: blockchainTx.referenceNumber,
+                        date: blockchainTx.createdAt,
+                        status: blockchainTx.blockchainStatus,
+                        txHash: blockchainTx.blockchainTxHash,
+                        blockNumber: blockchainTx.blockchainBlockNumber
                     } : null
                 }
             });
@@ -62,7 +75,10 @@ router.get('/:hash', async (req, res) => {
         // 3. Try to find in Diploma
         const diploma = await Diploma.findOne({ diplomaId: hash });
         if (diploma) {
-            const transaction = await Transaction.findOne({ requestId: diploma.diplomaId });
+            const blockchainTx = await BlockchainTransaction.findOne({ 
+                studentIDNumber: diploma.studentId 
+            }).sort({ createdAt: -1 });
+
             return res.json({
                 success: true,
                 data: {
@@ -71,9 +87,12 @@ router.get('/:hash', async (req, res) => {
                     status: diploma.status === 'Finalized' ? 'Released' : diploma.status,
                     documentType: 'Diploma',
                     issuedDate: diploma.updatedAt,
-                    blockchainRecord: transaction ? {
-                        txID: transaction.transactionId,
-                        date: transaction.date
+                    blockchainRecord: blockchainTx ? {
+                        txID: blockchainTx.referenceNumber,
+                        date: blockchainTx.createdAt,
+                        status: blockchainTx.blockchainStatus,
+                        txHash: blockchainTx.blockchainTxHash,
+                        blockNumber: blockchainTx.blockchainBlockNumber
                     } : null
                 }
             });
@@ -87,7 +106,10 @@ router.get('/:hash', async (req, res) => {
             ]
         });
         if (doc) {
-            const transaction = await Transaction.findOne({ requestId: doc.documentId });
+            const blockchainTx = await BlockchainTransaction.findOne({ 
+                studentIDNumber: doc.studentId 
+            }).sort({ createdAt: -1 });
+
             return res.json({
                 success: true,
                 data: {
@@ -96,9 +118,12 @@ router.get('/:hash', async (req, res) => {
                     status: doc.status === 'Finalized' ? 'Released' : doc.status,
                     documentType: doc.documentType,
                     issuedDate: doc.updatedAt,
-                    blockchainRecord: transaction ? {
-                        txID: transaction.transactionId,
-                        date: transaction.date
+                    blockchainRecord: blockchainTx ? {
+                        txID: blockchainTx.referenceNumber,
+                        date: blockchainTx.createdAt,
+                        status: blockchainTx.blockchainStatus,
+                        txHash: blockchainTx.blockchainTxHash,
+                        blockNumber: blockchainTx.blockchainBlockNumber
                     } : null
                 }
             });
