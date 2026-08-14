@@ -48,7 +48,10 @@ router.get('/:hash', async (req, res) => {
                         txHash: blockchainTx.blockchainTxHash,
                         blockNumber: blockchainTx.blockchainBlockNumber,
                         idNumber: blockchainTx.studentIDNumber,
-                        yearGraduated: blockchainTx.yearGraduated
+                        yearGraduated: blockchainTx.yearGraduated,
+                        ownerType: blockchainTx.ownerType,
+                        course: blockchainTx.course,
+                        yearLevel: blockchainTx.yearLevel
                     } : null
                 }
             });
@@ -82,7 +85,10 @@ router.get('/:hash', async (req, res) => {
                         txHash: blockchainTx.blockchainTxHash,
                         blockNumber: blockchainTx.blockchainBlockNumber,
                         idNumber: blockchainTx.studentIDNumber,
-                        yearGraduated: blockchainTx.yearGraduated
+                        yearGraduated: blockchainTx.yearGraduated,
+                        ownerType: blockchainTx.ownerType,
+                        course: blockchainTx.course,
+                        yearLevel: blockchainTx.yearLevel
                     } : null
                 }
             });
@@ -116,7 +122,10 @@ router.get('/:hash', async (req, res) => {
                         txHash: blockchainTx.blockchainTxHash,
                         blockNumber: blockchainTx.blockchainBlockNumber,
                         idNumber: blockchainTx.studentIDNumber,
-                        yearGraduated: blockchainTx.yearGraduated
+                        yearGraduated: blockchainTx.yearGraduated,
+                        ownerType: blockchainTx.ownerType,
+                        course: blockchainTx.course,
+                        yearLevel: blockchainTx.yearLevel
                     } : null
                 }
             });
@@ -155,7 +164,10 @@ router.get('/:hash', async (req, res) => {
                         txHash: blockchainTx.blockchainTxHash,
                         blockNumber: blockchainTx.blockchainBlockNumber,
                         idNumber: blockchainTx.studentIDNumber,
-                        yearGraduated: blockchainTx.yearGraduated
+                        yearGraduated: blockchainTx.yearGraduated,
+                        ownerType: blockchainTx.ownerType,
+                        course: blockchainTx.course,
+                        yearLevel: blockchainTx.yearLevel
                     } : null
                 }
             });

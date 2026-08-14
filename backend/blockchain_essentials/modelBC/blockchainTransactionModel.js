@@ -20,6 +20,11 @@ const blockchainTransactionSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    ownerType: {
+      type: String,
+      enum: ['Student', 'Alumni'],
+      default: 'Student'
+    },
     nameOfStudent: {
       type: String,
       required: true,
@@ -27,6 +32,14 @@ const blockchainTransactionSchema = new mongoose.Schema(
     studentIDNumber: {
       type: String,
       required: true,
+    },
+    course: {
+      type: String,
+      default: ''
+    },
+    yearLevel: {
+      type: String,
+      default: ''
     },
     nameOfSchool: {
       type: String,

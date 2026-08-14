@@ -23,6 +23,9 @@ const buildStoredBlockchainRecord = (transaction, errorMessage) => ({
     studentIDNumber: transaction.studentIDNumber,
     nameOfSchool: transaction.nameOfSchool,
     yearGraduated: String(transaction.yearGraduated),
+    ownerType: transaction.ownerType,
+    course: transaction.course,
+    yearLevel: transaction.yearLevel,
     recordedBy: transaction.createdByEmail || '',
     timestamp: transaction.createdAt ? String(Math.floor(new Date(transaction.createdAt).getTime() / 1000)) : '0',
     exists: Boolean(transaction.blockchainTxHash || transaction.blockchainStatus === 'Recorded'),
@@ -35,7 +38,7 @@ const TransactionController = {
     /* CREATE TRANSACTION */
     createTransaction: async (req, res) => {
         try {
-            const { typeOfDocument, nameOfStudent, studentIDNumber, nameOfSchool, yearGraduated } = req.body;
+            const { typeOfDocument, nameOfStudent, studentIDNumber, nameOfSchool, yearGraduated, ownerType, course, yearLevel } = req.body;
             const userId = getUserIdentifier(req.user);
 
             if (!userId) {
@@ -55,7 +58,10 @@ const TransactionController = {
                 nameOfStudent,
                 studentIDNumber,
                 nameOfSchool,
-                yearGraduated,
+                yearGraduated: yearGraduated || 0,
+                ownerType: ownerType || 'Student',
+                course: course || '',
+                yearLevel: yearLevel || '',
                 blockchainTxHash: "",
                 blockchainBlockNumber: null,
                 blockchainStatus: "Pending",
@@ -69,7 +75,7 @@ const TransactionController = {
                     nameOfStudent,
                     studentIDNumber,
                     nameOfSchool,
-                    yearGraduated,
+                    yearGraduated: yearGraduated || 0,
                 });
 
                 transaction.blockchainTxHash = blockchainResult.transactionHash;

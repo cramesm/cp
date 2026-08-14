@@ -34,6 +34,9 @@ const RequestDetails = () => {
 
     // Blockchain Data State
     const [blockchainData, setBlockchainData] = useState({
+        ownerType: "Student",
+        course: "",
+        yearLevel: "",
         studentIDNumber: "",
         nameOfSchool: "VeriFitor University",
         yearGraduated: new Date().getFullYear(),
@@ -210,10 +213,13 @@ const RequestDetails = () => {
             if (isBlockchainEligible) {
                 const blockchainRes = await api.post('/blockchain/transactions', {
                     nameOfStudent: requestData.name || "Unknown",
+                    ownerType: blockchainData.ownerType,
+                    course: blockchainData.ownerType === 'Student' ? blockchainData.course : "",
+                    yearLevel: blockchainData.ownerType === 'Student' ? blockchainData.yearLevel : "",
                     studentIDNumber: blockchainData.studentIDNumber,
                     typeOfDocument: requestData.documentType || requestData.document_type || "Document",
                     nameOfSchool: blockchainData.nameOfSchool,
-                    yearGraduated: Number(blockchainData.yearGraduated)
+                    yearGraduated: blockchainData.ownerType === 'Alumni' ? Number(blockchainData.yearGraduated) : 0
                 });
 
                 setBlockchainResult({
@@ -567,6 +573,17 @@ const RequestDetails = () => {
                                                 </div>
 
                                                 <div className="grid grid-cols-2 gap-6 mb-8">
+                                                    <div className="col-span-2">
+                                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Owner Type *</label>
+                                                        <select
+                                                            value={blockchainData.ownerType}
+                                                            onChange={(e) => setBlockchainData({ ...blockchainData, ownerType: e.target.value })}
+                                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:border-blue-500 outline-none"
+                                                        >
+                                                            <option value="Student">Student</option>
+                                                            <option value="Alumni">Alumni</option>
+                                                        </select>
+                                                    </div>
                                                     <div>
                                                         <label className="block text-xs font-bold text-slate-500 uppercase mb-2">ID Number *</label>
                                                         <input
@@ -578,16 +595,45 @@ const RequestDetails = () => {
                                                             className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:border-blue-500 outline-none"
                                                         />
                                                     </div>
-                                                    <div>
-                                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Year Graduated *</label>
-                                                        <input
-                                                            type="number"
-                                                            required
-                                                            value={blockchainData.yearGraduated}
-                                                            onChange={(e) => setBlockchainData({ ...blockchainData, yearGraduated: e.target.value })}
-                                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:border-blue-500 outline-none"
-                                                        />
-                                                    </div>
+
+                                                    {blockchainData.ownerType === 'Alumni' ? (
+                                                        <div>
+                                                            <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Year Graduated *</label>
+                                                            <input
+                                                                type="number"
+                                                                required
+                                                                value={blockchainData.yearGraduated}
+                                                                onChange={(e) => setBlockchainData({ ...blockchainData, yearGraduated: e.target.value })}
+                                                                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:border-blue-500 outline-none"
+                                                            />
+                                                        </div>
+                                                    ) : (
+                                                        <>
+                                                            <div>
+                                                                <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Course *</label>
+                                                                <input
+                                                                    type="text"
+                                                                    required
+                                                                    placeholder="e.g. BSCS"
+                                                                    value={blockchainData.course}
+                                                                    onChange={(e) => setBlockchainData({ ...blockchainData, course: e.target.value })}
+                                                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:border-blue-500 outline-none"
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Year Level *</label>
+                                                                <input
+                                                                    type="text"
+                                                                    required
+                                                                    placeholder="e.g. 3rd Year"
+                                                                    value={blockchainData.yearLevel}
+                                                                    onChange={(e) => setBlockchainData({ ...blockchainData, yearLevel: e.target.value })}
+                                                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:border-blue-500 outline-none"
+                                                                />
+                                                            </div>
+                                                        </>
+                                                    )}
+
                                                     <div className="col-span-2">
                                                         <label className="block text-xs font-bold text-slate-500 uppercase mb-2">School Name</label>
                                                         <input

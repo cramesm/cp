@@ -206,10 +206,10 @@ function MyTransactions() {
                             <thead>
                                 <tr className="text-[13px] text-gray-800 border-b border-gray-200 uppercase font-bold bg-gray-50">
                                     <th className="px-6 py-4">Reference Number</th>
-                                    <th className="px-6 py-4">Student Name</th>
+                                    <th className="px-6 py-4">Owner Name</th>
                                     <th className="px-6 py-4">ID Number</th>
                                     <th className="px-6 py-4">Document Type</th>
-                                    <th className="px-6 py-4">Year Graduated</th>
+                                    <th className="px-6 py-4">Year / Course</th>
                                     <th className="px-6 py-4">Status</th>
                                     <th className="px-6 py-4">TX Hash</th>
                                     <th className="px-6 py-4">Created</th>
@@ -220,10 +220,21 @@ function MyTransactions() {
                                     paginatedTransactions.map((tx) => (
                                         <tr key={tx._id} className="border-b border-gray-200 hover:bg-gray-50 transition">
                                             <td className="px-6 py-4 text-sm font-mono text-[#1D2D44]">{tx.referenceNumber}</td>
-                                            <td className="px-6 py-4 text-sm">{tx.nameOfStudent}</td>
+                                            <td className="px-6 py-4 text-sm">
+                                                <div className="flex flex-col">
+                                                    <span>{tx.nameOfStudent}</span>
+                                                    <span className="text-[10px] text-gray-400 uppercase tracking-wider">{tx.ownerType || 'Student'}</span>
+                                                </div>
+                                            </td>
                                             <td className="px-6 py-4 text-sm">{tx.studentIDNumber}</td>
                                             <td className="px-6 py-4 text-sm">{tx.typeOfDocument}</td>
-                                            <td className="px-6 py-4 text-sm text-center">{tx.yearGraduated}</td>
+                                            <td className="px-6 py-4 text-sm text-center">
+                                                {(tx.ownerType === 'Alumni') 
+                                                    ? tx.yearGraduated 
+                                                    : (tx.course || tx.yearLevel) 
+                                                        ? `${tx.course || ''} ${tx.yearLevel || ''}`.trim()
+                                                        : tx.yearGraduated}
+                                            </td>
                                             <td className="px-6 py-4 text-sm">
                                                 <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusStyle(tx.blockchainStatus)}`}>
                                                     {tx.blockchainStatus}
