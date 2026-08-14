@@ -70,7 +70,7 @@ const AdminLogin = () => {
                     
                     {/* Logo Header - Made much bigger to match mockup */}
                     <div className="mb-12 flex justify-center">
-                        <img src={smallLogo} alt="Verifitor Logo" className="w-[85%] max-w-[350px] object-contain drop-shadow-md" />
+                        <img src={smallLogo} alt="Verifitor Logo" className="w-[95%] max-w-[400px] object-contain drop-shadow-md" />
                     </div>
 
                     {/* Welcome Text */}
