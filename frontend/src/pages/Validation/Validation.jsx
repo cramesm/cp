@@ -96,6 +96,8 @@ const Validation = () => {
                           {[
                             ["Request ID", verificationData?.requestId],
                             ["Name", verificationData?.ownerName],
+                            ["ID Number", verificationData?.blockchainRecord?.idNumber || 'N/A'],
+                            ["Year Graduated", verificationData?.blockchainRecord?.yearGraduated || 'N/A'],
                             ["Status", verificationData?.status],
                             ["Verification Date", new Date(verificationData?.issuedDate).toLocaleDateString()]
                           ].map(([label, value]) => (
@@ -141,10 +143,16 @@ const Validation = () => {
                             </div>
                             {isBlockchainEligible ? (
                               <>
-                                <div className="flex justify-between items-start gap-4">
-                                  <span className="text-xs font-bold text-gray-400 uppercase tracking-tight mt-1">Transaction ID (TxID):</span>
+                                <div className="flex justify-between items-start gap-4 mb-3">
+                                  <span className="text-xs font-bold text-gray-400 uppercase tracking-tight mt-1">Reference Number:</span>
                                   <div className="flex flex-col items-end">
                                     <span className="font-mono text-[10px] break-all select-all text-gray-800 bg-white p-1 rounded border border-gray-200 max-w-[220px] text-right">{verificationData?.blockchainRecord?.txID || 'N/A'}</span>
+                                  </div>
+                                </div>
+                                <div className="flex justify-between items-start gap-4">
+                                  <span className="text-xs font-bold text-gray-400 uppercase tracking-tight mt-1">Tx Hash:</span>
+                                  <div className="flex flex-col items-end">
+                                    <span className="font-mono text-[10px] break-all select-all text-gray-800 bg-white p-1 rounded border border-gray-200 max-w-[220px] text-right">{verificationData?.blockchainRecord?.txHash || 'N/A'}</span>
                                   </div>
                                 </div>
                                 {verificationData?.blockchainRecord?.blockNumber && verificationData.blockchainRecord.blockNumber !== 'N/A' && (

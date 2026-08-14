@@ -126,7 +126,7 @@ getMyTransactions: async (req, res) => {
             return res.json([]);
         }
 
-        const query = req.user.role === 'super admin' ? {} : { user: new mongoose.Types.ObjectId(userId) };
+        const query = {};
         const transactions = await BlockchainTransaction.find(query).sort({ createdAt: -1 });
 
         return res.json(transactions);
