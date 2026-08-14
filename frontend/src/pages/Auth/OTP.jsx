@@ -2,6 +2,10 @@ import { useState, useRef } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import api from '../../api';
 
+// Import local assets
+import loginImage from '../../assets/verifitor-login.png';
+import smallLogo from '../../assets/verifitor_logo.png';
+
 const OTP = () => {
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [showModal, setShowModal] = useState(false);
@@ -72,10 +76,9 @@ const OTP = () => {
             {/* Left Column */}
             <div className="hidden lg:flex lg:w-1/2 relative p-4">
                 <img 
-                    src="/assets/verifitor-login.png" 
+                    src={loginImage} 
                     alt="Verifitor Login Design" 
                     className="w-full h-full object-cover rounded-2xl shadow-xl"
-                    onError={(e) => { e.target.src = '../../assets/verifitor-login.png' }}
                 />
             </div>
 
@@ -93,7 +96,7 @@ const OTP = () => {
                 <div className="w-full max-w-[400px]">
                     {/* Logo Header */}
                     <div className="mb-8 flex justify-center">
-                        <img src="/assets/verifitor_logo.png" alt="Verifitor Logo" className="w-[85%] max-w-[350px] object-contain drop-shadow-md" onError={(e) => { e.target.src = '../../assets/verifitor_logo.png' }} />
+                        <img src={smallLogo} alt="Verifitor Logo" className="w-[95%] max-w-[400px] object-contain drop-shadow-md" />
                     </div>
 
                     <h2 className="text-[32px] font-black text-center text-[#000000] mb-2">VERIFY OTP</h2>
