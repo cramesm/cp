@@ -68,9 +68,9 @@ const AdminLogin = () => {
             <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-8 sm:p-12 bg-[#F2F2F2]">
                 <div className="w-full max-w-[400px]">
                     
-                    {/* Logo Header */}
-                    <div className="mb-10 flex justify-center">
-                        <img src={smallLogo} alt="Verifitor Logo" className="h-[100px] object-contain drop-shadow-md" />
+                    {/* Logo Header - Made much bigger to match mockup */}
+                    <div className="mb-12 flex justify-center">
+                        <img src={smallLogo} alt="Verifitor Logo" className="w-[85%] max-w-[350px] object-contain drop-shadow-md" />
                     </div>
 
                     {/* Welcome Text */}
@@ -145,6 +145,38 @@ const AdminLogin = () => {
                             </button>
                         </div>
                     </form>
+
+                    {/* Account Hints - Restored */}
+                    <div className="mt-12 pt-6 border-t border-gray-300">
+                        <p className="text-[10px] text-gray-500 text-center mb-3 uppercase tracking-widest font-bold">Demo Accounts</p>
+                        
+                        <div className="flex gap-3">
+                            <div
+                                className="flex-1 bg-white border border-gray-300 rounded-lg p-3 cursor-pointer hover:border-blue-400 hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                onClick={() => { setEmail('admin@verifitor.com'); setPassword('admin123'); }}
+                                role="button"
+                                tabIndex={0}
+                            >
+                                <p className="text-[11px] font-bold text-[#343a40] mb-1 flex items-center gap-1.5">
+                                    <i className="fa-solid fa-user-tie text-blue-500"></i> Registrar
+                                </p>
+                                <p className="text-[10px] text-[#6c757d] m-0 truncate">admin@verifitor.com</p>
+                            </div>
+
+                            <div
+                                className="flex-1 bg-white border border-gray-300 rounded-lg p-3 cursor-pointer hover:border-amber-400 hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-amber-400"
+                                onClick={() => { setEmail('sysadmin@verifitor.com'); setPassword('sysadmin123'); }}
+                                role="button"
+                                tabIndex={0}
+                            >
+                                <p className="text-[11px] font-bold text-[#343a40] mb-1 flex items-center gap-1.5">
+                                    <i className="fa-solid fa-shield-halved text-amber-500"></i> Super Admin
+                                </p>
+                                <p className="text-[10px] text-[#6c757d] m-0 truncate">sysadmin@verifitor.com</p>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
