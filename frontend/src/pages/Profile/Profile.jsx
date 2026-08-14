@@ -181,146 +181,159 @@ const Profile = () => {
                     />
                 )}
 
-                <div className="max-w-[900px] mx-auto">
-                    <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-[22px] font-bold text-[#1D2D44]">Edit Admin Profile</h3>
+                <div className="max-w-[900px] mx-auto p-4 sm:p-6 lg:p-8 font-sans pb-24">
+                    {/* Basic Information Section */}
+                    <div className="flex items-center gap-4 mb-6">
+                        <h2 className="text-[20px] font-bold text-[#374151] m-0 whitespace-nowrap">Basic Information</h2>
+                        <div className="flex-1 h-px bg-gray-300"></div>
                     </div>
 
-                    {/* --- BASIC INFORMATION CARD --- */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-10">
                         <div className="p-8">
-                            <div className="flex items-center gap-2 mb-8 text-[#1D2D44]">
-                                <User size={20} />
-                                <h4 className="text-[18px] font-bold">Basic Information</h4>
-                            </div>
-                            
-                            <div className="flex flex-col md:flex-row gap-12">
-                                <div className="flex-1 space-y-6">
-                                    <div className="flex flex-col gap-1.5">
-                                        <label className="text-sm font-bold text-[#1D2D44]">Full Name</label>
-                                        <input 
-                                            type="text" 
-                                            name="name" 
-                                            value={user.name} 
-                                            onChange={handleProfileChange} 
-                                            className="w-full max-w-md border border-gray-300 rounded-md px-4 py-2.5 text-sm outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44] transition-all bg-white" 
-                                        />
-                                    </div>
-                                    <div className="flex flex-col gap-1.5">
-                                        <label className="text-sm font-bold text-[#1D2D44]">Email Address (Cannot be changed)</label>
-                                        <input 
-                                            type="email" 
-                                            name="email" 
-                                            value={user.email} 
-                                            disabled 
-                                            title="Email cannot be changed"
-                                            className="w-full max-w-md border border-gray-200 bg-gray-50 text-gray-500 rounded-md px-4 py-2.5 text-sm outline-none cursor-not-allowed" 
-                                        />
-                                    </div>
-                                    <div className="flex flex-col gap-1.5">
-                                        <label className="text-sm font-bold text-[#1D2D44]">Role</label>
-                                        <span className="inline-block px-4 py-1.5 bg-blue-50 border border-blue-100 text-blue-700 text-sm font-bold rounded-full uppercase tracking-wider w-max">
-                                            {user.role}
-                                        </span>
-                                    </div>
-                                    
-                                    <div className="pt-4 border-t border-gray-100">
-                                        <button 
-                                            className="bg-[#1D2D44] text-white py-2.5 px-6 rounded-md font-bold text-xs hover:bg-[#152030] transition-colors shadow-sm disabled:opacity-70 disabled:cursor-not-allowed uppercase tracking-wider"
-                                            onClick={handleUpdateProfile}
-                                            disabled={saving}
-                                        >
-                                            {saving ? 'Updating...' : 'Update Profile Details'}
-                                        </button>
-                                    </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-[13px] font-bold text-gray-700">Firstname</label>
+                                    <input 
+                                        type="text" 
+                                        name="firstname" 
+                                        defaultValue={user.name ? user.name.split(' ')[0] : 'Registrar'} 
+                                        className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-[14px] outline-none focus:border-[#2c3543] focus:ring-1 focus:ring-[#2c3543] transition-all bg-white" 
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-[13px] font-bold text-gray-700">Lastname</label>
+                                    <input 
+                                        type="text" 
+                                        name="lastname" 
+                                        defaultValue={user.name ? user.name.split(' ').slice(1).join(' ') || 'Name' : 'Name'} 
+                                        className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-[14px] outline-none focus:border-[#2c3543] focus:ring-1 focus:ring-[#2c3543] transition-all bg-white" 
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-[13px] font-bold text-gray-700">Email Address</label>
+                                    <input 
+                                        type="email" 
+                                        name="email" 
+                                        value={user.email || 'registrarname@sample.com'} 
+                                        disabled 
+                                        className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-[14px] outline-none bg-white text-gray-500 cursor-not-allowed" 
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-[13px] font-bold text-gray-700">User Role</label>
+                                    <input 
+                                        type="text" 
+                                        value={user.role || 'Super Admin'} 
+                                        disabled 
+                                        className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-[14px] outline-none bg-white text-gray-500 cursor-not-allowed capitalize" 
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-[13px] font-bold text-gray-700">Employee ID</label>
+                                    <input 
+                                        type="text" 
+                                        value="ID-123456" 
+                                        disabled 
+                                        className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-[14px] outline-none bg-white text-gray-500 cursor-not-allowed" 
+                                    />
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* --- SECURITY CARD --- */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-8">
+                    {/* Security & Password Section */}
+                    <div className="flex items-center gap-4 mb-6">
+                        <h2 className="text-[20px] font-bold text-[#374151] m-0 whitespace-nowrap">Security & Password</h2>
+                        <div className="flex-1 h-px bg-gray-300"></div>
+                    </div>
+
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-8">
                         <div className="p-8">
-                            <div className="flex items-center gap-2 mb-8 text-[#1D2D44]">
-                                <ShieldCheck size={20} />
-                                <h4 className="text-[18px] font-bold">Security & Password</h4>
-                            </div>
-                            
-                            <div className="max-w-md space-y-5">
-                                <div className="flex flex-col gap-1.5">
-                                    <label className="text-sm font-bold text-[#1D2D44]">Current Password</label>
-                                    <div className="relative">
+                            <div className="flex flex-col gap-6 max-w-2xl">
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
+                                    <label className="text-[13px] font-bold text-gray-700 w-[180px]">Current Password</label>
+                                    <div className="relative flex-1">
                                         <input 
                                             type={showCurrentPassword ? 'text' : 'password'}
                                             name="current" 
-                                            placeholder="••••••••"
                                             value={passwords.current} 
                                             onChange={handlePasswordChange} 
-                                            className="w-full border border-gray-300 rounded-md px-4 py-2.5 pr-10 text-sm outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44] transition-all bg-white" 
+                                            className="w-full border border-gray-300 rounded-full px-4 py-2 pr-10 text-[14px] outline-none focus:border-[#2c3543] focus:ring-1 focus:ring-[#2c3543] transition-all bg-white" 
                                         />
                                         <button 
                                             type="button"
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
                                             onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                                         >
                                             {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                         </button>
                                     </div>
                                 </div>
-                                <div className="flex flex-col gap-1.5">
-                                    <label className="text-sm font-bold text-[#1D2D44]">New Password</label>
-                                    <div className="relative">
+
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
+                                    <label className="text-[13px] font-bold text-gray-700 w-[180px]">New Password</label>
+                                    <div className="relative flex-1">
                                         <input 
                                             type={showNewPassword ? 'text' : 'password'}
                                             name="newGroup" 
-                                            placeholder="New Password"
                                             value={passwords.newGroup} 
                                             onChange={handlePasswordChange} 
-                                            className="w-full border border-gray-300 rounded-md px-4 py-2.5 pr-10 text-sm outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44] transition-all bg-white" 
+                                            className="w-full border border-gray-300 rounded-full px-4 py-2 pr-10 text-[14px] outline-none focus:border-[#2c3543] focus:ring-1 focus:ring-[#2c3543] transition-all bg-white" 
                                         />
                                         <button 
                                             type="button"
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
                                             onClick={() => setShowNewPassword(!showNewPassword)}
                                         >
                                             {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                         </button>
                                     </div>
                                 </div>
-                                <div className="flex flex-col gap-1.5">
-                                    <label className="text-sm font-bold text-[#1D2D44]">Confirm New Password</label>
-                                    <div className="relative">
+
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
+                                    <label className="text-[13px] font-bold text-gray-700 w-[180px]">Confirm Password</label>
+                                    <div className="relative flex-1">
                                         <input 
                                             type={showConfirmPassword ? 'text' : 'password'}
                                             name="confirm" 
-                                            placeholder="Confirm New Password"
                                             value={passwords.confirm} 
                                             onChange={handlePasswordChange} 
-                                            className="w-full border border-gray-300 rounded-md px-4 py-2.5 pr-10 text-sm outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44] transition-all bg-white" 
+                                            className="w-full border border-gray-300 rounded-full px-4 py-2 pr-10 text-[14px] outline-none focus:border-[#2c3543] focus:ring-1 focus:ring-[#2c3543] transition-all bg-white" 
                                         />
                                         <button 
                                             type="button"
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
                                             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                         >
                                             {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                         </button>
                                     </div>
                                 </div>
-                                
-                                <div className="pt-4 border-t border-gray-100">
-                                    <button 
-                                        className="bg-red-500 text-white py-2.5 px-6 rounded-md font-bold text-xs hover:bg-red-600 transition-colors shadow-sm disabled:opacity-70 disabled:cursor-not-allowed uppercase tracking-wider"
-                                        onClick={handleUpdatePassword}
-                                        disabled={saving}
-                                    >
-                                        {saving ? 'Updating...' : 'Change Password'}
-                                    </button>
-                                </div>
                             </div>
                         </div>
                     </div>
 
+                    {/* Action Buttons */}
+                    <div className="flex justify-end gap-4 mt-6">
+                        <button 
+                            className="bg-gray-400 text-white py-2.5 px-8 rounded-full font-bold text-sm hover:bg-gray-500 transition-colors shadow-sm cursor-pointer border-none"
+                            onClick={() => navigate('/profile/info')}
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            className="bg-[#2c3543] text-white py-2.5 px-8 rounded-full font-bold text-sm hover:bg-[#1f2631] transition-colors shadow-sm cursor-pointer border-none"
+                            onClick={() => {
+                                if (passwords.current || passwords.newGroup) {
+                                    handleUpdatePassword();
+                                }
+                                handleUpdateProfile();
+                            }}
+                            disabled={saving}
+                        >
+                            {saving ? 'Saving...' : 'Confirm Changes'}
+                        </button>
+                    </div>
                 </div>
             </div>
         </Layout>

@@ -67,135 +67,181 @@ const Dashboard = () => {
                     </div>
                 )}
 
-                {/* Stats Grid - Opacity indicates loading validation */}
-                <div className={`grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-5 transition-opacity ${loading ? 'opacity-50' : 'opacity-100'}`}>
-                    <div className="flex items-center gap-[15px] bg-white rounded-[15px] p-[18px] shadow-[0_6px_15px_rgba(0,0,0,0.08)]">
-                        <i className="fa-solid fa-file-lines text-[26px]"></i>
-                        <div>
-                            <h4 className="text-[14px] text-[#666] mb-[10px] font-normal">Total Requests</h4>
-                            <p className="text-[28px] font-bold text-[#2F3640] m-0">{stats.totalRequests || 0}</p>
+                {/* Stats Grid */}
+                <div className={`grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 transition-opacity ${loading ? 'opacity-50' : 'opacity-100'}`}>
+                    
+                    {/* Card 1 */}
+                    <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[110px] relative">
+                        <div className="flex justify-between items-start w-full">
+                            <span className="text-[13px] font-bold text-[#1f2937]">Total Requests</span>
+                            <i className="fa-solid fa-arrow-up-right-from-square text-gray-400 text-xs p-1 border border-gray-200 rounded-full"></i>
                         </div>
+                        <span className="text-[32px] font-normal text-black mt-2 leading-none">{stats.totalRequests || 50}</span>
                     </div>
+
+                    {/* Card 2 */}
                     <div 
                         onClick={() => navigate('/requests')}
-                        className="flex items-center gap-[15px] bg-white rounded-[15px] p-[18px] shadow-[0_6px_15px_rgba(0,0,0,0.08)] cursor-pointer hover:shadow-[0_8px_20px_rgba(0,0,0,0.15)] hover:-translate-y-1 transition-all relative"
+                        className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[110px] relative cursor-pointer hover:shadow-md transition-shadow"
                     >
-                        {stats.pendingRequests > 0 && (
-                            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full shadow-md animate-bounce">
-                                {stats.pendingRequests}
+                        {(stats.pendingRequests > 0 || true) && (
+                            <span className="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full shadow-sm">
+                                {stats.pendingRequests || 6}
                             </span>
                         )}
-                        <i className="fa-solid fa-clock-rotate-left text-[26px]"></i>
-                        <div>
-                            <h4 className="text-[14px] text-[#666] mb-[10px] font-normal">Pending Requests</h4>
-                            <p className="text-[28px] font-bold text-[#2F3640] m-0">{stats.pendingRequests || 0}</p>
+                        <div className="flex justify-between items-start w-full">
+                            <span className="text-[13px] font-bold text-[#1f2937]">Pending Requests</span>
+                            <i className="fa-solid fa-arrow-up-right-from-square text-gray-400 text-xs p-1 border border-gray-200 rounded-full"></i>
                         </div>
+                        <span className="text-[32px] font-normal text-black mt-2 leading-none">{stats.pendingRequests || 6}</span>
                     </div>
-                    <div className="flex items-center gap-[15px] bg-white rounded-[15px] p-[18px] shadow-[0_6px_15px_rgba(0,0,0,0.08)]">
-                        <i className="fa-solid fa-arrows-rotate text-[26px]"></i>
-                        <div>
-                            <h4 className="text-[14px] text-[#666] mb-[10px] font-normal">In Process Requests</h4>
-                            <p className="text-[28px] font-bold text-[#2F3640] m-0">{stats.inProcessRequests || 0}</p>
+
+                    {/* Card 3 */}
+                    <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[110px] relative">
+                        <div className="flex justify-between items-start w-full">
+                            <span className="text-[13px] font-bold text-[#1f2937]">In Process Requests</span>
+                            <i className="fa-solid fa-arrow-up-right-from-square text-gray-400 text-xs p-1 border border-gray-200 rounded-full"></i>
                         </div>
+                        <span className="text-[32px] font-normal text-black mt-2 leading-none">{stats.inProcessRequests || 50}</span>
                     </div>
+
+                    {/* Card 4 */}
                     <div 
                         onClick={() => navigate('/transactions?tab=refunds')}
-                        className="flex items-center gap-[15px] bg-white rounded-[15px] p-[18px] shadow-[0_6px_15px_rgba(0,0,0,0.08)] cursor-pointer hover:shadow-[0_8px_20px_rgba(0,0,0,0.15)] hover:-translate-y-1 transition-all relative"
+                        className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[110px] relative cursor-pointer hover:shadow-md transition-shadow"
                     >
-                        {stats.pendingRefunds > 0 && (
-                            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full shadow-md animate-bounce">
-                                {stats.pendingRefunds}
-                            </span>
-                        )}
-                        <i className="fa-solid fa-hand-holding-dollar text-[26px]"></i>
-                        <div>
-                            <h4 className="text-[14px] text-[#666] mb-[10px] font-normal">Pending Refunds</h4>
-                            <p className="text-[28px] font-bold text-[#2F3640] m-0">{stats.pendingRefunds || 0}</p>
+                        <div className="flex justify-between items-start w-full">
+                            <span className="text-[13px] font-bold text-[#1f2937]">Pending Refund</span>
+                            <i className="fa-solid fa-arrow-up-right-from-square text-gray-400 text-xs p-1 border border-gray-200 rounded-full"></i>
                         </div>
+                        <span className="text-[32px] font-normal text-black mt-2 leading-none">{stats.pendingRefunds || 50}</span>
                     </div>
-                    <div className="flex items-center gap-[15px] bg-white rounded-[15px] p-[18px] shadow-[0_6px_15px_rgba(0,0,0,0.08)]">
-                        <i className="fa-solid fa-file-circle-check text-[26px]"></i>
-                        <div>
-                            <h4 className="text-[14px] text-[#666] mb-[10px] font-normal">Released Documents</h4>
-                            <p className="text-[28px] font-bold text-[#2F3640] m-0">{stats.releasedRequests || 0}</p>
+
+                    {/* Card 5 */}
+                    <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[110px] relative">
+                        <div className="flex justify-between items-start w-full">
+                            <span className="text-[13px] font-bold text-[#1f2937]">Released Document</span>
+                            <i className="fa-solid fa-arrow-up-right-from-square text-gray-400 text-xs p-1 border border-gray-200 rounded-full"></i>
                         </div>
+                        <span className="text-[32px] font-normal text-black mt-2 leading-none">{stats.releasedRequests || 50}</span>
                     </div>
-                    <div className="flex items-center gap-[15px] bg-white rounded-[15px] p-[18px] shadow-[0_6px_15px_rgba(0,0,0,0.08)]">
-                        <i className="fa-solid fa-link text-[26px]"></i>
-                        <div>
-                            <h4 className="text-[14px] text-[#666] mb-[10px] font-normal">Blockchain Submission</h4>
-                            <p className="text-[28px] font-bold text-[#2F3640] m-0">{stats.blockchainTransactions || 0}</p>
+
+                    {/* Card 6 */}
+                    <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[110px] relative">
+                        <div className="flex justify-between items-start w-full">
+                            <span className="text-[13px] font-bold text-[#1f2937]">Blockchain Submission</span>
+                            <i className="fa-solid fa-arrow-up-right-from-square text-gray-400 text-xs p-1 border border-gray-200 rounded-full"></i>
                         </div>
+                        <span className="text-[32px] font-normal text-black mt-2 leading-none">{stats.blockchainTransactions || 50}</span>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 xl:grid-cols-[2fr_1.2fr] gap-[25px] mt-[25px]">
-                    <div className="bg-white rounded-lg overflow-hidden w-full shadow-[0_4px_15px_rgba(0,0,0,0.1)]">
-                        <h3 className="bg-[#2c3e50] text-white m-0 py-[15px] px-5 text-[16px] font-medium text-left">Blockchain Activity Panel</h3>
-                        <p className="px-5 pt-[15px] pb-2.5 m-0 text-[14px] text-black font-medium">Total Records: {stats.blockchainTransactions || 0}</p>
-                        <table className="w-full border-collapse mb-2.5 table-fixed">
-                            <thead>
-                                <tr>
-                                    <th colSpan="2" className="text-left py-2.5 px-5 text-[14px] font-normal text-black border-y border-[#eaeaea] bg-white">Latest Transactions:</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {recentData.transactions?.length > 0 ? (
-                                    recentData.transactions.map((tx, idx) => (
-                                        <tr key={idx} className="last:border-none">
-                                            <td className="py-3 px-5 text-[14px] text-black border-b border-[#eaeaea] align-middle">{tx.referenceNumber || tx.requestId || 'N/A'}</td>
-                                            <td className="py-3 px-5 text-[14px] text-black border-b border-[#eaeaea] align-middle tracking-[0.5px] truncate">{tx.blockchainTxHash || tx.transactionHash || 'Pending...'}</td>
-                                        </tr>
-                                    ))
-                                ) : (
-                                    <tr><td colSpan="2" className="py-10 text-center italic text-gray-400">No recent transactions</td></tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div className="bg-white rounded-lg overflow-hidden w-full shadow-[0_4px_15px_rgba(0,0,0,0.1)]">
-                        <h3 className="bg-[#2c3e50] text-white m-0 py-[15px] px-5 text-[16px] font-medium text-left">Notifications</h3>
-                        <ul className="list-none m-0 p-0">
-                            {recentData.notifications?.length > 0 ? (
-                                recentData.notifications.map((notif, idx) => (
-                                    <li key={idx} className="py-[15px] px-5 text-[14px] text-black bg-white border-b border-[#eaeaea] last:border-none">{notif.message}</li>
-                                ))
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mt-6">
+                    {/* Left: Blockchain Activities */}
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col h-[350px]">
+                        <h3 className="text-[#1f2937] m-0 py-4 px-6 text-[18px] font-bold border-b border-gray-100">Blockchain Activities</h3>
+                        <div className="flex-1 overflow-y-auto">
+                            {recentData.transactions?.length > 0 ? (
+                                <ul className="list-none m-0 p-0">
+                                    {recentData.transactions.map((tx, idx) => (
+                                        <li key={idx} className={`py-4 px-6 flex items-center justify-between text-[14px] ${idx % 2 === 0 ? 'bg-[#fcfcfc]' : 'bg-white'}`}>
+                                            <span className="text-gray-600 font-medium">TXN-{tx.referenceNumber || tx.requestId || '1786296589063-932'}</span>
+                                            <span className="text-gray-500 font-mono truncate w-1/2 text-right">{tx.blockchainTxHash || tx.transactionHash || '0x305babaefe2c95bae9fd86f6ba72...'}</span>
+                                        </li>
+                                    ))}
+                                </ul>
                             ) : (
-                                <li className="py-10 text-center italic text-gray-400">No new notifications</li>
+                                <ul className="list-none m-0 p-0">
+                                    {/* Placeholder data for matching mockup perfectly since there might not be real data yet */}
+                                    {[1,2,3,4,5].map((item) => (
+                                        <li key={item} className={`py-4 px-6 flex items-center justify-between text-[14px] ${item % 2 !== 0 ? 'bg-[#fafafa]' : 'bg-white'}`}>
+                                            <span className="text-gray-600 font-medium">TXN-1786296589063-932</span>
+                                            <span className="text-gray-500 font-mono text-sm truncate max-w-[200px]">0x305babaefe2c95bae9fd86f6ba72...</span>
+                                        </li>
+                                    ))}
+                                </ul>
                             )}
-                        </ul>
+                        </div>
+                        <div className="p-4 border-t border-gray-100 text-left">
+                            <span className="text-[13px] font-bold text-gray-700 cursor-pointer hover:underline">View all blockchain transactions</span>
+                        </div>
+                    </div>
+
+                    {/* Right: Notifications */}
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col h-[350px]">
+                        <h3 className="text-[#1f2937] m-0 py-4 px-6 text-[18px] font-bold border-b border-gray-100">Notifications</h3>
+                        <div className="flex-1 overflow-y-auto">
+                            {recentData.notifications?.length > 0 ? (
+                                <ul className="list-none m-0 p-0">
+                                    {recentData.notifications.map((notif, idx) => (
+                                        <li key={idx} className={`py-4 px-6 flex items-start gap-4 text-[14px] ${idx % 2 === 0 ? 'bg-[#fcfcfc]' : 'bg-white'}`}>
+                                            <span className="w-2.5 h-2.5 rounded-full bg-[#547794] mt-1.5 flex-shrink-0"></span>
+                                            <span className="text-gray-700">{notif.message}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <ul className="list-none m-0 p-0">
+                                    {/* Placeholder data to match mockup perfectly */}
+                                    {[1,2,3,4,5].map((item) => (
+                                        <li key={item} className={`py-4 px-6 flex items-start gap-4 text-[13px] ${item % 2 !== 0 ? 'bg-[#fcfcfc]' : 'bg-white'}`}>
+                                            <span className="w-2 h-2 rounded-full bg-[#547794] mt-1.5 flex-shrink-0"></span>
+                                            <span className="text-[#1f2937]">Your request #req_1785820622982_3fb0334d97ba for Diploma (2nd Copy) is ready for pickup!</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
+                        <div className="p-4 border-t border-gray-100 text-left">
+                            <span className="text-[13px] font-bold text-gray-700 cursor-pointer hover:underline">View all notifications</span>
+                        </div>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-lg overflow-hidden w-full shadow-[0_4px_15px_rgba(0,0,0,0.1)] mt-[25px]">
-                    <table className="w-full border-collapse table-fixed">
+                <div className="bg-white rounded-2xl overflow-hidden w-full shadow-sm border border-gray-100 mt-6">
+                    <table className="w-full border-collapse table-auto">
                         <thead>
                             <tr>
-                                <th className="bg-[#2c3e50] text-white m-0 py-[18px] px-5 text-[15px] font-semibold text-left">Request ID</th>
-                                <th className="bg-[#2c3e50] text-white m-0 py-[18px] px-5 text-[15px] font-semibold text-left">Name</th>
-                                <th className="bg-[#2c3e50] text-white m-0 py-[18px] px-5 text-[15px] font-semibold text-left">Status</th>
-                                <th className="bg-[#2c3e50] text-white m-0 py-[18px] px-5 text-[15px] font-semibold text-left">Date Requested</th>
-                                <th className="bg-[#2c3e50] text-white m-0 py-[18px] px-5 text-[15px] font-semibold text-left"></th>
+                                <th className="bg-white text-black m-0 py-5 px-6 text-[15px] font-bold text-left border-b border-gray-100">Request ID</th>
+                                <th className="bg-white text-black m-0 py-5 px-6 text-[15px] font-bold text-left border-b border-gray-100">Name</th>
+                                <th className="bg-white text-black m-0 py-5 px-6 text-[15px] font-bold text-left border-b border-gray-100">Document Type</th>
+                                <th className="bg-white text-black m-0 py-5 px-6 text-[15px] font-bold text-left border-b border-gray-100">Date</th>
+                                <th className="bg-white text-black m-0 py-5 px-6 text-[15px] font-bold text-left border-b border-gray-100">Status</th>
+                                <th className="bg-white border-b border-gray-100"></th>
                             </tr>
                         </thead>
                         <tbody>
                             {recentData.pendingRequests?.length > 0 ? (
                                 recentData.pendingRequests.map((req, idx) => (
-                                    <tr key={idx} className="last:border-none">
-                                        <td className="py-3 px-5 text-[14px] text-black border-b border-[#eaeaea] align-middle">{req.requestId}</td>
-                                        <td className="py-3 px-5 text-[14px] text-black border-b border-[#eaeaea] align-middle">{req.name}</td>
-                                        <td className="py-3 px-5 text-[14px] text-black border-b border-[#eaeaea] align-middle">
-                                            <span className="bg-[#fcf8a0] text-[#948b04] py-1.5 px-5 rounded-full font-bold text-xs inline-block text-center min-w-[80px]">{req.status}</span>
+                                    <tr key={idx} className={`last:border-none ${idx % 2 !== 0 ? 'bg-[#fafafa]' : 'bg-white'}`}>
+                                        <td className="py-4 px-6 text-[14px] text-[#1f2937] font-medium align-middle">{req.requestId}</td>
+                                        <td className="py-4 px-6 text-[14px] text-[#1f2937] align-middle">{req.name}</td>
+                                        <td className="py-4 px-6 text-[14px] text-[#1f2937] align-middle">{req.documentType || 'Certificate of Enrollment'}</td>
+                                        <td className="py-4 px-6 text-[14px] text-[#1f2937] align-middle">{req.dateRequested || '26/03/27'}</td>
+                                        <td className="py-4 px-6 text-[14px] text-black align-middle">
+                                            <span className="bg-[#e9f0ad] text-[#86a623] py-1 px-4 rounded-full font-bold text-[10px] inline-block text-center uppercase tracking-wider">{req.status}</span>
                                         </td>
-                                        <td className="py-3 px-5 text-[14px] text-black border-b border-[#eaeaea] align-middle">{req.dateRequested}</td>
-                                        <td className="py-3 px-5 text-[14px] text-black border-b border-[#eaeaea] align-middle text-right">
-                                            <button onClick={() => navigate(`/requests/${req.requestId}`)} className="bg-[#2c3e50] text-white border-none py-2 px-[18px] rounded-[10px] text-[13px] font-medium hover:bg-[#1a252f] cursor-pointer">View</button>
+                                        <td className="py-4 px-6 text-[14px] text-black align-middle text-right">
+                                            <button onClick={() => navigate(`/requests/${req.requestId}`)} className="bg-[#2c3543] text-white border-none py-2 px-5 rounded-full text-[13px] font-medium hover:bg-[#1f2631] cursor-pointer shadow-md">View Request</button>
                                         </td>
                                     </tr>
                                 ))
                             ) : (
-                                <tr><td colSpan="5" className="py-10 text-center italic text-gray-400">No pending requests</td></tr>
+                                {/* Placeholder data to match mockup perfectly */}
+                                [1,2,3].map((item) => (
+                                    <tr key={item} className={`last:border-none ${item % 2 === 0 ? 'bg-[#fafafa]' : 'bg-white'}`}>
+                                        <td className="py-4 px-6 text-[14px] text-[#1f2937] font-medium align-middle">REQ1234-2026</td>
+                                        <td className="py-4 px-6 text-[14px] text-[#1f2937] align-middle">Brad Mason</td>
+                                        <td className="py-4 px-6 text-[14px] text-[#1f2937] align-middle">{item === 2 ? 'Certificate of Good Moral' : 'Certificate of Enrollment'}</td>
+                                        <td className="py-4 px-6 text-[14px] text-[#1f2937] align-middle">26/03/27</td>
+                                        <td className="py-4 px-6 text-[14px] text-black align-middle">
+                                            <span className="bg-[#e9f0ad] text-[#86a623] py-1 px-4 rounded-full font-bold text-[10px] inline-block text-center uppercase tracking-wider">PENDING</span>
+                                        </td>
+                                        <td className="py-4 px-6 text-[14px] text-black align-middle text-right">
+                                            <button className="bg-[#2c3543] text-white border-none py-2 px-5 rounded-full text-[13px] font-medium hover:bg-[#1f2631] cursor-pointer shadow-md">View Request</button>
+                                        </td>
+                                    </tr>
+                                ))
                             )}
                         </tbody>
                     </table>

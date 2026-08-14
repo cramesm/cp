@@ -34,61 +34,65 @@ const ProfileInfo = () => {
 
     return (
         <Layout>
-            <div className="p-10 bg-[#f8fafc] min-h-screen font-sans">
-                {/* Profile Card */}
-                <div className="max-w-[900px] mx-auto bg-white rounded-[20px] shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="p-8">
-                        <h3 className="text-[20px] font-semibold text-[#1D2D44] mb-8 px-4">
-                            Basic Information
-                        </h3>
+            <div className="max-w-[900px] mx-auto p-4 sm:p-6 lg:p-8 font-sans">
+                {/* Title Section */}
+                <div className="flex items-center gap-4 mb-6">
+                    <h2 className="text-[22px] font-bold text-[#374151] m-0 whitespace-nowrap">My Profile</h2>
+                    <div className="flex-1 h-px bg-gray-300"></div>
+                </div>
 
-                        <div className="flex flex-col md:flex-row items-center gap-12 px-4">
-                            {/* Avatar Section */}
-                            <div className="flex-shrink-0">
-                                <div className="w-48 h-48 rounded-full bg-[#1D2D44] flex items-center justify-center overflow-hidden border-4 border-white shadow-lg">
-                                    {user.profilePic ? (
-                                        <img src={user.profilePic.startsWith('http') ? user.profilePic : `http://localhost:5000${user.profilePic}`} alt="Profile" className="w-full h-full object-cover" />
-                                    ) : (
-                                        <User size={100} color="white" strokeWidth={1.5} />
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Details Grid */}
-                            <div className="flex-1 grid grid-cols-[150px_1fr] gap-y-6 text-[15px]">
-                                <span className="text-gray-500 font-medium">Name:</span>
-                                <span className="text-gray-800">{user.name}</span>
-
-                                <span className="text-gray-500 font-medium">Email:</span>
-                                <span className="text-gray-800 underline decoration-gray-200">{user.email}</span>
-
-                                <span className="text-gray-500 font-medium">Role:</span>
-                                <span className="text-[#1D2D44] font-bold uppercase tracking-wide text-xs">{user.role}</span>
-                            </div>
-                        </div>
-
-                        {/* Updated Edit Button to Navigate to Profile */}
-                        <div className="mt-10 flex justify-center border-t border-gray-50 pt-8">
-                            <button 
-                                onClick={() => navigate('/profile')} 
-                                className="flex items-center gap-2 bg-[#1D2D44] text-white px-8 py-2.5 rounded-full font-bold text-sm hover:bg-[#152030] transition-all shadow-md active:scale-95"
-                            >
-                                <Edit3 size={16} />
-                                Edit Profile
-                            </button>
-                        </div>
+                {/* Top Avatar Card */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 mb-6 flex items-center gap-6">
+                    <div className="w-24 h-24 rounded-full bg-black flex items-center justify-center overflow-hidden flex-shrink-0">
+                        {user.profilePic ? (
+                            <img src={user.profilePic.startsWith('http') ? user.profilePic : `http://localhost:5000${user.profilePic}`} alt="Profile" className="w-full h-full object-cover" />
+                        ) : (
+                            <User size={48} color="white" />
+                        )}
+                    </div>
+                    <div>
+                        <h3 className="text-[28px] font-bold text-[#1f2937] m-0 leading-tight">{user.name || 'Registrar Name'}</h3>
+                        <p className="text-[14px] text-gray-500 m-0 mt-1 capitalize">{user.role || 'Super Admin'}</p>
                     </div>
                 </div>
 
-                {/* Bottom Logout Button */}
-                <div className="max-w-[900px] mx-auto mt-8 flex justify-end px-4">
-                    <button 
-                        onClick={handleLogout}
-                        className="flex items-center gap-2 bg-[#1D2D44] text-white px-10 py-2.5 rounded-xl font-bold text-sm hover:bg-red-700 transition-all shadow-lg active:scale-95"
-                    >
-                        <LogOut size={18} />
-                        Logout
-                    </button>
+                {/* Personal Information Card */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+                    <div className="p-6">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-[20px] font-bold text-[#374151] m-0">Personal Information</h3>
+                            <button 
+                                onClick={() => navigate('/profile')} 
+                                className="bg-[#2c3543] text-white px-8 py-2 rounded-lg font-bold text-sm hover:bg-[#1f2631] transition-colors shadow-md cursor-pointer border-none"
+                            >
+                                Edit
+                            </button>
+                        </div>
+                        <div className="h-px bg-gray-200 w-full mb-6"></div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-8 gap-x-4">
+                            <div>
+                                <p className="text-[12px] font-bold text-gray-500 m-0 mb-1">Firstname</p>
+                                <p className="text-[16px] font-bold text-[#1f2937] m-0">{user.name ? user.name.split(' ')[0] : 'Registrar'}</p>
+                            </div>
+                            <div>
+                                <p className="text-[12px] font-bold text-gray-500 m-0 mb-1">Lastname</p>
+                                <p className="text-[16px] font-bold text-[#1f2937] m-0">{user.name ? user.name.split(' ').slice(1).join(' ') || 'Name' : 'Lastname'}</p>
+                            </div>
+                            <div>
+                                <p className="text-[12px] font-bold text-gray-500 m-0 mb-1">Employee ID</p>
+                                <p className="text-[16px] font-bold text-[#1f2937] m-0">ID-123456</p>
+                            </div>
+                            <div className="lg:col-span-2">
+                                <p className="text-[12px] font-bold text-gray-500 m-0 mb-1">Email Address</p>
+                                <p className="text-[16px] font-bold text-[#1f2937] m-0">{user.email || 'registrarname@sample.com'}</p>
+                            </div>
+                            <div>
+                                <p className="text-[12px] font-bold text-gray-500 m-0 mb-1">User Role</p>
+                                <p className="text-[16px] font-bold text-[#1f2937] m-0 capitalize">{user.role || 'Super Admin'}</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </Layout>

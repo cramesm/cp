@@ -148,20 +148,22 @@ const Layout = ({ children }) => {
                 ></div>
             )}
 
-            <aside className={`fixed top-0 left-0 min-h-screen bg-[#2f3947] border-r border-[#1a232f] flex flex-col z-[1000] shadow-2xl sidebar transition-all duration-300 
+            <aside className={`fixed top-0 left-0 min-h-screen bg-[#2c3543] flex flex-col z-[1000] shadow-2xl sidebar transition-all duration-300 
                 ${isMobileOpen ? 'translate-x-0 w-[260px]' : '-translate-x-full md:translate-x-0'} 
                 ${isCollapsed ? 'md:w-[80px]' : 'md:w-[260px]'}
             `}>
-                <div className={`h-[72px] bg-[#f4f6f8] flex items-center justify-center border-b border-[#d9d9d9] overflow-hidden transition-all duration-300 ${isCollapsed ? 'px-2' : 'px-6'}`}>
+                {/* White Logo Container */}
+                <div className={`h-[120px] bg-white flex items-center justify-center overflow-hidden transition-all duration-300 rounded-br-2xl ${isCollapsed ? 'px-2' : 'px-6'}`}>
                     {isCollapsed ? (
-                        <div className="w-[48px] h-[48px] rounded-xl bg-[#2f3947] flex items-center justify-center flex-shrink-0 shadow-sm transition-all duration-300">
+                        <div className="w-[48px] h-[48px] rounded-xl bg-[#2c3543] flex items-center justify-center flex-shrink-0 shadow-sm transition-all duration-300">
                             <span className="text-white font-bold text-xl tracking-tight">V</span>
                         </div>
                     ) : (
                         <img
-                            src="/assets/verifitorlogo.png"
+                            src="/assets/verifitor_logo.png"
                             alt="Verifitor"
-                            className="h-[46px] object-contain transition-all duration-300"
+                            className="w-full max-w-[180px] object-contain transition-all duration-300"
+                            onError={(e) => { e.target.src = '../../assets/verifitor_logo.png' }}
                         />
                     )}
                 </div>
@@ -180,23 +182,16 @@ const Layout = ({ children }) => {
                                         }
                                     }}
                                     className={({ isActive }) =>
-                                        `relative flex items-center z-10 ${isCollapsed ? 'justify-center mx-1 px-0 py-3.5' : 'gap-4 px-4 py-3.5'} rounded-xl transition-colors duration-200 ${
+                                        `relative flex items-center z-10 ${isCollapsed ? 'justify-center mx-1 px-0 py-3.5' : 'gap-4 px-4 py-3.5'} transition-colors duration-200 ${
                                             isActive
-                                                ? 'text-[#1f1f1f] font-semibold'
-                                                : 'text-[#9ba4b5] hover:text-white hover:bg-[#3a4555]'
+                                                ? 'text-white font-bold border-l-4 border-white bg-[#374151]'
+                                                : 'text-[#9ba4b5] hover:text-white border-l-4 border-transparent hover:bg-[#374151]'
                                         }`
                                     }
                                 >
                                     {({ isActive }) => (
                                         <>
-                                            {isActive && (
-                                                <motion.div
-                                                    layoutId="activeTab"
-                                                    className="absolute inset-0 bg-[#f1f1f1] rounded-xl -z-10 shadow-sm"
-                                                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                                                />
-                                            )}
-                                            <i className={`${item.icon} ${isCollapsed ? 'text-[18px]' : 'text-[16px]'} transition-all duration-300 ${isActive ? 'text-[#1f1f1f]' : ''}`}></i>
+                                            <i className={`${item.icon} ${isCollapsed ? 'text-[18px]' : 'text-[16px]'} transition-all duration-300 ${isActive ? 'text-white' : ''}`}></i>
                                             {!isCollapsed && <span className="text-[15px] tracking-wide transition-opacity duration-300">{item.label}</span>}
                                         </>
                                     )}
@@ -205,21 +200,33 @@ const Layout = ({ children }) => {
                         ))}
                     </ul>
                 </nav>
+
+                {/* Logout Button */}
+                <div className="p-4 mt-auto">
+                    <button 
+                        onClick={handleLogout}
+                        className={`w-full bg-white text-[#2c3543] py-2.5 rounded-xl font-bold flex justify-center items-center gap-2 hover:bg-gray-100 transition-colors ${isCollapsed ? 'px-0' : 'px-4'}`}
+                        title={isCollapsed ? "Logout" : ""}
+                    >
+                        <i className="fa-solid fa-arrow-right-from-bracket text-lg"></i>
+                        {!isCollapsed && <span className="text-[15px]">Logout</span>}
+                    </button>
+                </div>
             </aside>
 
             <div className={`flex flex-col w-full ${isCollapsed ? 'md:ml-[80px] md:w-[calc(100%-80px)]' : 'md:ml-[260px] md:w-[calc(100%-260px)]'} transition-all duration-300 main-content`}>
-                <header className="flex items-center justify-between px-8 bg-[#6f8faa]/95 backdrop-blur-md sticky top-0 z-[990] h-[72px] border-b border-[#5a7c98] top-nav shadow-sm">
-                    <div className="flex items-center gap-6">
+                <header className="flex items-center justify-between px-8 bg-[#547794] m-4 rounded-xl sticky top-4 z-[990] h-[72px] shadow-sm">
+                    <div className="flex items-center gap-4">
                         <button
                             onClick={handleToggle}
-                            className="text-white hover:bg-[#5a7c98] p-2.5 rounded-xl transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-white/50 flex items-center justify-center"
+                            className="text-white hover:bg-white/20 p-2.5 rounded-xl transition-all cursor-pointer focus:outline-none flex items-center justify-center"
                             title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
                             aria-label={isCollapsed ? "Expand sidebar navigation" : "Collapse sidebar navigation"}
                             aria-expanded={!isCollapsed}
                         >
-                            <i className={`fa-solid ${isCollapsed ? 'fa-bars-staggered' : 'fa-outdent'} text-lg`}></i>
+                            <i className="fa-solid fa-angles-left text-2xl"></i>
                         </button>
-                        <h2 className="text-white text-[22px] font-bold m-0 tracking-tight">
+                        <h2 className="text-white text-[24px] font-normal m-0 tracking-wide">
                             {getPageTitle()}
                         </h2>
                     </div>
@@ -228,33 +235,38 @@ const Layout = ({ children }) => {
                         <button
                             type="button"
                             onClick={() => navigate('/notifications')}
-                            className="text-white hover:opacity-80 text-[20px] transition-opacity relative"
+                            className="text-white hover:text-gray-200 text-[22px] transition-colors relative"
                             aria-label="View notifications"
                         >
-                            <i className="fa-regular fa-bell"></i>
-                            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#6f8faa]"></span>
+                            <i className="fa-solid fa-bell"></i>
+                            <span className="absolute -top-1.5 -right-1.5 w-4 h-4 flex items-center justify-center bg-red-600 text-white text-[10px] font-bold rounded-full border-2 border-[#547794]">4</span>
                         </button>
 
-                        <button
-                            type="button"
-                            onClick={toggleMenu}
-                            className="flex items-center justify-center w-10 h-10 rounded-full bg-[#f4f6f8] text-[#2f3947] text-[20px] hover:bg-white transition-all shadow-sm"
-                            aria-label="User menu"
-                            aria-expanded={menuOpen}
-                            aria-haspopup="true"
-                        >
-                            <i className="fa-solid fa-circle-user"></i>
-                        </button>
+                        <div className="flex items-center gap-3 cursor-pointer" onClick={toggleMenu}>
+                            <button
+                                type="button"
+                                className="flex items-center justify-center w-10 h-10 rounded-full bg-white text-[#547794] text-[20px] transition-all shadow-sm overflow-hidden"
+                                aria-label="User menu"
+                                aria-expanded={menuOpen}
+                                aria-haspopup="true"
+                            >
+                                <i className="fa-solid fa-user"></i>
+                            </button>
+                            <div className="hidden md:flex flex-col text-left">
+                                <span className="text-white text-sm font-semibold m-0 leading-tight">Registrar Name</span>
+                                <span className="text-white/80 text-[11px] m-0 leading-tight lowercase">{userRole.replace(' ', '')}name@sample.com</span>
+                            </div>
+                        </div>
 
                         <div
-                            className={`absolute right-0 top-[56px] bg-white shadow-soft border border-slate-100 rounded-2xl flex-col min-w-[200px] z-[10000] overflow-hidden transition-all duration-200 origin-top-right ${
+                            className={`absolute right-0 top-[56px] bg-white shadow-lg border border-slate-100 rounded-xl flex-col min-w-[200px] z-[10000] overflow-hidden transition-all duration-200 origin-top-right ${
                                 menuOpen ? 'flex opacity-100 scale-100' : 'hidden opacity-0 scale-95'
                             }`}
                             role="menu"
                         >
                             <div className="px-5 py-3 border-b border-slate-100 bg-slate-50">
-                                <p className="text-sm font-bold text-slate-800 capitalize">{userRole}</p>
-                                <p className="text-xs text-slate-500">verifitor.com</p>
+                                <p className="text-sm font-bold text-slate-800 capitalize">Registrar Name</p>
+                                <p className="text-xs text-slate-500 capitalize">{userRole}</p>
                             </div>
                             
                             <NavLink
