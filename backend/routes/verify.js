@@ -24,7 +24,13 @@ router.get('/:hash', async (req, res) => {
         if (request) {
             // Check for blockchain record
             const blockchainTx = await BlockchainTransaction.findOne({ 
-                studentIDNumber: request.studentId 
+                $or: [
+                    { studentIDNumber: request.studentId },
+                    { 
+                        nameOfStudent: request.name,
+                        typeOfDocument: request.documentType || request.document_type || 'Document'
+                    }
+                ]
             }).sort({ createdAt: -1 });
 
             return res.json({
@@ -50,7 +56,13 @@ router.get('/:hash', async (req, res) => {
         const tor = await TOR.findOne({ torId: hash });
         if (tor) {
             const blockchainTx = await BlockchainTransaction.findOne({ 
-                studentIDNumber: tor.studentId 
+                $or: [
+                    { studentIDNumber: tor.studentId },
+                    { 
+                        nameOfStudent: tor.studentName,
+                        typeOfDocument: 'Transcript of Records'
+                    }
+                ]
             }).sort({ createdAt: -1 });
 
             return res.json({
@@ -76,7 +88,13 @@ router.get('/:hash', async (req, res) => {
         const diploma = await Diploma.findOne({ diplomaId: hash });
         if (diploma) {
             const blockchainTx = await BlockchainTransaction.findOne({ 
-                studentIDNumber: diploma.studentId 
+                $or: [
+                    { studentIDNumber: diploma.studentId },
+                    { 
+                        nameOfStudent: diploma.studentName,
+                        typeOfDocument: 'Diploma'
+                    }
+                ]
             }).sort({ createdAt: -1 });
 
             return res.json({
@@ -107,7 +125,13 @@ router.get('/:hash', async (req, res) => {
         });
         if (doc) {
             const blockchainTx = await BlockchainTransaction.findOne({ 
-                studentIDNumber: doc.studentId 
+                $or: [
+                    { studentIDNumber: doc.studentId },
+                    { 
+                        nameOfStudent: doc.studentName,
+                        typeOfDocument: doc.documentType
+                    }
+                ]
             }).sort({ createdAt: -1 });
 
             return res.json({
