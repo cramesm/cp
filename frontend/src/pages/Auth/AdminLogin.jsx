@@ -2,15 +2,18 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../../api';
 
+// Import local assets
+import loginImage from '../../assets/Verifitor Image Login.png';
+import smallLogo from '../../assets/logo-verifitor.png';
+
 const AdminLogin = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
-    const [isLoading, setIsLoading] = useState(false); // To handle loading state
+    const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
 
-    // --- NEW: Input Validation Logic ---
     const validateForm = () => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
@@ -28,25 +31,21 @@ const AdminLogin = () => {
         e.preventDefault();
         setError('');
 
-        if (!validateForm()) return; // Trigger Validation
+        if (!validateForm()) return;
 
         setIsLoading(true);
         try {
             const response = await api.post('/auth/login', { email, password });
             if (response.data.success || response.data.token) {
-                // --- NEW: Security & Authorization (JWT) ---
-                // Storing the token marks "Security & Authorization" as achieved on frontend
                 localStorage.setItem('token', response.data.token);
                 localStorage.setItem('adminUser', JSON.stringify(response.data.user));
 
-                // --- Role-based Sidebar Check ---
                 if (response.data.user && response.data.user.role) {
                     localStorage.setItem('userRole', response.data.user.role);
                 }
                 navigate('/dashboard');
             }
         } catch (err) {
-            // --- NEW: Better Output/Error Messages ---
             const message = err.response?.data?.message || 'Invalid credentials. Please try again.';
             setError(message);
         } finally {
@@ -55,108 +54,147 @@ const AdminLogin = () => {
     };
 
     return (
-        <div className="font-sans bg-[#f2f2f2] m-0 p-0 bg-[url('/assets/verifitor_bgimage.png')] bg-cover bg-center bg-no-repeat h-screen flex items-center justify-center">
-            <div className="w-[400px] p-[60px] bg-white shadow-[0_0_10px_rgba(0,0,0,0.1)] rounded-[20px]">
-                <img src="/assets/verifitorlogo.png" className="block mx-auto mb-5 w-[200px] h-auto" alt="Verifitor Logo" />
+        <div className="min-h-screen flex font-sans bg-[#F5F6F8]">
+            {/* Left Column - Branding */}
+            <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between bg-[#385b7c] bg-[url('/assets/verifitor_bgimage.png')] bg-cover bg-center overflow-hidden">
+                {/* Logo Icon Top Left */}
+                <div className="p-8 z-10 relative">
+                    <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg overflow-hidden p-1">
+                        <img src="/assets/verifitorlogo.png" className="w-full h-full object-contain scale-150 object-left" alt="Icon" />
+                    </div>
+                </div>
 
-                <form onSubmit={handleLogin}>
-                    <label htmlFor="email" className="block mb-2.5 text-black font-bold text-center">Login to your Account</label>
+                {/* Hero Text */}
+                <div className="px-12 z-10 pt-4 pb-8 relative">
+                    <h1 className="text-white text-[42px] font-extrabold leading-[1.2] tracking-wide shadow-sm">
+                        INNOVATION IN EVERY<br />CREDENTIALS
+                    </h1>
+                </div>
 
-                    {/* Error Box */}
-                    {error && (
-                        <div className="bg-red-50 border border-red-200 text-red-600 px-3 py-2 rounded-md text-xs mb-4 flex items-center gap-2" role="alert">
-                            <i className="fa-solid fa-circle-exclamation"></i>
-                            {error}
+                {/* Illustration/Image */}
+                <div className="flex-grow flex items-end justify-center px-12 z-10 relative">
+                    <img 
+                        src={loginImage} 
+                        alt="Verifitor Platform Preview" 
+                        className="max-w-[90%] h-auto object-contain drop-shadow-2xl translate-y-4"
+                    />
+                </div>
+                
+                {/* Optional dark overlay to improve text readability if needed */}
+                <div className="absolute inset-0 bg-[#213448] bg-opacity-40"></div>
+            </div>
+
+            {/* Right Column - Login Form */}
+            <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-8 sm:p-12 bg-[#f8f9fa]">
+                <div className="w-full max-w-[440px]">
+                    
+                    {/* Logo Header */}
+                    <div className="mb-10 flex justify-center">
+                        <img src="/assets/verifitorlogo.png" alt="Verifitor Logo" className="h-[70px] object-contain drop-shadow-sm" />
+                    </div>
+
+                    {/* Welcome Text */}
+                    <div className="text-center mb-10">
+                        <h2 className="text-[32px] font-black text-[#223345] mb-3 tracking-wide">WELCOME!</h2>
+                        <p className="text-[#6c757d] text-[13px] font-medium">Enter your email and password to access your account</p>
+                    </div>
+
+                    <form onSubmit={handleLogin} className="space-y-6">
+                        {error && (
+                            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm flex items-center gap-2" role="alert">
+                                <i className="fa-solid fa-circle-exclamation shrink-0"></i>
+                                {error}
+                            </div>
+                        )}
+
+                        <div className="space-y-5">
+                            <div className="relative">
+                                <input
+                                    id="login-email"
+                                    type="email"
+                                    placeholder="Enter your email"
+                                    className="w-full px-4 py-3.5 bg-white border border-[#dee2e6] rounded-lg text-sm text-[#495057] placeholder-[#adb5bd] focus:outline-none focus:border-[#213448] focus:ring-1 focus:ring-[#213448] transition-all shadow-sm"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    disabled={isLoading}
+                                    autoComplete="email"
+                                />
+                            </div>
+
+                            <div>
+                                <div className="relative">
+                                    <input
+                                        id="login-password"
+                                        type={showPassword ? 'text' : 'password'}
+                                        placeholder="Enter your password"
+                                        className="w-full px-4 py-3.5 bg-white border border-[#dee2e6] rounded-lg text-sm text-[#495057] placeholder-[#adb5bd] focus:outline-none focus:border-[#213448] focus:ring-1 focus:ring-[#213448] transition-all shadow-sm pr-12"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        disabled={isLoading}
+                                        autoComplete="current-password"
+                                    />
+                                    <button
+                                        type="button"
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-[#adb5bd] hover:text-[#495057] transition-colors focus:outline-none"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                    >
+                                        <i className={`fa-solid ${showPassword ? 'fa-eye' : 'fa-eye-slash'} text-lg`}></i>
+                                    </button>
+                                </div>
+                                <div className="mt-2 text-right">
+                                    <Link to="/forgot-password" className="text-[12px] text-[#73A9D4] hover:text-[#213448] hover:underline font-medium transition-colors">
+                                        Forgot Password?
+                                    </Link>
+                                </div>
+                            </div>
                         </div>
-                    )}
 
-                    <div className="mb-[15px]">
-                        <label htmlFor="login-email" className="sr-only">Email Address</label>
-                        <input
-                            id="login-email"
-                            type="email"
-                            placeholder="Email"
-                            className="w-full p-2.5 border border-[#ccc] rounded-[10px] shadow-[0_0_20px_rgba(0,0,0,0.1)] focus:outline-none focus:border-[#213448] text-sm"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            disabled={isLoading}
-                            autoComplete="email"
-                        />
-                    </div>
-
-                    <div className="relative w-full mb-[15px]">
-                        <label htmlFor="login-password" className="sr-only">Password</label>
-                        <input
-                            id="login-password"
-                            type={showPassword ? 'text' : 'password'}
-                            placeholder="Password"
-                            className="w-full p-2.5 border border-[#ccc] rounded-[10px] shadow-[0_0_20px_rgba(0,0,0,0.1)] focus:outline-none focus:border-[#213448] text-sm"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            disabled={isLoading}
-                            autoComplete="current-password"
-                        />
                         <button
-                            type="button"
-                            className="absolute right-[15px] top-1/2 -translate-y-1/2 text-[#777] text-sm hover:text-[#333] bg-transparent border-none cursor-pointer p-0"
-                            onClick={() => setShowPassword(!showPassword)}
-                            aria-label={showPassword ? 'Hide password' : 'Show password'}
+                            type="submit"
+                            disabled={isLoading}
+                            className={`w-full py-4 mt-2 bg-[#213448] text-white rounded-lg font-bold text-[15px] tracking-wide transition-all shadow-md flex justify-center items-center gap-2 ${isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-[#152230] hover:shadow-lg hover:-translate-y-0.5'}`}
                         >
-                            <i className={`fa-solid ${showPassword ? 'fa-eye' : 'fa-eye-slash'}`}></i>
+                            {isLoading ? (
+                                <>
+                                    <i className="fa-solid fa-spinner animate-spin"></i>
+                                    Logging in...
+                                </>
+                            ) : 'LOGIN'}
                         </button>
+                    </form>
+
+                    {/* Account Hints */}
+                    <div className="mt-10 pt-6 border-t border-gray-200">
+                        <p className="text-[10px] text-[#adb5bd] text-center mb-3 uppercase tracking-widest font-bold">Demo Accounts</p>
+                        
+                        <div className="flex gap-3">
+                            <div
+                                className="flex-1 bg-white border border-[#e9ecef] rounded-lg p-3 cursor-pointer hover:border-blue-300 hover:shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                onClick={() => { setEmail('admin@verifitor.com'); setPassword('admin123'); }}
+                                role="button"
+                                tabIndex={0}
+                            >
+                                <p className="text-[11px] font-bold text-[#343a40] mb-1 flex items-center gap-1.5">
+                                    <i className="fa-solid fa-user-tie text-blue-500"></i> Registrar
+                                </p>
+                                <p className="text-[10px] text-[#6c757d] m-0 truncate">admin@verifitor.com</p>
+                            </div>
+
+                            <div
+                                className="flex-1 bg-white border border-[#e9ecef] rounded-lg p-3 cursor-pointer hover:border-amber-300 hover:shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-amber-400"
+                                onClick={() => { setEmail('sysadmin@verifitor.com'); setPassword('sysadmin123'); }}
+                                role="button"
+                                tabIndex={0}
+                            >
+                                <p className="text-[11px] font-bold text-[#343a40] mb-1 flex items-center gap-1.5">
+                                    <i className="fa-solid fa-shield-halved text-amber-500"></i> Super Admin
+                                </p>
+                                <p className="text-[10px] text-[#6c757d] m-0 truncate">sysadmin@verifitor.com</p>
+                            </div>
+                        </div>
                     </div>
 
-                    <Link to="/forgot-password" size="xs" className="text-right block text-[10px] text-[#73A9D4] no-underline mb-4 hover:underline">Forgot Password?</Link>
-
-                    <button
-                        type="submit"
-                        disabled={isLoading}
-                        className={`w-full p-2.5 bg-[#213448] text-white border-none rounded-[10px] cursor-pointer text-base transition-all flex justify-center items-center gap-2 ${isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-[#1a2735]'}`}
-                    >
-                        {isLoading ? (
-                            <>
-                                <i className="fa-solid fa-spinner animate-spin"></i>
-                                Authenticating...
-                            </>
-                        ) : 'Login'}
-                    </button>
-                </form>
-
-                {/* Account Hints */}
-                <div className="mt-5 pt-4 border-t border-gray-200">
-                    <p className="text-[10px] text-gray-400 text-center mb-2 uppercase tracking-wider font-semibold">Demo Accounts</p>
-
-                    <div
-                        className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 mb-2 cursor-pointer hover:bg-blue-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
-                        onClick={() => { setEmail('admin@verifitor.com'); setPassword('admin123'); }}
-                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setEmail('admin@verifitor.com'); setPassword('admin123'); } }}
-                        title="Click to auto-fill"
-                        role="button"
-                        tabIndex={0}
-                        aria-label="Auto-fill Registrar Admin demo credentials"
-                    >
-                        <p className="text-[11px] font-semibold text-blue-800 mb-0.5 flex items-center gap-1.5">
-                            <i className="fa-solid fa-user-tie text-[10px]"></i> Registrar (Admin)
-                        </p>
-                        <p className="text-[10px] text-blue-600 m-0">admin@verifitor.com / admin123</p>
-                    </div>
-
-                    <div
-                        className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 cursor-pointer hover:bg-amber-100 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400"
-                        onClick={() => { setEmail('sysadmin@verifitor.com'); setPassword('sysadmin123'); }}
-                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setEmail('sysadmin@verifitor.com'); setPassword('sysadmin123'); } }}
-                        title="Click to auto-fill"
-                        role="button"
-                        tabIndex={0}
-                        aria-label="Auto-fill Super Admin demo credentials"
-                    >
-                        <p className="text-[11px] font-semibold text-amber-800 mb-0.5 flex items-center gap-1.5">
-                            <i className="fa-solid fa-shield-halved text-[10px]"></i> Super Admin
-                        </p>
-                        <p className="text-[10px] text-amber-600 m-0">sysadmin@verifitor.com / sysadmin123</p>
-                    </div>
-
-                    <p className="text-[9px] text-gray-400 text-center mt-2 italic">Click a card to auto-fill credentials</p>
                 </div>
             </div>
         </div>
@@ -164,3 +202,4 @@ const AdminLogin = () => {
 };
 
 export default AdminLogin;
+
