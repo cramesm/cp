@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import api from '../../api';
 
 // Import local assets
-import loginImage from '../../assets/Verifitor Image Login.png';
+import loginImage from '../../assets/verifitor-login.png';
 import smallLogo from '../../assets/logo-verifitor.png';
 
 const AdminLogin = () => {
