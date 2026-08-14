@@ -87,7 +87,7 @@ const Validation = () => {
                       {/* Student Card */}
                       <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 hover:shadow-md transition-shadow">
                         <div className="flex justify-between items-center mb-8">
-                          <h2 className="text-xl font-bold text-gray-700">{verificationData?.blockchainRecord?.ownerType === 'Alumni' ? 'Alumni Information' : 'Student Information'}</h2>
+                          <h2 className="text-xl font-bold text-gray-700">{verificationData?.ownerType === 'Alumni' ? 'Alumni Information' : 'Student Information'}</h2>
                           <span className="flex items-center bg-green-50 text-green-600 px-4 py-1.5 rounded-full text-sm font-semibold border border-green-100">
                             <CheckCircle className="w-4 h-4 mr-2" /> Verified
                           </span>
@@ -95,9 +95,9 @@ const Validation = () => {
                         <div className="space-y-5">
                           {[
                             ["Request ID", verificationData?.requestId],
-                            [verificationData?.blockchainRecord?.ownerType === 'Alumni' ? "Alumni Name" : "Student Name", verificationData?.ownerName],
-                            [verificationData?.blockchainRecord?.ownerType === 'Alumni' ? "Alumni ID" : "Student ID", verificationData?.blockchainRecord?.idNumber || 'N/A'],
-                            ...(verificationData?.blockchainRecord?.ownerType === 'Alumni' 
+                            [verificationData?.ownerType === 'Alumni' ? "Alumni Name" : "Student Name", verificationData?.ownerName],
+                            [verificationData?.ownerType === 'Alumni' ? "Alumni ID" : "Student ID", verificationData?.blockchainRecord?.idNumber || 'N/A'],
+                            ...(verificationData?.ownerType === 'Alumni' 
                               ? [["Year Graduated", verificationData?.blockchainRecord?.yearGraduated || 'N/A']]
                               : [
                                   ["Course", verificationData?.blockchainRecord?.course || 'N/A'],

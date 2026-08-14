@@ -6,6 +6,7 @@ const BlockchainTransaction = require('../blockchain_essentials/modelBC/blockcha
 const TOR = require('../models/TOR');
 const Diploma = require('../models/Diploma');
 const Document = require('../models/Document');
+const Student = require('../models/Users/Student');
 
 // @route   GET /api/verify/:hash
 // @desc    Verify a document by its hash
@@ -33,11 +34,18 @@ router.get('/:hash', async (req, res) => {
                 ]
             }).sort({ createdAt: -1 });
 
+            let ownerType = 'Student';
+            if (request.studentId) {
+                const student = await Student.findOne({ studentId: request.studentId });
+                if (student && student.role === 'alumni') ownerType = 'Alumni';
+            }
+
             return res.json({
                 success: true,
                 data: {
                     requestId: request.requestId,
                     ownerName: request.name,
+                    ownerType: ownerType,
                     status: request.status,
                     documentType: request.documentType || 'Document',
                     issuedDate: request.updatedAt,
@@ -70,11 +78,18 @@ router.get('/:hash', async (req, res) => {
                 ]
             }).sort({ createdAt: -1 });
 
+            let ownerType = 'Student';
+            if (tor.studentId) {
+                const student = await Student.findOne({ studentId: tor.studentId });
+                if (student && student.role === 'alumni') ownerType = 'Alumni';
+            }
+
             return res.json({
                 success: true,
                 data: {
                     requestId: tor.torId,
                     ownerName: tor.studentName,
+                    ownerType: ownerType,
                     status: tor.status === 'Finalized' ? 'Released' : tor.status,
                     documentType: 'Transcript of Records',
                     issuedDate: tor.updatedAt,
@@ -107,11 +122,18 @@ router.get('/:hash', async (req, res) => {
                 ]
             }).sort({ createdAt: -1 });
 
+            let ownerType = 'Student';
+            if (diploma.studentId) {
+                const student = await Student.findOne({ studentId: diploma.studentId });
+                if (student && student.role === 'alumni') ownerType = 'Alumni';
+            }
+
             return res.json({
                 success: true,
                 data: {
                     requestId: diploma.diplomaId,
                     ownerName: diploma.studentName,
+                    ownerType: ownerType,
                     status: diploma.status === 'Finalized' ? 'Released' : diploma.status,
                     documentType: 'Diploma',
                     issuedDate: diploma.updatedAt,
@@ -149,11 +171,18 @@ router.get('/:hash', async (req, res) => {
                 ]
             }).sort({ createdAt: -1 });
 
+            let ownerType = 'Student';
+            if (doc.studentId) {
+                const student = await Student.findOne({ studentId: doc.studentId });
+                if (student && student.role === 'alumni') ownerType = 'Alumni';
+            }
+
             return res.json({
                 success: true,
                 data: {
                     requestId: doc.documentId,
                     ownerName: doc.studentName,
+                    ownerType: ownerType,
                     status: doc.status === 'Finalized' ? 'Released' : doc.status,
                     documentType: doc.documentType,
                     issuedDate: doc.updatedAt,
