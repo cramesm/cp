@@ -65,21 +65,21 @@ const AdminLogin = () => {
             </div>
 
             {/* Right Column - Login Form */}
-            <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-8 sm:p-12 bg-[#f4f7f6]">
-                <div className="w-full max-w-[440px]">
+            <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-8 sm:p-12 bg-[#F2F2F2]">
+                <div className="w-full max-w-[400px]">
                     
-                    {/* Logo Header - using the new logo */}
+                    {/* Logo Header */}
                     <div className="mb-10 flex justify-center">
-                        <img src={smallLogo} alt="Verifitor Logo" className="h-[90px] object-contain drop-shadow-sm" />
+                        <img src={smallLogo} alt="Verifitor Logo" className="h-[100px] object-contain drop-shadow-md" />
                     </div>
 
                     {/* Welcome Text */}
-                    <div className="text-center mb-10">
-                        <h2 className="text-[32px] font-black text-[#223345] mb-3 tracking-wide">WELCOME!</h2>
-                        <p className="text-[#6c757d] text-[13px] font-medium">Enter your email and password to access your account</p>
+                    <div className="text-center mb-8">
+                        <h2 className="text-[36px] font-black text-[#000000] mb-2 tracking-wide">WELCOME!</h2>
+                        <p className="text-[#333333] text-[13px] font-normal">Enter your email and password to access your account</p>
                     </div>
 
-                    <form onSubmit={handleLogin} className="space-y-6">
+                    <form onSubmit={handleLogin} className="space-y-5">
                         {error && (
                             <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm flex items-center gap-2" role="alert">
                                 <i className="fa-solid fa-circle-exclamation shrink-0"></i>
@@ -87,13 +87,13 @@ const AdminLogin = () => {
                             </div>
                         )}
 
-                        <div className="space-y-5">
+                        <div className="space-y-6">
                             <div className="relative">
                                 <input
                                     id="login-email"
                                     type="email"
                                     placeholder="Enter your email"
-                                    className="w-full px-4 py-3.5 bg-white border border-[#dee2e6] rounded-lg text-sm text-[#495057] placeholder-[#adb5bd] focus:outline-none focus:border-[#213448] focus:ring-1 focus:ring-[#213448] transition-all shadow-sm"
+                                    className="w-full px-4 py-3.5 bg-white border border-gray-300 rounded-md text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-[#213448] shadow-sm"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     disabled={isLoading}
@@ -107,7 +107,7 @@ const AdminLogin = () => {
                                         id="login-password"
                                         type={showPassword ? 'text' : 'password'}
                                         placeholder="Enter your password"
-                                        className="w-full px-4 py-3.5 bg-white border border-[#dee2e6] rounded-lg text-sm text-[#495057] placeholder-[#adb5bd] focus:outline-none focus:border-[#213448] focus:ring-1 focus:ring-[#213448] transition-all shadow-sm pr-12"
+                                        className="w-full px-4 py-3.5 bg-white border border-gray-300 rounded-md text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-[#213448] shadow-sm pr-12"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         disabled={isLoading}
@@ -115,7 +115,7 @@ const AdminLogin = () => {
                                     />
                                     <button
                                         type="button"
-                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-[#adb5bd] hover:text-[#495057] transition-colors focus:outline-none"
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors focus:outline-none"
                                         onClick={() => setShowPassword(!showPassword)}
                                         aria-label={showPassword ? 'Hide password' : 'Show password'}
                                     >
@@ -123,58 +123,28 @@ const AdminLogin = () => {
                                     </button>
                                 </div>
                                 <div className="mt-2 text-right">
-                                    <Link to="/forgot-password" className="text-[12px] text-[#73A9D4] hover:text-[#213448] hover:underline font-medium transition-colors">
+                                    <Link to="/forgot-password" className="text-[12px] text-[#73A9D4] hover:text-[#528ebf] font-normal transition-colors">
                                         Forgot Password?
                                     </Link>
                                 </div>
                             </div>
                         </div>
 
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            className={`w-full py-4 mt-2 bg-[#213448] text-white rounded-lg font-bold text-[15px] tracking-wide transition-all shadow-md flex justify-center items-center gap-2 ${isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-[#152230] hover:shadow-lg hover:-translate-y-0.5'}`}
-                        >
-                            {isLoading ? (
-                                <>
-                                    <i className="fa-solid fa-spinner animate-spin"></i>
-                                    Logging in...
-                                </>
-                            ) : 'LOGIN'}
-                        </button>
-                    </form>
-
-                    {/* Account Hints - Restored */}
-                    <div className="mt-10 pt-6 border-t border-gray-200">
-                        <p className="text-[10px] text-[#adb5bd] text-center mb-3 uppercase tracking-widest font-bold">Demo Accounts</p>
-                        
-                        <div className="flex gap-3">
-                            <div
-                                className="flex-1 bg-white border border-[#e9ecef] rounded-lg p-3 cursor-pointer hover:border-blue-300 hover:shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-400"
-                                onClick={() => { setEmail('admin@verifitor.com'); setPassword('admin123'); }}
-                                role="button"
-                                tabIndex={0}
+                        <div className="flex justify-center mt-8">
+                            <button
+                                type="submit"
+                                disabled={isLoading}
+                                className={`w-3/5 py-3 bg-[#243547] text-white rounded-md font-bold text-[16px] tracking-wide shadow-md flex justify-center items-center gap-2 ${isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-[#1a2634] transition-colors'}`}
                             >
-                                <p className="text-[11px] font-bold text-[#343a40] mb-1 flex items-center gap-1.5">
-                                    <i className="fa-solid fa-user-tie text-blue-500"></i> Registrar
-                                </p>
-                                <p className="text-[10px] text-[#6c757d] m-0 truncate">admin@verifitor.com</p>
-                            </div>
-
-                            <div
-                                className="flex-1 bg-white border border-[#e9ecef] rounded-lg p-3 cursor-pointer hover:border-amber-300 hover:shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-amber-400"
-                                onClick={() => { setEmail('sysadmin@verifitor.com'); setPassword('sysadmin123'); }}
-                                role="button"
-                                tabIndex={0}
-                            >
-                                <p className="text-[11px] font-bold text-[#343a40] mb-1 flex items-center gap-1.5">
-                                    <i className="fa-solid fa-shield-halved text-amber-500"></i> Super Admin
-                                </p>
-                                <p className="text-[10px] text-[#6c757d] m-0 truncate">sysadmin@verifitor.com</p>
-                            </div>
+                                {isLoading ? (
+                                    <>
+                                        <i className="fa-solid fa-spinner animate-spin"></i>
+                                        Logging in...
+                                    </>
+                                ) : 'LOGIN'}
+                            </button>
                         </div>
-                    </div>
-
+                    </form>
                 </div>
             </div>
         </div>
