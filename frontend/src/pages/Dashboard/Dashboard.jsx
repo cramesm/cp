@@ -137,7 +137,7 @@ const Dashboard = () => {
 
                     {/* Card 6 */}
                     <div 
-                        onClick={() => navigate('/blockchain')}
+                        onClick={() => navigate('/blockchain/my-transactions')}
                         className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[110px] relative cursor-pointer hover:shadow-md transition-shadow"
                     >
                         <div className="flex justify-between items-start w-full">
@@ -174,7 +174,7 @@ const Dashboard = () => {
                             )}
                         </div>
                         <div className="p-4 border-t border-gray-100 text-left">
-                            <span onClick={() => navigate('/blockchain')} className="text-[13px] font-bold text-gray-700 cursor-pointer hover:underline">View all blockchain transactions</span>
+                            <span onClick={() => navigate('/blockchain/my-transactions')} className="text-[13px] font-bold text-gray-700 cursor-pointer hover:underline">View all blockchain transactions</span>
                         </div>
                     </div>
 
