@@ -26,7 +26,7 @@ const Transactions = () => {
   // Filter States
   const [searchTerm, setSearchTerm] = useState('');
   const [filterPaymentMode, setFilterPaymentMode] = useState('All Modes');
-  const [filterStatus, setFilterStatus] = useState('All Status');
+  const [filterStatus, setFilterStatus] = useState(searchParams.get('status') || 'All Status');
   const [filterUserRole, setFilterUserRole] = useState('All');
   const [filterProgram, setFilterProgram] = useState('All');
   const [filterUserStatus, setFilterUserStatus] = useState('All');
@@ -97,6 +97,15 @@ const Transactions = () => {
     fetchTransactions();
     fetchRefunds();
   }, []);
+
+  // Update active tab and filter status if URL changes
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab) setActiveTab(tab);
+    
+    const status = searchParams.get('status');
+    if (status) setFilterStatus(status);
+  }, [searchParams]);
 
   const triggerToast = (message, type = 'info') => {
     setToast({ show: true, message, type });

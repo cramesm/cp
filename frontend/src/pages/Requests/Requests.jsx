@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { SlidersHorizontal, ArrowDownAZ, ArrowUpZA } from 'lucide-react';
 import Layout from '../../components/Layout';
 import FilterDrawer from '../../components/FilterDrawer';
@@ -12,7 +12,11 @@ const Requests = () => {
     
     // Filter States
     const [searchTerm, setSearchTerm] = useState('');
-    const [filterStatus, setFilterStatus] = useState('All Status');
+    const location = useLocation();
+    const queryParams = new URLSearchParams(location.search);
+    const initialStatus = queryParams.get('status') || 'All Status';
+
+    const [filterStatus, setFilterStatus] = useState(initialStatus);
     const [filterType, setFilterType] = useState('All Document');
     const [filterUserRole, setFilterUserRole] = useState('All');
     const [filterProgram, setFilterProgram] = useState('All');
@@ -25,6 +29,15 @@ const Requests = () => {
     const [sortConfig, setSortConfig] = useState({ key: 'dateRequested', direction: 'desc' });
 
     const navigate = useNavigate();
+
+    // Update filter if URL changes
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const status = params.get('status');
+        if (status) {
+            setFilterStatus(status);
+        }
+    }, [location.search]);
 
     useEffect(() => {
         const fetchRequests = async () => {

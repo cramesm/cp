@@ -84,7 +84,7 @@ const Dashboard = () => {
 
                     {/* Card 2 */}
                     <div 
-                        onClick={() => navigate('/requests')}
+                        onClick={() => navigate('/requests?status=Pending')}
                         className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[110px] relative cursor-pointer hover:shadow-md transition-shadow"
                     >
                         {(stats.pendingRequests > 0 || true) && (
@@ -101,7 +101,7 @@ const Dashboard = () => {
 
                     {/* Card 3 */}
                     <div 
-                        onClick={() => navigate('/requests')}
+                        onClick={() => navigate('/requests?status=In Process')}
                         className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[110px] relative cursor-pointer hover:shadow-md transition-shadow"
                     >
                         <div className="flex justify-between items-start w-full">
@@ -113,7 +113,7 @@ const Dashboard = () => {
 
                     {/* Card 4 */}
                     <div 
-                        onClick={() => navigate('/transactions?tab=refunds')}
+                        onClick={() => navigate('/transactions?tab=refunds&status=Pending')}
                         className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[110px] relative cursor-pointer hover:shadow-md transition-shadow"
                     >
                         <div className="flex justify-between items-start w-full">
@@ -125,7 +125,7 @@ const Dashboard = () => {
 
                     {/* Card 5 */}
                     <div 
-                        onClick={() => navigate('/requests')}
+                        onClick={() => navigate('/requests?status=Released')}
                         className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[110px] relative cursor-pointer hover:shadow-md transition-shadow"
                     >
                         <div className="flex justify-between items-start w-full">
