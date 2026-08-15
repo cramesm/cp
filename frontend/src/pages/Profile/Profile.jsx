@@ -11,6 +11,8 @@ const Profile = () => {
     // User Information State
     const [user, setUser] = useState({
         name: '',
+        firstname: '',
+        lastname: '',
         email: '',
         role: ''
     });
@@ -76,8 +78,12 @@ const Profile = () => {
         const fetchProfile = async () => {
             try {
                 const res = await api.get('/auth/profile');
+                const fullName = res.data.name || '';
+                const parts = fullName.split(' ');
                 setUser({
-                    name: res.data.name || '',
+                    name: fullName,
+                    firstname: parts[0] || '',
+                    lastname: parts.slice(1).join(' ') || '',
                     email: res.data.email || '',
                     role: res.data.role || ''
                 });
@@ -91,8 +97,9 @@ const Profile = () => {
     }, []);
 
     const handleUpdateProfile = () => {
-        if (!user.name || !user.name.trim()) {
-            triggerToast("Name is required", "error");
+        const fullName = `${user.firstname} ${user.lastname}`.trim();
+        if (!fullName) {
+            triggerToast("Firstname and Lastname are required", "error");
             return;
         }
 
@@ -104,8 +111,14 @@ const Profile = () => {
             onConfirm: async () => {
                 setSaving(true);
                 try {
-                    await api.put('/auth/profile', { name: user.name });
-                    localStorage.setItem('adminUser', JSON.stringify(user));
+                    const res = await api.put('/auth/profile', { name: fullName });
+                    const updatedUser = res.data;
+                    
+                    // We must merge it into the existing adminUser to not lose token and other frontend-only fields
+                    const currentAdmin = JSON.parse(localStorage.getItem('adminUser') || '{}');
+                    localStorage.setItem('adminUser', JSON.stringify({ ...currentAdmin, ...updatedUser }));
+                    
+                    window.dispatchEvent(new Event('profileUpdated'));
                     triggerToast("Profile details updated successfully!", "success");
                 } catch (err) {
                     triggerToast(err.response?.data?.message || 'Failed to update profile.', "error");
@@ -196,7 +209,8 @@ const Profile = () => {
                                     <input 
                                         type="text" 
                                         name="firstname" 
-                                        defaultValue={user.name ? user.name.split(' ')[0] : 'Registrar'} 
+                                        value={user.firstname}
+                                        onChange={handleProfileChange}
                                         className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-[14px] outline-none focus:border-[#2c3543] focus:ring-1 focus:ring-[#2c3543] transition-all bg-white" 
                                     />
                                 </div>
@@ -205,7 +219,8 @@ const Profile = () => {
                                     <input 
                                         type="text" 
                                         name="lastname" 
-                                        defaultValue={user.name ? user.name.split(' ').slice(1).join(' ') || 'Name' : 'Name'} 
+                                        value={user.lastname}
+                                        onChange={handleProfileChange}
                                         className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-[14px] outline-none focus:border-[#2c3543] focus:ring-1 focus:ring-[#2c3543] transition-all bg-white" 
                                     />
                                 </div>

@@ -98,8 +98,6 @@ const Layout = ({ children }) => {
     };
 
     const userRole = localStorage.getItem('userRole') || '';
-    const adminUserStr = localStorage.getItem('adminUser');
-    const adminUser = adminUserStr ? JSON.parse(adminUserStr) : {};
 
     const menuItems = [
         { path: '/dashboard', label: 'Dashboard', icon: 'fa-solid fa-table-cells-large' },
@@ -130,6 +128,20 @@ const Layout = ({ children }) => {
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
+    }, []);
+
+    const [adminUser, setAdminUser] = useState(() => {
+        const adminUserStr = localStorage.getItem('adminUser');
+        return adminUserStr ? JSON.parse(adminUserStr) : {};
+    });
+
+    useEffect(() => {
+        const handleProfileUpdate = () => {
+            const adminUserStr = localStorage.getItem('adminUser');
+            setAdminUser(adminUserStr ? JSON.parse(adminUserStr) : {});
+        };
+        window.addEventListener('profileUpdated', handleProfileUpdate);
+        return () => window.removeEventListener('profileUpdated', handleProfileUpdate);
     }, []);
 
     useEffect(() => {
