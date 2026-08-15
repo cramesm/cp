@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import Breadcrumb from './Breadcrumb';
 import verifitorLogo from '../assets/verifitor_logo.png';
 import verifitorIcon from '../assets/logo-verifitor.png';
+import api from '../api';
 
 const getInitials = (name) => {
     if (!name) return 'U';
@@ -20,6 +21,7 @@ const Layout = ({ children }) => {
         return localStorage.getItem('sidebarCollapsed') === 'true';
     });
     const [isMobileOpen, setIsMobileOpen] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(0);
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -156,6 +158,20 @@ const Layout = ({ children }) => {
     useEffect(() => {
         setIsMobileOpen(false);
         setMenuOpen(false);
+
+        // Fetch unread notifications
+        const fetchUnreadCount = async () => {
+            try {
+                const res = await api.get('/notifications');
+                if (res.data) {
+                    const unread = res.data.filter(n => !n.isRead).length;
+                    setUnreadCount(unread);
+                }
+            } catch (err) {
+                console.error("Error fetching notifications for topbar", err);
+            }
+        };
+        fetchUnreadCount();
     }, [location.pathname]);
 
     return (
@@ -263,7 +279,11 @@ const Layout = ({ children }) => {
                             aria-label="View notifications"
                         >
                             <i className="fa-solid fa-bell"></i>
-                            <span className="absolute -top-1.5 -right-1.5 w-4 h-4 flex items-center justify-center bg-red-600 text-white text-[10px] font-bold rounded-full border-2 border-[#547794]">4</span>
+                            {unreadCount > 0 && (
+                                <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 flex items-center justify-center bg-red-600 text-white text-[10px] font-bold rounded-full border-2 border-[#547794]">
+                                    {unreadCount}
+                                </span>
+                            )}
                         </button>
 
                         <div className="flex items-center gap-3 cursor-pointer" onClick={toggleMenu}>
