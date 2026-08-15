@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Breadcrumb from './Breadcrumb';
+import verifitorLogo from '../assets/verifitor_logo.png';
+import verifitorIcon from '../assets/logo-verifitor.png';
 
 const Layout = ({ children }) => {
     const [menuOpen, setMenuOpen] = useState(false);
@@ -95,7 +97,9 @@ const Layout = ({ children }) => {
         }
     };
 
-    const userRole = localStorage.getItem('userRole');
+    const userRole = localStorage.getItem('userRole') || '';
+    const adminUserStr = localStorage.getItem('adminUser');
+    const adminUser = adminUserStr ? JSON.parse(adminUserStr) : {};
 
     const menuItems = [
         { path: '/dashboard', label: 'Dashboard', icon: 'fa-solid fa-table-cells-large' },
@@ -155,15 +159,14 @@ const Layout = ({ children }) => {
                 {/* White Logo Container */}
                 <div className={`h-[120px] bg-white flex items-center justify-center overflow-hidden transition-all duration-300 rounded-br-2xl ${isCollapsed ? 'px-2' : 'px-6'}`}>
                     {isCollapsed ? (
-                        <div className="w-[48px] h-[48px] rounded-xl bg-[#2c3543] flex items-center justify-center flex-shrink-0 shadow-sm transition-all duration-300">
-                            <span className="text-white font-bold text-xl tracking-tight">V</span>
+                        <div className="w-[48px] h-[48px] flex items-center justify-center flex-shrink-0 transition-all duration-300">
+                            <img src={verifitorIcon} alt="Verifitor Icon" className="w-full h-full object-contain" />
                         </div>
                     ) : (
                         <img
-                            src="/assets/verifitor_logo.png"
+                            src={verifitorLogo}
                             alt="Verifitor"
                             className="w-full max-w-[180px] object-contain transition-all duration-300"
-                            onError={(e) => { e.target.src = '../../assets/verifitor_logo.png' }}
                         />
                     )}
                 </div>
@@ -250,11 +253,15 @@ const Layout = ({ children }) => {
                                 aria-expanded={menuOpen}
                                 aria-haspopup="true"
                             >
-                                <i className="fa-solid fa-user"></i>
+                                {adminUser.profilePic ? (
+                                    <img src={adminUser.profilePic.startsWith('http') ? adminUser.profilePic : `http://localhost:5000${adminUser.profilePic}`} alt="Profile" className="w-full h-full object-cover" />
+                                ) : (
+                                    <i className="fa-solid fa-user"></i>
+                                )}
                             </button>
                             <div className="hidden md:flex flex-col text-left">
-                                <span className="text-white text-sm font-semibold m-0 leading-tight">Registrar Name</span>
-                                <span className="text-white/80 text-[11px] m-0 leading-tight lowercase">{userRole.replace(' ', '')}name@sample.com</span>
+                                <span className="text-white text-sm font-semibold m-0 leading-tight">{adminUser.name || 'Registrar Name'}</span>
+                                <span className="text-white/80 text-[11px] m-0 leading-tight lowercase">{adminUser.email || `${userRole.replace(' ', '')}name@sample.com`}</span>
                             </div>
                         </div>
 
@@ -265,8 +272,8 @@ const Layout = ({ children }) => {
                             role="menu"
                         >
                             <div className="px-5 py-3 border-b border-slate-100 bg-slate-50">
-                                <p className="text-sm font-bold text-slate-800 capitalize">Registrar Name</p>
-                                <p className="text-xs text-slate-500 capitalize">{userRole}</p>
+                                <p className="text-sm font-bold text-slate-800 capitalize">{adminUser.name || 'Registrar Name'}</p>
+                                <p className="text-xs text-slate-500 capitalize">{userRole || 'Super Admin'}</p>
                             </div>
                             
                             <NavLink
