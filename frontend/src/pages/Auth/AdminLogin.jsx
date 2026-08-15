@@ -54,7 +54,7 @@ const AdminLogin = () => {
     };
 
     return (
-        <div className="min-h-screen flex font-sans bg-[#F5F6F8]">
+        <div className="h-screen overflow-hidden flex font-sans bg-[#F5F6F8]">
             {/* Left Column - Branding (Entirely from the provided image) */}
             <div className="hidden lg:flex lg:w-1/2 relative p-4">
                 <img 
@@ -65,12 +65,12 @@ const AdminLogin = () => {
             </div>
 
             {/* Right Column - Login Form */}
-            <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-6 sm:p-8 bg-[#F2F2F2]">
+            <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-6 sm:p-8 bg-[#F2F2F2] overflow-y-auto">
                 <div className="w-full max-w-[400px]">
                     
                     {/* Logo Header - Made much bigger to match mockup */}
                     <div className="mb-6 flex justify-center">
-                        <img src={smallLogo} alt="Verifitor Logo" className="w-[95%] max-w-[400px] object-contain drop-shadow-md" />
+                        <img src={smallLogo} alt="Verifitor Logo" className="w-[85%] max-w-[320px] max-h-[140px] object-contain drop-shadow-md" />
                     </div>
 
                     {/* Welcome Text */}
