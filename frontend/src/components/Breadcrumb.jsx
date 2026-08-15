@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 const labelMap = {
     'dashboard': 'Dashboard',
@@ -45,12 +45,9 @@ const Breadcrumb = () => {
                         {crumb.isLast ? (
                             <span className="text-gray-800 font-semibold">{crumb.label}</span>
                         ) : (
-                            <Link 
-                                to={crumb.path} 
-                                className="text-[#6f8faa] hover:text-[#2f3947] transition-colors no-underline hover:underline"
-                            >
+                            <span className="text-[#6f8faa]">
                                 {crumb.label}
-                            </Link>
+                            </span>
                         )}
                     </li>
                 ))}
