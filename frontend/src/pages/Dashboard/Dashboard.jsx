@@ -173,9 +173,6 @@ const Dashboard = () => {
                                 </ul>
                             )}
                         </div>
-                        <div className="p-4 border-t border-gray-100 text-left">
-                            <span onClick={() => navigate('/blockchain/my-transactions')} className="text-[13px] font-bold text-gray-700 cursor-pointer hover:underline">View all blockchain transactions</span>
-                        </div>
                     </div>
 
                     {/* Right: Notifications */}
@@ -201,9 +198,6 @@ const Dashboard = () => {
                                     ))}
                                 </ul>
                             )}
-                        </div>
-                        <div className="p-4 border-t border-gray-100 text-left">
-                            <span onClick={() => navigate('/notifications')} className="text-[13px] font-bold text-gray-700 cursor-pointer hover:underline">View all notifications</span>
                         </div>
                     </div>
                 </div>
