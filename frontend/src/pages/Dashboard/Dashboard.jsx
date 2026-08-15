@@ -152,7 +152,6 @@ const Dashboard = () => {
                                 </ul>
                             ) : (
                                 <ul className="list-none m-0 p-0">
-                                    {/* Placeholder data for matching mockup perfectly since there might not be real data yet */}
                                     {[1,2,3,4,5].map((item) => (
                                         <li key={item} className={`py-4 px-6 flex items-center justify-between text-[14px] ${item % 2 !== 0 ? 'bg-[#fafafa]' : 'bg-white'}`}>
                                             <span className="text-gray-600 font-medium">TXN-1786296589063-932</span>
@@ -182,7 +181,6 @@ const Dashboard = () => {
                                 </ul>
                             ) : (
                                 <ul className="list-none m-0 p-0">
-                                    {/* Placeholder data to match mockup perfectly */}
                                     {[1,2,3,4,5].map((item) => (
                                         <li key={item} className={`py-4 px-6 flex items-start gap-4 text-[13px] ${item % 2 !== 0 ? 'bg-[#fcfcfc]' : 'bg-white'}`}>
                                             <span className="w-2 h-2 rounded-full bg-[#547794] mt-1.5 flex-shrink-0"></span>
@@ -227,7 +225,6 @@ const Dashboard = () => {
                                     </tr>
                                 ))
                             ) : (
-                                {/* Placeholder data to match mockup perfectly */}
                                 [1,2,3].map((item) => (
                                     <tr key={item} className={`last:border-none ${item % 2 === 0 ? 'bg-[#fafafa]' : 'bg-white'}`}>
                                         <td className="py-4 px-6 text-[14px] text-[#1f2937] font-medium align-middle">REQ1234-2026</td>
