@@ -71,7 +71,10 @@ const Dashboard = () => {
                 <div className={`grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 transition-opacity ${loading ? 'opacity-50' : 'opacity-100'}`}>
                     
                     {/* Card 1 */}
-                    <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[110px] relative">
+                    <div 
+                        onClick={() => navigate('/requests')}
+                        className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[110px] relative cursor-pointer hover:shadow-md transition-shadow"
+                    >
                         <div className="flex justify-between items-start w-full">
                             <span className="text-[13px] font-bold text-[#1f2937]">Total Requests</span>
                             <i className="fa-solid fa-arrow-up-right-from-square text-gray-400 text-xs p-1 border border-gray-200 rounded-full"></i>
@@ -97,7 +100,10 @@ const Dashboard = () => {
                     </div>
 
                     {/* Card 3 */}
-                    <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[110px] relative">
+                    <div 
+                        onClick={() => navigate('/requests')}
+                        className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[110px] relative cursor-pointer hover:shadow-md transition-shadow"
+                    >
                         <div className="flex justify-between items-start w-full">
                             <span className="text-[13px] font-bold text-[#1f2937]">In Process Requests</span>
                             <i className="fa-solid fa-arrow-up-right-from-square text-gray-400 text-xs p-1 border border-gray-200 rounded-full"></i>
@@ -118,7 +124,10 @@ const Dashboard = () => {
                     </div>
 
                     {/* Card 5 */}
-                    <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[110px] relative">
+                    <div 
+                        onClick={() => navigate('/requests')}
+                        className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[110px] relative cursor-pointer hover:shadow-md transition-shadow"
+                    >
                         <div className="flex justify-between items-start w-full">
                             <span className="text-[13px] font-bold text-[#1f2937]">Released Document</span>
                             <i className="fa-solid fa-arrow-up-right-from-square text-gray-400 text-xs p-1 border border-gray-200 rounded-full"></i>
@@ -127,7 +136,10 @@ const Dashboard = () => {
                     </div>
 
                     {/* Card 6 */}
-                    <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[110px] relative">
+                    <div 
+                        onClick={() => navigate('/blockchain')}
+                        className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[110px] relative cursor-pointer hover:shadow-md transition-shadow"
+                    >
                         <div className="flex justify-between items-start w-full">
                             <span className="text-[13px] font-bold text-[#1f2937]">Blockchain Submission</span>
                             <i className="fa-solid fa-arrow-up-right-from-square text-gray-400 text-xs p-1 border border-gray-200 rounded-full"></i>
@@ -162,7 +174,7 @@ const Dashboard = () => {
                             )}
                         </div>
                         <div className="p-4 border-t border-gray-100 text-left">
-                            <span className="text-[13px] font-bold text-gray-700 cursor-pointer hover:underline">View all blockchain transactions</span>
+                            <span onClick={() => navigate('/blockchain')} className="text-[13px] font-bold text-gray-700 cursor-pointer hover:underline">View all blockchain transactions</span>
                         </div>
                     </div>
 
@@ -191,7 +203,7 @@ const Dashboard = () => {
                             )}
                         </div>
                         <div className="p-4 border-t border-gray-100 text-left">
-                            <span className="text-[13px] font-bold text-gray-700 cursor-pointer hover:underline">View all notifications</span>
+                            <span onClick={() => navigate('/notifications')} className="text-[13px] font-bold text-gray-700 cursor-pointer hover:underline">View all notifications</span>
                         </div>
                     </div>
                 </div>

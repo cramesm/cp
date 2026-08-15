@@ -125,9 +125,9 @@ const TransactionDetails = () => {
                     <p className="text-sm text-gray-400 mt-1">Transaction ID: {id}</p>
                     <button
                         onClick={() => navigate('/transactions')}
-                        className="mt-6 bg-[#1D2D44] text-white px-6 py-2 rounded-full font-bold text-xs hover:bg-[#152030] transition-all uppercase tracking-widest"
+                        className="flex items-center gap-2 text-slate-700 hover:text-blue-600 hover:bg-white font-bold bg-slate-100 px-4 py-2 mt-6 rounded-xl border border-slate-200 shadow-sm transition-all text-sm w-fit"
                     >
-                        Back to Transactions
+                        <ArrowLeft size={16} /> Back to Transactions
                     </button>
                 </div>
             </Layout>
@@ -188,9 +188,9 @@ const TransactionDetails = () => {
                     </div>
                     <button
                         onClick={() => navigate('/transactions')}
-                        className="flex items-center gap-2 bg-[#1D2D44] text-white px-6 py-2 rounded-full font-bold text-xs hover:bg-[#152030] transition-all uppercase tracking-widest shadow-md"
+                        className="flex items-center gap-2 text-slate-700 hover:text-blue-600 hover:bg-white font-bold bg-slate-100 px-4 py-2 rounded-xl border border-slate-200 shadow-sm transition-all text-sm w-fit"
                     >
-                        <ArrowLeft size={14} /> Back to List
+                        <ArrowLeft size={16} /> Back to Transactions
                     </button>
                 </div>
 

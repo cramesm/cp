@@ -120,8 +120,8 @@ const TORDetails = () => {
                 <div className="flex flex-col items-center justify-center h-[60vh] text-gray-400">
                     <AlertCircle className="w-12 h-12 mb-3" />
                     <p className="font-medium">TOR record not found</p>
-                    <button onClick={() => navigate('/tor')} className="mt-4 text-sm text-[#6f8faa] hover:underline">
-                        ← Back to TOR Management
+                    <button onClick={() => navigate('/tor')} className="flex items-center gap-2 text-slate-700 hover:text-blue-600 hover:bg-white font-bold bg-slate-100 px-4 py-2 mt-6 rounded-xl border border-slate-200 shadow-sm transition-all text-sm w-fit">
+                        <ArrowLeft size={16} /> Back to TOR Management
                     </button>
                 </div>
             </Layout>
@@ -144,10 +144,9 @@ const TORDetails = () => {
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                     <button
                         onClick={() => navigate('/tor')}
-                        className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 transition-colors"
+                        className="flex items-center gap-2 text-slate-700 hover:text-blue-600 hover:bg-white font-bold bg-slate-100 px-4 py-2 mt-6 rounded-xl border border-slate-200 shadow-sm transition-all text-sm w-fit"
                     >
-                        <ArrowLeft className="w-4 h-4" />
-                        Back to TOR Management
+                        <ArrowLeft size={16} /> Back to TOR Management
                     </button>
                     <div className="flex items-center gap-3">
                         {tor.status === 'Draft' && (

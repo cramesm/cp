@@ -113,7 +113,7 @@ function MyTransactions() {
             <div className="p-6 bg-[#F8F9FA] min-h-screen font-sans">
                 <button
                     onClick={() => navigate('/blockchain')}
-                    className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 mb-4 transition"
+                    className="flex items-center gap-2 text-slate-700 hover:text-blue-600 hover:bg-white font-bold bg-slate-100 px-4 py-2 rounded-xl border border-slate-200 shadow-sm transition-all text-sm w-fit mb-4"
                 >
                     <i className="fa-solid fa-arrow-left text-xs"></i>
                     Back to Blockchain
