@@ -5,6 +5,15 @@ import Breadcrumb from './Breadcrumb';
 import verifitorLogo from '../assets/verifitor_logo.png';
 import verifitorIcon from '../assets/logo-verifitor.png';
 
+const getInitials = (name) => {
+    if (!name) return 'U';
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+        return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+};
+
 const Layout = ({ children }) => {
     const [menuOpen, setMenuOpen] = useState(false);
     const [isCollapsed, setIsCollapsed] = useState(() => {
@@ -268,7 +277,7 @@ const Layout = ({ children }) => {
                                 {adminUser.profilePic ? (
                                     <img src={adminUser.profilePic.startsWith('http') ? adminUser.profilePic : `http://localhost:5000${adminUser.profilePic}`} alt="Profile" className="w-full h-full object-cover" />
                                 ) : (
-                                    <i className="fa-solid fa-user"></i>
+                                    <span className="text-[16px] font-bold text-[#547794] tracking-wide">{getInitials(adminUser.name || 'Registrar Name')}</span>
                                 )}
                             </button>
                             <div className="hidden md:flex flex-col text-left">
