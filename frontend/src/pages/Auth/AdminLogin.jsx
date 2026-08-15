@@ -65,16 +65,16 @@ const AdminLogin = () => {
             </div>
 
             {/* Right Column - Login Form */}
-            <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-8 sm:p-12 bg-[#F2F2F2]">
+            <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-6 sm:p-8 bg-[#F2F2F2]">
                 <div className="w-full max-w-[400px]">
                     
                     {/* Logo Header - Made much bigger to match mockup */}
-                    <div className="mb-12 flex justify-center">
+                    <div className="mb-6 flex justify-center">
                         <img src={smallLogo} alt="Verifitor Logo" className="w-[95%] max-w-[400px] object-contain drop-shadow-md" />
                     </div>
 
                     {/* Welcome Text */}
-                    <div className="text-center mb-8">
+                    <div className="text-center mb-6">
                         <h2 className="text-[36px] font-black text-[#000000] mb-2 tracking-wide">WELCOME!</h2>
                         <p className="text-[#333333] text-[13px] font-normal">Enter your email and password to access your account</p>
                     </div>
@@ -130,7 +130,7 @@ const AdminLogin = () => {
                             </div>
                         </div>
 
-                        <div className="flex justify-center mt-8">
+                        <div className="flex justify-center mt-6">
                             <button
                                 type="submit"
                                 disabled={isLoading}
@@ -147,7 +147,7 @@ const AdminLogin = () => {
                     </form>
 
                     {/* Account Hints - Restored */}
-                    <div className="mt-12 pt-6 border-t border-gray-300">
+                    <div className="mt-8 pt-5 border-t border-gray-300">
                         <p className="text-[10px] text-gray-500 text-center mb-3 uppercase tracking-widest font-bold">Demo Accounts</p>
                         
                         <div className="flex gap-3">
