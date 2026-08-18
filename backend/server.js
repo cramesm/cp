@@ -41,7 +41,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // Handle preflight requests natively
+app.options(/.*/, cors(corsOptions)); // Handle preflight requests natively (Express 5 safe)
 app.use(express.json());
 
 // Request logger
