@@ -5,6 +5,7 @@ const cors = require('cors');
 const path = require('path');
 const mongoose = require('mongoose');
 const helmet = require('helmet');
+const auditLoggerMiddleware = require('./middleware/auditLoggerMiddleware');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -26,7 +27,9 @@ app.use(helmet({
     },
   },
   crossOriginEmbedderPolicy: false, 
-  crossOriginOpenerPolicy: { policy: "same-origin" }
+  crossOriginOpenerPolicy: { policy: "same-origin" },
+  frameguard: { action: 'sameorigin' },
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' }
 }));
 
 // Allow CORS dynamically for all Vercel environments
@@ -34,10 +37,11 @@ const corsOptions = {
   origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'ngrok-skip-browser-warning']
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Accept', 'Content-Type', 'Authorization']
 };
 
 app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // Handle preflight requests natively
 app.use(express.json());
 
 // Request logger
@@ -45,6 +49,9 @@ app.use((req, res, next) => {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
     next();
 });
+
+// Custom Audit Logger (saves to MongoDB)
+app.use(auditLoggerMiddleware);
 
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

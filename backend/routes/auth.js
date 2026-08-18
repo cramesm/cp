@@ -3,6 +3,8 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const { protect } = require('../middleware/authMiddleware');
+const { validate, registerValidation, loginValidation, updateProfileValidation } = require('../middleware/validationMiddleware');
+const { registerLimiter, loginProgressiveLimiter } = require('../middleware/rateLimiterMiddleware');
 
 const Student = require('../models/Users/Student');
 const Alumni = require('../models/Users/Alumni');
@@ -33,7 +35,7 @@ const generateToken = (user) => {
 
 // @route   POST /api/auth/register
 // @desc    Register a new student/alumni
-router.post('/register', async (req, res) => {
+router.post('/register', registerLimiter, registerValidation, validate, async (req, res) => {
   try {
     const { firstName, lastName, email, password, role, studentId, course, yearLevel, phoneNumber } = req.body;
 
@@ -93,7 +95,7 @@ router.post('/register', async (req, res) => {
 
 // @route   POST /api/auth/login
 // @desc    Authenticate user and get token
-router.post('/login', async (req, res) => {
+router.post('/login', loginProgressiveLimiter, loginValidation, validate, async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -327,7 +329,7 @@ router.get('/profile', protect, async (req, res) => {
   }
 });
 
-router.put('/profile', protect, async (req, res) => {
+router.put('/profile', protect, updateProfileValidation, validate, async (req, res) => {
   try {
     const { name, firstName, lastName, profilePic, course, yearLevel, phoneNumber } = req.body;
     
