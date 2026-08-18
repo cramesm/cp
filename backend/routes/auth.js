@@ -127,7 +127,7 @@ router.post('/login', async (req, res) => {
     }
 
     // Check account status
-    if (user.status === 'Inactive') {
+    if (user.status && ['inactive', 'stopped'].includes(user.status.toLowerCase())) {
       return res.status(403).json({ success: false, message: 'Account is currently inactive. Please contact an administrator.' });
     }
 

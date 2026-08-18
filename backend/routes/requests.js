@@ -40,33 +40,14 @@ const enrichRequestWithStudentData = async (reqObj) => {
 };
 
 // Get all requests (Filtered for students/alumni if authenticated, unfiltered for staff/admin)
-router.get('/', async (req, res) => {
+router.get('/', protect, async (req, res) => {
   try {
     let query = {};
     
-    // Check if an Authorization header is provided for smart role-based filtering
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-      const jwt = require('jsonwebtoken');
-      const token = req.headers.authorization.split(' ')[1];
-      try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'supersecretverifitor123');
-        if (decoded.role === 'student' || decoded.role === 'alumni') {
-          let userName = decoded.name;
-          if (!userName || userName === 'User') {
-            const Student = require('../models/Users/Student');
-            const Alumni = require('../models/Users/Alumni');
-            let student = await Student.findById(decoded.id);
-            if (!student) student = await Alumni.findById(decoded.id);
-            if (student) {
-              userName = `${student.firstName || ''} ${student.lastName || ''}`.trim();
-            }
-          }
-          if (userName) {
-            query = { name: userName };
-          }
-        }
-      } catch (err) {
-        console.error('Failed to parse token in GET /requests:', err);
+    // Apply smart role-based filtering since we now require authentication
+    if (req.user && (req.user.role === 'student' || req.user.role === 'alumni')) {
+      if (req.user.name && req.user.name !== 'User') {
+        query = { name: req.user.name };
       }
     }
 
