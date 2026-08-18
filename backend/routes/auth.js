@@ -151,6 +151,12 @@ router.post('/login', loginProgressiveLimiter, loginValidation, validate, async 
       details: `${user.role} logged into the system`
     });
 
+    // Clear the progressive rate limiter on success
+    const LoginLockout = require('../models/LoginLockout');
+    if (req.clientIp) {
+      await LoginLockout.deleteOne({ ip: req.clientIp });
+    }
+
     res.json({
       success: true,
       message: 'Logged in successfully',
