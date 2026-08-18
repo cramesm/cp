@@ -79,7 +79,7 @@ const Dashboard = () => {
                             <span className="text-[13px] font-bold text-[#1f2937]">Total Requests</span>
                             <i className="fa-solid fa-arrow-up-right-from-square text-gray-400 text-xs p-1 border border-gray-200 rounded-full"></i>
                         </div>
-                        <span className="text-[32px] font-normal text-black mt-2 leading-none">{stats.totalRequests || 50}</span>
+                        <span className="text-[32px] font-normal text-black mt-2 leading-none">{stats.totalRequests ?? 0}</span>
                     </div>
 
                     {/* Card 2 */}
@@ -87,16 +87,16 @@ const Dashboard = () => {
                         onClick={() => navigate('/requests?status=Pending')}
                         className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between min-h-[110px] relative cursor-pointer hover:shadow-md transition-shadow"
                     >
-                        {(stats.pendingRequests > 0 || true) && (
+                        {(stats.pendingRequests > 0) && (
                             <span className="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full shadow-sm">
-                                {stats.pendingRequests || 6}
+                                {stats.pendingRequests}
                             </span>
                         )}
                         <div className="flex justify-between items-start w-full">
                             <span className="text-[13px] font-bold text-[#1f2937]">Pending Requests</span>
                             <i className="fa-solid fa-arrow-up-right-from-square text-gray-400 text-xs p-1 border border-gray-200 rounded-full"></i>
                         </div>
-                        <span className="text-[32px] font-normal text-black mt-2 leading-none">{stats.pendingRequests || 6}</span>
+                        <span className="text-[32px] font-normal text-black mt-2 leading-none">{stats.pendingRequests ?? 0}</span>
                     </div>
 
                     {/* Card 3 */}
@@ -108,7 +108,7 @@ const Dashboard = () => {
                             <span className="text-[13px] font-bold text-[#1f2937]">In Process Requests</span>
                             <i className="fa-solid fa-arrow-up-right-from-square text-gray-400 text-xs p-1 border border-gray-200 rounded-full"></i>
                         </div>
-                        <span className="text-[32px] font-normal text-black mt-2 leading-none">{stats.inProcessRequests || 50}</span>
+                        <span className="text-[32px] font-normal text-black mt-2 leading-none">{stats.inProcessRequests ?? 0}</span>
                     </div>
 
                     {/* Card 4 */}
@@ -120,7 +120,7 @@ const Dashboard = () => {
                             <span className="text-[13px] font-bold text-[#1f2937]">Pending Refund</span>
                             <i className="fa-solid fa-arrow-up-right-from-square text-gray-400 text-xs p-1 border border-gray-200 rounded-full"></i>
                         </div>
-                        <span className="text-[32px] font-normal text-black mt-2 leading-none">{stats.pendingRefunds || 50}</span>
+                        <span className="text-[32px] font-normal text-black mt-2 leading-none">{stats.pendingRefunds ?? 0}</span>
                     </div>
 
                     {/* Card 5 */}
@@ -132,7 +132,7 @@ const Dashboard = () => {
                             <span className="text-[13px] font-bold text-[#1f2937]">Released Document</span>
                             <i className="fa-solid fa-arrow-up-right-from-square text-gray-400 text-xs p-1 border border-gray-200 rounded-full"></i>
                         </div>
-                        <span className="text-[32px] font-normal text-black mt-2 leading-none">{stats.releasedRequests || 50}</span>
+                        <span className="text-[32px] font-normal text-black mt-2 leading-none">{stats.releasedRequests ?? 0}</span>
                     </div>
 
                     {/* Card 6 */}
@@ -144,7 +144,7 @@ const Dashboard = () => {
                             <span className="text-[13px] font-bold text-[#1f2937]">Blockchain Submission</span>
                             <i className="fa-solid fa-arrow-up-right-from-square text-gray-400 text-xs p-1 border border-gray-200 rounded-full"></i>
                         </div>
-                        <span className="text-[32px] font-normal text-black mt-2 leading-none">{stats.blockchainTransactions || 50}</span>
+                        <span className="text-[32px] font-normal text-black mt-2 leading-none">{stats.blockchainTransactions ?? 0}</span>
                     </div>
                 </div>
 
