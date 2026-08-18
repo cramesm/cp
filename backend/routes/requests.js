@@ -76,7 +76,6 @@ router.put('/:id', protect, async (req, res) => {
 
         const updateData = {};
         if (status) updateData.status = status;
-        if (name) updateData.name = name;
         if (documentHash !== undefined) updateData.documentHash = documentHash;
         if (rejectionReason !== undefined) updateData.rejectionReason = rejectionReason;
         if (status === 'In Process') updateData.rejectionReason = ''; // Clear reason if reopened
