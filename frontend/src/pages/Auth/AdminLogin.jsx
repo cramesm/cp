@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../../api';
 
@@ -12,7 +12,18 @@ const AdminLogin = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [cooldown, setCooldown] = useState(0);
     const navigate = useNavigate();
+
+    useEffect(() => {
+        let timer;
+        if (cooldown > 0) {
+            timer = setInterval(() => {
+                setCooldown((prev) => prev - 1);
+            }, 1000);
+        }
+        return () => clearInterval(timer);
+    }, [cooldown]);
 
     const validateForm = () => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -46,6 +57,13 @@ const AdminLogin = () => {
                 navigate('/dashboard');
             }
         } catch (err) {
+            if (err.response?.status === 429) {
+                const msg = err.response.data.message;
+                const match = msg.match(/in (\d+) seconds/);
+                if (match) {
+                    setCooldown(parseInt(match[1], 10));
+                }
+            }
             const message = err.response?.data?.message || 'Invalid credentials. Please try again.';
             setError(message);
         } finally {
@@ -133,10 +151,15 @@ const AdminLogin = () => {
                         <div className="flex justify-center mt-6">
                             <button
                                 type="submit"
-                                disabled={isLoading}
-                                className={`w-3/5 py-3 bg-[#243547] text-white rounded-md font-bold text-[16px] tracking-wide shadow-md flex justify-center items-center gap-2 ${isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-[#1a2634] transition-colors'}`}
+                                disabled={isLoading || cooldown > 0}
+                                className={`w-3/5 py-3 bg-[#243547] text-white rounded-md font-bold text-[16px] tracking-wide shadow-md flex justify-center items-center gap-2 ${(isLoading || cooldown > 0) ? 'opacity-70 cursor-not-allowed' : 'hover:bg-[#1a2634] transition-colors'}`}
                             >
-                                {isLoading ? (
+                                {cooldown > 0 ? (
+                                    <>
+                                        <i className="fa-solid fa-lock"></i>
+                                        Try again in {cooldown}s
+                                    </>
+                                ) : isLoading ? (
                                     <>
                                         <i className="fa-solid fa-spinner animate-spin"></i>
                                         Logging in...

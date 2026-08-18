@@ -13,69 +13,81 @@ const registerLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// 2. Custom Progressive Rate Limiter for Login
-// Store in memory: { [ip]: { failures: number, lockedUntil: number } }
-const loginAttempts = {};
+const LoginLockout = require('../models/LoginLockout');
 
-const loginProgressiveLimiter = (req, res, next) => {
+// 2. Custom Progressive Rate Limiter for Login (Persistent)
+const loginProgressiveLimiter = async (req, res, next) => {
   const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
   const now = Date.now();
 
-  if (!loginAttempts[ip]) {
-    loginAttempts[ip] = { failures: 0, lockedUntil: null };
-  }
+  try {
+    let attempt = await LoginLockout.findOne({ ip });
 
-  const attempt = loginAttempts[ip];
-
-  // Check if IP is currently locked out
-  if (attempt.lockedUntil && now < attempt.lockedUntil) {
-    // User is locked out but tried again -> Penalize further by incrementing failures
-    attempt.failures += 1;
-    applyLockout(attempt, now); // Re-apply lock out logic with new failure count
-    
-    const remainingTime = Math.ceil((attempt.lockedUntil - now) / 1000);
-    return res.status(429).json({
-      success: false,
-      message: `Too many failed login attempts. Try again in ${remainingTime} seconds.`
-    });
-  }
-
-  // If lock time passed, clear the lock but keep failure count? 
-  // No, if lock expired, we let them try again. If they fail, it increments from previous.
-  // Actually, standard behavior usually resets or halves it, but we'll leave failures intact to ensure progression.
-  if (attempt.lockedUntil && now >= attempt.lockedUntil) {
-    attempt.lockedUntil = null;
-  }
-
-  // Intercept the response finish event to check status code
-  res.on('finish', () => {
-    const statusCode = res.statusCode;
-
-    if (statusCode === 200 || statusCode === 201) {
-      // Successful login resets the counter
-      delete loginAttempts[ip];
-    } else if (statusCode === 400 || statusCode === 401 || statusCode === 403 || statusCode === 404) {
-      // Failed login attempt
-      if (loginAttempts[ip]) {
-        loginAttempts[ip].failures += 1;
-        applyLockout(loginAttempts[ip], Date.now());
-      }
+    if (!attempt) {
+      attempt = await LoginLockout.create({ ip, failures: 0, lockedUntil: null });
     }
-  });
 
-  next();
+    // Check if IP is currently locked out
+    if (attempt.lockedUntil && now < attempt.lockedUntil.getTime()) {
+      // User is locked out but tried again -> Penalize further by incrementing failures
+      attempt.failures += 1;
+      attempt.lastAttempt = now;
+      applyLockout(attempt, now); // Re-apply lock out logic with new failure count
+      await attempt.save();
+      
+      const remainingTime = Math.ceil((attempt.lockedUntil.getTime() - now) / 1000);
+      return res.status(429).json({
+        success: false,
+        message: `Too many failed login attempts. Try again in ${remainingTime} seconds.`
+      });
+    }
+
+    // If lock time passed, clear the lock but keep failure count
+    if (attempt.lockedUntil && now >= attempt.lockedUntil.getTime()) {
+      attempt.lockedUntil = null;
+      await attempt.save();
+    }
+
+    // Intercept the response finish event to check status code
+    res.on('finish', async () => {
+      const statusCode = res.statusCode;
+
+      try {
+        if (statusCode === 200 || statusCode === 201) {
+          // Successful login resets the counter
+          await LoginLockout.deleteOne({ ip });
+        } else if (statusCode === 400 || statusCode === 401 || statusCode === 403 || statusCode === 404) {
+          // Failed login attempt
+          const currentAttempt = await LoginLockout.findOne({ ip });
+          if (currentAttempt) {
+            currentAttempt.failures += 1;
+            currentAttempt.lastAttempt = Date.now();
+            applyLockout(currentAttempt, Date.now());
+            await currentAttempt.save();
+          }
+        }
+      } catch (err) {
+        console.error('Error updating LoginLockout on finish:', err);
+      }
+    });
+
+    next();
+  } catch (error) {
+    console.error('Login rate limiter error:', error);
+    next(); // Proceed anyway if DB fails
+  }
 };
 
 function applyLockout(attempt, now) {
   if (attempt.failures >= 10) {
     // 30 min lockout
-    attempt.lockedUntil = now + 30 * 60 * 1000;
+    attempt.lockedUntil = new Date(now + 30 * 60 * 1000);
   } else if (attempt.failures >= 8) {
     // 5 min lockout
-    attempt.lockedUntil = now + 5 * 60 * 1000;
+    attempt.lockedUntil = new Date(now + 5 * 60 * 1000);
   } else if (attempt.failures >= 5) {
     // 3 min lockout
-    attempt.lockedUntil = now + 3 * 60 * 1000;
+    attempt.lockedUntil = new Date(now + 3 * 60 * 1000);
   }
 }
 
