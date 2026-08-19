@@ -398,49 +398,11 @@ const TransactionDetails = () => {
                                     </div>
                                 </div>
 
-                                {/* Bug 7: Re-upload receipt when Needs Update */}
+                                {/* Needs Update Notification Info */}
                                 {txData.status === 'Needs Update' && (
                                     <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
-                                        <p className="text-[11px] font-bold text-amber-700 uppercase tracking-wider mb-2">Re-upload Receipt</p>
-                                        <p className="text-[12px] text-amber-600 mb-3">This payment needs an updated receipt. Upload a corrected image below.</p>
-                                        <input
-                                            type="file"
-                                            id="receiptReupload"
-                                            className="hidden"
-                                            accept="image/png,image/jpg,image/jpeg"
-                                            onChange={async (e) => {
-                                                if (!e.target.files || !e.target.files[0]) return;
-                                                const formData = new FormData();
-                                                formData.append('receiptImage', e.target.files[0]);
-                                                setActionLoading(true);
-                                                try {
-                                                    const res = await api.put(`/transactions/${txData.transactionId}/reupload`, formData, {
-                                                        headers: { 'Content-Type': 'multipart/form-data' }
-                                                    });
-                                                    setTxData(res.data);
-                                                    showFeedback({
-                                                        title: 'Receipt Re-uploaded',
-                                                        message: 'The receipt has been successfully re-uploaded. The status is now set to Pending Verification.',
-                                                        type: 'success'
-                                                    });
-                                                } catch (err) {
-                                                    showFeedback({
-                                                        title: 'Upload Failed',
-                                                        message: 'We couldn\'t upload the new receipt. Please try again.',
-                                                        type: 'error'
-                                                    });
-                                                } finally {
-                                                    setActionLoading(false);
-                                                }
-                                            }}
-                                        />
-                                        <button
-                                            onClick={() => document.getElementById('receiptReupload').click()}
-                                            disabled={actionLoading}
-                                            className="w-full py-2 bg-amber-600 text-white rounded-md font-bold text-xs uppercase hover:bg-amber-700 transition-colors disabled:opacity-50"
-                                        >
-                                            {actionLoading ? 'Uploading...' : 'Choose & Upload New Receipt'}
-                                        </button>
+                                        <p className="text-[11px] font-bold text-amber-700 uppercase tracking-wider mb-2">Awaiting Re-upload</p>
+                                        <p className="text-[12px] text-amber-600">The user has been notified to upload a new receipt via the mobile app. Awaiting user action.</p>
                                     </div>
                                 )}
                             </div>
