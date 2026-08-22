@@ -27,6 +27,7 @@ app.use(helmet({
     },
   },
   crossOriginEmbedderPolicy: false, 
+  crossOriginResourcePolicy: { policy: "cross-origin" },
   crossOriginOpenerPolicy: { policy: "same-origin" },
   frameguard: { action: 'sameorigin' },
   referrerPolicy: { policy: 'strict-origin-when-cross-origin' }
