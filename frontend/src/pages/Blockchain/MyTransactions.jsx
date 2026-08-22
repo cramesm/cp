@@ -99,7 +99,7 @@ function MyTransactions() {
         return (
             <Layout>
                 <div className="p-6 flex items-center justify-center min-h-screen">
-                    <div className="flex flex-col items-center gap-3 text-gray-500">
+                    <div className="flex flex-col items-center gap-3 text-gray-600">
                         <RefreshCw size={28} className="animate-spin text-[#1D2D44]" />
                         <p className="text-sm font-medium">Loading transactions...</p>
                     </div>
@@ -183,7 +183,7 @@ function MyTransactions() {
                                     {filterMonth && (
                                         <button
                                             onClick={() => setFilterMonth("")}
-                                            className="text-xs text-gray-400 hover:text-gray-600 underline"
+                                            className="text-xs text-gray-600 hover:text-gray-600 underline"
                                         >
                                             Clear
                                         </button>
@@ -227,7 +227,7 @@ function MyTransactions() {
                                             <td className="px-6 py-4 text-sm">
                                                 <div className="flex flex-col">
                                                     <span>{tx.nameOfStudent}</span>
-                                                    <span className="text-[10px] text-gray-400 uppercase tracking-wider">{tx.ownerType || 'Student'}</span>
+                                                    <span className="text-[10px] text-gray-600 uppercase tracking-wider">{tx.ownerType || 'Student'}</span>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 text-sm">{tx.studentIDNumber}</td>
@@ -255,10 +255,10 @@ function MyTransactions() {
                                                         <Copy size={14} />
                                                     </button>
                                                 ) : (
-                                                    <span className="text-gray-400 text-xs">—</span>
+                                                    <span className="text-gray-600 text-xs">—</span>
                                                 )}
                                             </td>
-                                            <td className="px-6 py-4 text-sm text-gray-500">
+                                            <td className="px-6 py-4 text-sm text-gray-600">
                                                 {new Date(tx.createdAt).toLocaleDateString()}
                                             </td>
                                         </tr>
@@ -266,7 +266,7 @@ function MyTransactions() {
                                 ) : (
                                     <tr>
                                         <td colSpan="8" className="px-6 py-12 text-center">
-                                            <div className="flex flex-col items-center gap-2 text-gray-400">
+                                            <div className="flex flex-col items-center gap-2 text-gray-600">
                                                 <span className="text-3xl">📭</span>
                                                 <p className="text-sm font-medium">No transactions found</p>
                                                 <p className="text-xs">Try adjusting your filters or create a new transaction</p>
@@ -290,7 +290,7 @@ function MyTransactions() {
                                 <button
                                     onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                                     disabled={currentPage === 1}
-                                    className="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                                    className="px-3 py-1 border border-gray-300 rounded text-sm disabled:text-gray-600 disabled:bg-gray-50 disabled:cursor-not-allowed hover:bg-gray-50"
                                 >
                                     Previous
                                 </button>
@@ -311,7 +311,7 @@ function MyTransactions() {
                                 <button
                                     onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                                     disabled={currentPage === totalPages}
-                                    className="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                                    className="px-3 py-1 border border-gray-300 rounded text-sm disabled:text-gray-600 disabled:bg-gray-50 disabled:cursor-not-allowed hover:bg-gray-50"
                                 >
                                     Next
                                 </button>
