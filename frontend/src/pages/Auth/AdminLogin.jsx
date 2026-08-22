@@ -83,7 +83,7 @@ const AdminLogin = () => {
             </div>
 
             {/* Right Column - Login Form */}
-            <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-6 sm:p-8 bg-[#F2F2F2] overflow-y-auto">
+            <main className="w-full lg:w-1/2 flex flex-col items-center justify-center p-6 sm:p-8 bg-[#F2F2F2] overflow-y-auto">
                 <div className="w-full max-w-[400px]">
                     
                     {/* Logo Header - Made much bigger to match mockup */}
@@ -133,7 +133,7 @@ const AdminLogin = () => {
                                     />
                                     <button
                                         type="button"
-                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors focus:outline-none"
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 p-2 w-10 h-10 flex items-center justify-center text-gray-500 hover:text-gray-700 transition-colors focus:outline-none"
                                         onClick={() => setShowPassword(!showPassword)}
                                         aria-label={showPassword ? 'Hide password' : 'Show password'}
                                     >
@@ -141,7 +141,7 @@ const AdminLogin = () => {
                                     </button>
                                 </div>
                                 <div className="mt-2 text-right">
-                                    <Link to="/forgot-password" className="text-[12px] text-[#73A9D4] hover:text-[#528ebf] font-normal transition-colors">
+                                    <Link to="/forgot-password" className="text-[12px] text-[#2B6D9B] hover:text-[#1e4c6c] font-normal transition-colors">
                                         Forgot Password?
                                     </Link>
                                 </div>
@@ -171,7 +171,7 @@ const AdminLogin = () => {
 
                     {/* Account Hints - Restored */}
                     <div className="mt-8 pt-5 border-t border-gray-300">
-                        <p className="text-[10px] text-gray-500 text-center mb-3 uppercase tracking-widest font-bold">Demo Accounts</p>
+                        <p className="text-[10px] text-gray-700 text-center mb-3 uppercase tracking-widest font-bold">Demo Accounts</p>
                         
                         <div className="flex gap-3">
                             <div
@@ -201,7 +201,7 @@ const AdminLogin = () => {
                     </div>
 
                 </div>
-            </div>
+            </main>
         </div>
     );
 };
