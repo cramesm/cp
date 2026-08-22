@@ -96,9 +96,10 @@ export default function ActivityLogs() {
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
               <div className="flex items-center gap-6">
                 {/* Updated Show Entries to match image style */}
-                <div className="flex items-center gap-2 text-[14px] text-[#7E84A3]">
+                <div className="flex items-center gap-2 text-[14px] text-gray-700">
                   <span>Show</span>
                   <select 
+                    aria-label="Entries per page"
                     className="appearance-none bg-white border border-[#DDE2EF] rounded-[6px] px-3 py-1 pr-8 outline-none text-[#4D5E80] cursor-pointer bg-no-repeat bg-[right_10px_center] transition-all hover:border-gray-400"
                     style={{
                       backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%237E84A3'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
@@ -118,6 +119,7 @@ export default function ActivityLogs() {
                    <input 
                     type="text" 
                     placeholder="Search logs..." 
+                    aria-label="Search logs"
                     className="border border-gray-300 rounded-md px-3 py-2 text-xs w-64 outline-none focus:border-[#1D2D44]"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -134,8 +136,9 @@ export default function ActivityLogs() {
               <FilterSelect label="Status:" value={filterStatus} onChange={setFilterStatus} options={statuses} />
               
               <div className="flex flex-col gap-1">
-                <label className="text-[11px] font-bold text-gray-600 uppercase tracking-tight">Start Date:</label>
+                <label htmlFor="startDate" className="text-[11px] font-bold text-gray-600 uppercase tracking-tight">Start Date:</label>
                 <input 
+                  id="startDate"
                   type="date" 
                   className="border border-gray-300 rounded px-2 py-1.5 text-[12px] text-gray-500 bg-white outline-none focus:border-[#1D2D44]" 
                   value={startDate}
@@ -143,8 +146,9 @@ export default function ActivityLogs() {
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-[11px] font-bold text-gray-600 uppercase tracking-tight">End Date:</label>
+                <label htmlFor="endDate" className="text-[11px] font-bold text-gray-600 uppercase tracking-tight">End Date:</label>
                 <input 
+                  id="endDate"
                   type="date" 
                   className="border border-gray-300 rounded px-2 py-1.5 text-[12px] text-gray-500 bg-white outline-none focus:border-[#1D2D44]" 
                   value={endDate}
@@ -253,11 +257,14 @@ export default function ActivityLogs() {
 
 
 function FilterSelect({ label, value, onChange, options }) {
+  const selectId = `filter-${label.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}`;
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-[11px] font-bold text-gray-600 uppercase tracking-tight">{label}</label>
+      <label htmlFor={selectId} className="text-[11px] font-bold text-gray-600 uppercase tracking-tight">{label}</label>
       <select 
-        className="border border-gray-300 rounded px-2 py-1.5 text-[12px] text-gray-500 bg-white outline-none cursor-pointer hover:border-gray-400 focus:border-[#1D2D44]"
+        id={selectId}
+        aria-label={label.replace(':', '')}
+        className="border border-gray-300 rounded px-2 py-1.5 text-[12px] text-gray-700 bg-white outline-none cursor-pointer hover:border-gray-400 focus:border-[#1D2D44]"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       >
