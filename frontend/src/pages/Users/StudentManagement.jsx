@@ -277,6 +277,7 @@ const StudentManagement = () => {
                                 <div className="relative">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
                                     <input
+                                        aria-label="Search users"
                                         type="text"
                                         placeholder="Search users..."
                                         className="w-64 rounded-md border border-gray-300 py-2 pl-9 pr-4 text-xs outline-none focus:border-[#1D2D44]"
@@ -327,8 +328,9 @@ const StudentManagement = () => {
                             <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">Sorting</h3>
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="flex flex-col gap-1.5">
-                                    <label className="text-sm font-bold text-[#1D2D44]">Sort By:</label>
+                                    <label htmlFor="sortBy" className="text-sm font-bold text-[#1D2D44]">Sort By:</label>
                                     <select 
+                                        id="sortBy"
                                         className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#1D2D44] bg-white"
                                         value={sortConfig.key}
                                         onChange={(e) => setSortConfig({ ...sortConfig, key: e.target.value })}
@@ -357,8 +359,9 @@ const StudentManagement = () => {
                             
                             {activeTab === 'student' && (
                                 <div className="flex flex-col gap-1.5">
-                                    <label className="text-sm font-bold text-[#1D2D44]">Program Level:</label>
+                                    <label htmlFor="filterProgramLevel" className="text-sm font-bold text-[#1D2D44]">Program Level:</label>
                                     <select 
+                                        id="filterProgramLevel"
                                         value={filterProgram}
                                         onChange={e => setFilterProgram(e.target.value)}
                                         className="rounded-md border border-gray-300 py-2 px-3 text-sm outline-none focus:border-[#1D2D44] bg-white cursor-pointer shadow-sm text-gray-700"
@@ -372,8 +375,9 @@ const StudentManagement = () => {
                             )}
 
                             <div className="flex flex-col gap-1.5">
-                                <label className="text-sm font-bold text-[#1D2D44]">Status:</label>
+                                <label htmlFor="filterStatus" className="text-sm font-bold text-[#1D2D44]">Status:</label>
                                 <select 
+                                    id="filterStatus"
                                     value={filterStatus}
                                     onChange={e => setFilterStatus(e.target.value)}
                                     className="rounded-md border border-gray-300 py-2 px-3 text-sm outline-none focus:border-[#1D2D44] bg-white cursor-pointer shadow-sm text-gray-700"
@@ -427,6 +431,7 @@ const StudentManagement = () => {
                                             <td className="px-8 py-4 text-center">
                                                 <div className="relative inline-block min-w-[100px]">
                                                     <select
+                                                        aria-label={`Status for ${user.firstName} ${user.lastName}`}
                                                         value={user.status || 'Active'}
                                                         onChange={(e) => handleStatusChange(user._id, user.role || 'student', e.target.value)}
                                                         className={`w-full appearance-none rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wide outline-none cursor-pointer text-center transition-all shadow-sm focus:ring-2 focus:ring-offset-1 focus:ring-gray-300 ${
@@ -537,8 +542,9 @@ const StudentManagement = () => {
                                 <div className="space-y-5">
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">First Name</label>
+                                            <label htmlFor="firstName" className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">First Name</label>
                                             <input
+                                                id="firstName"
                                                 type="text"
                                                 name="firstName"
                                                 value={formData.firstName}
@@ -549,8 +555,9 @@ const StudentManagement = () => {
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Last Name</label>
+                                            <label htmlFor="lastName" className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Last Name</label>
                                             <input
+                                                id="lastName"
                                                 type="text"
                                                 name="lastName"
                                                 value={formData.lastName}
@@ -563,8 +570,9 @@ const StudentManagement = () => {
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">{activeTab === 'student' ? 'School Email' : 'Email'}</label>
+                                            <label htmlFor="email" className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">{activeTab === 'student' ? 'School Email' : 'Email'}</label>
                                             <input
+                                                id="email"
                                                 type="email"
                                                 name="email"
                                                 value={formData.email}
@@ -575,8 +583,9 @@ const StudentManagement = () => {
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Student ID</label>
+                                            <label htmlFor="studentId" className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Student ID</label>
                                             <input
+                                                id="studentId"
                                                 type="text"
                                                 name="studentId"
                                                 value={activeTab === 'alumni' ? 'Auto-generated' : formData.studentId}
@@ -589,9 +598,10 @@ const StudentManagement = () => {
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Password</label>
+                                        <label htmlFor="password" className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Password</label>
                                         <div className="relative">
                                             <input
+                                                id="password"
                                                 type={showPassword ? 'text' : 'password'}
                                                 name="password"
                                                 value={formData.password}
@@ -611,8 +621,9 @@ const StudentManagement = () => {
                                     </div>
                                     {activeTab === 'student' && (
                                         <div>
-                                            <label className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Program Level</label>
+                                            <label htmlFor="modalProgramLevel" className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Program Level</label>
                                             <select
+                                                id="modalProgramLevel"
                                                 name="programLevel"
                                                 value={formData.programLevel}
                                                 onChange={handleInputChange}
