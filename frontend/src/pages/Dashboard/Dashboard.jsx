@@ -215,7 +215,7 @@ const Dashboard = () => {
                                 <th className="bg-white text-black m-0 py-5 px-6 text-[15px] font-bold text-left border-b border-gray-100">Document Type</th>
                                 <th className="bg-white text-black m-0 py-5 px-6 text-[15px] font-bold text-left border-b border-gray-100">Date</th>
                                 <th className="bg-white text-black m-0 py-5 px-6 text-[15px] font-bold text-left border-b border-gray-100">Status</th>
-                                <th className="bg-white border-b border-gray-100"></th>
+                                <th className="bg-white border-b border-gray-100"><span className="sr-only">Actions</span></th>
                             </tr>
                         </thead>
                         <tbody>
