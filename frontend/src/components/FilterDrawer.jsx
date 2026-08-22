@@ -55,6 +55,7 @@ const FilterDrawer = ({ isOpen, onClose, onClearAll, children, title = "Filters 
             )}
             <button 
               onClick={onClose}
+              aria-label="Close filters"
               className="p-2 rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
             >
               <X size={20} />

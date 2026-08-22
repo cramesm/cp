@@ -87,10 +87,10 @@ const Requests = () => {
     // Helper for Status Badge Styling
     const getStatusStyle = (status) => {
         switch (status?.toLowerCase()) {
-            case 'released': return 'bg-[#E1FFEB] text-[#28A745]';
-            case 'pending': return 'bg-[#FFF9DB] text-[#D4A017]';
-            case 'rejected': return 'bg-[#FFE1E1] text-[#DC3545]';
-            case 'in process': return 'bg-[#DBEAFE] text-[#2563EB]';
+            case 'released': return 'bg-[#E1FFEB] text-[#1E7E34]';
+            case 'pending': return 'bg-[#FFF9DB] text-[#B8860B]';
+            case 'rejected': return 'bg-[#FFE1E1] text-[#B02A37]';
+            case 'in process': return 'bg-[#DBEAFE] text-[#1D4ED8]';
             default: return 'bg-gray-100 text-gray-600';
         }
     };
@@ -160,6 +160,7 @@ const Requests = () => {
                         <div className="flex items-center gap-2 text-sm text-gray-500">
                             Show 
                             <select 
+                                aria-label="Entries per page"
                                 value={entriesPerPage}
                                 onChange={(e) => setEntriesPerPage(Number(e.target.value))}
                                 className="border border-gray-300 rounded px-1 py-1 focus:outline-none"
@@ -229,11 +230,12 @@ const Requests = () => {
                     }}
                 >
                     <div className="flex flex-col gap-4">
-                        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">Sorting</h3>
+                        <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">Sorting</h3>
                         <div className="grid grid-cols-2 gap-3">
                             <div className="flex flex-col gap-1.5">
-                                <label className="text-sm font-bold text-[#1D2D44]">Sort By:</label>
+                                <label htmlFor="sortBy" className="text-sm font-bold text-[#1D2D44]">Sort By:</label>
                                 <select 
+                                    id="sortBy"
                                     className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#1D2D44] bg-white"
                                     value={sortConfig.key}
                                     onChange={(e) => setSortConfig({ ...sortConfig, key: e.target.value })}
@@ -258,7 +260,7 @@ const Requests = () => {
 
                         <div className="border-t border-gray-100 my-2"></div>
 
-                        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">Filtering</h3>
+                        <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">Filtering</h3>
                         
                         <FilterDropdown label="Document Type:" value={filterType} onChange={setFilterType} options={documentTypes} />
                         <FilterDropdown label="Status:" value={filterStatus} onChange={setFilterStatus} options={statuses} />
@@ -268,8 +270,9 @@ const Requests = () => {
                         
                         <div className="grid grid-cols-2 gap-3 mt-2">
                             <div className="flex flex-col gap-1.5">
-                                <label className="text-sm font-bold text-[#1D2D44]">Start Date:</label>
+                                <label htmlFor="startDate" className="text-sm font-bold text-[#1D2D44]">Start Date:</label>
                                 <input 
+                                    id="startDate"
                                     type="date" 
                                     className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#1D2D44] bg-white"
                                     value={startDate}
@@ -277,8 +280,9 @@ const Requests = () => {
                                 />
                             </div>
                             <div className="flex flex-col gap-1.5">
-                                <label className="text-sm font-bold text-[#1D2D44]">End Date:</label>
+                                <label htmlFor="endDate" className="text-sm font-bold text-[#1D2D44]">End Date:</label>
                                 <input 
+                                    id="endDate"
                                     type="date" 
                                     className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#1D2D44] bg-white"
                                     value={endDate}
@@ -299,7 +303,7 @@ const Requests = () => {
                                 <th className="px-8 py-5">Document Type</th>
                                 <th className="px-8 py-5">Date</th>
                                 <th className="px-8 py-5">Status</th>
-                                <th className="px-8 py-5 text-right"></th>
+                                <th className="px-8 py-5 text-right"><span className="sr-only">Actions</span></th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
@@ -336,7 +340,7 @@ const Requests = () => {
                                     );
                                 })
                             ) : (
-                                <tr><td colSpan="6" className="py-20 text-center text-gray-400 italic">No requests found matching your filters.</td></tr>
+                                <tr><td colSpan="6" className="py-20 text-center text-gray-500 italic">No requests found matching your filters.</td></tr>
                             )}
                         </tbody>
                     </table>
@@ -369,7 +373,7 @@ const Requests = () => {
                                 </button>
                             );
                         } else if (pageNumber === currentPage - 2 || pageNumber === currentPage + 2) {
-                            return <span key={pageNumber} className="text-gray-400 mt-2 text-xs">...</span>;
+                            return <span key={pageNumber} className="text-gray-500 mt-2 text-xs">...</span>;
                         }
                         return null;
                     })}
