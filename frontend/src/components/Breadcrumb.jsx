@@ -40,12 +40,12 @@ const Breadcrumb = () => {
                 {crumbs.map((crumb, index) => (
                     <li key={crumb.path} className="flex items-center gap-1.5">
                         {index > 0 && (
-                            <i className="fa-solid fa-chevron-right text-[9px] text-gray-300"></i>
+                            <i className="fa-solid fa-chevron-right text-[9px] text-gray-400"></i>
                         )}
                         {crumb.isLast ? (
                             <span className="text-gray-800 font-semibold">{crumb.label}</span>
                         ) : (
-                            <span className="text-[#6f8faa]">
+                            <span className="text-gray-600">
                                 {crumb.label}
                             </span>
                         )}
