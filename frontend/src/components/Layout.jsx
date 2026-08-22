@@ -276,7 +276,7 @@ const Layout = ({ children }) => {
                             type="button"
                             onClick={() => navigate('/notifications')}
                             className="text-white hover:text-gray-200 text-[22px] transition-colors relative"
-                            aria-label={`View notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
+                            aria-label="View notifications"
                         >
                             <i className="fa-solid fa-bell"></i>
                             {unreadCount > 0 && (
@@ -290,7 +290,7 @@ const Layout = ({ children }) => {
                             <button
                                 type="button"
                                 className="flex items-center justify-center w-10 h-10 rounded-full bg-white text-[#547794] text-[20px] transition-all shadow-sm overflow-hidden"
-                                aria-label={`User menu for ${adminUser.name || 'Registrar Name'} (${getInitials(adminUser.name || 'Registrar Name')})`}
+                                aria-label="User menu"
                                 aria-expanded={menuOpen}
                                 aria-haspopup="true"
                             >
@@ -302,7 +302,7 @@ const Layout = ({ children }) => {
                             </button>
                             <div className="hidden md:flex flex-col text-left">
                                 <span className="text-white text-sm font-semibold m-0 leading-tight">{adminUser.name || 'Registrar Name'}</span>
-                                <span className="text-white text-[11px] m-0 leading-tight lowercase">{adminUser.email || `${userRole.replace(' ', '')}name@sample.com`}</span>
+                                <span className="text-white/80 text-[11px] m-0 leading-tight lowercase">{adminUser.email || `${userRole.replace(' ', '')}name@sample.com`}</span>
                             </div>
                         </div>
 
