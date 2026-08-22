@@ -10,6 +10,7 @@ const AdminLogin = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+    const [showDemoAccounts, setShowDemoAccounts] = useState(false);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [cooldown, setCooldown] = useState(0);
@@ -169,7 +170,8 @@ const AdminLogin = () => {
                         </div>
                     </form>
 
-                    {/* Account Hints - Restored */}
+                    {/* Account Hints - Restored but Hidden by Default */}
+                    {showDemoAccounts && (
                     <div className="mt-8 pt-5 border-t border-gray-300">
                         <p className="text-[10px] text-gray-700 text-center mb-3 uppercase tracking-widest font-bold">Demo Accounts</p>
                         
@@ -199,8 +201,17 @@ const AdminLogin = () => {
                             </div>
                         </div>
                     </div>
+                    )}
 
                 </div>
+
+                {/* Hidden UI Button */}
+                <button 
+                    onClick={() => setShowDemoAccounts(!showDemoAccounts)}
+                    className="fixed bottom-0 right-0 w-8 h-8 opacity-0 cursor-default"
+                    aria-hidden="true"
+                    tabIndex={-1}
+                />
             </main>
         </div>
     );
