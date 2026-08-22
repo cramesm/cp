@@ -11,7 +11,7 @@ function Blockchain() {
             description: 'View all your recorded blockchain transactions',
             icon: Eye,
             color: 'bg-purple-50 border-purple-200',
-            buttonColor: 'bg-purple-600 hover:bg-purple-700',
+            buttonColor: 'bg-purple-700 hover:bg-purple-800',
             path: '/blockchain/my-transactions'
         },
         {
@@ -19,7 +19,7 @@ function Blockchain() {
             description: 'Verify a transaction on the blockchain',
             icon: CheckCircle,
             color: 'bg-green-50 border-green-200',
-            buttonColor: 'bg-green-600 hover:bg-green-700',
+            buttonColor: 'bg-green-800 hover:bg-green-900',
             path: '/blockchain/verify'
         }
     ];
