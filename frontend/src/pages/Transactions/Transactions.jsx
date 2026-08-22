@@ -282,6 +282,7 @@ const Transactions = () => {
                   <div className="flex items-center gap-2 text-[14px] text-[#7E84A3]">
                     <span>Show</span>
                     <select
+                      aria-label="Entries per page"
                       className="appearance-none bg-white border border-[#DDE2EF] rounded-[6px] px-3 py-1 pr-8 outline-none text-[#4D5E80] cursor-pointer transition-all hover:border-gray-400"
                       value={entriesPerPage}
                       onChange={(e) => setEntriesPerPage(Number(e.target.value))}
@@ -352,6 +353,7 @@ const Transactions = () => {
                         <div className="flex flex-col gap-1.5">
                             <label className="text-sm font-bold text-[#1D2D44]">Sort By:</label>
                             <select 
+                                aria-label="Sort by"
                                 className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#1D2D44] bg-white"
                                 value={sortConfig.key}
                                 onChange={(e) => setSortConfig({ ...sortConfig, key: e.target.value })}
@@ -366,6 +368,7 @@ const Transactions = () => {
                         <div className="flex flex-col gap-1.5">
                             <label className="text-sm font-bold text-[#1D2D44]">Order:</label>
                             <button 
+                                aria-label="Toggle sort direction"
                                 onClick={() => setSortConfig({ ...sortConfig, direction: sortConfig.direction === 'asc' ? 'desc' : 'asc' })}
                                 className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white flex items-center justify-between hover:bg-gray-50 transition-colors"
                             >
@@ -382,6 +385,7 @@ const Transactions = () => {
                     <div className="flex flex-col gap-1.5">
                       <label className="text-sm font-bold text-[#1D2D44]">Payment Mode:</label>
                       <select
+                        aria-label="Filter by payment mode"
                         value={filterPaymentMode}
                         onChange={(e) => setFilterPaymentMode(e.target.value)}
                         className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white outline-none focus:border-[#1D2D44]"
@@ -393,6 +397,7 @@ const Transactions = () => {
                     <div className="flex flex-col gap-1.5">
                       <label className="text-sm font-bold text-[#1D2D44]">Status:</label>
                       <select
+                        aria-label="Filter by status"
                         value={filterStatus}
                         onChange={(e) => setFilterStatus(e.target.value)}
                         className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white outline-none focus:border-[#1D2D44]"
@@ -404,6 +409,7 @@ const Transactions = () => {
                     <div className="flex flex-col gap-1.5">
                       <label className="text-sm font-bold text-[#1D2D44]">User Role:</label>
                       <select
+                        aria-label="Filter by user role"
                         value={filterUserRole}
                         onChange={(e) => setFilterUserRole(e.target.value)}
                         className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white outline-none focus:border-[#1D2D44]"
@@ -417,6 +423,7 @@ const Transactions = () => {
                     <div className="flex flex-col gap-1.5">
                       <label className="text-sm font-bold text-[#1D2D44]">Program Level:</label>
                       <select
+                        aria-label="Filter by program level"
                         value={filterProgram}
                         onChange={(e) => setFilterProgram(e.target.value)}
                         className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white outline-none focus:border-[#1D2D44]"
@@ -431,6 +438,7 @@ const Transactions = () => {
                     <div className="flex flex-col gap-1.5">
                       <label className="text-sm font-bold text-[#1D2D44]">User Status:</label>
                       <select
+                        aria-label="Filter by user status"
                         value={filterUserStatus}
                         onChange={(e) => setFilterUserStatus(e.target.value)}
                         className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white outline-none focus:border-[#1D2D44]"
@@ -445,6 +453,7 @@ const Transactions = () => {
                         <div className="flex flex-col gap-1.5">
                             <label className="text-sm font-bold text-[#1D2D44]">Start Date:</label>
                             <input 
+                                aria-label="Start date"
                                 type="date" 
                                 className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#1D2D44] bg-white"
                                 value={startDate}
@@ -454,6 +463,7 @@ const Transactions = () => {
                         <div className="flex flex-col gap-1.5">
                             <label className="text-sm font-bold text-[#1D2D44]">End Date:</label>
                             <input 
+                                aria-label="End date"
                                 type="date" 
                                 className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#1D2D44] bg-white"
                                 value={endDate}
@@ -547,7 +557,7 @@ const Transactions = () => {
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                className={`text-xs px-2 ${currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-black hover:underline cursor-pointer'}`}
+                className={`text-xs px-2 ${currentPage === 1 ? 'text-gray-400 cursor-not-allowed' : 'text-gray-600 hover:text-black hover:underline cursor-pointer'}`}
               >
                 Previous
               </button>
@@ -576,7 +586,7 @@ const Transactions = () => {
               <button
                 disabled={currentPage === totalPages || totalPages === 0}
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                className={`text-xs px-2 ${currentPage === totalPages || totalPages === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-black hover:underline cursor-pointer'}`}
+                className={`text-xs px-2 ${currentPage === totalPages || totalPages === 0 ? 'text-gray-400 cursor-not-allowed' : 'text-gray-600 hover:text-black hover:underline cursor-pointer'}`}
               >
                 Next
               </button>
