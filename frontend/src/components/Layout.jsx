@@ -337,7 +337,7 @@ const Layout = ({ children }) => {
                     </div>
                 </header>
 
-                <main id="main-content" className="flex-1 w-full bg-slate-50 p-6 md:p-8">
+                <main id="main-content" className="flex-1 w-full bg-slate-50 text-slate-900 p-6 md:p-8">
                     <Breadcrumb />
                     <motion.div
                         initial={{ opacity: 0, y: 10 }}
