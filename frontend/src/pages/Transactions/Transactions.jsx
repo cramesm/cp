@@ -348,7 +348,7 @@ const Transactions = () => {
                 }}
             >
                 <div className="flex flex-col gap-4">
-                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">Sorting</h3>
+                    <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">Sorting</h3>
                     <div className="grid grid-cols-2 gap-3">
                         <div className="flex flex-col gap-1.5">
                             <label className="text-sm font-bold text-[#1D2D44]">Sort By:</label>
@@ -380,7 +380,7 @@ const Transactions = () => {
 
                     <div className="border-t border-gray-100 my-2"></div>
 
-                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">Filtering</h3>
+                    <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">Filtering</h3>
                     
                     <div className="flex flex-col gap-1.5">
                       <label className="text-sm font-bold text-[#1D2D44]">Payment Mode:</label>
@@ -492,7 +492,7 @@ const Transactions = () => {
                 </thead>
                 <tbody className="text-[13px]">
                   {loading ? (
-                    <tr><td colSpan="9" className="px-6 py-20 text-center text-gray-400 italic">Loading payments...</td></tr>
+                    <tr><td colSpan="9" className="px-6 py-20 text-center text-gray-500 italic">Loading payments...</td></tr>
                   ) : paginatedTransactions.length > 0 ? (
                     paginatedTransactions.map((tx, idx) => {
                       const txDate = new Date(tx.date);
@@ -557,7 +557,7 @@ const Transactions = () => {
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                className={`text-xs px-2 ${currentPage === 1 ? 'text-gray-400 cursor-not-allowed' : 'text-gray-600 hover:text-black hover:underline cursor-pointer'}`}
+                className={`text-xs px-2 ${currentPage === 1 ? 'text-gray-500 cursor-not-allowed' : 'text-gray-600 hover:text-black hover:underline cursor-pointer'}`}
               >
                 Previous
               </button>
@@ -578,7 +578,7 @@ const Transactions = () => {
                     </button>
                   );
                 } else if (pageNumber === currentPage - 2 || pageNumber === currentPage + 2) {
-                  return <span key={pageNumber} className="text-gray-400 mt-2 text-xs">...</span>;
+                  return <span key={pageNumber} className="text-gray-500 mt-2 text-xs">...</span>;
                 }
                 return null;
               })}
@@ -586,7 +586,7 @@ const Transactions = () => {
               <button
                 disabled={currentPage === totalPages || totalPages === 0}
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                className={`text-xs px-2 ${currentPage === totalPages || totalPages === 0 ? 'text-gray-400 cursor-not-allowed' : 'text-gray-600 hover:text-black hover:underline cursor-pointer'}`}
+                className={`text-xs px-2 ${currentPage === totalPages || totalPages === 0 ? 'text-gray-500 cursor-not-allowed' : 'text-gray-600 hover:text-black hover:underline cursor-pointer'}`}
               >
                 Next
               </button>
@@ -613,7 +613,7 @@ const Transactions = () => {
                 </thead>
                 <tbody className="text-[13px]">
                   {refundsLoading ? (
-                    <tr><td colSpan="8" className="px-6 py-20 text-center text-gray-400 italic">Loading refund requests...</td></tr>
+                    <tr><td colSpan="8" className="px-6 py-20 text-center text-gray-500 italic">Loading refund requests...</td></tr>
                   ) : refunds.length > 0 ? (
                     refunds.map((refund, idx) => {
                       const refundDate = new Date(refund.createdAt);
@@ -648,7 +648,7 @@ const Transactions = () => {
                                 <Eye size={13} /> Review
                               </button>
                             ) : (
-                              <span className="text-xs text-gray-400 italic">
+                              <span className="text-xs text-gray-500 italic">
                                 {refund.status === 'Approved' ? 'Approved' : 'Rejected'}
                                 {refund.processedBy && ` by ${refund.processedBy.split('@')[0]}`}
                               </span>
@@ -716,7 +716,7 @@ const Transactions = () => {
                         }}
                       />
                     ) : null}
-                    <div className={`flex-col items-center text-gray-400 ${(selectedTx.imageUrl || selectedTx.receiptImage) ? 'hidden' : 'flex'}`}>
+                    <div className={`flex-col items-center text-gray-500 ${(selectedTx.imageUrl || selectedTx.receiptImage) ? 'hidden' : 'flex'}`}>
                       <ImageIcon size={48} className="mb-2 opacity-50" />
                       <span className="text-xs font-bold text-center">No receipt image uploaded</span>
                     </div>
