@@ -116,9 +116,10 @@ const Notifications = () => {
               
               {/* Show Entries & Search & Filters */}
               <div className="flex items-center gap-4 flex-1 w-full md:w-auto">
-                <div className="flex items-center gap-2 text-[14px] text-[#7E84A3] whitespace-nowrap">
+                <div className="flex items-center gap-2 text-[14px] text-gray-600 whitespace-nowrap">
                   <span>Show</span>
                   <select 
+                    aria-label="Entries per page"
                     className="appearance-none bg-white border border-[#DDE2EF] rounded-[6px] px-3 py-2 pr-8 outline-none text-[#4D5E80] cursor-pointer bg-no-repeat bg-[right_10px_center] hover:border-gray-300"
                     style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%237E84A3'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundSize: '12px' }}
                     value={entriesPerPage}
@@ -133,6 +134,7 @@ const Notifications = () => {
                 <div className="relative flex-1 max-w-sm">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
                     <input 
+                        aria-label="Search notifications"
                         type="text" 
                         placeholder="Search notifications..." 
                         className="w-full border border-gray-300 rounded-md px-3 py-2 pl-9 text-xs outline-none focus:border-[#1D2D44]"
@@ -190,6 +192,7 @@ const Notifications = () => {
                       <div className="flex flex-col gap-1.5">
                           <label className="text-sm font-bold text-[#1D2D44]">Sort By:</label>
                           <select 
+                              aria-label="Sort By"
                               className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#1D2D44] bg-white"
                               value={sortConfig.key}
                               onChange={(e) => setSortConfig({ ...sortConfig, key: e.target.value })}
@@ -217,6 +220,7 @@ const Notifications = () => {
                   <div className="flex flex-col gap-1.5">
                       <label className="text-sm font-bold text-[#1D2D44]">Status:</label>
                       <select 
+                          aria-label="Status Filter"
                           value={filterStatus} 
                           onChange={(e) => setFilterStatus(e.target.value)} 
                           className="border border-gray-300 rounded-md px-3 py-2 text-sm outline-none bg-white"
@@ -229,6 +233,7 @@ const Notifications = () => {
                       <div className="flex flex-col gap-1.5">
                           <label className="text-sm font-bold text-[#1D2D44]">Start Date:</label>
                           <input 
+                              aria-label="Start Date"
                               type="date" 
                               className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#1D2D44] bg-white"
                               value={startDate}
@@ -238,6 +243,7 @@ const Notifications = () => {
                       <div className="flex flex-col gap-1.5">
                           <label className="text-sm font-bold text-[#1D2D44]">End Date:</label>
                           <input 
+                              aria-label="End Date"
                               type="date" 
                               className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#1D2D44] bg-white"
                               value={endDate}
@@ -267,11 +273,11 @@ const Notifications = () => {
                             <td className="py-5 px-8">
                                 <div className="flex items-center gap-3">
                                     <span className={`w-2 h-2 rounded-full ${n.isRead ? 'bg-gray-300' : 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]'}`}></span>
-                                    <span className={`font-bold ${n.isRead ? 'text-gray-400 font-normal' : 'text-[#1D2D44]'}`}>{n.isRead ? 'Read' : 'Unread'}</span>
+                                    <span className={`font-bold ${n.isRead ? 'text-gray-600 font-normal' : 'text-[#1D2D44]'}`}>{n.isRead ? 'Read' : 'Unread'}</span>
                                 </div>
                             </td>
-                            <td className={`py-5 px-2 text-center ${n.isRead ? 'text-gray-400' : 'text-gray-800 font-medium'}`}>{n.message}</td>
-                            <td className="py-5 px-8 text-right text-gray-400 font-mono text-xs">{n.date}</td>
+                            <td className={`py-5 px-2 text-center ${n.isRead ? 'text-gray-600' : 'text-gray-800 font-medium'}`}>{n.message}</td>
+                            <td className="py-5 px-8 text-right text-gray-600 font-mono text-xs">{n.date}</td>
                         </tr>
                     ))
                 ) : (
@@ -286,7 +292,7 @@ const Notifications = () => {
             <button 
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className={`text-xs px-2 ${currentPage === 1 ? 'text-gray-300' : 'text-gray-400 hover:text-black cursor-pointer'}`}
+                className={`text-xs px-2 ${currentPage === 1 ? 'text-gray-400' : 'text-gray-600 hover:text-black cursor-pointer'}`}
             >
                 Previous
             </button>
@@ -294,7 +300,7 @@ const Notifications = () => {
             <button 
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages || totalPages === 0}
-                className={`text-xs px-2 ${currentPage === totalPages || totalPages === 0 ? 'text-gray-300' : 'text-gray-400 hover:text-black cursor-pointer'}`}
+                className={`text-xs px-2 ${currentPage === totalPages || totalPages === 0 ? 'text-gray-400' : 'text-gray-600 hover:text-black cursor-pointer'}`}
             >
                 Next
             </button>
