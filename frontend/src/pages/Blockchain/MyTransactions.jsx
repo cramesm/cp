@@ -49,9 +49,9 @@ function MyTransactions() {
 
     const getStatusStyle = (status) => {
         switch (status?.toLowerCase()) {
-            case "recorded": return "bg-[#E1FFEB] text-[#28A745]";
-            case "pending": return "bg-[#FFFDE1] text-[#D2C300]";
-            case "failed": return "bg-[#FFE1E1] text-[#DC3545]";
+            case "recorded": return "bg-[#E1FFEB] text-[#15803d]";
+            case "pending": return "bg-[#FFFDE1] text-[#854d0e]";
+            case "failed": return "bg-[#FFE1E1] text-[#b91c1c]";
             default: return "bg-gray-100 text-gray-600";
         }
     };
@@ -136,9 +136,10 @@ function MyTransactions() {
 
                             {/* Left: entries + search */}
                             <div className="flex items-center gap-3 flex-1 min-w-0">
-                                <div className="flex items-center gap-2 text-[14px] text-[#7E84A3] shrink-0">
+                                <div className="flex items-center gap-2 text-[14px] text-[#4D5E80] shrink-0">
                                     <span>Show</span>
                                     <select
+                                        aria-label="Entries per page"
                                         className="appearance-none bg-white border border-[#DDE2EF] rounded-[6px] px-3 py-1 outline-none text-[#4D5E80] cursor-pointer hover:border-gray-400"
                                         value={entriesPerPage}
                                         onChange={(e) => setEntriesPerPage(Number(e.target.value))}
@@ -151,6 +152,7 @@ function MyTransactions() {
                                 </div>
                                 <input
                                     type="text"
+                                    aria-label="Search transactions"
                                     className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-[#1D2D44] min-w-0"
                                     placeholder="Search by Reference Number, Student Name, or ID Number"
                                     value={searchTerm}
@@ -161,6 +163,7 @@ function MyTransactions() {
                             {/* Right: status + month + refresh */}
                             <div className="flex items-center gap-3 flex-wrap shrink-0">
                                 <select
+                                    aria-label="Filter by status"
                                     value={filterStatus}
                                     onChange={(e) => setFilterStatus(e.target.value)}
                                     className="border border-gray-300 rounded px-2 py-2 text-sm bg-white min-w-[130px] outline-none"
@@ -172,6 +175,7 @@ function MyTransactions() {
                                 <div className="flex items-center gap-2">
                                     <input
                                         type="month"
+                                        aria-label="Filter by month"
                                         className="border border-gray-300 rounded px-2 py-2 text-sm text-gray-600 outline-none focus:border-[#1D2D44]"
                                         value={filterMonth}
                                         onChange={(e) => setFilterMonth(e.target.value)}
@@ -179,7 +183,7 @@ function MyTransactions() {
                                     {filterMonth && (
                                         <button
                                             onClick={() => setFilterMonth("")}
-                                            className="text-xs text-gray-400 hover:text-gray-600 underline"
+                                            className="text-xs text-gray-500 hover:text-gray-600 underline"
                                         >
                                             Clear
                                         </button>
@@ -223,7 +227,7 @@ function MyTransactions() {
                                             <td className="px-6 py-4 text-sm">
                                                 <div className="flex flex-col">
                                                     <span>{tx.nameOfStudent}</span>
-                                                    <span className="text-[10px] text-gray-400 uppercase tracking-wider">{tx.ownerType || 'Student'}</span>
+                                                    <span className="text-[10px] text-gray-500 uppercase tracking-wider">{tx.ownerType || 'Student'}</span>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 text-sm">{tx.studentIDNumber}</td>
@@ -251,7 +255,7 @@ function MyTransactions() {
                                                         <Copy size={14} />
                                                     </button>
                                                 ) : (
-                                                    <span className="text-gray-400 text-xs">—</span>
+                                                    <span className="text-gray-500 text-xs">—</span>
                                                 )}
                                             </td>
                                             <td className="px-6 py-4 text-sm text-gray-500">
@@ -262,7 +266,7 @@ function MyTransactions() {
                                 ) : (
                                     <tr>
                                         <td colSpan="8" className="px-6 py-12 text-center">
-                                            <div className="flex flex-col items-center gap-2 text-gray-400">
+                                            <div className="flex flex-col items-center gap-2 text-gray-500">
                                                 <span className="text-3xl">📭</span>
                                                 <p className="text-sm font-medium">No transactions found</p>
                                                 <p className="text-xs">Try adjusting your filters or create a new transaction</p>
