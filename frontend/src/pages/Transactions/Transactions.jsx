@@ -256,7 +256,7 @@ const Transactions = () => {
             className={`px-6 py-3 rounded-t-lg text-sm font-bold transition-all ${
               activeTab === 'payments'
                 ? 'bg-white text-[#1D2D44] border border-b-0 border-gray-200 shadow-sm'
-                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
             All Payments
@@ -266,7 +266,7 @@ const Transactions = () => {
             className={`px-6 py-3 rounded-t-lg text-sm font-bold transition-all relative ${
               activeTab === 'refunds'
                 ? 'bg-white text-[#1D2D44] border border-b-0 border-gray-200 shadow-sm'
-                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
             Refund Requests
@@ -279,7 +279,7 @@ const Transactions = () => {
             <div className="p-6 border-b border-gray-100">
               <div className="flex flex-wrap items-center justify-between gap-6 pb-4 mb-4">
                 <div className="flex items-center gap-3 flex-1 max-md">
-                  <div className="flex items-center gap-2 text-[14px] text-[#7E84A3]">
+                  <div className="flex items-center gap-2 text-[14px] text-[#4D5E80]">
                     <span>Show</span>
                     <select
                       aria-label="Entries per page"
