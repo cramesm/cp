@@ -140,6 +140,8 @@ const documentUploadRoutes = require('./routes/documentUploads');
 const alumniRoutes = require('./routes/alumni');
 const uploadRoutes = require('./routes/uploads');
 const emailRoutes = require('./routes/email');
+const profileRoutes = require('./routes/profile');
+const refundRoutes = require('./routes/refunds');
 
 console.log('Routes imported successfully');
 
@@ -161,6 +163,8 @@ app.use('/api/requests', documentUploadRoutes);
 app.use('/api/v1/alumni', alumniRoutes); // V1 Migration
 app.use('/api/upload', uploadRoutes);
 app.use('/api/email', emailRoutes);
+app.use('/api/profile', profileRoutes);
+app.use('/api/refunds', refundRoutes);
 
 console.log('Routes mounted successfully');
 

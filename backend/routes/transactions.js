@@ -35,6 +35,17 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Get transactions for logged-in user
+router.get('/my-transactions', protect, async (req, res) => {
+  try {
+    const transactions = await Transaction.find({ payerEmail: req.user.email }).sort({ date: -1 });
+    res.json({ success: true, transactions });
+  } catch (error) {
+    console.error('Error fetching my-transactions:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
 // Get a receipt for a specific request
 router.get('/receipt', async (req, res) => {
   try {

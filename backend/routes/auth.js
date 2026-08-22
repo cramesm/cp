@@ -33,6 +33,124 @@ const generateToken = (user) => {
   );
 };
 
+// Temporary store for registration OTPs
+const registrationOtpStore = {};
+
+// @route   POST /api/auth/register/request-otp
+// @desc    Request OTP for registration
+router.post('/register/request-otp', registerLimiter, async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ success: false, message: 'Email is required' });
+
+    // Check if email is already in use
+    const student = await Student.findOne({ email });
+    const alumni = await Alumni.findOne({ email });
+    const superAdmin = await SuperAdmin.findOne({ email });
+    const registrar = await Registrar.findOne({ email });
+
+    if (student || alumni || superAdmin || registrar) {
+      return res.status(400).json({ success: false, message: 'Email is already registered' });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = Date.now() + 10 * 60 * 1000; // 10 mins
+    
+    registrationOtpStore[email] = { otp, expiresAt };
+
+    await transporter.sendMail({
+      from: `"VeriFitor System" <${process.env.SMTP_EMAIL}>`,
+      to: email,
+      subject: 'VeriFitor - Registration OTP',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #2f3947;">Registration OTP</h2>
+          <p>Use the OTP below to complete your registration:</p>
+          <div style="background: #f4f4f4; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0;">
+            <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #2f3947;">${otp}</span>
+          </div>
+          <p style="color: #666;">This OTP expires in <strong>10 minutes</strong>.</p>
+        </div>
+      `
+    });
+
+    res.json({ success: true, message: 'OTP sent successfully' });
+  } catch (error) {
+    console.error('Request OTP error:', error);
+    res.status(500).json({ success: false, message: 'Error sending OTP' });
+  }
+});
+
+// @route   POST /api/auth/register/verify-otp
+// @desc    Verify OTP and register user
+router.post('/register/verify-otp', registerLimiter, registerValidation, validate, async (req, res) => {
+  try {
+    const { email, otp, firstName, lastName, password, role, studentId, course, yearLevel, phoneNumber } = req.body;
+    
+    const stored = registrationOtpStore[email];
+    if (!stored || Date.now() > stored.expiresAt || stored.otp !== otp) {
+      return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
+    }
+
+    // OTP is valid. Proceed to register.
+    // Check again to avoid race conditions
+    const existingStudent = await Student.findOne({ email });
+    const existingAlumni = await Alumni.findOne({ email });
+    if (existingStudent || existingAlumni) {
+      return res.status(400).json({ success: false, message: 'Email already registered' });
+    }
+
+    if (studentId) {
+      const existingIdStudent = await Student.findOne({ studentId });
+      const existingIdAlumni = await Alumni.findOne({ studentId });
+      if (existingIdStudent || existingIdAlumni) {
+        return res.status(400).json({ success: false, message: 'Student ID already registered' });
+      }
+    }
+
+    const isAlumni = role === 'alumni';
+    const UserModel = isAlumni ? Alumni : Student;
+
+    const user = await UserModel.create({
+      firstName,
+      lastName,
+      email,
+      password,
+      role: role || 'student',
+      studentId: studentId || null,
+      course: course || '',
+      yearLevel: yearLevel || '',
+      phoneNumber: phoneNumber || ''
+    });
+
+    // Clean up OTP
+    delete registrationOtpStore[email];
+
+    const token = generateToken(user);
+
+    res.status(201).json({
+      success: true,
+      message: 'Registration successful',
+      token,
+      user: {
+        id: user._id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        studentId: user.studentId || '',
+        course: user.course || '',
+        yearLevel: user.yearLevel || '',
+        phoneNumber: user.phoneNumber || '',
+        profilePic: user.profilePic || ''
+      }
+    });
+  } catch (error) {
+    console.error('Verify OTP error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
 // @route   POST /api/auth/register
 // @desc    Register a new student/alumni
 router.post('/register', registerLimiter, registerValidation, validate, async (req, res) => {
@@ -171,7 +289,8 @@ router.post('/login', loginProgressiveLimiter, loginValidation, validate, async 
         studentId: user.studentId || '',
         course: user.course || '',
         yearLevel: user.yearLevel || '',
-        phoneNumber: user.phoneNumber || ''
+        phoneNumber: user.phoneNumber || '',
+        profilePic: user.profilePic || ''
       }
     });
   } catch (error) {

@@ -46,9 +46,7 @@ router.get('/', protect, async (req, res) => {
     
     // Apply smart role-based filtering since we now require authentication
     if (req.user && (req.user.role === 'student' || req.user.role === 'alumni')) {
-      if (req.user.name && req.user.name !== 'User') {
-        query = { name: req.user.name };
-      }
+      query = { requesterEmail: req.user.email };
     }
 
     const requests = await Request.find(query).sort({ dateRequested: 1 });
