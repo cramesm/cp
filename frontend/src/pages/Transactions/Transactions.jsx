@@ -543,7 +543,7 @@ const Transactions = () => {
                     })
                   ) : (
                     <tr>
-                      <td colSpan="9" className="px-6 py-20 text-center text-[#99AAB5] italic text-[16px]">
+                      <td colSpan="9" className="px-6 py-20 text-center text-gray-500 italic text-[16px]">
                         No payments found matching your filters.
                       </td>
                     </tr>
@@ -659,7 +659,7 @@ const Transactions = () => {
                     })
                   ) : (
                     <tr>
-                      <td colSpan="8" className="px-6 py-20 text-center text-[#99AAB5] italic text-[16px]">
+                      <td colSpan="8" className="px-6 py-20 text-center text-gray-500 italic text-[16px]">
                         No refund requests found.
                       </td>
                     </tr>
