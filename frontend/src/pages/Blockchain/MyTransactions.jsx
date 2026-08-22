@@ -49,9 +49,9 @@ function MyTransactions() {
 
     const getStatusStyle = (status) => {
         switch (status?.toLowerCase()) {
-            case "recorded": return "bg-[#E1FFEB] text-[#28A745]";
-            case "pending": return "bg-[#FFFDE1] text-[#D2C300]";
-            case "failed": return "bg-[#FFE1E1] text-[#DC3545]";
+            case "recorded": return "bg-[#E1FFEB] text-[#15803d]";
+            case "pending": return "bg-[#FFFDE1] text-[#854d0e]";
+            case "failed": return "bg-[#FFE1E1] text-[#b91c1c]";
             default: return "bg-gray-100 text-gray-600";
         }
     };
@@ -136,7 +136,7 @@ function MyTransactions() {
 
                             {/* Left: entries + search */}
                             <div className="flex items-center gap-3 flex-1 min-w-0">
-                                <div className="flex items-center gap-2 text-[14px] text-[#7E84A3] shrink-0">
+                                <div className="flex items-center gap-2 text-[14px] text-[#4D5E80] shrink-0">
                                     <span>Show</span>
                                     <select
                                         aria-label="Entries per page"
