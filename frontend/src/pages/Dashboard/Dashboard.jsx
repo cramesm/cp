@@ -157,7 +157,11 @@ const Dashboard = () => {
                                 <ul className="list-none m-0 p-0">
                                     {recentData.transactions.map((tx, idx) => (
                                         <li key={idx} className={`py-4 px-6 flex items-center justify-between text-[14px] ${idx % 2 === 0 ? 'bg-[#fcfcfc]' : 'bg-white'}`}>
-                                            <span className="text-gray-600 font-medium">TXN-{tx.referenceNumber || tx.requestId || '1786296589063-932'}</span>
+                                            <span className="text-gray-600 font-medium">
+                                                {`${tx.referenceNumber || tx.requestId || '1786296589063-932'}`.startsWith('TXN-') 
+                                                    ? `${tx.referenceNumber || tx.requestId || '1786296589063-932'}` 
+                                                    : `TXN-${tx.referenceNumber || tx.requestId || '1786296589063-932'}`}
+                                            </span>
                                             <span className="text-gray-500 font-mono truncate w-1/2 text-right">{tx.blockchainTxHash || tx.transactionHash || '0x305babaefe2c95bae9fd86f6ba72...'}</span>
                                         </li>
                                     ))}
