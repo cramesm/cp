@@ -191,7 +191,7 @@ export default function AddRegistrar() {
         )}
 
         <div className="max-w-5xl mx-auto">
-          <div className="flex items-center gap-2 text-[12px] mb-6 text-gray-400 uppercase tracking-widest font-bold">
+          <div className="flex items-center gap-2 text-[12px] mb-6 text-gray-500 uppercase tracking-widest font-bold">
             <span className="cursor-pointer hover:text-[#1D2D44]" onClick={() => navigate('/manage-registrar')}>Manage Registrar</span>
             <ChevronRight size={14} />
             <span className="text-[#1D2D44]">Add New Registrar</span>
@@ -240,11 +240,11 @@ export default function AddRegistrar() {
                   <h3 className="text-[16px] font-bold uppercase tracking-wider">Security</h3>
                 </div>
                 <div className="space-y-5">
-                  <FormInput label="Employee ID" placeholder="e.g. 2024-REG-001" />
+                  <FormInput label="Employee ID" placeholder="e.g. 2024-REG-001" name="employeeId" />
 
                   <div className="flex flex-col gap-2">
                     <div className="flex justify-between items-center">
-                      <label className="text-[12px] font-bold text-gray-500 uppercase tracking-tight">Auto-Generated Password</label>
+                      <label htmlFor="generatedPassword" className="text-[12px] font-bold text-gray-500 uppercase tracking-tight">Auto-Generated Password</label>
                       <button
                         onClick={generatePassword}
                         className="text-[#1D2D44] text-[10px] font-bold flex items-center gap-1 hover:underline uppercase"
@@ -254,11 +254,12 @@ export default function AddRegistrar() {
                     </div>
                     <input
                       type="text"
+                      id="generatedPassword"
                       value={generatedPassword}
                       readOnly
                       className="w-full bg-[#F1F5F9] border border-gray-200 rounded-lg p-3 text-sm font-mono text-[#1D2D44] font-bold text-center tracking-widest"
                     />
-                    <p className="text-[10px] text-gray-400 italic">Complexity: Uppercase, Lowercase, Number, & Special Char.</p>
+                    <p className="text-[10px] text-gray-500 italic">Complexity: Uppercase, Lowercase, Number, & Special Char.</p>
                   </div>
                 </div>
               </section>
@@ -272,8 +273,9 @@ export default function AddRegistrar() {
                 </div>
                 <div className="space-y-5">
                   <div className="flex flex-col gap-2">
-                    <label className="text-[12px] font-bold text-gray-500 uppercase tracking-tight">Specific Responsibility (Optional)</label>
+                    <label htmlFor="responsibility" className="text-[12px] font-bold text-gray-500 uppercase tracking-tight">Specific Responsibility (Optional)</label>
                     <textarea
+                      id="responsibility"
                       placeholder="e.g. Handles Transcript of Records..."
                       className="w-full bg-white border border-gray-300 rounded-lg p-3 text-sm h-48 outline-none focus:border-[#1D2D44] resize-none transition-all"
                     />
@@ -329,9 +331,10 @@ export default function AddRegistrar() {
 function FormInput({ label, placeholder = "", name, value, onChange, error }) {
   return (
     <div className="flex flex-col gap-2">
-      <label className="text-[12px] font-bold text-gray-500 uppercase tracking-tight">{label}</label>
+      <label htmlFor={name} className="text-[12px] font-bold text-gray-500 uppercase tracking-tight">{label}</label>
       <input
         type="text"
+        id={name}
         name={name}
         value={value}
         onChange={onChange}
