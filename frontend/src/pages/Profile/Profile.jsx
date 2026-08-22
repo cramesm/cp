@@ -205,9 +205,10 @@ const Profile = () => {
                         <div className="p-8">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-[13px] font-bold text-gray-700">Firstname</label>
+                                    <label className="text-[13px] font-bold text-gray-700" htmlFor="firstname">Firstname</label>
                                     <input 
                                         type="text" 
+                                        id="firstname"
                                         name="firstname" 
                                         value={user.firstname}
                                         onChange={handleProfileChange}
@@ -215,9 +216,10 @@ const Profile = () => {
                                     />
                                 </div>
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-[13px] font-bold text-gray-700">Lastname</label>
+                                    <label className="text-[13px] font-bold text-gray-700" htmlFor="lastname">Lastname</label>
                                     <input 
                                         type="text" 
+                                        id="lastname"
                                         name="lastname" 
                                         value={user.lastname}
                                         onChange={handleProfileChange}
@@ -225,9 +227,10 @@ const Profile = () => {
                                     />
                                 </div>
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-[13px] font-bold text-gray-700">Email Address</label>
+                                    <label className="text-[13px] font-bold text-gray-700" htmlFor="email">Email Address</label>
                                     <input 
                                         type="email" 
+                                        id="email"
                                         name="email" 
                                         value={user.email || 'registrarname@sample.com'} 
                                         disabled 
@@ -235,18 +238,20 @@ const Profile = () => {
                                     />
                                 </div>
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-[13px] font-bold text-gray-700">User Role</label>
+                                    <label className="text-[13px] font-bold text-gray-700" htmlFor="role">User Role</label>
                                     <input 
                                         type="text" 
+                                        id="role"
                                         value={user.role || 'Super Admin'} 
                                         disabled 
                                         className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-[14px] outline-none bg-white text-gray-500 cursor-not-allowed capitalize" 
                                     />
                                 </div>
                                 <div className="flex flex-col gap-2">
-                                    <label className="text-[13px] font-bold text-gray-700">Employee ID</label>
+                                    <label className="text-[13px] font-bold text-gray-700" htmlFor="employeeId">Employee ID</label>
                                     <input 
                                         type="text" 
+                                        id="employeeId"
                                         value="ID-123456" 
                                         disabled 
                                         className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-[14px] outline-none bg-white text-gray-500 cursor-not-allowed" 
@@ -266,10 +271,11 @@ const Profile = () => {
                         <div className="p-8">
                             <div className="flex flex-col gap-6 max-w-2xl">
                                 <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
-                                    <label className="text-[13px] font-bold text-gray-700 w-[180px]">Current Password</label>
+                                    <label className="text-[13px] font-bold text-gray-700 w-[180px]" htmlFor="current">Current Password</label>
                                     <div className="relative flex-1">
                                         <input 
                                             type={showCurrentPassword ? 'text' : 'password'}
+                                            id="current"
                                             name="current" 
                                             value={passwords.current} 
                                             onChange={handlePasswordChange} 
@@ -277,7 +283,8 @@ const Profile = () => {
                                         />
                                         <button 
                                             type="button"
-                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                                            aria-label={showCurrentPassword ? 'Hide current password' : 'Show current password'}
+                                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none p-2"
                                             onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                                         >
                                             {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -286,10 +293,11 @@ const Profile = () => {
                                 </div>
 
                                 <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
-                                    <label className="text-[13px] font-bold text-gray-700 w-[180px]">New Password</label>
+                                    <label className="text-[13px] font-bold text-gray-700 w-[180px]" htmlFor="newGroup">New Password</label>
                                     <div className="relative flex-1">
                                         <input 
                                             type={showNewPassword ? 'text' : 'password'}
+                                            id="newGroup"
                                             name="newGroup" 
                                             value={passwords.newGroup} 
                                             onChange={handlePasswordChange} 
@@ -297,7 +305,8 @@ const Profile = () => {
                                         />
                                         <button 
                                             type="button"
-                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                                            aria-label={showNewPassword ? 'Hide new password' : 'Show new password'}
+                                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none p-2"
                                             onClick={() => setShowNewPassword(!showNewPassword)}
                                         >
                                             {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -306,10 +315,11 @@ const Profile = () => {
                                 </div>
 
                                 <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
-                                    <label className="text-[13px] font-bold text-gray-700 w-[180px]">Confirm Password</label>
+                                    <label className="text-[13px] font-bold text-gray-700 w-[180px]" htmlFor="confirm">Confirm Password</label>
                                     <div className="relative flex-1">
                                         <input 
                                             type={showConfirmPassword ? 'text' : 'password'}
+                                            id="confirm"
                                             name="confirm" 
                                             value={passwords.confirm} 
                                             onChange={handlePasswordChange} 
@@ -317,7 +327,8 @@ const Profile = () => {
                                         />
                                         <button 
                                             type="button"
-                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                                            aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none p-2"
                                             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                         >
                                             {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -331,7 +342,7 @@ const Profile = () => {
                     {/* Action Buttons */}
                     <div className="flex justify-end gap-4 mt-6">
                         <button 
-                            className="bg-gray-400 text-white py-2.5 px-8 rounded-full font-bold text-sm hover:bg-gray-500 transition-colors shadow-sm cursor-pointer border-none"
+                            className="bg-gray-500 text-white py-2.5 px-8 rounded-full font-bold text-sm hover:bg-gray-600 transition-colors shadow-sm cursor-pointer border-none"
                             onClick={() => navigate('/profile/info')}
                         >
                             Cancel
