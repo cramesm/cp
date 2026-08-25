@@ -2,9 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../../api';
 
-// Import local assets
-import loginImage from '../../assets/verifitor-login.webp';
-import smallLogo from '../../assets/verifitor_logo.webp';
+// Using images from public directory to optimize LCP
 
 const AdminLogin = () => {
     const [email, setEmail] = useState('');
@@ -77,7 +75,7 @@ const AdminLogin = () => {
             {/* Left Column - Branding (Entirely from the provided image) */}
             <div className="hidden lg:flex lg:w-1/2 relative p-4">
                 <img 
-                    src={loginImage} 
+                    src="/verifitor-login.webp" 
                     alt="Verifitor Login Design" 
                     className="w-full h-full object-cover rounded-2xl shadow-xl"
                     width="1414"
@@ -92,7 +90,7 @@ const AdminLogin = () => {
                     
                     {/* Logo Header - Made much bigger to match mockup */}
                     <div className="mb-6 flex justify-center">
-                        <img src={smallLogo} alt="Verifitor Logo" className="w-[85%] max-w-[320px] max-h-[140px] object-contain drop-shadow-md" width="621" height="213" fetchPriority="high" />
+                        <img src="/verifitor_logo.webp" alt="Verifitor Logo" className="w-[85%] max-w-[320px] max-h-[140px] object-contain drop-shadow-md" width="621" height="213" fetchPriority="high" />
                     </div>
 
                     {/* Welcome Text */}
