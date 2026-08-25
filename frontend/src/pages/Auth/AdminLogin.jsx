@@ -3,8 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import api from '../../api';
 
 // Import local assets
-import loginImage from '../../assets/verifitor-login.png';
-import smallLogo from '../../assets/verifitor_logo.png';
+import loginImage from '../../assets/verifitor-login.webp';
+import smallLogo from '../../assets/verifitor_logo.webp';
 
 const AdminLogin = () => {
     const [email, setEmail] = useState('');
@@ -80,6 +80,9 @@ const AdminLogin = () => {
                     src={loginImage} 
                     alt="Verifitor Login Design" 
                     className="w-full h-full object-cover rounded-2xl shadow-xl"
+                    width="1414"
+                    height="2000"
+                    fetchPriority="high"
                 />
             </div>
 
@@ -89,7 +92,7 @@ const AdminLogin = () => {
                     
                     {/* Logo Header - Made much bigger to match mockup */}
                     <div className="mb-6 flex justify-center">
-                        <img src={smallLogo} alt="Verifitor Logo" className="w-[85%] max-w-[320px] max-h-[140px] object-contain drop-shadow-md" />
+                        <img src={smallLogo} alt="Verifitor Logo" className="w-[85%] max-w-[320px] max-h-[140px] object-contain drop-shadow-md" width="621" height="213" fetchPriority="high" />
                     </div>
 
                     {/* Welcome Text */}
