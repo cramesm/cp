@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import Layout from '../../components/Layout';
 import api from '../../api';
+import TableSkeleton from '../../components/TableSkeleton';
 
 export default function ActivityLogs() {
   const [logs, setLogs] = useState([]);
@@ -171,9 +172,9 @@ export default function ActivityLogs() {
                   <th className="py-5 px-6 text-center">Status</th>
                 </tr>
               </thead>
-              <tbody className="text-[13px]">
+              <tbody className="divide-y divide-gray-100 text-[13px]">
                 {loading ? (
-                  <tr><td colSpan="6" className="py-20 text-center text-gray-400">Loading activity logs...</td></tr>
+                  <TableSkeleton columns={6} rows={entriesPerPage || 10} />
                 ) : paginatedLogs.length > 0 ? (
                   paginatedLogs.map((log, index) => {
                     const logDate = new Date(log.timestamp);

@@ -5,6 +5,7 @@ import { Search, Plus } from 'lucide-react';
 import api from '../../api';
 import ConfirmModal from '../../components/ConfirmModal';
 import FeedbackModal from '../../components/FeedbackModal';
+import TableSkeleton from '../../components/TableSkeleton';
 
 const ManageRegistrar = () => {
   const [registrars, setRegistrars] = useState([]);
@@ -161,10 +162,10 @@ const ManageRegistrar = () => {
                   <th className="px-8 py-5 text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 text-[13px]">
-                {loading ? (
-                  <tr><td colSpan="5" className="py-20 text-center text-gray-400">Loading registrars...</td></tr>
-                ) : paginatedRegistrars.length > 0 ? (
+                <tbody className="divide-y divide-gray-100 text-[13px]">
+                  {loading ? (
+                    <TableSkeleton columns={5} rows={entriesPerPage || 10} />
+                  ) : paginatedRegistrars.length > 0 ? (
                   paginatedRegistrars.map((item, idx) => (
                     <tr
                       key={item._id || item.registrarId}

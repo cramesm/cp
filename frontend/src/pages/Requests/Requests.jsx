@@ -5,6 +5,7 @@ import Layout from '../../components/Layout';
 import FilterDrawer from '../../components/FilterDrawer';
 import ActiveFilterChips from '../../components/ActiveFilterChips';
 import api from '../../api';
+import TableSkeleton from '../../components/TableSkeleton';
 
 const Requests = () => {
     const [requests, setRequests] = useState([]);
@@ -306,10 +307,10 @@ const Requests = () => {
                                 <th className="px-8 py-5 text-right"><span className="sr-only">Actions</span></th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-50">
-                            {loading ? (
-                                <tr><td colSpan="6" className="py-20 text-center text-gray-400">Loading requests...</td></tr>
-                            ) : paginatedRequests.length > 0 ? (
+                            <tbody className="divide-y divide-gray-100 text-[13px]">
+                                {loading ? (
+                                    <TableSkeleton columns={6} rows={entriesPerPage || 10} />
+                                ) : paginatedRequests.length > 0 ? (
                                 paginatedRequests.map((req, idx) => {
                                     const reqDate = new Date(req.dateRequested);
                                     const formattedDate = reqDate.toLocaleDateString('en-US', {

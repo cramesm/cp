@@ -5,6 +5,7 @@ import ConfirmModal from '../../components/ConfirmModal';
 import FilterDrawer from '../../components/FilterDrawer';
 import ActiveFilterChips from '../../components/ActiveFilterChips';
 import api from '../../api';
+import TableSkeleton from '../../components/TableSkeleton';
 import { X, ZoomIn, CheckCircle, Image as ImageIcon, Send, AlertCircle, RefreshCw, Receipt, Eye, XCircle, Undo2, SlidersHorizontal, ArrowDownAZ, ArrowUpZA } from 'lucide-react';
 
 const API_BASE = (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : '') || 'http://127.0.0.1:5000';
@@ -492,7 +493,7 @@ const Transactions = () => {
                 </thead>
                 <tbody className="text-[13px]">
                   {loading ? (
-                    <tr><td colSpan="9" className="px-6 py-20 text-center text-gray-500 italic">Loading payments...</td></tr>
+                    <TableSkeleton columns={9} rows={entriesPerPage || 10} />
                   ) : paginatedTransactions.length > 0 ? (
                     paginatedTransactions.map((tx, idx) => {
                       const txDate = new Date(tx.date);
@@ -613,7 +614,7 @@ const Transactions = () => {
                 </thead>
                 <tbody className="text-[13px]">
                   {refundsLoading ? (
-                    <tr><td colSpan="8" className="px-6 py-20 text-center text-gray-500 italic">Loading refund requests...</td></tr>
+                    <TableSkeleton columns={8} rows={10} />
                   ) : refunds.length > 0 ? (
                     refunds.map((refund, idx) => {
                       const refundDate = new Date(refund.createdAt);

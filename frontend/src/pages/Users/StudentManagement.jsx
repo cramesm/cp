@@ -6,6 +6,7 @@ import ActiveFilterChips from '../../components/ActiveFilterChips';
 import axiosInstance from '../../components/config/axiosConfig';
 import ConfirmModal from '../../components/ConfirmModal';
 import FeedbackModal from '../../components/FeedbackModal';
+import TableSkeleton from '../../components/TableSkeleton';
 
 const StudentManagement = () => {
     const [users, setUsers] = useState([]);
@@ -406,7 +407,7 @@ const StudentManagement = () => {
                             </thead>
                             <tbody className="divide-y divide-gray-100 text-[13px]">
                                 {loading ? (
-                                    <tr><td colSpan="5" className="py-20 text-center text-gray-400">Loading users...</td></tr>
+                                    <TableSkeleton columns={5} rows={entriesPerPage || 10} />
                                 ) : paginatedUsers.length > 0 ? (
                                     paginatedUsers.map((user, idx) => (
                                         <tr
