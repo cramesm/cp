@@ -100,6 +100,17 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// Get a transaction by requestId
+router.get('/by-request/:requestId', async (req, res) => {
+  try {
+    const transaction = await Transaction.findOne({ requestId: req.params.requestId }).sort({ date: -1 });
+    if (!transaction) return res.json(null);
+    res.json(transaction);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching transaction by request' });
+  }
+});
+
 // Upload receipt and create a new transaction
 router.post('/upload-receipt', upload.single('receiptImage'), async (req, res) => {
   try {

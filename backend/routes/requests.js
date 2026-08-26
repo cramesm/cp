@@ -62,6 +62,19 @@ router.get('/', protect, async (req, res) => {
   }
 });
 
+// Get a single request by ID
+router.get('/:id', protect, async (req, res) => {
+    try {
+        const request = await Request.findOne({ requestId: req.params.id });
+        if (!request) return res.status(404).json({ message: 'Request not found' });
+        
+        const enrichedRequest = await enrichRequestWithStudentData(request.toObject());
+        res.json(enrichedRequest);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching request' });
+    }
+});
+
 // Update a request (Logged)
 router.put('/:id', protect, async (req, res) => {
     try {

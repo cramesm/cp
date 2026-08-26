@@ -77,13 +77,14 @@ const RequestDetails = () => {
 
     const fetchData = async () => {
         try {
-            const res = await api.get('/requests');
-            const found = res.data.find(r => r.requestId === id);
-            if (found) setRequestData(found);
+            const res = await api.get(`/requests/${id}`);
+            if (res.data) setRequestData(res.data);
 
-            const txRes = await api.get('/transactions');
-            const foundTx = txRes.data.find(t => t.requestId === id);
-            if (foundTx) setPaymentTx(foundTx);
+            const txRes = await api.get(`/transactions/by-request/${id}`);
+            if (txRes.data) setPaymentTx(txRes.data);
+
+            const found = res.data;
+            const foundTx = txRes.data;
 
             // Determine Step
             const docType = (found?.documentType || found?.document_type || '').toLowerCase();
