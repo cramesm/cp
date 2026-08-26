@@ -294,7 +294,7 @@ const Requests = () => {
                 </FilterDrawer>
 
                 {/* --- TABLE SECTION --- */}
-                <div className="bg-white shadow-sm border border-gray-200 overflow-hidden">
+                <div className="bg-white shadow-sm border border-gray-200 overflow-hidden min-h-[600px]">
                     <table className="w-full text-left">
                         <thead>
                             <tr className="text-[15px] font-bold text-black border-b border-gray-100">
