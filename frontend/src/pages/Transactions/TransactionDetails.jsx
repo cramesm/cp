@@ -88,14 +88,6 @@ const TransactionDetails = () => {
                 setTxData(res.data);
             } catch (error) {
                 console.error("Error fetching transaction:", error);
-                // Fallback: try to find in list
-                try {
-                    const listRes = await api.get('/transactions');
-                    const found = listRes.data.find(tx => tx.transactionId === id);
-                    if (found) setTxData(found);
-                } catch (e) {
-                    console.error("Fallback also failed:", e);
-                }
             } finally {
                 setLoading(false);
             }
