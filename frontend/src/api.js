@@ -4,13 +4,10 @@ const getBaseURL = () => {
   if (import.meta.env.VITE_API_URL) {
     return import.meta.env.VITE_API_URL;
   }
-  // Validate hostname against allowlist to prevent DOM-based link manipulation (CWE-451)
-  const hostname = window.location.hostname;
-  const allowedHosts = ['localhost', '127.0.0.1'];
-  if (allowedHosts.includes(hostname)) {
-    return `http://${hostname}:5000/api`;
+  // Only use window.location in dev mode — Vite tree-shakes this from production builds
+  if (import.meta.env.DEV) {
+    return `http://localhost:5000/api`;
   }
-  // Production fallback — use relative path (proxied by Vercel)
   return '/api';
 };
 
