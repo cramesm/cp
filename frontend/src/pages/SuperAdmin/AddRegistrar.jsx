@@ -4,6 +4,7 @@ import ConfirmModal from '../../components/ConfirmModal';
 import { ChevronRight, UserPlus, ShieldCheck, Briefcase, Save, X, CheckCircle, RefreshCw, AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';
+import { useModals } from '../../hooks/useModals';
 
 export default function AddRegistrar() {
   const navigate = useNavigate();
@@ -315,7 +316,7 @@ export default function AddRegistrar() {
 
       <ConfirmModal
         isOpen={confirmConfig !== null}
-        onClose={() => setConfirmConfig(null)}
+        onClose={closeConfirm}
         onConfirm={confirmConfig?.onConfirm}
         title={confirmConfig?.title}
         message={confirmConfig?.message}

@@ -6,6 +6,7 @@ import api from '../../api';
 import ConfirmModal from '../../components/ConfirmModal';
 import FeedbackModal from '../../components/FeedbackModal';
 import TableSkeleton from '../../components/TableSkeleton';
+import { useModals } from '../../hooks/useModals';
 
 const ManageRegistrar = () => {
   const [registrars, setRegistrars] = useState([]);
@@ -113,7 +114,7 @@ const ManageRegistrar = () => {
           <ConfirmModal 
               {...confirmConfig} 
               isOpen={!!confirmConfig} 
-              onClose={() => !confirmConfig.isLoading && setConfirmConfig(null)} 
+              onClose={closeConfirm} 
           />
       )}
       <div className="p-8 bg-[#f8fafc] min-h-screen relative">
@@ -270,7 +271,7 @@ const ManageRegistrar = () => {
           <FeedbackModal 
               {...feedbackConfig} 
               isOpen={!!feedbackConfig} 
-              onClose={() => setFeedbackConfig(null)} 
+              onClose={closeFeedback} 
           />
       )}
     </Layout>

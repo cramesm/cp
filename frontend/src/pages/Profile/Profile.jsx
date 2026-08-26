@@ -4,6 +4,7 @@ import Layout from '../../components/Layout';
 import ConfirmModal from '../../components/ConfirmModal';
 import api from '../../api';
 import { User, ShieldCheck, Save, X, Camera, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { useModals } from '../../hooks/useModals';
 
 const Profile = () => {
     const navigate = useNavigate();
@@ -190,7 +191,7 @@ const Profile = () => {
                     <ConfirmModal 
                         {...confirmConfig} 
                         isOpen={!!confirmConfig} 
-                        onClose={() => !confirmConfig.isLoading && setConfirmConfig(null)} 
+                        onClose={closeConfirm} 
                     />
                 )}
 

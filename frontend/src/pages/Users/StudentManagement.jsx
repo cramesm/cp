@@ -7,6 +7,7 @@ import axiosInstance from '../../components/config/axiosConfig';
 import ConfirmModal from '../../components/ConfirmModal';
 import FeedbackModal from '../../components/FeedbackModal';
 import TableSkeleton from '../../components/TableSkeleton';
+import { useModals } from '../../hooks/useModals';
 
 const StudentManagement = () => {
     const [users, setUsers] = useState([]);
@@ -229,7 +230,7 @@ const StudentManagement = () => {
                 <ConfirmModal 
                     {...confirmConfig} 
                     isOpen={!!confirmConfig} 
-                    onClose={() => !confirmConfig.isLoading && setConfirmConfig(null)} 
+                    onClose={closeConfirm} 
                 />
             )}
             <div className="p-8 bg-[#F8F9FA] min-h-[calc(100vh-64px)] font-sans relative">
@@ -668,7 +669,7 @@ const StudentManagement = () => {
                     <FeedbackModal 
                         {...feedbackConfig} 
                         isOpen={!!feedbackConfig} 
-                        onClose={() => setFeedbackConfig(null)} 
+                        onClose={closeFeedback} 
                     />
                 )}
             </div>

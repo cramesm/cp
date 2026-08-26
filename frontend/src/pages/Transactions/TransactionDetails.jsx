@@ -5,6 +5,7 @@ import api from '../../api';
 import { ArrowLeft, CheckCircle, XCircle, Clock, Image as ImageIcon, Eye, CreditCard, AlertCircle, User, FileText, RefreshCw, Edit3 } from 'lucide-react';
 import ConfirmModal from '../../components/ConfirmModal';
 import FeedbackModal from '../../components/FeedbackModal';
+import { useModals } from '../../hooks/useModals';
 
 const API_BASE = (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : '') || 'http://127.0.0.1:5000';
 
@@ -160,7 +161,7 @@ const TransactionDetails = () => {
                 <ConfirmModal 
                     {...confirmConfig} 
                     isOpen={!!confirmConfig} 
-                    onClose={() => !confirmConfig.isLoading && setConfirmConfig(null)} 
+                    onClose={closeConfirm} 
                 />
             )}
             <div className="p-8 bg-[#F8F9FA] min-h-[calc(100vh-64px)] font-sans relative">
@@ -421,7 +422,7 @@ const TransactionDetails = () => {
                     <FeedbackModal 
                         {...feedbackConfig} 
                         isOpen={!!feedbackConfig} 
-                        onClose={() => setFeedbackConfig(null)} 
+                        onClose={closeFeedback} 
                     />
                 )}
             </div>

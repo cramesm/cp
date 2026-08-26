@@ -5,6 +5,7 @@ import Layout from '../../components/Layout';
 import ConfirmModal from '../../components/ConfirmModal';
 import FeedbackModal from '../../components/FeedbackModal';
 import api from '../../api';
+import { useModals } from '../../hooks/useModals';
 
 const API_BASE = (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : '') || 'http://127.0.0.1:5000';
 
@@ -746,7 +747,7 @@ const RequestDetails = () => {
                     title={confirmConfig.title}
                     message={confirmConfig.message}
                     onConfirm={confirmConfig.onConfirm}
-                    onClose={() => setConfirmConfig(null)}
+                    onClose={closeConfirm}
                     type={confirmConfig.type}
                     confirmText={confirmConfig.confirmText}
                     cancelText={confirmConfig.cancelText}
@@ -758,7 +759,7 @@ const RequestDetails = () => {
                 <FeedbackModal 
                     {...feedbackConfig} 
                     isOpen={!!feedbackConfig} 
-                    onClose={() => setFeedbackConfig(null)} 
+                    onClose={closeFeedback} 
                 />
             )}
         </Layout>
