@@ -89,17 +89,6 @@ router.get('/refunds', protect, async (req, res) => {
   }
 });
 
-// Get a single transaction by transactionId
-router.get('/:id', async (req, res) => {
-  try {
-    const transaction = await Transaction.findOne({ transactionId: req.params.id });
-    if (!transaction) return res.status(404).json({ message: 'Transaction not found' });
-    res.json(transaction);
-  } catch (error) {
-    res.status(500).json({ message: 'Error fetching transaction' });
-  }
-});
-
 // Get a transaction by requestId
 router.get('/by-request/:requestId', async (req, res) => {
   try {
@@ -108,6 +97,17 @@ router.get('/by-request/:requestId', async (req, res) => {
     res.json(transaction);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching transaction by request' });
+  }
+});
+
+// Get a single transaction by transactionId
+router.get('/:id', async (req, res) => {
+  try {
+    const transaction = await Transaction.findOne({ transactionId: req.params.id });
+    if (!transaction) return res.status(404).json({ message: 'Transaction not found' });
+    res.json(transaction);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching transaction' });
   }
 });
 

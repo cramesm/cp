@@ -52,8 +52,8 @@ export default function RegistrarInformation() {
   useEffect(() => {
     const fetchRegistrar = async () => {
       try {
-        const res = await api.get(`/registrars`);
-        const registrar = res.data.find(r => r._id === id || r.registrarId === id);
+        const res = await api.get(`/registrars/${id}`);
+        const registrar = res.data;
         if (registrar) {
           setRegistrarId(registrar._id); // Store MongoDB _id for API calls
           const fullName = registrar.name || '';

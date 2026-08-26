@@ -31,6 +31,37 @@ router.get('/', async (req, res) => {
   }
 });
 
+// @route   GET /api/registrars/:id
+router.get('/:id', async (req, res) => {
+  try {
+    let staff = await Registrar.findById(req.params.id);
+    let isAdmin = false;
+    
+    if (!staff) {
+      staff = await Admin.findById(req.params.id);
+      isAdmin = true;
+    }
+    
+    // Fallback: check by registrarId
+    if (!staff) {
+      staff = await Registrar.findOne({ registrarId: req.params.id });
+    }
+
+    if (!staff) return res.status(404).json({ message: 'User not found' });
+
+    let responseData = staff.toObject();
+    if (isAdmin) {
+      responseData.registrarId = 'ADMIN-' + staff._id.toString().substring(0, 4);
+      responseData.status = 'Active';
+    }
+
+    res.json(responseData);
+  } catch (error) {
+    console.error('Error fetching registrar:', error);
+    res.status(500).json({ message: 'Error fetching registrar' });
+  }
+});
+
 // @route   POST /api/registrars
 router.post('/', async (req, res) => {
   try {
