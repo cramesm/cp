@@ -6,6 +6,7 @@ const path = require('path');
 const mongoose = require('mongoose');
 const helmet = require('helmet');
 const auditLoggerMiddleware = require('./middleware/auditLoggerMiddleware');
+const { globalLimiter, authLimiter } = require('./middleware/rateLimiter');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -15,7 +16,7 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://apis.google.com", "https://vercel.live"],
+      scriptSrc: ["'self'", "https://apis.google.com", "https://vercel.live"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com"],
       imgSrc: ["'self'", "data:", "https://res.cloudinary.com"],
       connectSrc: ["'self'", "http://localhost:5000", "https://*.vercel.app", "https://vercel.live", "wss://ws-us3.pusher.com"],
@@ -26,16 +27,28 @@ app.use(helmet({
       formAction: ["'self'"]
     },
   },
-  crossOriginEmbedderPolicy: false, 
+  crossOriginEmbedderPolicy: { policy: "require-corp" }, 
   crossOriginResourcePolicy: { policy: "cross-origin" },
   crossOriginOpenerPolicy: { policy: "same-origin" },
-  frameguard: { action: 'sameorigin' },
-  referrerPolicy: { policy: 'strict-origin-when-cross-origin' }
+  frameguard: { action: 'deny' },
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+  hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
+  xContentTypeOptions: true
 }));
+
+// Apply Global Rate Limiter
+app.use('/api', globalLimiter);
 
 // Allow CORS dynamically for all Vercel environments
 const corsOptions = {
-  origin: true,
+  origin: function (origin, callback) {
+    const allowedOrigins = [process.env.FRONTEND_URL, 'http://localhost:3000', 'http://localhost:5173'];
+    if (!origin || allowedOrigins.indexOf(origin) !== -1 || origin.endsWith('.vercel.app')) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Origin', 'X-Requested-With', 'Accept', 'Content-Type', 'Authorization', 'ngrok-skip-browser-warning']
@@ -89,17 +102,17 @@ async function seedUsers() {
         if (!existingSuperAdmin) {
             await SuperAdmin.create({
                 email: 'sysadmin@verifitor.com',
-                password: 'sysadmin123', // Model handles hashing
+                password: process.env.DEFAULT_ADMIN_PASSWORD || 'sysadmin123', // Model handles hashing
                 role: 'super admin',
                 name: 'Super Admin'
             });
-            console.log('Default Super Admin created (sysadmin@verifitor.com / sysadmin123)');
+            console.log('Default Super Admin created.');
         }
 
         // 2. Seed Standard Registrars
         const registrarsToSeed = [
-            { email: 'admin@verifitor.com', password: 'admin123', name: 'Admin', registrarId: 'REG-001' },
-            { email: 'saetsmurf1@gmail.com', password: 'admin123', name: 'Primary Admin', registrarId: 'REG-002' }
+            { email: 'admin@verifitor.com', password: process.env.DEFAULT_ADMIN_PASSWORD || 'admin123', name: 'Admin', registrarId: 'REG-001' },
+            { email: 'saetsmurf1@gmail.com', password: process.env.DEFAULT_ADMIN_PASSWORD || 'admin123', name: 'Primary Admin', registrarId: 'REG-002' }
         ];
 
         for (const reg of registrarsToSeed) {
@@ -112,7 +125,7 @@ async function seedUsers() {
                     name: reg.name,
                     registrarId: reg.registrarId
                 });
-                console.log(`Default Registrar created (${reg.email} / ${reg.password})`);
+                console.log(`Default Registrar created (${reg.email}).`);
             }
         }
     } catch (error) {
@@ -146,7 +159,7 @@ const refundRoutes = require('./routes/refunds');
 
 console.log('Routes imported successfully');
 
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/requests', requestRoutes);
 app.use('/api/transactions', transactionRoutes);

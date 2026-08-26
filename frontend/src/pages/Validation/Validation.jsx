@@ -13,13 +13,17 @@ const Validation = () => {
   const [verificationData, setVerificationData] = useState(null);
   const [error, setError] = useState(null);
 
-  const hashFromUrl = new URLSearchParams(window.location.search).get('hash');
+  let hashFromUrl = new URLSearchParams(window.location.search).get('hash');
+  // Sanitize the hash to prevent DOM-based XSS and link manipulation
+  if (hashFromUrl) {
+    hashFromUrl = hashFromUrl.replace(/[^a-zA-Z0-9_-]/g, '');
+  }
 
   useEffect(() => {
     const fetchVerification = async () => {
       if (!hashFromUrl) {
         setIsLoading(false);
-        setError('No hash provided');
+        setError('No valid hash provided');
         return;
       }
 
