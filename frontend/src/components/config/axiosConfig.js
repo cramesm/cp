@@ -4,8 +4,14 @@ const getBaseURL = () => {
   if (import.meta.env.VITE_API_URL) {
     return import.meta.env.VITE_API_URL;
   }
+  // Validate hostname against allowlist to prevent DOM-based link manipulation (CWE-451)
   const hostname = window.location.hostname;
-  return `http://${hostname}:5000/api`;
+  const allowedHosts = ['localhost', '127.0.0.1'];
+  if (allowedHosts.includes(hostname)) {
+    return `http://${hostname}:5000/api`;
+  }
+  // Production fallback — use relative path (proxied by Vercel)
+  return '/api';
 };
 
 const API = axios.create({

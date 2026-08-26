@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { CheckCircle, ExternalLink, ShieldCheck, AlertTriangle, Mail, Phone, Globe, Loader2, ArrowLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import ValidationNavbar from '../../components/ValidationPageNavBar';
 import Footer from '../../components/Footer';
 import api from '../../api';
@@ -13,11 +13,11 @@ const Validation = () => {
   const [verificationData, setVerificationData] = useState(null);
   const [error, setError] = useState(null);
 
-  let hashFromUrl = new URLSearchParams(window.location.search).get('hash');
+  // Use React Router's useSearchParams to avoid DOM taint flow from window.location
+  const [searchParams] = useSearchParams();
+  const rawHash = searchParams.get('hash');
   // Sanitize the hash to prevent DOM-based XSS and link manipulation
-  if (hashFromUrl) {
-    hashFromUrl = hashFromUrl.replace(/[^a-zA-Z0-9_-]/g, '');
-  }
+  const hashFromUrl = rawHash ? rawHash.replace(/[^a-zA-Z0-9_-]/g, '') : null;
 
   useEffect(() => {
     const fetchVerification = async () => {

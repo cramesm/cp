@@ -42,8 +42,13 @@ app.use('/api', globalLimiter);
 // Allow CORS dynamically for all Vercel environments
 const corsOptions = {
   origin: function (origin, callback) {
-    const allowedOrigins = [process.env.FRONTEND_URL, 'http://localhost:3000', 'http://localhost:5173'];
-    if (!origin || allowedOrigins.indexOf(origin) !== -1 || origin.endsWith('.vercel.app')) {
+    const allowedOrigins = [
+      process.env.FRONTEND_URL,
+      'https://verifitor-frontend.vercel.app',
+      'http://localhost:3000',
+      'http://localhost:5173'
+    ];
+    if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
