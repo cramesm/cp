@@ -332,7 +332,7 @@ const Requests = () => {
                                             <td className="px-8 py-5 text-right">
                                                 <button
                                                     onClick={() => navigate(`/requests/${req.requestId}`)}
-                                                    className="bg-[#2f3947] text-white px-5 py-2 rounded text-[12px] font-bold hover:bg-black transition-all"
+                                                    className="bg-[#2c3543] hover:bg-[#1f2631] text-white px-4 py-1.5 rounded-full text-[11.5px] font-bold border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_6px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(0,0,0,0.25)] active:translate-y-0.5 active:border-b-0 transition-all cursor-pointer"
                                                 >
                                                     View Request
                                                 </button>

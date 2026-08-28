@@ -6,7 +6,6 @@ import api from '../../api';
 import ConfirmModal from '../../components/ConfirmModal';
 import FeedbackModal from '../../components/FeedbackModal';
 import TableSkeleton from '../../components/TableSkeleton';
-import { useModals } from '../../hooks/useModals';
 
 const ManageRegistrar = () => {
   const [registrars, setRegistrars] = useState([]);
@@ -41,6 +40,8 @@ const ManageRegistrar = () => {
           isLoading: false
       });
   };
+
+  const closeConfirm = () => setConfirmConfig(null);
 
   // Feedback Modal
   const [feedbackConfig, setFeedbackConfig] = useState(null);
@@ -117,118 +118,118 @@ const ManageRegistrar = () => {
               onClose={closeConfirm} 
           />
       )}
-      <div className="p-8 bg-[#f8fafc] min-h-screen relative">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">Manage Staff</h1>
-          <p className="text-sm text-gray-500">View and manage staff accounts.</p>
-        </div>
-        <div className="rounded-xl bg-white shadow-sm border border-gray-100 overflow-hidden">
+      <div className="py-2 px-2 sm:px-4 font-sans space-y-4 relative">
+        <div className="rounded-[22px] bg-white shadow-[0_8px_24px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.02)] border border-slate-100/90 overflow-hidden">
           
           {/* Header Section */}
-          <div className="flex flex-col gap-4 p-6 md:flex-row md:items-center md:justify-between border-b border-gray-100">
-            <div className="flex items-center gap-6">
+          <div className="flex flex-col gap-3 p-4 sm:p-5 md:flex-row md:items-center md:justify-between border-b border-slate-100 bg-slate-50/40">
+            <div>
+              <h1 className="text-[18px] font-black text-slate-900 m-0">Manage Staff</h1>
+              <p className="text-[11.5px] text-slate-500 font-medium m-0">View and manage authorized registrar accounts</p>
+            </div>
 
+            <div className="flex items-center gap-3 flex-wrap">
               {/* Search Bar */}
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
                 <input
                   type="text"
                   placeholder="Search registrars..."
-                  className="w-64 rounded-md border border-gray-300 py-2 pl-9 pr-4 text-xs outline-none focus:border-[#1D2D44]"
+                  className="w-56 rounded-full border border-slate-200 bg-white py-1.5 pl-8 pr-3.5 text-[12px] font-medium outline-none focus:border-blue-500 shadow-2xs"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
-            </div>
 
-            {/* Add Button */}
-            <Link 
-              to="/manage-registrar/add" 
-              className="flex items-center justify-center gap-2 rounded-md bg-[#6c4df6] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#5a3ed9] transition-all shadow-sm"
-            >
-              <Plus size={16} />
-              Add New Registrar
-            </Link>
+              {/* 3D Add Button */}
+              <Link 
+                to="/manage-registrar/add" 
+                className="flex items-center justify-center gap-1.5 rounded-full bg-[#2c3543] hover:bg-[#1f2631] px-4 py-1.5 text-[12px] font-bold text-white border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_6px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 hover:shadow-[0_4px_10px_rgba(0,0,0,0.3)] active:translate-y-0.5 active:border-b-0 transition-all"
+              >
+                <Plus size={14} />
+                <span>Add Registrar</span>
+              </Link>
+            </div>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-white text-[11px] font-bold uppercase tracking-wider text-gray-800 border-b border-gray-200">
-                  <th className="px-8 py-5">Registrar ID</th>
-                  <th className="px-8 py-5">Registrar Name</th>
-                  <th className="px-8 py-5 text-center">Role</th>
-                  <th className="px-8 py-5">Email Address</th>
-                  <th className="px-8 py-5 text-center">Status</th>
-                  <th className="px-8 py-5 text-right">Action</th>
+                <tr className="bg-slate-50/70 text-[11.5px] font-extrabold uppercase tracking-wider text-slate-500 border-b border-slate-100">
+                  <th className="py-3 px-5">Registrar ID</th>
+                  <th className="py-3 px-5">Registrar Name</th>
+                  <th className="py-3 px-5 text-center">Role</th>
+                  <th className="py-3 px-5">Email Address</th>
+                  <th className="py-3 px-5 text-center">Status</th>
+                  <th className="py-3 px-5 text-right">Action</th>
                 </tr>
               </thead>
-                <tbody className="divide-y divide-gray-100 text-[13px]">
+                <tbody className="divide-y divide-slate-100 text-[12.5px]">
                   {loading ? (
-                    <TableSkeleton columns={5} rows={entriesPerPage || 10} />
+                    <TableSkeleton columns={6} rows={entriesPerPage || 10} />
                   ) : paginatedRegistrars.length > 0 ? (
                   paginatedRegistrars.map((item, idx) => (
                     <tr
                       key={item._id || item.registrarId}
-                      className={`transition-colors ${idx % 2 !== 0 ? 'bg-[#F9FAFF]' : 'bg-white hover:bg-gray-50'}`}
+                      className="hover:bg-slate-50/80 transition-colors"
                     >
-                      <td className="px-8 py-4 font-mono text-gray-500">{item.registrarId}</td>
-                      <td className="px-8 py-4 font-semibold text-gray-800">{item.name}</td>
-                      <td className="px-8 py-4">
-                        {/* Centered Role Badge */}
-                        <div className="flex justify-center">
-                          <span className="min-w-[100px] text-center px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold uppercase tracking-wide">
-                            {item.role}
-                          </span>
-                        </div>
+                      <td className="py-3 px-5 font-mono text-slate-600 font-bold">
+                        <span className="bg-slate-100 px-2 py-0.5 rounded-md text-[11.5px]">
+                          {item.registrarId}
+                        </span>
                       </td>
-                      <td className="px-8 py-4 text-gray-600">{item.email}</td>
-                      <td className="px-8 py-4 text-center">
-                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${
+                      <td className="py-3 px-5 font-bold text-slate-900">{item.name}</td>
+                      <td className="py-3 px-5 text-center">
+                        <span className="inline-block px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-extrabold uppercase tracking-wider border border-blue-200/60">
+                          {item.role}
+                        </span>
+                      </td>
+                      <td className="py-3 px-5 text-slate-600">{item.email}</td>
+                      <td className="py-3 px-5 text-center">
+                        <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider border ${
                             item.status === 'Active' 
-                                ? 'bg-green-100 text-green-700' 
-                                : 'bg-red-100 text-red-700'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                                : 'bg-red-50 text-red-700 border-red-200'
                         }`}>
                             {item.status || 'Inactive'}
                         </span>
                       </td>
-                      <td className="px-8 py-4 text-right">
-                        {/* Action Button - Uniform width and centered text */}
+                      <td className="py-3 px-5 text-right">
                         <div className="flex justify-end gap-2">
                           <button
                             onClick={() => handleToggleStatus(item._id || item.registrarId, item.status || 'Inactive')}
-                            className={`min-w-[90px] rounded-full px-4 py-2 text-[11px] font-bold text-white text-center transition-colors shadow-sm ${
+                            className={`min-w-[85px] rounded-full px-3 py-1 text-[11px] font-bold text-white text-center border-t border-white/20 border-b-2 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all ${
                                 (item.status || 'Inactive') === 'Active'
-                                    ? 'bg-orange-500 hover:bg-orange-600'
-                                    : 'bg-green-500 hover:bg-green-600'
+                                    ? 'bg-amber-600 hover:bg-amber-700 border-amber-900/40'
+                                    : 'bg-emerald-600 hover:bg-emerald-700 border-emerald-900/40'
                             }`}
                           >
                             {(item.status || 'Inactive') === 'Active' ? 'Deactivate' : 'Activate'}
                           </button>
                           <Link
                             to={`/manage-registrar/details/${item._id || item.registrarId}`}
-                            className="min-w-[130px] rounded-full bg-[#1D2D44] px-4 py-2 text-[11px] font-bold text-white text-center hover:bg-[#152030] transition-colors shadow-sm"
+                            className="min-w-[110px] rounded-full bg-[#2c3543] hover:bg-[#1f2631] px-3.5 py-1 text-[11px] font-bold text-white text-center border-t border-white/20 border-b-2 border-black/50 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all"
                           >
-                            Manage Registrar
+                            Manage
                           </Link>
                         </div>
                       </td>
                     </tr>
                   ))
                 ) : (
-                  <tr><td colSpan="5" className="py-20 text-center text-gray-400 italic">No registrars found.</td></tr>
+                  <tr><td colSpan="6" className="py-12 text-center text-slate-400 italic">No registrars found.</td></tr>
                 )}
               </tbody>
             </table>
           </div>
 
-          {/* Table Footer / Pagination Placeholder */}
-          <div className="p-6 border-t border-gray-100 flex justify-center">
-            <div className="flex items-center gap-2">
+          {/* Table Footer / Pagination */}
+          <div className="p-4 border-t border-slate-100 flex justify-center bg-slate-50/30">
+            <div className="flex items-center gap-1.5">
                 <button 
                     disabled={currentPage === 1}
                     onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    className={`text-xs px-2 ${currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-black hover:underline cursor-pointer'}`}
+                    className={`text-xs px-2.5 py-1 rounded-md ${currentPage === 1 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:bg-slate-200 cursor-pointer font-bold'}`}
                 >
                     Previous
                 </button>
@@ -240,17 +241,17 @@ const ManageRegistrar = () => {
                             <button
                                 key={pageNumber}
                                 onClick={() => setCurrentPage(pageNumber)}
-                                className={`w-8 h-8 rounded text-xs transition-colors font-bold ${
+                                className={`w-7 h-7 rounded-lg text-xs transition-colors font-bold ${
                                     currentPage === pageNumber 
-                                        ? 'bg-[#1D2D44] text-white' 
-                                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                        ? 'bg-[#2c3543] text-white shadow-2xs' 
+                                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                                 }`}
                             >
                                 {pageNumber}
                             </button>
                         );
                     } else if (pageNumber === currentPage - 2 || pageNumber === currentPage + 2) {
-                        return <span key={pageNumber} className="text-gray-400 mt-2 text-xs">...</span>;
+                        return <span key={pageNumber} className="text-slate-400 text-xs px-1">...</span>;
                     }
                     return null;
                 })}
@@ -258,7 +259,7 @@ const ManageRegistrar = () => {
                 <button 
                     disabled={currentPage === totalPages || totalPages === 0}
                     onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    className={`text-xs px-2 ${currentPage === totalPages || totalPages === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-black hover:underline cursor-pointer'}`}
+                    className={`text-xs px-2.5 py-1 rounded-md ${currentPage === totalPages || totalPages === 0 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:bg-slate-200 cursor-pointer font-bold'}`}
                 >
                     Next
                 </button>
@@ -266,14 +267,6 @@ const ManageRegistrar = () => {
           </div>
         </div>
       </div>
-      {/* Feedback Modal */}
-      {feedbackConfig && (
-          <FeedbackModal 
-              {...feedbackConfig} 
-              isOpen={!!feedbackConfig} 
-              onClose={closeFeedback} 
-          />
-      )}
     </Layout>
   );
 };
