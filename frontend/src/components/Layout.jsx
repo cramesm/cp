@@ -190,27 +190,27 @@ const Layout = ({ children }) => {
             )}
 
             {/* 3D Floating Dock Sidebar with Original Colors & Logos */}
-            <aside className={`fixed top-4 left-4 bottom-4 bg-[#2c3543] rounded-[28px] shadow-[0_20px_50px_rgba(0,0,0,0.35),0_6px_20px_rgba(0,0,0,0.2)] border border-slate-700/50 flex flex-col z-[1000] sidebar transition-all duration-300 overflow-hidden ${
-                isMobileOpen ? 'translate-x-0 w-[260px]' : '-translate-x-[120%] md:translate-x-0'
-            } ${isCollapsed ? 'md:w-[80px]' : 'md:w-[260px]'}`}>
+            <aside className={`fixed top-3 left-3 bottom-3 bg-[#2c3543] rounded-[24px] shadow-[0_16px_40px_rgba(0,0,0,0.3),0_4px_12px_rgba(0,0,0,0.18)] border border-slate-700/50 flex flex-col z-[1000] sidebar transition-all duration-300 overflow-hidden ${
+                isMobileOpen ? 'translate-x-0 w-[245px]' : '-translate-x-[120%] md:translate-x-0'
+            } ${isCollapsed ? 'md:w-[76px]' : 'md:w-[245px]'}`}>
                 
                 {/* White Logo Container with 3D inset/border */}
-                <div className={`h-[110px] bg-white flex items-center justify-center overflow-hidden transition-all duration-300 rounded-t-[28px] shadow-sm border-b border-gray-100 ${isCollapsed ? 'px-2' : 'px-6'}`}>
+                <div className={`h-[96px] bg-white flex items-center justify-center overflow-hidden transition-all duration-300 rounded-t-[24px] shadow-xs border-b border-gray-100 ${isCollapsed ? 'px-2' : 'px-5'}`}>
                     {isCollapsed ? (
-                        <div className="w-[44px] h-[44px] flex items-center justify-center flex-shrink-0 transition-transform duration-300 hover:scale-105">
+                        <div className="w-[40px] h-[40px] flex items-center justify-center flex-shrink-0 transition-transform duration-300 hover:scale-105">
                             <img src={verifitorIcon} alt="Verifitor Icon" className="w-full h-full object-contain" />
                         </div>
                     ) : (
                         <img
                             src={verifitorLogo}
                             alt="Verifitor"
-                            className="w-full max-w-[170px] object-contain transition-all duration-300 hover:scale-105"
+                            className="w-full max-w-[155px] object-contain transition-all duration-300 hover:scale-105"
                         />
                     )}
                 </div>
 
                 {/* Navigation Items in Original Dark Colors with Tactile 3D Shaped Buttons */}
-                <nav className="flex-1 px-3 py-4 overflow-y-auto space-y-2.5 custom-scrollbar" aria-label="Main navigation">
+                <nav className="flex-1 px-2.5 py-3 overflow-y-auto space-y-1.5 custom-scrollbar" aria-label="Main navigation">
                     {menuItems.map((item) => (
                         <NavLink
                             key={item.path}
@@ -223,22 +223,22 @@ const Layout = ({ children }) => {
                                 }
                             }}
                             className={({ isActive }) =>
-                                `group relative flex items-center gap-3 px-3 py-2.5 rounded-2xl font-bold text-[13.5px] transition-all duration-200 select-none ${
+                                `group relative flex items-center gap-3 px-3 py-2 rounded-xl font-bold text-[13px] transition-all duration-200 select-none ${
                                     isActive
-                                        ? 'bg-gradient-to-b from-[#3e4c5e] to-[#2d3846] text-white border-t border-white/20 border-b-2 border-black/40 shadow-[0_6px_15px_rgba(0,0,0,0.35),inset_0_1px_1px_rgba(255,255,255,0.2)] scale-[1.02]'
-                                        : 'bg-[#252d3a]/60 text-[#9ba4b5] border-t border-white/5 border-b border-black/20 hover:bg-gradient-to-b hover:from-[#354253] hover:to-[#293442] hover:text-white hover:shadow-[0_4px_12px_rgba(0,0,0,0.25),inset_0_1px_1px_rgba(255,255,255,0.1)] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-inner'
-                                } ${isCollapsed ? 'justify-center px-0 py-2.5' : ''}`
+                                        ? 'bg-gradient-to-b from-[#3e4c5e] to-[#2d3846] text-white border-t border-white/20 border-b-2 border-black/40 shadow-[0_4px_12px_rgba(0,0,0,0.35),inset_0_1px_1px_rgba(255,255,255,0.2)] scale-[1.01]'
+                                        : 'bg-[#252d3a]/60 text-[#9ba4b5] border-t border-white/5 border-b border-black/20 hover:bg-gradient-to-b hover:from-[#354253] hover:to-[#293442] hover:text-white hover:shadow-[0_3px_10px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 active:translate-y-0.5'
+                                } ${isCollapsed ? 'justify-center px-0 py-2' : ''}`
                             }
                         >
                             {({ isActive }) => (
                                 <>
                                     {/* 3D Inner Icon Tile */}
-                                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
+                                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
                                         isActive 
-                                            ? 'bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-[0_3px_8px_rgba(37,99,235,0.4),inset_0_1px_1px_rgba(255,255,255,0.4)]' 
+                                            ? 'bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-[0_2px_6px_rgba(37,99,235,0.4),inset_0_1px_1px_rgba(255,255,255,0.4)]' 
                                             : 'bg-[#1e2531] text-[#9ba4b5] group-hover:text-white group-hover:bg-[#283342] shadow-[inset_0_1px_2px_rgba(0,0,0,0.4)]'
                                     }`}>
-                                        <i className={`${item.icon} ${isCollapsed ? 'text-[16px]' : 'text-[14px]'}`}></i>
+                                        <i className={`${item.icon} ${isCollapsed ? 'text-[15px]' : 'text-[13px]'}`}></i>
                                     </div>
 
                                     {!isCollapsed && (
@@ -247,7 +247,7 @@ const Layout = ({ children }) => {
 
                                     {/* 3D Active Indicator Pill */}
                                     {isActive && (
-                                        <span className="absolute right-2.5 w-1.5 h-4 bg-blue-400 rounded-full shadow-[0_0_8px_rgba(96,165,250,0.9)]"></span>
+                                        <span className="absolute right-2 w-1.5 h-3.5 bg-blue-400 rounded-full shadow-[0_0_6px_rgba(96,165,250,0.9)]"></span>
                                     )}
                                 </>
                             )}
@@ -256,57 +256,57 @@ const Layout = ({ children }) => {
                 </nav>
 
                 {/* Bottom Dock Actions with 3D Shaped Logout Button */}
-                <div className="p-3.5 border-t border-slate-700/60">
+                <div className="p-3 border-t border-slate-700/60">
                     <button 
                         onClick={handleLogout}
-                        className={`w-full bg-white text-[#2c3543] py-2.5 rounded-2xl font-bold flex justify-center items-center gap-2 border-t border-white border-b-4 border-slate-300 shadow-[0_6px_16px_rgba(0,0,0,0.25)] hover:bg-gray-50 hover:-translate-y-0.5 active:translate-y-1 active:border-b-0 transition-all ${isCollapsed ? 'px-0' : 'px-4'}`}
+                        className={`w-full bg-white text-[#2c3543] py-2 rounded-xl font-bold flex justify-center items-center gap-2 border-t border-white border-b-4 border-slate-300 shadow-[0_4px_12px_rgba(0,0,0,0.2)] hover:bg-gray-50 hover:-translate-y-0.5 active:translate-y-1 active:border-b-0 transition-all ${isCollapsed ? 'px-0' : 'px-3'}`}
                         title={isCollapsed ? "Logout" : ""}
                     >
-                        <i className="fa-solid fa-arrow-right-from-bracket text-base"></i>
-                        {!isCollapsed && <span className="text-[14px]">Logout</span>}
+                        <i className="fa-solid fa-arrow-right-from-bracket text-sm"></i>
+                        {!isCollapsed && <span className="text-[13px]">Logout</span>}
                     </button>
                 </div>
             </aside>
 
-            <div className={`flex flex-col w-full ${isCollapsed ? 'md:ml-[96px] md:w-[calc(100%-96px)]' : 'md:ml-[280px] md:w-[calc(100%-280px)]'} transition-all duration-300 main-content min-w-0`}>
+            <div className={`flex flex-col w-full ${isCollapsed ? 'md:ml-[88px] md:w-[calc(100%-88px)]' : 'md:ml-[258px] md:w-[calc(100%-258px)]'} transition-all duration-300 main-content min-w-0`}>
                 
-                {/* Sticky Header Wrapper (Prevents scroll gap content bleed) */}
-                <div className="sticky top-0 z-[990] pt-4 pb-2 px-4 bg-[#e9e9e9]/95 backdrop-blur-md transition-colors">
-                    <header className="flex items-center justify-between px-6 sm:px-8 bg-gradient-to-r from-[#44627d] via-[#4d6f8c] to-[#547794] rounded-[26px] h-[70px] shadow-[0_10px_30px_rgba(44,53,67,0.14),0_2px_6px_rgba(0,0,0,0.04)] border border-white/20">
-                        <div className="flex items-center gap-3 sm:gap-4">
+                {/* Sticky Header Wrapper (Tightened gap, no bleed) */}
+                <div className="sticky top-0 z-[990] pt-3 pb-1.5 px-3 sm:px-4 bg-[#e9e9e9]/95 backdrop-blur-md transition-colors">
+                    <header className="flex items-center justify-between px-5 sm:px-6 bg-gradient-to-r from-[#44627d] via-[#4d6f8c] to-[#547794] rounded-[22px] h-[62px] shadow-[0_8px_24px_rgba(44,53,67,0.12),0_2px_6px_rgba(0,0,0,0.03)] border border-white/20">
+                        <div className="flex items-center gap-3">
                             <button
                                 onClick={handleToggle}
-                                className="w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer focus:outline-none flex items-center justify-center border border-white/15 shadow-inner"
+                                className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer focus:outline-none flex items-center justify-center border border-white/15 shadow-inner"
                                 title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
                                 aria-label={isCollapsed ? "Expand sidebar navigation" : "Collapse sidebar navigation"}
                                 aria-expanded={!isCollapsed}
                             >
-                                <i className="fa-solid fa-angles-left text-lg"></i>
+                                <i className="fa-solid fa-angles-left text-base"></i>
                             </button>
-                            <h2 className="text-white text-[20px] sm:text-[22px] font-extrabold m-0 tracking-tight drop-shadow-xs truncate max-w-[280px] sm:max-w-none">
+                            <h2 className="text-white text-[19px] sm:text-[21px] font-extrabold m-0 tracking-tight drop-shadow-xs truncate max-w-[260px] sm:max-w-none">
                                 {getPageTitle()}
                             </h2>
                         </div>
 
-                        <div className="flex items-center gap-3 sm:gap-4">
+                        <div className="flex items-center gap-2.5 sm:gap-3">
                             {/* Notification Pill Button */}
                             <button
                                 type="button"
                                 onClick={() => navigate('/notifications')}
-                                className="w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all border border-white/15 shadow-inner relative"
+                                className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all border border-white/15 shadow-inner relative"
                                 aria-label={`View notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
                             >
-                                <i className="fa-solid fa-bell text-[15px]"></i>
+                                <i className="fa-solid fa-bell text-[14px]"></i>
                                 {unreadCount > 0 && (
-                                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-red-500 text-white text-[10px] font-extrabold rounded-full ring-2 ring-[#4d6f8c] shadow-sm animate-pulse">
+                                    <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-0.5 flex items-center justify-center bg-red-500 text-white text-[9.5px] font-extrabold rounded-full ring-2 ring-[#4d6f8c] shadow-sm animate-pulse">
                                         {unreadCount}
                                     </span>
                                 )}
                             </button>
 
                             {/* Non-Clickable User Profile Badge */}
-                            <div className="flex items-center gap-2.5 p-1 pl-1.5 pr-3.5 bg-white/15 rounded-full border border-white/20 shadow-sm select-none cursor-default">
-                                <div className="w-8 h-8 rounded-full bg-white text-[#547794] flex items-center justify-center font-extrabold text-xs shadow-sm overflow-hidden flex-shrink-0">
+                            <div className="flex items-center gap-2 p-1 pl-1.5 pr-3 bg-white/15 rounded-full border border-white/20 shadow-xs select-none cursor-default">
+                                <div className="w-7 h-7 rounded-full bg-white text-[#547794] flex items-center justify-center font-extrabold text-[11px] shadow-xs overflow-hidden flex-shrink-0">
                                     {adminUser.profilePic ? (
                                         <img src={adminUser.profilePic.startsWith('http') ? adminUser.profilePic : `http://localhost:5000${adminUser.profilePic}`} alt="Profile" className="w-full h-full object-cover" />
                                     ) : (
@@ -314,20 +314,20 @@ const Layout = ({ children }) => {
                                     )}
                                 </div>
                                 <div className="hidden md:flex flex-col text-left">
-                                    <span className="text-white text-[13px] font-bold m-0 leading-tight truncate max-w-[130px]">{adminUser.name || 'Registrar Name'}</span>
-                                    <span className="text-white/80 text-[10.5px] font-medium m-0 leading-tight lowercase truncate max-w-[130px]">{adminUser.email || `${userRole.replace(' ', '')}name@sample.com`}</span>
+                                    <span className="text-white text-[12.5px] font-bold m-0 leading-tight truncate max-w-[120px]">{adminUser.name || 'Registrar Name'}</span>
+                                    <span className="text-white/80 text-[10px] font-medium m-0 leading-tight lowercase truncate max-w-[120px]">{adminUser.email || `${userRole.replace(' ', '')}name@sample.com`}</span>
                                 </div>
                             </div>
                         </div>
                     </header>
                 </div>
 
-                <main id="main-content" className="flex-1 w-full px-4 sm:px-6 py-2">
+                <main id="main-content" className="flex-1 w-full px-3 sm:px-4 py-1.5">
                     <Breadcrumb />
                     <motion.div
-                        initial={{ opacity: 0, y: 8 }}
+                        initial={{ opacity: 0, y: 6 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.25 }}
+                        transition={{ duration: 0.2 }}
                     >
                         {children}
                     </motion.div>

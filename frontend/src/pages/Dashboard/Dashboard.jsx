@@ -123,10 +123,10 @@ const Dashboard = () => {
 
     return (
         <Layout>
-            <div className="space-y-6 pb-6">
+            <div className="space-y-4 pb-4">
                 {/* Error Output Message */}
                 {error && (
-                    <div className="flex items-center justify-between bg-red-50 border border-red-200 text-red-700 px-5 py-3.5 rounded-2xl shadow-sm">
+                    <div className="flex items-center justify-between bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-2xl shadow-sm">
                         <div className="flex items-center gap-2.5 text-sm font-semibold">
                             <AlertCircle size={18} />
                             <span>{error}</span>
@@ -140,39 +140,39 @@ const Dashboard = () => {
                 {/* ========================================================================= */}
                 {/* 1. 3D ELEVATED STATS GRID                                                 */}
                 {/* ========================================================================= */}
-                <div className={`grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 transition-opacity ${loading ? 'opacity-60' : 'opacity-100'}`}>
+                <div className={`grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 transition-opacity ${loading ? 'opacity-60' : 'opacity-100'}`}>
                     {statCards.map((card, idx) => (
                         <div 
                             key={idx}
                             onClick={() => navigate(card.link)}
-                            className="bg-white rounded-[26px] p-5 shadow-[0_10px_30px_rgba(0,0,0,0.03),0_2px_8px_rgba(0,0,0,0.02)] border border-slate-100/90 flex flex-col justify-between min-h-[140px] relative cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group"
+                            className="bg-white rounded-[20px] p-4 shadow-[0_8px_24px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.02)] border border-slate-100/90 flex flex-col justify-between min-h-[125px] relative cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group"
                         >
                             {/* Card Top Header with 3D Icon Badge & Arrow */}
                             <div className="flex justify-between items-start w-full">
-                                <div className={`w-10 h-10 rounded-2xl ${card.iconBg} flex items-center justify-center text-sm shadow-xs transition-transform group-hover:scale-110`}>
+                                <div className={`w-8 h-8 rounded-xl ${card.iconBg} flex items-center justify-center text-xs shadow-2xs transition-transform group-hover:scale-105`}>
                                     <i className={card.icon}></i>
                                 </div>
-                                <div className="w-7 h-7 rounded-full bg-slate-100 group-hover:bg-[#2c3543] text-slate-400 group-hover:text-white flex items-center justify-center transition-colors">
-                                    <ArrowUpRight size={13} />
+                                <div className="w-6 h-6 rounded-full bg-slate-100 group-hover:bg-[#2c3543] text-slate-400 group-hover:text-white flex items-center justify-center transition-colors">
+                                    <ArrowUpRight size={12} />
                                 </div>
                             </div>
 
                             {/* Badge if pending */}
                             {card.badge && (
-                                <span className="absolute top-3.5 right-12 bg-red-500 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full shadow-sm animate-pulse">
+                                <span className="absolute top-3 right-10 bg-red-500 text-white text-[9.5px] font-extrabold px-2 py-0.5 rounded-full shadow-xs animate-pulse">
                                     {card.badge} Action
                                 </span>
                             )}
 
                             {/* Card Value & Title */}
-                            <div className="mt-3">
-                                <span className="text-[32px] font-black text-slate-900 leading-none tracking-tight block">
+                            <div className="mt-2">
+                                <span className="text-[28px] font-black text-slate-900 leading-none tracking-tight block">
                                     {card.value}
                                 </span>
-                                <span className="text-[13px] font-bold text-slate-700 mt-1 block">
+                                <span className="text-[12.5px] font-bold text-slate-700 mt-1 block truncate">
                                     {card.title}
                                 </span>
-                                <span className="text-[10.5px] font-medium text-slate-400 block truncate mt-0.5">
+                                <span className="text-[10px] font-medium text-slate-400 block truncate mt-0.5">
                                     {card.subtitle}
                                 </span>
                             </div>
@@ -183,25 +183,25 @@ const Dashboard = () => {
                 {/* ========================================================================= */}
                 {/* 2. MIDDLE SECTION: BLOCKCHAIN ACTIVITIES & SYSTEM NOTIFICATIONS           */}
                 {/* ========================================================================= */}
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                     
                     {/* Left Card: Blockchain Ledger Activities */}
-                    <div className="bg-white rounded-[28px] shadow-[0_10px_30px_rgba(0,0,0,0.03),0_2px_8px_rgba(0,0,0,0.02)] border border-slate-100/90 flex flex-col h-[380px] overflow-hidden">
+                    <div className="bg-white rounded-[22px] shadow-[0_8px_24px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.02)] border border-slate-100/90 flex flex-col h-[340px] overflow-hidden">
                         
                         {/* Header */}
-                        <div className="py-4 px-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                        <div className="py-3.5 px-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                             <div className="flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center text-xs font-bold border border-sky-200/60">
+                                <div className="w-7 h-7 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center text-xs font-bold border border-sky-200/60">
                                     <i className="fa-solid fa-cubes"></i>
                                 </div>
                                 <div>
-                                    <h3 className="text-slate-900 text-[16px] font-extrabold m-0 leading-tight">Blockchain Activities</h3>
-                                    <p className="text-[11px] text-slate-400 font-medium m-0">Cryptographic audit trail on smart contract</p>
+                                    <h3 className="text-slate-900 text-[15px] font-extrabold m-0 leading-tight">Blockchain Activities</h3>
+                                    <p className="text-[10.5px] text-slate-400 font-medium m-0">Cryptographic audit trail on smart contract</p>
                                 </div>
                             </div>
                             <button 
                                 onClick={() => navigate('/blockchain/my-transactions')} 
-                                className="text-[12px] font-bold text-sky-600 hover:text-sky-700 flex items-center gap-1 bg-sky-50 px-3 py-1.5 rounded-full transition-colors"
+                                className="text-[11.5px] font-bold text-sky-600 hover:text-sky-700 flex items-center gap-1 bg-sky-50 px-3 py-1.5 rounded-full transition-colors"
                             >
                                 <span>View all</span>
                                 <ArrowUpRight size={12} />
@@ -209,24 +209,24 @@ const Dashboard = () => {
                         </div>
 
                         {/* List Feed */}
-                        <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
+                        <div className="flex-1 overflow-y-auto p-2.5 space-y-1.5 custom-scrollbar">
                             {recentData.transactions?.length > 0 ? (
                                 recentData.transactions.map((tx, idx) => (
                                     <div 
                                         key={idx} 
-                                        className="p-3 bg-slate-50/80 hover:bg-slate-100/90 rounded-2xl transition-all flex items-center justify-between border border-slate-100/80 group"
+                                        className="p-2.5 bg-slate-50/80 hover:bg-slate-100/90 rounded-xl transition-all flex items-center justify-between border border-slate-100/80 group"
                                     >
-                                        <div className="flex items-center gap-3 overflow-hidden">
-                                            <div className="w-8 h-8 rounded-xl bg-white shadow-xs flex items-center justify-center text-blue-600 flex-shrink-0">
-                                                <i className="fa-solid fa-cube text-xs"></i>
+                                        <div className="flex items-center gap-2.5 overflow-hidden">
+                                            <div className="w-7 h-7 rounded-lg bg-white shadow-2xs flex items-center justify-center text-blue-600 flex-shrink-0">
+                                                <i className="fa-solid fa-cube text-[11px]"></i>
                                             </div>
                                             <div className="overflow-hidden">
-                                                <span className="text-[13px] font-extrabold text-slate-900 block truncate">
+                                                <span className="text-[12.5px] font-extrabold text-slate-900 block truncate">
                                                     {`${tx.referenceNumber || tx.requestId || '1786296589063-932'}`.startsWith('TXN-') 
                                                         ? `${tx.referenceNumber || tx.requestId || '1786296589063-932'}` 
                                                         : `TXN-${tx.referenceNumber || tx.requestId || '1786296589063-932'}`}
                                                 </span>
-                                                <span className="text-[11px] text-slate-400 font-medium block">
+                                                <span className="text-[10px] text-slate-400 font-medium block">
                                                     Block Confirmation Verified
                                                 </span>
                                             </div>
@@ -235,29 +235,29 @@ const Dashboard = () => {
                                         <div className="flex items-center gap-2">
                                             <span 
                                                 onClick={(e) => handleCopyHash(tx.blockchainTxHash || tx.transactionHash || '0x305babaefe2c95bae9fd86f6ba72...', e)}
-                                                className="font-mono text-[11.5px] bg-white border border-slate-200/80 px-2.5 py-1 rounded-full text-slate-600 truncate max-w-[170px] sm:max-w-[210px] cursor-pointer hover:border-blue-400 hover:text-blue-600 transition-colors flex items-center gap-1.5"
+                                                className="font-mono text-[11px] bg-white border border-slate-200/80 px-2 py-0.5 rounded-full text-slate-600 truncate max-w-[150px] sm:max-w-[190px] cursor-pointer hover:border-blue-400 hover:text-blue-600 transition-colors flex items-center gap-1.5"
                                                 title="Click to copy hash"
                                             >
                                                 <span>{tx.blockchainTxHash || tx.transactionHash || '0x305babaefe2c95bae9fd86f6ba72...'}</span>
                                                 {copiedHash === (tx.blockchainTxHash || tx.transactionHash) ? <Check size={11} className="text-emerald-600" /> : <Copy size={11} className="text-slate-400" />}
                                             </span>
-                                            <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.8)]"></span>
+                                            <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.8)]"></span>
                                         </div>
                                     </div>
                                 ))
                             ) : (
                                 [1, 2, 3, 4, 5].map((item) => (
-                                    <div key={item} className="p-3 bg-slate-50/80 hover:bg-slate-100/90 rounded-2xl transition-all flex items-center justify-between border border-slate-100/80">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-xl bg-white shadow-xs flex items-center justify-center text-blue-600 flex-shrink-0">
-                                                <i className="fa-solid fa-cube text-xs"></i>
+                                    <div key={item} className="p-2.5 bg-slate-50/80 hover:bg-slate-100/90 rounded-xl transition-all flex items-center justify-between border border-slate-100/80">
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="w-7 h-7 rounded-lg bg-white shadow-2xs flex items-center justify-center text-blue-600 flex-shrink-0">
+                                                <i className="fa-solid fa-cube text-[11px]"></i>
                                             </div>
                                             <div>
-                                                <span className="text-[13px] font-extrabold text-slate-900 block">TXN-1786296589063-932</span>
-                                                <span className="text-[11px] text-slate-400 font-medium block">Block Confirmed</span>
+                                                <span className="text-[12.5px] font-extrabold text-slate-900 block">TXN-1786296589063-932</span>
+                                                <span className="text-[10px] text-slate-400 font-medium block">Block Confirmed</span>
                                             </div>
                                         </div>
-                                        <span className="font-mono text-[11.5px] bg-white border border-slate-200/80 px-3 py-1 rounded-full text-slate-600 truncate max-w-[180px]">
+                                        <span className="font-mono text-[11px] bg-white border border-slate-200/80 px-2.5 py-0.5 rounded-full text-slate-600 truncate max-w-[160px]">
                                             0x305babaefe2c95bae9fd86f6ba72...
                                         </span>
                                     </div>
@@ -267,22 +267,22 @@ const Dashboard = () => {
                     </div>
 
                     {/* Right Card: Live Notifications Feed */}
-                    <div className="bg-white rounded-[28px] shadow-[0_10px_30px_rgba(0,0,0,0.03),0_2px_8px_rgba(0,0,0,0.02)] border border-slate-100/90 flex flex-col h-[380px] overflow-hidden">
+                    <div className="bg-white rounded-[22px] shadow-[0_8px_24px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.02)] border border-slate-100/90 flex flex-col h-[340px] overflow-hidden">
                         
                         {/* Header */}
-                        <div className="py-4 px-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                        <div className="py-3.5 px-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                             <div className="flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xs font-bold border border-purple-200/60">
+                                <div className="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-xs font-bold border border-purple-200/60">
                                     <i className="fa-solid fa-bell"></i>
                                 </div>
                                 <div>
-                                    <h3 className="text-slate-900 text-[16px] font-extrabold m-0 leading-tight">Live Notifications</h3>
-                                    <p className="text-[11px] text-slate-400 font-medium m-0">Student requests & verification alerts</p>
+                                    <h3 className="text-slate-900 text-[15px] font-extrabold m-0 leading-tight">Live Notifications</h3>
+                                    <p className="text-[10.5px] text-slate-400 font-medium m-0">Student requests & verification alerts</p>
                                 </div>
                             </div>
                             <button 
                                 onClick={() => navigate('/notifications')} 
-                                className="text-[12px] font-bold text-purple-600 hover:text-purple-700 flex items-center gap-1 bg-purple-50 px-3 py-1.5 rounded-full transition-colors"
+                                className="text-[11.5px] font-bold text-purple-600 hover:text-purple-700 flex items-center gap-1 bg-purple-50 px-3 py-1.5 rounded-full transition-colors"
                             >
                                 <span>View all</span>
                                 <ArrowUpRight size={12} />
@@ -290,41 +290,41 @@ const Dashboard = () => {
                         </div>
 
                         {/* List Feed */}
-                        <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
+                        <div className="flex-1 overflow-y-auto p-2.5 space-y-1.5 custom-scrollbar">
                             {recentData.notifications?.length > 0 ? (
                                 recentData.notifications.map((notif, idx) => (
                                     <div 
                                         key={idx} 
                                         onClick={() => navigate('/notifications')}
-                                        className="p-3.5 bg-slate-50/80 hover:bg-slate-100/90 rounded-2xl transition-all flex items-start gap-3.5 border border-slate-100/80 cursor-pointer"
+                                        className="p-3 bg-slate-50/80 hover:bg-slate-100/90 rounded-xl transition-all flex items-start gap-3 border border-slate-100/80 cursor-pointer"
                                     >
-                                        <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                        <div className="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center flex-shrink-0 mt-0.5">
                                             <i className="fa-solid fa-circle-info text-xs"></i>
                                         </div>
                                         <div className="flex-1">
-                                            <p className="text-[13px] font-semibold text-slate-800 leading-snug m-0">
+                                            <p className="text-[12.5px] font-semibold text-slate-800 leading-snug m-0">
                                                 {notif.message}
                                             </p>
-                                            <span className="text-[11px] text-slate-400 font-medium mt-1 block">
+                                            <span className="text-[10.5px] text-slate-400 font-medium mt-0.5 block">
                                                 {notif.createdAt ? new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recent Alert'}
                                             </span>
                                         </div>
                                         {!notif.isRead && (
-                                            <span className="w-2.5 h-2.5 rounded-full bg-blue-600 flex-shrink-0 mt-1.5 shadow-[0_0_6px_rgba(37,99,235,0.6)]"></span>
+                                            <span className="w-2 h-2 rounded-full bg-blue-600 flex-shrink-0 mt-1.5 shadow-[0_0_5px_rgba(37,99,235,0.6)]"></span>
                                         )}
                                     </div>
                                 ))
                             ) : (
                                 [1, 2, 3, 4].map((item) => (
-                                    <div key={item} className="p-3.5 bg-slate-50/80 hover:bg-slate-100/90 rounded-2xl transition-all flex items-start gap-3.5 border border-slate-100/80">
-                                        <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0 mt-0.5 border border-blue-200/50">
+                                    <div key={item} className="p-3 bg-slate-50/80 hover:bg-slate-100/90 rounded-xl transition-all flex items-start gap-3 border border-slate-100/80">
+                                        <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0 mt-0.5 border border-blue-200/50">
                                             <i className="fa-solid fa-file-circle-check text-xs"></i>
                                         </div>
                                         <div className="flex-1">
-                                            <p className="text-[13px] font-semibold text-slate-800 leading-snug m-0">
+                                            <p className="text-[12.5px] font-semibold text-slate-800 leading-snug m-0">
                                                 Request #req_1785820622982 for Diploma (2nd Copy) is ready for pickup!
                                             </p>
-                                            <span className="text-[11px] text-slate-400 font-medium mt-0.5 block">
+                                            <span className="text-[10.5px] text-slate-400 font-medium mt-0.5 block">
                                                 10 minutes ago
                                             </span>
                                         </div>
@@ -338,34 +338,34 @@ const Dashboard = () => {
                 {/* ========================================================================= */}
                 {/* 3. BOTTOM SECTION: ENHANCED RECENT REQUESTS TABLE                         */}
                 {/* ========================================================================= */}
-                <div className="bg-white rounded-[28px] shadow-[0_10px_30px_rgba(0,0,0,0.03),0_2px_8px_rgba(0,0,0,0.02)] border border-slate-100/90 overflow-hidden">
+                <div className="bg-white rounded-[22px] shadow-[0_8px_24px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.02)] border border-slate-100/90 overflow-hidden">
                     
                     {/* Table Toolbar Header */}
-                    <div className="p-5 sm:p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/40">
+                    <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/40">
                         <div>
-                            <h3 className="text-[18px] font-black text-slate-900 tracking-tight m-0">Recent Document Requests</h3>
-                            <p className="text-[12px] text-slate-500 font-medium mt-0.5 m-0">Track live student clearance and document issuance queue</p>
+                            <h3 className="text-[16px] font-black text-slate-900 tracking-tight m-0">Recent Document Requests</h3>
+                            <p className="text-[11.5px] text-slate-500 font-medium mt-0.5 m-0">Track live student clearance and document issuance queue</p>
                         </div>
 
                         {/* Search & Filter Controls */}
-                        <div className="flex items-center gap-2.5 flex-wrap">
+                        <div className="flex items-center gap-2 flex-wrap">
                             <div className="relative">
-                                <i className="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                                <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[11px]"></i>
                                 <input 
                                     type="text" 
                                     placeholder="Filter by name, ID..." 
                                     value={searchFilter}
                                     onChange={(e) => setSearchFilter(e.target.value)}
-                                    className="pl-9 pr-4 py-1.5 bg-white border border-slate-200 rounded-full text-[12.5px] font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 shadow-2xs"
+                                    className="pl-8 pr-3.5 py-1.5 bg-white border border-slate-200 rounded-full text-[12px] font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 shadow-2xs"
                                 />
                             </div>
 
                             <button 
                                 onClick={() => navigate('/requests')}
-                                className="flex items-center gap-1.5 px-4 py-2 bg-[#2c3543] hover:bg-[#1f2631] text-white rounded-full text-[12.5px] font-bold shadow-md hover:shadow-lg transition-all active:scale-98"
+                                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#2c3543] hover:bg-[#1f2631] text-white rounded-full text-[12px] font-bold shadow-xs hover:shadow-md transition-all active:scale-98"
                             >
                                 <span>All Requests</span>
-                                <ArrowUpRight size={13} />
+                                <ArrowUpRight size={12} />
                             </button>
                         </div>
                     </div>
@@ -375,37 +375,37 @@ const Dashboard = () => {
                         <table className="w-full border-collapse table-auto text-left">
                             <thead>
                                 <tr className="bg-slate-50/70 border-b border-slate-100">
-                                    <th className="py-4 px-6 text-[12px] font-extrabold text-slate-500 uppercase tracking-wider">Request ID</th>
-                                    <th className="py-4 px-6 text-[12px] font-extrabold text-slate-500 uppercase tracking-wider">Student Name</th>
-                                    <th className="py-4 px-6 text-[12px] font-extrabold text-slate-500 uppercase tracking-wider">Document Type</th>
-                                    <th className="py-4 px-6 text-[12px] font-extrabold text-slate-500 uppercase tracking-wider">Date Requested</th>
-                                    <th className="py-4 px-6 text-[12px] font-extrabold text-slate-500 uppercase tracking-wider text-center">Status</th>
-                                    <th className="py-4 px-6 text-[12px] font-extrabold text-slate-500 uppercase tracking-wider text-right">Action</th>
+                                    <th className="py-3 px-5 text-[11.5px] font-extrabold text-slate-500 uppercase tracking-wider">Request ID</th>
+                                    <th className="py-3 px-5 text-[11.5px] font-extrabold text-slate-500 uppercase tracking-wider">Student Name</th>
+                                    <th className="py-3 px-5 text-[11.5px] font-extrabold text-slate-500 uppercase tracking-wider">Document Type</th>
+                                    <th className="py-3 px-5 text-[11.5px] font-extrabold text-slate-500 uppercase tracking-wider">Date Requested</th>
+                                    <th className="py-3 px-5 text-[11.5px] font-extrabold text-slate-500 uppercase tracking-wider text-center">Status</th>
+                                    <th className="py-3 px-5 text-[11.5px] font-extrabold text-slate-500 uppercase tracking-wider text-right">Action</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
                                 {filteredRequests.length > 0 ? (
                                     filteredRequests.map((req, idx) => (
                                         <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
-                                            <td className="py-4 px-6 text-[13.5px] text-slate-900 font-extrabold align-middle">
-                                                <span className="bg-slate-100 px-2.5 py-1 rounded-lg text-slate-700 font-mono text-[12px]">
+                                            <td className="py-3 px-5 text-[13px] text-slate-900 font-extrabold align-middle">
+                                                <span className="bg-slate-100 px-2 py-0.5 rounded-md text-slate-700 font-mono text-[11.5px]">
                                                     {req.requestId}
                                                 </span>
                                             </td>
-                                            <td className="py-4 px-6 text-[13.5px] text-slate-900 font-bold align-middle">
+                                            <td className="py-3 px-5 text-[13px] text-slate-900 font-bold align-middle">
                                                 {req.name}
                                             </td>
-                                            <td className="py-4 px-6 text-[13px] text-slate-700 font-medium align-middle">
+                                            <td className="py-3 px-5 text-[12.5px] text-slate-700 font-medium align-middle">
                                                 <span className="inline-flex items-center gap-1.5">
                                                     <i className="fa-solid fa-file-lines text-blue-500 text-xs"></i>
                                                     <span>{req.documentType || 'Certificate of Enrollment'}</span>
                                                 </span>
                                             </td>
-                                            <td className="py-4 px-6 text-[13px] text-slate-500 font-medium align-middle">
+                                            <td className="py-3 px-5 text-[12.5px] text-slate-500 font-medium align-middle">
                                                 {req.dateRequested || '26/03/27'}
                                             </td>
-                                            <td className="py-4 px-6 text-center align-middle">
-                                                <span className={`inline-flex items-center gap-1.5 py-1 px-3.5 rounded-full font-extrabold text-[11px] uppercase tracking-wider ${
+                                            <td className="py-3 px-5 text-center align-middle">
+                                                <span className={`inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider ${
                                                     req.status === 'Released' || req.status === 'Approved'
                                                         ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                                                         : req.status === 'In Process'
@@ -418,10 +418,10 @@ const Dashboard = () => {
                                                     <span>{req.status || 'Pending'}</span>
                                                 </span>
                                             </td>
-                                            <td className="py-4 px-6 text-right align-middle">
+                                            <td className="py-3 px-5 text-right align-middle">
                                                 <button 
                                                     onClick={() => navigate(`/requests/${req.requestId}`)} 
-                                                    className="bg-[#2c3543] hover:bg-[#1f2631] text-white py-1.5 px-4 rounded-full text-[12px] font-bold shadow-xs hover:shadow-md transition-all active:scale-95"
+                                                    className="bg-[#2c3543] hover:bg-[#1f2631] text-white py-1 px-3.5 rounded-full text-[11.5px] font-bold shadow-2xs hover:shadow-xs transition-all active:scale-95"
                                                 >
                                                     View Details
                                                 </button>
@@ -435,25 +435,25 @@ const Dashboard = () => {
                                         { id: 'REQ-1236-2026', name: 'John Doe', doc: 'Diploma (2nd Copy)', date: '28/03/27', status: 'Released' }
                                     ].map((item, idx) => (
                                         <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
-                                            <td className="py-4 px-6 text-[13.5px] text-slate-900 font-extrabold align-middle">
-                                                <span className="bg-slate-100 px-2.5 py-1 rounded-lg text-slate-700 font-mono text-[12px]">
+                                            <td className="py-3 px-5 text-[13px] text-slate-900 font-extrabold align-middle">
+                                                <span className="bg-slate-100 px-2 py-0.5 rounded-md text-slate-700 font-mono text-[11.5px]">
                                                     {item.id}
                                                 </span>
                                             </td>
-                                            <td className="py-4 px-6 text-[13.5px] text-slate-900 font-bold align-middle">
+                                            <td className="py-3 px-5 text-[13px] text-slate-900 font-bold align-middle">
                                                 {item.name}
                                             </td>
-                                            <td className="py-4 px-6 text-[13px] text-slate-700 font-medium align-middle">
+                                            <td className="py-3 px-5 text-[12.5px] text-slate-700 font-medium align-middle">
                                                 <span className="inline-flex items-center gap-1.5">
                                                     <i className="fa-solid fa-file-lines text-blue-500 text-xs"></i>
                                                     <span>{item.doc}</span>
                                                 </span>
                                             </td>
-                                            <td className="py-4 px-6 text-[13px] text-slate-500 font-medium align-middle">
+                                            <td className="py-3 px-5 text-[12.5px] text-slate-500 font-medium align-middle">
                                                 {item.date}
                                             </td>
-                                            <td className="py-4 px-6 text-center align-middle">
-                                                <span className={`inline-flex items-center gap-1.5 py-1 px-3.5 rounded-full font-extrabold text-[11px] uppercase tracking-wider ${
+                                            <td className="py-3 px-5 text-center align-middle">
+                                                <span className={`inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider ${
                                                     item.status === 'Released'
                                                         ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                                                         : item.status === 'In Process'
@@ -466,10 +466,10 @@ const Dashboard = () => {
                                                     <span>{item.status}</span>
                                                 </span>
                                             </td>
-                                            <td className="py-4 px-6 text-right align-middle">
+                                            <td className="py-3 px-5 text-right align-middle">
                                                 <button 
                                                     onClick={() => navigate('/requests')}
-                                                    className="bg-[#2c3543] hover:bg-[#1f2631] text-white py-1.5 px-4 rounded-full text-[12px] font-bold shadow-xs hover:shadow-md transition-all active:scale-95"
+                                                    className="bg-[#2c3543] hover:bg-[#1f2631] text-white py-1 px-3.5 rounded-full text-[11.5px] font-bold shadow-2xs hover:shadow-xs transition-all active:scale-95"
                                                 >
                                                     View Details
                                                 </button>
