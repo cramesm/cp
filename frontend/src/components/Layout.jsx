@@ -209,8 +209,8 @@ const Layout = ({ children }) => {
                     )}
                 </div>
 
-                {/* Navigation Items in Original Dark Colors with 3D Floating Elevation */}
-                <nav className="flex-1 px-3.5 py-5 overflow-y-auto space-y-2 custom-scrollbar" aria-label="Main navigation">
+                {/* Navigation Items in Original Dark Colors with Tactile 3D Shaped Buttons */}
+                <nav className="flex-1 px-3 py-4 overflow-y-auto space-y-2.5 custom-scrollbar" aria-label="Main navigation">
                     {menuItems.map((item) => (
                         <NavLink
                             key={item.path}
@@ -223,22 +223,31 @@ const Layout = ({ children }) => {
                                 }
                             }}
                             className={({ isActive }) =>
-                                `group relative flex items-center gap-3.5 px-3.5 py-3 rounded-2xl font-bold text-[14px] transition-all duration-200 ${
+                                `group relative flex items-center gap-3 px-3 py-2.5 rounded-2xl font-bold text-[13.5px] transition-all duration-200 select-none ${
                                     isActive
-                                        ? 'bg-[#374151] text-white shadow-md shadow-black/30 border-l-4 border-white translate-x-1'
-                                        : 'text-[#9ba4b5] hover:text-white hover:bg-[#374151]/80 hover:shadow-xs'
-                                } ${isCollapsed ? 'justify-center px-0' : ''}`
+                                        ? 'bg-gradient-to-b from-[#3e4c5e] to-[#2d3846] text-white border-t border-white/20 border-b-2 border-black/40 shadow-[0_6px_15px_rgba(0,0,0,0.35),inset_0_1px_1px_rgba(255,255,255,0.2)] scale-[1.02]'
+                                        : 'bg-[#252d3a]/60 text-[#9ba4b5] border-t border-white/5 border-b border-black/20 hover:bg-gradient-to-b hover:from-[#354253] hover:to-[#293442] hover:text-white hover:shadow-[0_4px_12px_rgba(0,0,0,0.25),inset_0_1px_1px_rgba(255,255,255,0.1)] hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-inner'
+                                } ${isCollapsed ? 'justify-center px-0 py-2.5' : ''}`
                             }
                         >
                             {({ isActive }) => (
                                 <>
-                                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 ${
-                                        isActive ? 'text-white' : 'text-[#9ba4b5] group-hover:text-white'
+                                    {/* 3D Inner Icon Tile */}
+                                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
+                                        isActive 
+                                            ? 'bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-[0_3px_8px_rgba(37,99,235,0.4),inset_0_1px_1px_rgba(255,255,255,0.4)]' 
+                                            : 'bg-[#1e2531] text-[#9ba4b5] group-hover:text-white group-hover:bg-[#283342] shadow-[inset_0_1px_2px_rgba(0,0,0,0.4)]'
                                     }`}>
-                                        <i className={`${item.icon} ${isCollapsed ? 'text-[18px]' : 'text-[16px]'}`}></i>
+                                        <i className={`${item.icon} ${isCollapsed ? 'text-[16px]' : 'text-[14px]'}`}></i>
                                     </div>
+
                                     {!isCollapsed && (
                                         <span className="tracking-wide truncate">{item.label}</span>
+                                    )}
+
+                                    {/* 3D Active Indicator Pill */}
+                                    {isActive && (
+                                        <span className="absolute right-2.5 w-1.5 h-4 bg-blue-400 rounded-full shadow-[0_0_8px_rgba(96,165,250,0.9)]"></span>
                                     )}
                                 </>
                             )}
@@ -246,19 +255,19 @@ const Layout = ({ children }) => {
                     ))}
                 </nav>
 
-                {/* Bottom Dock Actions (Collapse & Logout) with Original Styling */}
-                <div className="p-3.5 border-t border-slate-700/60 space-y-2">
+                {/* Bottom Dock Actions with 3D Shaped Buttons */}
+                <div className="p-3 border-t border-slate-700/60 space-y-2">
                     <button 
                         onClick={toggleSidebar}
-                        className="hidden md:flex w-full items-center justify-center p-2 rounded-xl text-[#9ba4b5] hover:text-white hover:bg-[#374151]/80 transition-all focus:outline-none"
+                        className="hidden md:flex w-full items-center justify-center p-2 rounded-xl bg-[#222a36] text-[#9ba4b5] border-t border-white/10 border-b border-black/40 shadow-sm hover:bg-[#323d4d] hover:text-white hover:-translate-y-0.5 active:translate-y-0.5 transition-all focus:outline-none"
                         title={isCollapsed ? "Expand Dock" : "Collapse Dock"}
                     >
-                        <i className={`fa-solid ${isCollapsed ? 'fa-angles-right' : 'fa-angles-left'} text-[13px]`}></i>
+                        <i className={`fa-solid ${isCollapsed ? 'fa-angles-right' : 'fa-angles-left'} text-[12px]`}></i>
                     </button>
 
                     <button 
                         onClick={handleLogout}
-                        className={`w-full bg-white text-[#2c3543] py-2.5 rounded-2xl font-bold flex justify-center items-center gap-2 hover:bg-gray-100 shadow-md transition-all active:scale-[0.98] ${isCollapsed ? 'px-0' : 'px-4'}`}
+                        className={`w-full bg-white text-[#2c3543] py-2.5 rounded-2xl font-bold flex justify-center items-center gap-2 border-t border-white border-b-4 border-slate-300 shadow-[0_6px_16px_rgba(0,0,0,0.25)] hover:bg-gray-50 hover:-translate-y-0.5 active:translate-y-1 active:border-b-0 transition-all ${isCollapsed ? 'px-0' : 'px-4'}`}
                         title={isCollapsed ? "Logout" : ""}
                     >
                         <i className="fa-solid fa-arrow-right-from-bracket text-base"></i>
