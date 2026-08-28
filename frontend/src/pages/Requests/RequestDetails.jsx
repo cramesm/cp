@@ -290,7 +290,7 @@ const RequestDetails = () => {
                     </div>
                     <button 
                         onClick={() => navigate('/requests')}
-                        className="bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs px-4 py-1.5 rounded-full border border-slate-200 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 transition-all flex items-center gap-2 cursor-pointer w-fit"
+                        className="bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold text-xs px-4 py-2 rounded-full border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-2 cursor-pointer w-fit"
                     >
                         <ArrowLeft size={13} />
                         <span>Back to Document Requests</span>
@@ -518,14 +518,22 @@ const RequestDetails = () => {
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <div className="flex justify-start">
+                                                <div className="flex items-center justify-between gap-3 pt-2">
                                                     <button
-                                                        className="text-slate-400 hover:text-red-500 font-bold text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                        type="button"
+                                                        onClick={() => navigate('/requests')}
+                                                        className="bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs px-4 py-2 rounded-full border border-slate-200 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 transition-all flex items-center gap-1.5 cursor-pointer"
+                                                    >
+                                                        <ArrowLeft size={13} />
+                                                        <span>Back to Document Requests</span>
+                                                    </button>
+                                                    <button
+                                                        className="text-slate-400 hover:text-red-500 font-bold text-xs flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                                                         onClick={() => setShowRejectForm(true)}
                                                         disabled={!hasProcessingAccess || status === 'In Process'}
                                                         title={status === 'In Process' ? 'Cannot reject a request that is already In Process. Use the stepper to continue processing.' : ''}
                                                     >
-                                                        <Trash2 size={16} /> Reject Request
+                                                        <Trash2 size={14} /> Reject Request
                                                     </button>
                                                 </div>
                                             )}
@@ -552,13 +560,16 @@ const RequestDetails = () => {
                                             )}
                                         </div>
 
-                                        <div className="flex gap-4 pt-6 border-t border-slate-100">
+                                        <div className="flex items-center gap-3 pt-6 border-t border-slate-100">
                                             <button
-                                                className="flex-[1] bg-slate-100 text-slate-600 py-4 rounded-xl font-bold hover:bg-slate-200 transition-all"
+                                                className="bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs px-6 py-2.5 rounded-full border border-slate-200 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 transition-all flex items-center gap-1.5 cursor-pointer"
                                                 onClick={() => setCurrentStep(1)}
-                                            >Back</button>
+                                            >
+                                                <ArrowLeft size={13} />
+                                                <span>Back to Step 1</span>
+                                            </button>
                                             <button
-                                                className={`flex-[2] text-white py-4 rounded-xl font-bold transition-all shadow-md disabled:opacity-50 ${!hasProcessingAccess ? 'bg-slate-300 shadow-none' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-100'}`}
+                                                className={`flex-1 text-white py-2.5 px-6 rounded-full font-bold text-xs border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 ${!hasProcessingAccess ? 'bg-slate-400' : 'bg-[#2c3543] hover:bg-[#1f2631]'}`}
                                                 disabled={!uploadedFile || actionLoading || !hasProcessingAccess}
                                                 onClick={processUpload}
                                             >
@@ -659,13 +670,16 @@ const RequestDetails = () => {
                                             </div>
                                         )}
 
-                                        <div className="flex gap-4 pt-6 border-t border-slate-100">
+                                        <div className="flex items-center gap-3 pt-6 border-t border-slate-100">
                                             <button
-                                                className="flex-[1] bg-slate-100 text-slate-600 py-4 rounded-xl font-bold hover:bg-slate-200 transition-all"
+                                                className="bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs px-6 py-2.5 rounded-full border border-slate-200 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 transition-all flex items-center gap-1.5 cursor-pointer"
                                                 onClick={() => setCurrentStep(2)}
-                                            >Back</button>
+                                            >
+                                                <ArrowLeft size={13} />
+                                                <span>Back to Step 2</span>
+                                            </button>
                                             <button
-                                                className={`flex-[2] text-white py-4 rounded-xl font-bold transition-all shadow-md disabled:opacity-50 ${(!hasProcessingAccess) ? 'bg-slate-300 shadow-none' : (isBlockchainEligible ? 'bg-[#2c3e50] hover:bg-[#1a252f]' : 'bg-green-600 hover:bg-green-700')}`}
+                                                className={`flex-1 text-white py-2.5 px-6 rounded-full font-bold text-xs border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 ${(!hasProcessingAccess) ? 'bg-slate-400' : 'bg-[#2c3543] hover:bg-[#1f2631]'}`}
                                                 disabled={actionLoading || !hasProcessingAccess || (isBlockchainEligible && !blockchainData.studentIDNumber)}
                                                 onClick={() => showConfirm({
                                                     title: isBlockchainEligible ? 'Secure to Blockchain' : 'Finalize Document',
@@ -682,44 +696,45 @@ const RequestDetails = () => {
                                 {/* Final Step Content */}
                                 {((isBlockchainEligible && currentStep === 4) || (!isBlockchainEligible && currentStep === 3)) && (
                                     <div className="bg-white p-10 rounded-2xl shadow-sm border border-slate-100 animate-in fade-in slide-in-from-right-4 duration-300 text-center">
-                                        <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                                            <CheckCircle2 size={48} className="text-green-600" />
+                                        <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                            <CheckCircle2 size={48} className="text-emerald-600" />
                                         </div>
-                                        <h2 className="text-3xl font-bold text-slate-800 mb-4">Request Completed</h2>
-                                        <p className="text-slate-500 mb-8 max-w-md mx-auto">
+                                        <h2 className="text-2xl font-bold text-slate-800 mb-2">Request Completed</h2>
+                                        <p className="text-slate-500 mb-8 max-w-md mx-auto text-xs">
                                             The document request has been successfully finalized. It is now marked as Released and is ready for the student.
                                         </p>
 
                                         {blockchainResult && (
-                                            <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 text-left mb-8 max-w-lg mx-auto">
-                                                <h4 className="font-bold text-xs text-slate-400 uppercase tracking-widest mb-4">Blockchain Record</h4>
-                                                <div className="space-y-3">
+                                            <div className="bg-slate-50 p-5 rounded-xl border border-slate-200 text-left mb-8 max-w-lg mx-auto">
+                                                <h4 className="font-bold text-xs text-slate-400 uppercase tracking-widest mb-3">Blockchain Record</h4>
+                                                <div className="space-y-2">
                                                     <div>
-                                                        <p className="text-xs text-slate-500">Transaction Hash</p>
+                                                        <p className="text-[10.5px] font-bold text-slate-400 uppercase">Transaction Hash</p>
                                                         <p className="font-mono text-xs text-slate-700 truncate">{blockchainResult.transactionHash}</p>
                                                     </div>
                                                     <div>
-                                                        <p className="text-xs text-slate-500">Reference / ID Number</p>
-                                                        <p className="font-bold text-slate-700">{blockchainResult.referenceNumber} / {blockchainResult.studentIDNumber}</p>
+                                                        <p className="text-[10.5px] font-bold text-slate-400 uppercase">Reference / ID Number</p>
+                                                        <p className="font-bold text-slate-700 text-xs">{blockchainResult.referenceNumber} / {blockchainResult.studentIDNumber}</p>
                                                     </div>
                                                 </div>
                                             </div>
                                         )}
 
-                                        <div className="flex gap-4 justify-center">
+                                        <div className="flex flex-wrap gap-3 justify-center">
                                             {requestData.documentFile && (
                                                 <a
                                                     href={requestData.documentFile.startsWith('data:') ? requestData.documentFile : `${API_BASE}${requestData.documentFile}`}
                                                     download={requestData.documentFile.startsWith('data:') ? `document-${requestData.requestId}.pdf` : undefined}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="bg-blue-600 text-white px-8 py-4 rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg flex items-center gap-2"
+                                                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-full font-bold text-xs flex items-center gap-2 shadow-xs transition-all"
                                                 >
-                                                    <FileText size={20} /> View / Download Document
+                                                    <FileText size={15} /> 
+                                                    <span>View / Download Document</span>
                                                 </a>
                                             )}
                                             <button
-                                                className="bg-slate-800 text-white px-8 py-4 rounded-xl font-bold hover:bg-slate-900 transition-colors shadow-lg"
+                                                className="bg-[#2c3543] hover:bg-[#1f2631] text-white px-6 py-2.5 rounded-full font-bold text-xs border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-1.5 cursor-pointer"
                                                 onClick={() => navigate('/requests')}
                                             >
                                                 Return to Requests
