@@ -172,9 +172,6 @@ const Dashboard = () => {
                                 <span className="text-[12.5px] font-bold text-slate-700 mt-1 block truncate">
                                     {card.title}
                                 </span>
-                                <span className="text-[10px] font-medium text-slate-400 block truncate mt-0.5">
-                                    {card.subtitle}
-                                </span>
                             </div>
                         </div>
                     ))}
@@ -194,10 +191,7 @@ const Dashboard = () => {
                                 <div className="w-7 h-7 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center text-xs font-bold border border-sky-200/60">
                                     <i className="fa-solid fa-cubes"></i>
                                 </div>
-                                <div>
-                                    <h3 className="text-slate-900 text-[15px] font-extrabold m-0 leading-tight">Blockchain Activities</h3>
-                                    <p className="text-[10.5px] text-slate-400 font-medium m-0">Cryptographic audit trail on smart contract</p>
-                                </div>
+                                <h3 className="text-slate-900 text-[15px] font-extrabold m-0 leading-tight">Blockchain Activities</h3>
                             </div>
                             <button 
                                 onClick={() => navigate('/blockchain/my-transactions')} 
@@ -275,10 +269,7 @@ const Dashboard = () => {
                                 <div className="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-xs font-bold border border-purple-200/60">
                                     <i className="fa-solid fa-bell"></i>
                                 </div>
-                                <div>
-                                    <h3 className="text-slate-900 text-[15px] font-extrabold m-0 leading-tight">Live Notifications</h3>
-                                    <p className="text-[10.5px] text-slate-400 font-medium m-0">Student requests & verification alerts</p>
-                                </div>
+                                <h3 className="text-slate-900 text-[15px] font-extrabold m-0 leading-tight">Live Notifications</h3>
                             </div>
                             <button 
                                 onClick={() => navigate('/notifications')} 
@@ -344,7 +335,6 @@ const Dashboard = () => {
                     <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/40">
                         <div>
                             <h3 className="text-[16px] font-black text-slate-900 tracking-tight m-0">Recent Document Requests</h3>
-                            <p className="text-[11.5px] text-slate-500 font-medium mt-0.5 m-0">Track live student clearance and document issuance queue</p>
                         </div>
 
                         {/* Search & Filter Controls */}
