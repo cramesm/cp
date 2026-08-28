@@ -21,7 +21,7 @@ const Breadcrumb = () => {
     const location = useLocation();
     const pathSegments = location.pathname.split('/').filter(Boolean);
 
-    if (pathSegments.length <= 1 || pathSegments[0] === 'profile') return null;
+    if (pathSegments.length <= 1 || pathSegments[0] === 'profile' || pathSegments[0] === 'blockchain') return null;
 
     const crumbs = pathSegments.map((segment, index) => {
         const path = '/' + pathSegments.slice(0, index + 1).join('/');
