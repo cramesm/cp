@@ -276,95 +276,111 @@ const Layout = ({ children }) => {
                 </div>
             </aside>
 
-            <div className={`flex flex-col w-full ${isCollapsed ? 'md:ml-[96px] md:w-[calc(100%-96px)]' : 'md:ml-[280px] md:w-[calc(100%-280px)]'} transition-all duration-300 main-content`}>
-                <header className="flex items-center justify-between px-8 bg-[#547794] m-4 rounded-xl sticky top-4 z-[990] h-[72px] shadow-sm">
-                    <div className="flex items-center gap-4">
+            <div className={`flex flex-col w-full ${isCollapsed ? 'md:ml-[96px] md:w-[calc(100%-96px)]' : 'md:ml-[280px] md:w-[calc(100%-280px)]'} transition-all duration-300 main-content min-w-0`}>
+                
+                {/* 3D Elevated Floating Top Navigation Header */}
+                <header className="flex items-center justify-between px-6 sm:px-8 bg-gradient-to-r from-[#44627d] via-[#4d6f8c] to-[#547794] m-4 rounded-[28px] sticky top-4 z-[990] h-[72px] shadow-[0_12px_32px_rgba(44,53,67,0.14),0_2px_6px_rgba(0,0,0,0.04)] border border-white/20 backdrop-blur-md">
+                    <div className="flex items-center gap-3 sm:gap-4">
                         <button
                             onClick={handleToggle}
-                            className="text-white hover:bg-white/20 p-2.5 rounded-xl transition-all cursor-pointer focus:outline-none flex items-center justify-center"
+                            className="w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer focus:outline-none flex items-center justify-center border border-white/15 shadow-inner"
                             title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
                             aria-label={isCollapsed ? "Expand sidebar navigation" : "Collapse sidebar navigation"}
                             aria-expanded={!isCollapsed}
                         >
-                            <i className="fa-solid fa-angles-left text-2xl"></i>
+                            <i className="fa-solid fa-angles-left text-lg"></i>
                         </button>
-                        <h2 className="text-white text-[24px] font-normal m-0 tracking-wide">
+                        <h2 className="text-white text-[20px] sm:text-[22px] font-extrabold m-0 tracking-tight drop-shadow-xs truncate max-w-[280px] sm:max-w-none">
                             {getPageTitle()}
                         </h2>
                     </div>
 
-                    <div className="flex items-center gap-6 relative" ref={dropdownRef}>
+                    <div className="flex items-center gap-3 sm:gap-4 relative" ref={dropdownRef}>
+                        {/* Notification Pill Button */}
                         <button
                             type="button"
                             onClick={() => navigate('/notifications')}
-                            className="text-white hover:text-gray-200 text-[22px] transition-colors relative"
+                            className="w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all border border-white/15 shadow-inner relative"
                             aria-label={`View notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
                         >
-                            <i className="fa-solid fa-bell"></i>
+                            <i className="fa-solid fa-bell text-[15px]"></i>
                             {unreadCount > 0 && (
-                                <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 flex items-center justify-center bg-red-600 text-white text-[10px] font-bold rounded-full border-2 border-[#547794]">
+                                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-red-500 text-white text-[10px] font-extrabold rounded-full ring-2 ring-[#4d6f8c] shadow-sm animate-pulse">
                                     {unreadCount}
                                 </span>
                             )}
                         </button>
 
-                        <div className="flex items-center gap-3 cursor-pointer" onClick={toggleMenu}>
-                            <button
-                                type="button"
-                                className="flex items-center justify-center w-10 h-10 rounded-full bg-white text-[#547794] text-[20px] transition-all shadow-sm overflow-hidden"
-                                aria-label={`User menu for ${adminUser.name || 'Registrar Name'} (${getInitials(adminUser.name || 'Registrar Name')})`}
-                                aria-expanded={menuOpen}
-                                aria-haspopup="true"
-                            >
+                        {/* User Profile Pill */}
+                        <div 
+                            className="flex items-center gap-2.5 p-1 pl-1.5 pr-3 bg-white/15 hover:bg-white/25 rounded-full border border-white/20 transition-all cursor-pointer shadow-sm select-none" 
+                            onClick={toggleMenu}
+                        >
+                            <div className="w-8 h-8 rounded-full bg-white text-[#547794] flex items-center justify-center font-extrabold text-xs shadow-sm overflow-hidden flex-shrink-0">
                                 {adminUser.profilePic ? (
                                     <img src={adminUser.profilePic.startsWith('http') ? adminUser.profilePic : `http://localhost:5000${adminUser.profilePic}`} alt="Profile" className="w-full h-full object-cover" />
                                 ) : (
-                                    <span className="text-[16px] font-bold text-[#547794] tracking-wide">{getInitials(adminUser.name || 'Registrar Name')}</span>
+                                    <span className="tracking-tight">{getInitials(adminUser.name || 'Registrar Name')}</span>
                                 )}
-                            </button>
-                            <div className="hidden md:flex flex-col text-left">
-                                <span className="text-white text-sm font-semibold m-0 leading-tight">{adminUser.name || 'Registrar Name'}</span>
-                                <span className="text-white text-[11px] m-0 leading-tight lowercase">{adminUser.email || `${userRole.replace(' ', '')}name@sample.com`}</span>
                             </div>
+                            <div className="hidden md:flex flex-col text-left">
+                                <span className="text-white text-[13px] font-bold m-0 leading-tight truncate max-w-[120px]">{adminUser.name || 'Registrar Name'}</span>
+                                <span className="text-white/80 text-[10.5px] font-medium m-0 leading-tight lowercase truncate max-w-[120px]">{adminUser.email || `${userRole.replace(' ', '')}name@sample.com`}</span>
+                            </div>
+                            <i className="fa-solid fa-chevron-down text-white/70 text-[10px] ml-0.5 hidden sm:block"></i>
                         </div>
 
+                        {/* Dropdown Menu */}
                         <div
-                            className={`absolute right-0 top-[56px] bg-white shadow-lg border border-slate-100 rounded-xl flex-col min-w-[200px] z-[10000] overflow-hidden transition-all duration-200 origin-top-right ${
+                            className={`absolute right-0 top-[58px] bg-white shadow-2xl border border-slate-100 rounded-3xl flex-col min-w-[210px] z-[10000] overflow-hidden p-1.5 transition-all duration-200 origin-top-right ${
                                 menuOpen ? 'flex opacity-100 scale-100' : 'hidden opacity-0 scale-95'
                             }`}
                             role="menu"
                         >
-                            <div className="px-5 py-3 border-b border-slate-100 bg-slate-50">
-                                <p className="text-sm font-bold text-slate-800 capitalize">{adminUser.name || 'Registrar Name'}</p>
-                                <p className="text-xs text-slate-500 capitalize">{userRole || 'Super Admin'}</p>
+                            <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/80 rounded-t-2xl">
+                                <p className="text-sm font-extrabold text-slate-800 capitalize leading-tight truncate">{adminUser.name || 'Registrar Name'}</p>
+                                <p className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider capitalize mt-0.5">{userRole || 'Super Admin'}</p>
                             </div>
                             
-                            <NavLink
-                                to="/profile/info"
-                                className="text-slate-700 px-5 py-3 no-underline text-sm font-medium transition-colors hover:bg-slate-50 hover:text-brand-600 flex items-center gap-3"
-                                role="menuitem"
-                            >
-                                <i className="fa-regular fa-id-badge"></i> Profile Info
-                            </NavLink>
+                            <div className="py-1">
+                                <NavLink
+                                    to="/profile/info"
+                                    onClick={() => setMenuOpen(false)}
+                                    className="text-slate-700 px-3.5 py-2.5 no-underline text-[13px] font-semibold transition-colors hover:bg-slate-100 hover:text-blue-600 rounded-xl flex items-center gap-3"
+                                    role="menuitem"
+                                >
+                                    <i className="fa-regular fa-id-badge text-slate-400"></i> Profile Info
+                                </NavLink>
+                                <NavLink
+                                    to="/profile"
+                                    onClick={() => setMenuOpen(false)}
+                                    className="text-slate-700 px-3.5 py-2.5 no-underline text-[13px] font-semibold transition-colors hover:bg-slate-100 hover:text-blue-600 rounded-xl flex items-center gap-3"
+                                    role="menuitem"
+                                >
+                                    <i className="fa-solid fa-sliders text-slate-400"></i> Settings
+                                </NavLink>
+                            </div>
 
-                            <button
-                                type="button"
-                                onClick={handleLogout}
-                                className="text-red-600 px-5 py-3 text-sm font-medium text-left bg-transparent border-t border-slate-100 w-full cursor-pointer transition-colors hover:bg-red-50 flex items-center gap-3"
-                                role="menuitem"
-                            >
-                                <i className="fa-solid fa-arrow-right-from-bracket"></i> Logout
-                            </button>
+                            <div className="pt-1 border-t border-slate-100">
+                                <button
+                                    type="button"
+                                    onClick={handleLogout}
+                                    className="text-red-600 px-3.5 py-2.5 text-[13px] font-bold text-left bg-transparent w-full cursor-pointer transition-colors hover:bg-red-50 rounded-xl flex items-center gap-3"
+                                    role="menuitem"
+                                >
+                                    <i className="fa-solid fa-arrow-right-from-bracket"></i> Logout
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </header>
 
-                <main id="main-content" className="flex-1 w-full bg-slate-50 text-slate-900 p-6 md:p-8">
+                <main id="main-content" className="flex-1 w-full px-4 sm:px-6 py-2">
                     <Breadcrumb />
                     <motion.div
-                        initial={{ opacity: 0, y: 10 }}
+                        initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3 }}
+                        transition={{ duration: 0.25 }}
                     >
                         {children}
                     </motion.div>
