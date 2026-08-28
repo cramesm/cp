@@ -255,16 +255,8 @@ const Layout = ({ children }) => {
                     ))}
                 </nav>
 
-                {/* Bottom Dock Actions with 3D Shaped Buttons */}
-                <div className="p-3 border-t border-slate-700/60 space-y-2">
-                    <button 
-                        onClick={toggleSidebar}
-                        className="hidden md:flex w-full items-center justify-center p-2 rounded-xl bg-[#222a36] text-[#9ba4b5] border-t border-white/10 border-b border-black/40 shadow-sm hover:bg-[#323d4d] hover:text-white hover:-translate-y-0.5 active:translate-y-0.5 transition-all focus:outline-none"
-                        title={isCollapsed ? "Expand Dock" : "Collapse Dock"}
-                    >
-                        <i className={`fa-solid ${isCollapsed ? 'fa-angles-right' : 'fa-angles-left'} text-[12px]`}></i>
-                    </button>
-
+                {/* Bottom Dock Actions with 3D Shaped Logout Button */}
+                <div className="p-3.5 border-t border-slate-700/60">
                     <button 
                         onClick={handleLogout}
                         className={`w-full bg-white text-[#2c3543] py-2.5 rounded-2xl font-bold flex justify-center items-center gap-2 border-t border-white border-b-4 border-slate-300 shadow-[0_6px_16px_rgba(0,0,0,0.25)] hover:bg-gray-50 hover:-translate-y-0.5 active:translate-y-1 active:border-b-0 transition-all ${isCollapsed ? 'px-0' : 'px-4'}`}
