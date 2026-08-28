@@ -189,72 +189,93 @@ const Layout = ({ children }) => {
                 ></div>
             )}
 
-            <aside className={`fixed top-0 left-0 min-h-screen bg-[#2c3543] flex flex-col z-[1000] shadow-2xl sidebar transition-all duration-300 
-                ${isMobileOpen ? 'translate-x-0 w-[260px]' : '-translate-x-full md:translate-x-0'} 
-                ${isCollapsed ? 'md:w-[80px]' : 'md:w-[260px]'}
-            `}>
-                {/* White Logo Container */}
-                <div className={`h-[120px] bg-white flex items-center justify-center overflow-hidden transition-all duration-300 rounded-br-2xl ${isCollapsed ? 'px-2' : 'px-6'}`}>
-                    {isCollapsed ? (
-                        <div className="w-[48px] h-[48px] flex items-center justify-center flex-shrink-0 transition-all duration-300">
-                            <img src={verifitorIcon} alt="Verifitor Icon" className="w-full h-full object-contain" />
+            {/* Floating 3D Dock Sidebar */}
+            <aside className={`fixed top-4 left-4 bottom-4 bg-white/95 backdrop-blur-xl border border-white/80 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.03)] flex flex-col z-[1000] sidebar transition-all duration-300 ${
+                isMobileOpen ? 'translate-x-0 w-[245px]' : '-translate-x-[120%] md:translate-x-0'
+            } ${isCollapsed ? 'md:w-[76px]' : 'md:w-[245px]'}`}>
+                
+                {/* 3D Elevated Logo Header */}
+                <div className={`p-4 flex items-center justify-center border-b border-gray-100/80 ${isCollapsed ? 'px-2' : 'px-5'}`}>
+                    <div 
+                        onClick={() => navigate('/dashboard')}
+                        className="flex items-center gap-3 cursor-pointer select-none"
+                    >
+                        <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#213448] to-[#3B82F6] flex items-center justify-center shadow-md shadow-blue-500/20 flex-shrink-0 transition-transform hover:scale-105">
+                            <i className="fa-solid fa-cube text-white text-lg drop-shadow-sm"></i>
                         </div>
-                    ) : (
-                        <img
-                            src={verifitorLogo}
-                            alt="Verifitor"
-                            className="w-full max-w-[180px] object-contain transition-all duration-300"
-                        />
-                    )}
+                        {!isCollapsed && (
+                            <div className="flex flex-col text-left overflow-hidden">
+                                <span className="font-black text-[17px] tracking-tight text-gray-900 leading-tight">VeriFitor</span>
+                                <span className="text-[10px] uppercase tracking-wider font-extrabold text-blue-600 leading-tight">
+                                    {userRole === 'super admin' ? 'Super Admin' : 'Registrar'}
+                                </span>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
-                <nav className="flex-1 px-4 py-6 overflow-y-auto" aria-label="Main navigation">
-                    <ul className="list-none p-0 m-0 flex flex-col gap-3">
-                        {menuItems.map((item) => (
-                            <li key={item.path} className="relative">
-                                <NavLink
-                                    to={item.path}
-                                    end={item.path === '/dashboard'}
-                                    title={isCollapsed ? item.label : ''}
-                                    onClick={() => {
-                                        if (window.innerWidth < 768) {
-                                            setIsMobileOpen(false);
-                                        }
-                                    }}
-                                    className={({ isActive }) =>
-                                        `relative flex items-center z-10 ${isCollapsed ? 'justify-center mx-1 px-0 py-3.5' : 'gap-4 px-4 py-3.5'} transition-colors duration-200 ${
-                                            isActive
-                                                ? 'text-white font-bold border-l-4 border-white bg-[#374151]'
-                                                : 'text-[#9ba4b5] hover:text-white border-l-4 border-transparent hover:bg-[#374151]'
-                                        }`
-                                    }
-                                >
-                                    {({ isActive }) => (
-                                        <>
-                                            <i className={`${item.icon} ${isCollapsed ? 'text-[18px]' : 'text-[16px]'} transition-all duration-300 ${isActive ? 'text-white' : ''}`}></i>
-                                            {!isCollapsed && <span className="text-[15px] tracking-wide transition-opacity duration-300">{item.label}</span>}
-                                        </>
+                {/* 3D Floating Navigation Items */}
+                <nav className="flex-1 px-3 py-4 overflow-y-auto space-y-1.5 custom-scrollbar" aria-label="Main navigation">
+                    {menuItems.map((item) => (
+                        <NavLink
+                            key={item.path}
+                            to={item.path}
+                            end={item.path === '/dashboard'}
+                            title={isCollapsed ? item.label : ''}
+                            onClick={() => {
+                                if (window.innerWidth < 768) {
+                                    setIsMobileOpen(false);
+                                }
+                            }}
+                            className={({ isActive }) =>
+                                `group relative flex items-center gap-3.5 px-3.5 py-3 rounded-2xl font-semibold text-[13.5px] transition-all duration-200 ${
+                                    isActive
+                                        ? 'bg-[#111827] text-white shadow-lg shadow-black/15 scale-[1.01]'
+                                        : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100/80 hover:shadow-2xs active:scale-[0.98]'
+                                } ${isCollapsed ? 'justify-center px-0' : ''}`
+                            }
+                        >
+                            {({ isActive }) => (
+                                <>
+                                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 ${
+                                        isActive ? 'text-white' : 'text-gray-500 group-hover:text-gray-900'
+                                    }`}>
+                                        <i className={`${item.icon} ${isCollapsed ? 'text-[17px]' : 'text-[15px]'}`}></i>
+                                    </div>
+                                    {!isCollapsed && (
+                                        <span className="tracking-tight truncate">{item.label}</span>
                                     )}
-                                </NavLink>
-                            </li>
-                        ))}
-                    </ul>
+                                    {isActive && (
+                                        <span className="absolute left-1.5 w-1 h-5 bg-blue-500 rounded-full shadow-sm shadow-blue-400"></span>
+                                    )}
+                                </>
+                            )}
+                        </NavLink>
+                    ))}
                 </nav>
 
-                {/* Logout Button */}
-                <div className="p-4 mt-auto">
+                {/* Bottom Dock Actions (Collapse & Logout) */}
+                <div className="p-3 border-t border-gray-100/80 space-y-1.5">
+                    <button 
+                        onClick={toggleSidebar}
+                        className="hidden md:flex w-full items-center justify-center p-2.5 rounded-2xl text-gray-400 hover:text-gray-700 hover:bg-gray-100/80 transition-all focus:outline-none"
+                        title={isCollapsed ? "Expand Dock" : "Collapse Dock"}
+                    >
+                        <i className={`fa-solid ${isCollapsed ? 'fa-angles-right' : 'fa-angles-left'} text-[13px]`}></i>
+                    </button>
+
                     <button 
                         onClick={handleLogout}
-                        className={`w-full bg-white text-[#2c3543] py-2.5 rounded-xl font-bold flex justify-center items-center gap-2 hover:bg-gray-100 transition-colors ${isCollapsed ? 'px-0' : 'px-4'}`}
-                        title={isCollapsed ? "Logout" : ""}
+                        className={`w-full flex items-center gap-3 p-2.5 rounded-2xl text-red-600 hover:bg-red-50 font-bold text-[13px] transition-all ${isCollapsed ? 'justify-center px-0' : 'px-3.5'}`}
+                        title={isCollapsed ? "Sign Out" : ""}
                     >
-                        <i className="fa-solid fa-arrow-right-from-bracket text-lg"></i>
-                        {!isCollapsed && <span className="text-[15px]">Logout</span>}
+                        <i className="fa-solid fa-arrow-right-from-bracket text-[15px]"></i>
+                        {!isCollapsed && <span>Sign Out</span>}
                     </button>
                 </div>
             </aside>
 
-            <div className={`flex flex-col w-full ${isCollapsed ? 'md:ml-[80px] md:w-[calc(100%-80px)]' : 'md:ml-[260px] md:w-[calc(100%-260px)]'} transition-all duration-300 main-content`}>
+            <div className={`flex flex-col w-full ${isCollapsed ? 'md:ml-[92px] md:w-[calc(100%-92px)]' : 'md:ml-[264px] md:w-[calc(100%-264px)]'} transition-all duration-300 main-content`}>
                 <header className="flex items-center justify-between px-8 bg-[#547794] m-4 rounded-xl sticky top-4 z-[990] h-[72px] shadow-sm">
                     <div className="flex items-center gap-4">
                         <button
