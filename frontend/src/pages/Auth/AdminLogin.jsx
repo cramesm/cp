@@ -216,13 +216,6 @@ const AdminLogin = () => {
                     </div>
                     )}
 
-                    {/* Footer / Info note */}
-                    <div className="mt-8 text-center">
-                        <p className="text-[12.5px] text-gray-500">
-                            Need technical support? <span className="text-[#2B6D9B] font-medium cursor-pointer hover:underline" onClick={() => setShowDemoAccounts(!showDemoAccounts)}>Contact Administrator</span>
-                        </p>
-                    </div>
-
                 </div>
 
                 {/* Hidden UI Button for Demo Accounts Toggle */}
