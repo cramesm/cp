@@ -233,74 +233,79 @@ const StudentManagement = () => {
                     onClose={closeConfirm} 
                 />
             )}
-            <div className="p-8 bg-[#F8F9FA] min-h-[calc(100vh-64px)] font-sans relative">
-                <div className="mb-6">
-                    <h1 className="text-2xl font-bold text-gray-800">User Management</h1>
-                    <p className="text-sm text-gray-500">View and manage registered mobile app users.</p>
-                </div>
-
+            <div className="py-2 px-2 sm:px-4 font-sans space-y-4 relative">
                 {error && (
-                    <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md mb-6">
+                    <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-2xl text-xs font-bold">
                         {error}
                     </div>
                 )}
 
-                {/* Tabs */}
-                <div className="flex space-x-6 mb-6">
-                    <button
-                        onClick={() => setActiveTab('student')}
-                        className={`pb-2 font-bold text-sm transition-colors border-b-[3px] ${
-                            activeTab === 'student'
-                                ? 'border-[#1D2D44] text-[#1D2D44]'
-                                : 'border-transparent text-gray-500 hover:text-gray-800'
-                        }`}
-                    >
-                        Students
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('alumni')}
-                        className={`pb-2 font-bold text-sm transition-colors border-b-[3px] ${
-                            activeTab === 'alumni'
-                                ? 'border-[#1D2D44] text-[#1D2D44]'
-                                : 'border-transparent text-gray-500 hover:text-gray-800'
-                        }`}
-                    >
-                        Alumni
-                    </button>
-                </div>
-
-                <div className="rounded-xl bg-white shadow-sm border border-gray-100 overflow-hidden">
+                <div className="rounded-[22px] bg-white shadow-[0_8px_24px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.02)] border border-slate-100/90 overflow-hidden">
                     
                     {/* Header Section */}
-                    <div className="flex flex-col gap-4 p-6 border-b border-gray-100">
-                        <div className="flex items-center justify-between gap-6">
-                            <div className="flex items-center gap-3">
+                    <div className="flex flex-col gap-3.5 p-4 sm:p-5 border-b border-slate-100 bg-slate-50/40">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div>
+                                <h1 className="text-[18px] font-black text-slate-900 m-0">User Management</h1>
+                                <p className="text-[11.5px] text-slate-500 font-medium m-0">View and manage registered student and alumni mobile accounts</p>
+                            </div>
+
+                            {/* 3D Segmented Tabs */}
+                            <div className="inline-flex bg-slate-200/70 p-1 rounded-full border border-slate-200 self-start sm:self-auto">
+                                <button
+                                    onClick={() => setActiveTab('student')}
+                                    className={`px-4 py-1 rounded-full font-extrabold text-[11.5px] transition-all ${
+                                        activeTab === 'student'
+                                            ? 'bg-[#2c3543] text-white shadow-xs'
+                                            : 'text-slate-600 hover:text-slate-900'
+                                    }`}
+                                >
+                                    Students
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('alumni')}
+                                    className={`px-4 py-1 rounded-full font-extrabold text-[11.5px] transition-all ${
+                                        activeTab === 'alumni'
+                                            ? 'bg-[#2c3543] text-white shadow-xs'
+                                            : 'text-slate-600 hover:text-slate-900'
+                                    }`}
+                                >
+                                    Alumni
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Toolbar Controls */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+                            <div className="flex items-center gap-2.5 flex-wrap">
                                 {/* Search Bar */}
                                 <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
                                     <input
                                         aria-label="Search users"
                                         type="text"
                                         placeholder="Search users..."
-                                        className="w-64 rounded-md border border-gray-300 py-2 pl-9 pr-4 text-xs outline-none focus:border-[#1D2D44]"
+                                        className="w-56 sm:w-64 rounded-full border border-slate-200 bg-white py-1.5 pl-8 pr-3.5 text-[12px] font-medium outline-none focus:border-blue-500 shadow-2xs"
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                     />
                                 </div>
                                 <button 
                                     onClick={() => setIsFilterDrawerOpen(true)}
-                                    className="bg-gray-100 text-gray-700 px-4 py-2 rounded font-bold text-xs hover:bg-gray-200 transition-colors flex items-center gap-2 border border-gray-200"
+                                    className="bg-white hover:bg-slate-50 text-slate-700 px-3.5 py-1.5 rounded-full font-bold text-[11.5px] border border-slate-200 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 transition-all flex items-center gap-1.5"
                                 >
-                                    <SlidersHorizontal size={14} /> Filters & Sort
+                                    <SlidersHorizontal size={13} />
+                                    <span>Filters & Sort</span>
                                 </button>
                             </div>
-                            {/* Add Button */}
+
+                            {/* 3D Add Button */}
                             <button 
                                 onClick={() => setShowModal(true)}
-                                className="flex items-center justify-center gap-2 rounded-md bg-[#6c4df6] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#5a3ed9] transition-all shadow-sm"
+                                className="flex items-center justify-center gap-1.5 rounded-full bg-[#2c3543] hover:bg-[#1f2631] px-4 py-1.5 text-[12px] font-bold text-white border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_6px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 hover:shadow-[0_4px_10px_rgba(0,0,0,0.3)] active:translate-y-0.5 active:border-b-0 transition-all self-start sm:self-auto"
                             >
-                                <Plus size={16} />
-                                Add New {activeTab === 'student' ? 'Student' : 'Alumni'}
+                                <Plus size={14} />
+                                <span>Add New {activeTab === 'student' ? 'Student' : 'Alumni'}</span>
                             </button>
                         </div>
 
@@ -327,13 +332,13 @@ const StudentManagement = () => {
                         }}
                     >
                         <div className="flex flex-col gap-4">
-                            <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">Sorting</h3>
+                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Sorting</h3>
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="flex flex-col gap-1.5">
-                                    <label htmlFor="sortBy" className="text-sm font-bold text-[#1D2D44]">Sort By:</label>
+                                    <label htmlFor="sortBy" className="text-xs font-bold text-slate-700">Sort By:</label>
                                     <select 
                                         id="sortBy"
-                                        className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#1D2D44] bg-white"
+                                        className="border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-blue-500 bg-white"
                                         value={sortConfig.key}
                                         onChange={(e) => setSortConfig({ ...sortConfig, key: e.target.value })}
                                     >
@@ -344,29 +349,29 @@ const StudentManagement = () => {
                                     </select>
                                 </div>
                                 <div className="flex flex-col gap-1.5">
-                                    <label className="text-sm font-bold text-[#1D2D44]">Order:</label>
+                                    <label className="text-xs font-bold text-slate-700">Order:</label>
                                     <button 
                                         onClick={() => setSortConfig({ ...sortConfig, direction: sortConfig.direction === 'asc' ? 'desc' : 'asc' })}
-                                        className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white flex items-center justify-between hover:bg-gray-50 transition-colors"
+                                        className="border border-slate-200 rounded-xl px-3 py-2 text-xs bg-white flex items-center justify-between hover:bg-slate-50 transition-colors"
                                     >
-                                        {sortConfig.direction === 'asc' ? 'Ascending' : 'Descending'}
-                                        {sortConfig.direction === 'asc' ? <ArrowUpZA size={16} className="text-gray-500"/> : <ArrowDownAZ size={16} className="text-gray-500"/>}
+                                        <span>{sortConfig.direction === 'asc' ? 'Ascending' : 'Descending'}</span>
+                                        {sortConfig.direction === 'asc' ? <ArrowUpZA size={14} className="text-slate-500"/> : <ArrowDownAZ size={14} className="text-slate-500"/>}
                                     </button>
                                 </div>
                             </div>
 
-                            <div className="border-t border-gray-100 my-2"></div>
+                            <div className="border-t border-slate-100 my-1"></div>
 
-                            <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">Filtering</h3>
+                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Filtering</h3>
                             
                             {activeTab === 'student' && (
                                 <div className="flex flex-col gap-1.5">
-                                    <label htmlFor="filterProgramLevel" className="text-sm font-bold text-[#1D2D44]">Program Level:</label>
+                                    <label htmlFor="filterProgramLevel" className="text-xs font-bold text-slate-700">Program Level:</label>
                                     <select 
                                         id="filterProgramLevel"
                                         value={filterProgram}
                                         onChange={e => setFilterProgram(e.target.value)}
-                                        className="rounded-md border border-gray-300 py-2 px-3 text-sm outline-none focus:border-[#1D2D44] bg-white cursor-pointer shadow-sm text-gray-700"
+                                        className="rounded-xl border border-slate-200 py-2 px-3 text-xs outline-none focus:border-blue-500 bg-white cursor-pointer text-slate-700"
                                     >
                                         <option value="All">All Programs</option>
                                         <option value="Bachelors">Bachelors</option>
@@ -377,12 +382,12 @@ const StudentManagement = () => {
                             )}
 
                             <div className="flex flex-col gap-1.5">
-                                <label htmlFor="filterStatus" className="text-sm font-bold text-[#1D2D44]">Status:</label>
+                                <label htmlFor="filterStatus" className="text-xs font-bold text-slate-700">Status:</label>
                                 <select 
                                     id="filterStatus"
                                     value={filterStatus}
                                     onChange={e => setFilterStatus(e.target.value)}
-                                    className="rounded-md border border-gray-300 py-2 px-3 text-sm outline-none focus:border-[#1D2D44] bg-white cursor-pointer shadow-sm text-gray-700"
+                                    className="rounded-xl border border-slate-200 py-2 px-3 text-xs outline-none focus:border-blue-500 bg-white cursor-pointer text-slate-700"
                                 >
                                     <option value="All">All Statuses</option>
                                     <option value="Active">Active</option>
@@ -396,90 +401,94 @@ const StudentManagement = () => {
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr className="bg-white text-[11px] font-bold uppercase tracking-wider text-gray-800 border-b border-gray-200">
-                                    <th className="px-8 py-5">Name</th>
-                                    <th className="px-8 py-5">{activeTab === 'student' ? 'School Email' : 'Email'}</th>
-                                    <th className="px-8 py-5">Student ID</th>
-                                    {activeTab === 'student' && <th className="px-8 py-5">Program</th>}
-                                    <th className="px-8 py-5">Joined Date</th>
-                                    <th className="px-8 py-5 text-center">Status</th>
-                                    <th className="px-8 py-5 text-right">Action</th>
+                                <tr className="bg-slate-50/70 text-[11.5px] font-extrabold uppercase tracking-wider text-slate-500 border-b border-slate-100">
+                                    <th className="py-3 px-5">Name</th>
+                                    <th className="py-3 px-5">{activeTab === 'student' ? 'School Email' : 'Email'}</th>
+                                    <th className="py-3 px-5">Student ID</th>
+                                    {activeTab === 'student' && <th className="py-3 px-5">Program</th>}
+                                    <th className="py-3 px-5">Joined Date</th>
+                                    <th className="py-3 px-5 text-center">Status</th>
+                                    <th className="py-3 px-5 text-right">Action</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100 text-[13px]">
+                            <tbody className="divide-y divide-slate-100 text-[12.5px]">
                                 {loading ? (
-                                    <TableSkeleton columns={5} rows={entriesPerPage || 10} />
+                                    <TableSkeleton columns={6} rows={entriesPerPage || 10} />
                                 ) : paginatedUsers.length > 0 ? (
                                     paginatedUsers.map((user, idx) => (
                                         <tr
                                             key={user._id}
-                                            className={`transition-colors ${idx % 2 !== 0 ? 'bg-[#F9FAFF]' : 'bg-white hover:bg-gray-50'}`}
+                                            className="hover:bg-slate-50/80 transition-colors"
                                         >
-                                            <td className="px-8 py-4 font-semibold text-gray-800">
+                                            <td className="py-3 px-5 font-bold text-slate-900">
                                                 {user.firstName} {user.lastName}
                                             </td>
-                                            <td className="px-8 py-4 text-gray-600">{user.email}</td>
-                                            <td className="px-8 py-4 font-mono text-gray-500">
-                                                {user.studentId ? user.studentId : 'N/A'}
+                                            <td className="py-3 px-5 text-slate-600">{user.email}</td>
+                                            <td className="py-3 px-5 font-mono text-slate-600">
+                                                <span className="bg-slate-100 px-2 py-0.5 rounded-md text-[11.5px] font-bold">
+                                                    {user.studentId ? user.studentId : 'N/A'}
+                                                </span>
                                             </td>
                                             {activeTab === 'student' && (
-                                                <td className="px-8 py-4 text-gray-600 font-medium">
-                                                    {user.programLevel || 'Bachelors'}
+                                                <td className="py-3 px-5">
+                                                    <span className="inline-block px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-extrabold uppercase tracking-wider border border-blue-200/60">
+                                                        {user.programLevel || 'Bachelors'}
+                                                    </span>
                                                 </td>
                                             )}
-                                            <td className="px-8 py-4 text-gray-600">
+                                            <td className="py-3 px-5 text-slate-500">
                                                 {new Date(user.createdAt).toLocaleDateString()}
                                             </td>
-                                            <td className="px-8 py-4 text-center">
-                                                <div className="relative inline-block min-w-[100px]">
+                                            <td className="py-3 px-5 text-center">
+                                                <div className="relative inline-block min-w-[95px]">
                                                     <select
                                                         aria-label={`Status for ${user.firstName} ${user.lastName}`}
                                                         value={user.status || 'Active'}
                                                         onChange={(e) => handleStatusChange(user._id, user.role || 'student', e.target.value)}
-                                                        className={`w-full appearance-none rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wide outline-none cursor-pointer text-center transition-all shadow-sm focus:ring-2 focus:ring-offset-1 focus:ring-gray-300 ${
+                                                        className={`w-full appearance-none rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wide outline-none cursor-pointer text-center transition-all border ${
                                                             (user.status || 'Active') === 'Active'
-                                                                ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                                                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                                                                : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
                                                         }`}
                                                         style={{ WebkitAppearance: 'none', MozAppearance: 'none' }}
                                                     >
-                                                        <option value="Active" className="text-gray-700 font-bold bg-white">ACTIVE</option>
-                                                        <option value="Inactive" className="text-gray-700 font-bold bg-white">INACTIVE</option>
+                                                        <option value="Active" className="text-slate-800 font-bold bg-white">ACTIVE</option>
+                                                        <option value="Inactive" className="text-slate-800 font-bold bg-white">INACTIVE</option>
                                                     </select>
-                                                    <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center">
-                                                        <i className={`fa-solid fa-chevron-down text-[8px] ${
-                                                            (user.status || 'Active') === 'Active' ? 'text-green-700' : 'text-gray-700'
+                                                    <div className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center">
+                                                        <i className={`fa-solid fa-chevron-down text-[7.5px] ${
+                                                            (user.status || 'Active') === 'Active' ? 'text-emerald-700' : 'text-slate-600'
                                                         }`}></i>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-8 py-4 text-right">
+                                            <td className="py-3 px-5 text-right">
                                                 <div className="flex justify-end gap-2">
                                                     <button
                                                         onClick={() => handleDelete(user._id, user.role || 'student', `${user.firstName} ${user.lastName}`)}
-                                                        className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center text-red-600 hover:bg-red-600 hover:text-white transition-all shadow-sm border border-red-100 group"
+                                                        className="w-7 h-7 rounded-full bg-red-50 hover:bg-red-600 hover:text-white text-red-600 flex items-center justify-center transition-all shadow-2xs border border-red-200/60 hover:-translate-y-0.5 active:translate-y-0.5"
                                                         title="Delete User"
                                                     >
-                                                        <i className="fa-regular fa-trash-can group-hover:scale-110 transition-transform"></i>
+                                                        <i className="fa-regular fa-trash-can text-xs"></i>
                                                     </button>
                                                 </div>
                                             </td>
                                         </tr>
                                     ))
                                 ) : (
-                                    <tr><td colSpan="5" className="py-20 text-center text-gray-400 italic">No {activeTab === 'student' ? 'students' : 'alumni'} found.</td></tr>
+                                    <tr><td colSpan="7" className="py-12 text-center text-slate-400 italic">No {activeTab === 'student' ? 'students' : 'alumni'} found.</td></tr>
                                 )}
                             </tbody>
                         </table>
                     </div>
 
-                    {/* Table Footer / Pagination Placeholder */}
-                    <div className="p-6 border-t border-gray-100 flex justify-center">
-                        <div className="flex items-center gap-2">
+                    {/* Table Footer / Pagination */}
+                    <div className="p-4 border-t border-slate-100 flex justify-center bg-slate-50/30">
+                        <div className="flex items-center gap-1.5">
                             <button 
                                 disabled={currentPage === 1}
                                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                className={`text-xs px-2 ${currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-black hover:underline cursor-pointer'}`}
+                                className={`text-xs px-2.5 py-1 rounded-md ${currentPage === 1 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:bg-slate-200 cursor-pointer font-bold'}`}
                             >
                                 Previous
                             </button>
@@ -491,17 +500,17 @@ const StudentManagement = () => {
                                         <button
                                             key={pageNumber}
                                             onClick={() => setCurrentPage(pageNumber)}
-                                            className={`w-8 h-8 rounded text-xs transition-colors font-bold ${
+                                            className={`w-7 h-7 rounded-lg text-xs transition-colors font-bold ${
                                                 currentPage === pageNumber 
-                                                    ? 'bg-[#1D2D44] text-white' 
-                                                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                                    ? 'bg-[#2c3543] text-white shadow-2xs' 
+                                                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                                             }`}
                                         >
                                             {pageNumber}
                                         </button>
                                     );
                                 } else if (pageNumber === currentPage - 2 || pageNumber === currentPage + 2) {
-                                    return <span key={pageNumber} className="text-gray-400 mt-2 text-xs">...</span>;
+                                    return <span key={pageNumber} className="text-slate-400 text-xs px-1">...</span>;
                                 }
                                 return null;
                             })}
@@ -509,7 +518,7 @@ const StudentManagement = () => {
                             <button 
                                 disabled={currentPage === totalPages || totalPages === 0}
                                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                className={`text-xs px-2 ${currentPage === totalPages || totalPages === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-black hover:underline cursor-pointer'}`}
+                                className={`text-xs px-2.5 py-1 rounded-md ${currentPage === totalPages || totalPages === 0 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:bg-slate-200 cursor-pointer font-bold'}`}
                             >
                                 Next
                             </button>
@@ -519,32 +528,32 @@ const StudentManagement = () => {
 
                 {/* Add Student Modal */}
                 {showModal && (
-                    <div className="fixed inset-0 bg-[#1D2D44]/80 flex items-center justify-center z-[1100] backdrop-blur-sm">
-                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-gray-100">
-                            <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-[#F9FAFF]">
+                    <div className="fixed inset-0 bg-[#1D2D44]/60 flex items-center justify-center z-[1100] backdrop-blur-xs p-4">
+                        <div className="bg-white rounded-[24px] shadow-2xl w-full max-w-md overflow-hidden border border-slate-100">
+                            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                                 <div>
-                                    <h3 className="text-xl font-bold text-gray-800">Add New {activeTab === 'student' ? 'Student' : 'Alumni'}</h3>
-                                    <p className="text-xs text-gray-500 mt-1">Register a new mobile user</p>
+                                    <h3 className="text-[17px] font-black text-slate-900 m-0">Add New {activeTab === 'student' ? 'Student' : 'Alumni'}</h3>
+                                    <p className="text-[11px] text-slate-400 font-medium m-0 mt-0.5">Register a new verified mobile user</p>
                                 </div>
                                 <button
                                     onClick={() => setShowModal(false)}
-                                    className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600 transition"
+                                    className="w-7 h-7 flex items-center justify-center rounded-full bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition"
                                 >
-                                    <i className="fa-solid fa-xmark"></i>
+                                    <i className="fa-solid fa-xmark text-xs"></i>
                                 </button>
                             </div>
                             
-                            <form onSubmit={handleAddStudent} className="p-8">
+                            <form onSubmit={handleAddStudent} className="p-6">
                                 {addError && (
-                                    <div className="bg-red-50 text-red-600 p-3 rounded-md text-xs font-medium mb-5 border border-red-200">
+                                    <div className="bg-red-50 text-red-600 p-2.5 rounded-xl text-xs font-bold mb-4 border border-red-200">
                                         <i className="fa-solid fa-circle-exclamation mr-1"></i> {addError}
                                     </div>
                                 )}
 
-                                <div className="space-y-5">
-                                    <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-4">
+                                    <div className="grid grid-cols-2 gap-3">
                                         <div>
-                                            <label htmlFor="firstName" className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">First Name</label>
+                                            <label htmlFor="firstName" className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">First Name</label>
                                             <input
                                                 id="firstName"
                                                 type="text"
@@ -552,12 +561,12 @@ const StudentManagement = () => {
                                                 value={formData.firstName}
                                                 onChange={handleInputChange}
                                                 required
-                                                className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6c4df6] focus:border-transparent bg-gray-50 focus:bg-white transition-all"
+                                                className="w-full px-3.5 py-2 text-[13px] border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 bg-white transition-all"
                                                 placeholder="First Name"
                                             />
                                         </div>
                                         <div>
-                                            <label htmlFor="lastName" className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Last Name</label>
+                                            <label htmlFor="lastName" className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">Last Name</label>
                                             <input
                                                 id="lastName"
                                                 type="text"
@@ -565,14 +574,14 @@ const StudentManagement = () => {
                                                 value={formData.lastName}
                                                 onChange={handleInputChange}
                                                 required
-                                                className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6c4df6] focus:border-transparent bg-gray-50 focus:bg-white transition-all"
+                                                className="w-full px-3.5 py-2 text-[13px] border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 bg-white transition-all"
                                                 placeholder="Last Name"
                                             />
                                         </div>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-2 gap-3">
                                         <div>
-                                            <label htmlFor="email" className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">{activeTab === 'student' ? 'School Email' : 'Email'}</label>
+                                            <label htmlFor="email" className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">{activeTab === 'student' ? 'School Email' : 'Email'}</label>
                                             <input
                                                 id="email"
                                                 type="email"
@@ -580,12 +589,12 @@ const StudentManagement = () => {
                                                 value={formData.email}
                                                 onChange={handleInputChange}
                                                 required
-                                                className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6c4df6] focus:border-transparent bg-gray-50 focus:bg-white transition-all"
+                                                className="w-full px-3.5 py-2 text-[13px] border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 bg-white transition-all"
                                                 placeholder={activeTab === 'student' ? "student@school.edu" : "alumni@email.com"}
                                             />
                                         </div>
                                         <div>
-                                            <label htmlFor="studentId" className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Student ID</label>
+                                            <label htmlFor="studentId" className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">Student ID</label>
                                             <input
                                                 id="studentId"
                                                 type="text"
@@ -594,13 +603,13 @@ const StudentManagement = () => {
                                                 onChange={handleInputChange}
                                                 required={activeTab === 'student'}
                                                 disabled={activeTab === 'alumni'}
-                                                className={`w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6c4df6] focus:border-transparent transition-all ${activeTab === 'alumni' ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-gray-50 focus:bg-white'}`}
+                                                className={`w-full px-3.5 py-2 text-[13px] border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 transition-all ${activeTab === 'alumni' ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-white'}`}
                                                 placeholder={activeTab === 'student' ? "e.g. 2021-00001" : "Auto-generated"}
                                             />
                                         </div>
                                     </div>
                                     <div>
-                                        <label htmlFor="password" className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Password</label>
+                                        <label htmlFor="password" className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">Password</label>
                                         <div className="relative">
                                             <input
                                                 id="password"
@@ -609,27 +618,27 @@ const StudentManagement = () => {
                                                 value={formData.password}
                                                 onChange={handleInputChange}
                                                 required
-                                                className="w-full px-4 py-2.5 pr-10 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6c4df6] focus:border-transparent bg-gray-50 focus:bg-white transition-all"
+                                                className="w-full px-3.5 py-2 pr-9 text-[13px] border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 bg-white transition-all"
                                                 placeholder="Assign a secure password"
                                             />
                                             <button
                                                 type="button"
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
                                                 onClick={() => setShowPassword(!showPassword)}
                                             >
-                                                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                                {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                                             </button>
                                         </div>
                                     </div>
                                     {activeTab === 'student' && (
                                         <div>
-                                            <label htmlFor="modalProgramLevel" className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Program Level</label>
+                                            <label htmlFor="modalProgramLevel" className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">Program Level</label>
                                             <select
                                                 id="modalProgramLevel"
                                                 name="programLevel"
                                                 value={formData.programLevel}
                                                 onChange={handleInputChange}
-                                                className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6c4df6] focus:border-transparent bg-gray-50 focus:bg-white transition-all cursor-pointer"
+                                                className="w-full px-3.5 py-2 text-[13px] border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 bg-white transition-all cursor-pointer"
                                             >
                                                 <option value="Bachelors">Bachelors</option>
                                                 <option value="Masters">Masters</option>
@@ -639,21 +648,21 @@ const StudentManagement = () => {
                                     )}
                                 </div>
                                 
-                                <div className="mt-8 flex justify-end gap-3 pt-4 border-t border-gray-100">
+                                <div className="mt-6 flex justify-end gap-2.5 pt-4 border-t border-slate-100">
                                     <button
                                         type="button"
                                         onClick={() => setShowModal(false)}
-                                        className="px-5 py-2.5 text-xs font-bold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                                        className="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-full transition-colors"
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         type="submit"
                                         disabled={adding}
-                                        className="px-6 py-2.5 text-xs font-bold text-white bg-[#6c4df6] rounded-lg hover:bg-[#5a3ed9] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center shadow-md shadow-[#6c4df6]/20"
+                                        className="px-5 py-2 text-xs font-bold text-white bg-[#2c3543] hover:bg-[#1f2631] rounded-full border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_6px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all disabled:opacity-50 flex items-center"
                                     >
                                         {adding ? (
-                                            <><i className="fa-solid fa-spinner fa-spin mr-2"></i> Registering...</>
+                                            <><i className="fa-solid fa-spinner fa-spin mr-1.5"></i> Registering...</>
                                         ) : (
                                             'Register ' + (activeTab === 'student' ? 'Student' : 'Alumni')
                                         )}

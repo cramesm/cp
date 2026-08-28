@@ -4,7 +4,6 @@ import ConfirmModal from '../../components/ConfirmModal';
 import { ChevronRight, UserPlus, ShieldCheck, Briefcase, Save, X, CheckCircle, RefreshCw, AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';
-import { useModals } from '../../hooks/useModals';
 
 export default function AddRegistrar() {
   const navigate = useNavigate();
@@ -33,6 +32,8 @@ export default function AddRegistrar() {
       isLoading: false
     });
   };
+
+  const closeConfirm = () => setConfirmConfig(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -100,8 +101,8 @@ export default function AddRegistrar() {
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
       isValid = false;
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Invalid email address';
       isValid = false;
     }
 
@@ -110,63 +111,67 @@ export default function AddRegistrar() {
   };
 
   const handleAddRegistrar = () => {
-    // Validation
+    // Validate form before showing confirmation
     if (!validateForm()) {
-      setToast({ show: true, message: 'Please fix the errors before submitting', type: 'error' });
+      setToast({ show: true, message: 'Please fill in all required fields correctly', type: 'error' });
       setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
       return;
     }
 
     showConfirm({
-      title: 'Register Registrar Account',
-      message: `Are you sure you want to register a new ${formData.role} account for ${formData.firstName} ${formData.lastName}?`,
+      title: 'Add New Registrar',
+      message: `Are you sure you want to add ${formData.firstName} ${formData.lastName} as a new registrar? An account will be created with the generated password.`,
       type: 'info',
-      confirmText: 'Register',
+      confirmText: 'Add Registrar',
       onConfirm: async () => {
         setLoading(true);
         try {
-          console.log('Sending request to /registrars with data:', {
-            name: `${formData.firstName} ${formData.lastName}`,
-            email: formData.email,
-            role: formData.role
-          });
-
-          const response = await api.post('/registrars', {
-            name: `${formData.firstName} ${formData.lastName}`,
-            email: formData.email,
+          // Prepare payload matching the API requirements
+          const payload = {
+            name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
+            email: formData.email.trim().toLowerCase(),
             password: generatedPassword,
-            role: formData.role
-          });
+            role: 'registrar',
+            status: 'Active'
+          };
 
-          console.log('Response:', response.data);
+          const response = await api.post('/registrars', payload);
 
-          setToast({ show: true, message: 'New Registrar added successfully!', type: 'success' });
-          setTimeout(() => {
-            setToast({ show: false, message: '', type: 'success' });
-            navigate('/manage-registrar');
-          }, 2000);
+          if (response.status === 201 || response.status === 200) {
+            setToast({ show: true, message: 'Registrar successfully added!', type: 'success' });
+
+            // Reset form
+            setFormData({
+              firstName: '',
+              lastName: '',
+              email: '',
+              role: 'Registrar Staff'
+            });
+            generatePassword();
+
+            // Navigate back to the list after short delay
+            setTimeout(() => {
+              navigate('/manage-registrar');
+            }, 1500);
+          }
         } catch (error) {
           console.error('Error adding registrar:', error);
-          console.error('Error response:', error.response);
-          console.error('Error request:', error.request);
 
-          let errorMessage = 'Failed to add registrar';
+          let errorMessage = 'Failed to add registrar. Please try again.';
 
           if (error.response) {
-            // Server responded with error
-            errorMessage = error.response.data?.message || errorMessage;
-            if (error.response.status === 404) {
-              errorMessage = 'API endpoint not found. Please restart the backend server.';
+            if (error.response.data && error.response.data.message) {
+              errorMessage = error.response.data.message;
+            } else if (error.response.status === 400) {
+              errorMessage = 'A registrar with this email already exists.';
             } else if (error.response.status === 403) {
               errorMessage = 'Access denied. You must be logged in as a Super Admin.';
             } else if (error.response.status === 401) {
               errorMessage = 'Unauthorized. Please log in again.';
             }
           } else if (error.request) {
-            // Request made but no response
             errorMessage = 'Server is not responding. Please check if the backend is running.';
           } else {
-            // Something else happened
             errorMessage = error.message;
           }
 
@@ -181,33 +186,32 @@ export default function AddRegistrar() {
 
   return (
     <Layout>
-      <div className="p-8 bg-[#F8FAFC] min-h-screen font-sans relative">
+      <div className="py-2 px-2 sm:px-4 font-sans space-y-4 relative">
 
         {toast.show && (
-          <div className={`fixed top-5 left-1/2 -translate-x-1/2 z-[10001] flex items-center gap-3 px-6 py-3 rounded-lg shadow-2xl text-white ${toast.type === 'error' ? 'bg-red-600' : 'bg-[#1D2D44]'
-            }`}>
+          <div className={`fixed top-5 left-1/2 -translate-x-1/2 z-[10001] flex items-center gap-3 px-6 py-3 rounded-full shadow-2xl text-white ${
+            toast.type === 'error' ? 'bg-red-600' : 'bg-[#2c3543]'
+          }`}>
             {toast.type === 'error' ? <AlertTriangle size={18} /> : <CheckCircle size={18} />}
-            <p className="font-bold text-sm">{toast.message}</p>
+            <p className="font-bold text-xs m-0">{toast.message}</p>
           </div>
         )}
 
-        <div className="max-w-5xl mx-auto">
-          <div className="flex items-center gap-2 text-[12px] mb-6 text-gray-500 uppercase tracking-widest font-bold">
-            <span className="cursor-pointer hover:text-[#1D2D44]" onClick={() => navigate('/manage-registrar')}>Manage Registrar</span>
-            <ChevronRight size={14} />
-            <span className="text-[#1D2D44]">Add New Registrar</span>
+        <div className="max-w-5xl mx-auto space-y-4">
+          <div className="flex items-center gap-2 text-[11.5px] text-slate-400 font-extrabold uppercase tracking-wider">
+            <span className="cursor-pointer hover:text-slate-900 transition-colors" onClick={() => navigate('/manage-registrar')}>Manage Registrar</span>
+            <ChevronRight size={13} />
+            <span className="text-slate-900">Add New Registrar</span>
           </div>
 
-          <h2 className="text-[24px] font-bold text-[#1D2D44] mb-8">Registrar Registration</h2>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="space-y-6">
-              <section className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-                <div className="flex items-center gap-2 mb-6 text-[#1D2D44]">
-                  <UserPlus size={20} />
-                  <h3 className="text-[16px] font-bold uppercase tracking-wider">Basic Information</h3>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="space-y-4">
+              <section className="bg-white p-6 rounded-[22px] shadow-[0_8px_24px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.02)] border border-slate-100/90">
+                <div className="flex items-center gap-2 mb-5 text-[#2c3543]">
+                  <UserPlus size={18} />
+                  <h3 className="text-[14px] font-black uppercase tracking-wider m-0">Basic Information</h3>
                 </div>
-                <div className="space-y-5">
+                <div className="space-y-4">
                   <FormInput
                     label="First Name"
                     placeholder="e.g. Maria"
@@ -235,22 +239,22 @@ export default function AddRegistrar() {
                 </div>
               </section>
 
-              <section className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-                <div className="flex items-center gap-2 mb-6 text-[#1D2D44]">
-                  <ShieldCheck size={20} />
-                  <h3 className="text-[16px] font-bold uppercase tracking-wider">Security</h3>
+              <section className="bg-white p-6 rounded-[22px] shadow-[0_8px_24px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.02)] border border-slate-100/90">
+                <div className="flex items-center gap-2 mb-5 text-[#2c3543]">
+                  <ShieldCheck size={18} />
+                  <h3 className="text-[14px] font-black uppercase tracking-wider m-0">Security</h3>
                 </div>
-                <div className="space-y-5">
+                <div className="space-y-4">
                   <FormInput label="Employee ID" placeholder="e.g. 2024-REG-001" name="employeeId" />
 
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-1.5">
                     <div className="flex justify-between items-center">
-                      <label htmlFor="generatedPassword" className="text-[12px] font-bold text-gray-500 uppercase tracking-tight">Auto-Generated Password</label>
+                      <label htmlFor="generatedPassword" className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Auto-Generated Password</label>
                       <button
                         onClick={generatePassword}
-                        className="text-[#1D2D44] text-[10px] font-bold flex items-center gap-1 hover:underline uppercase"
+                        className="text-[#2c3543] text-[11px] font-bold flex items-center gap-1 hover:underline cursor-pointer"
                       >
-                        <RefreshCw size={12} /> Regenerate
+                        <RefreshCw size={11} /> Regenerate
                       </button>
                     </div>
                     <input
@@ -258,27 +262,27 @@ export default function AddRegistrar() {
                       id="generatedPassword"
                       value={generatedPassword}
                       readOnly
-                      className="w-full bg-[#F1F5F9] border border-gray-200 rounded-lg p-3 text-sm font-mono text-[#1D2D44] font-bold text-center tracking-widest"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-mono text-[#2c3543] font-bold text-center tracking-widest"
                     />
-                    <p className="text-[10px] text-gray-500 italic">Complexity: Uppercase, Lowercase, Number, & Special Char.</p>
+                    <p className="text-[10.5px] text-slate-400 italic m-0">Complexity: Uppercase, Lowercase, Number, & Special Char.</p>
                   </div>
                 </div>
               </section>
             </div>
 
-            <div className="space-y-6">
-              <section className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 h-full">
-                <div className="flex items-center gap-2 mb-6 text-[#1D2D44]">
-                  <Briefcase size={20} />
-                  <h3 className="text-[16px] font-bold uppercase tracking-wider">Access & Roles</h3>
+            <div className="space-y-4">
+              <section className="bg-white p-6 rounded-[22px] shadow-[0_8px_24px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.02)] border border-slate-100/90 h-full flex flex-col">
+                <div className="flex items-center gap-2 mb-5 text-[#2c3543]">
+                  <Briefcase size={18} />
+                  <h3 className="text-[14px] font-black uppercase tracking-wider m-0">Access & Roles</h3>
                 </div>
-                <div className="space-y-5">
-                  <div className="flex flex-col gap-2">
-                    <label htmlFor="responsibility" className="text-[12px] font-bold text-gray-500 uppercase tracking-tight">Specific Responsibility (Optional)</label>
+                <div className="space-y-4 flex-1 flex flex-col">
+                  <div className="flex flex-col gap-1.5 flex-1">
+                    <label htmlFor="responsibility" className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Specific Responsibility (Optional)</label>
                     <textarea
                       id="responsibility"
                       placeholder="e.g. Handles Transcript of Records..."
-                      className="w-full bg-white border border-gray-300 rounded-lg p-3 text-sm h-48 outline-none focus:border-[#1D2D44] resize-none transition-all"
+                      className="w-full bg-white border border-slate-200 rounded-xl p-3 text-xs flex-1 outline-none focus:border-blue-500 resize-none transition-all"
                     />
                   </div>
                 </div>
@@ -287,26 +291,25 @@ export default function AddRegistrar() {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-end gap-3 mt-10">
-            {/* Styled according to the requested "Cancel" image */}
+          <div className="flex justify-end gap-2.5 pt-2">
             <button
               onClick={() => navigate('/manage-registrar')}
-              className="bg-white border border-gray-300 text-gray-600 px-8 py-2.5 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-gray-50 transition-all flex items-center gap-2"
+              className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-6 py-2 rounded-full font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer"
             >
-              <X size={14} /> Cancel
+              <X size={13} /> Cancel
             </button>
             <button
               onClick={handleAddRegistrar}
               disabled={loading}
-              className="bg-[#1D2D44] text-white px-10 py-2.5 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-[#152030] shadow-lg active:scale-95 flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-[#2c3543] hover:bg-[#1f2631] text-white px-7 py-2 rounded-full font-bold text-xs border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_6px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 flex items-center gap-1.5 transition-all disabled:opacity-50 cursor-pointer"
             >
               {loading ? (
                 <>
-                  <RefreshCw size={14} className="animate-spin" /> Adding...
+                  <RefreshCw size={13} className="animate-spin" /> Adding...
                 </>
               ) : (
                 <>
-                  <Save size={14} /> Add Registrar
+                  <Save size={13} /> Add Registrar
                 </>
               )}
             </button>
@@ -331,8 +334,8 @@ export default function AddRegistrar() {
 
 function FormInput({ label, placeholder = "", name, value, onChange, error }) {
   return (
-    <div className="flex flex-col gap-2">
-      <label htmlFor={name} className="text-[12px] font-bold text-gray-500 uppercase tracking-tight">{label}</label>
+    <div className="flex flex-col gap-1.5">
+      <label htmlFor={name} className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">{label}</label>
       <input
         type="text"
         id={name}
@@ -340,13 +343,14 @@ function FormInput({ label, placeholder = "", name, value, onChange, error }) {
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className={`w-full bg-white border rounded-lg p-3 text-sm outline-none transition-all ${error
-          ? 'border-red-500 focus:border-red-500'
-          : 'border-gray-300 focus:border-[#1D2D44]'
-          }`}
+        className={`w-full bg-white border rounded-xl px-3.5 py-2 text-[13px] outline-none transition-all ${
+          error
+            ? 'border-red-500 focus:border-red-500'
+            : 'border-slate-200 focus:border-blue-500'
+        }`}
       />
       {error && (
-        <p className="text-[10px] text-red-600 font-medium flex items-center gap-1">
+        <p className="text-[10.5px] text-red-600 font-bold flex items-center gap-1 m-0">
           <span className="text-red-500">•</span> {error}
         </p>
       )}
