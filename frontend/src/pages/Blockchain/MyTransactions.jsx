@@ -2,21 +2,27 @@ import { useEffect, useState, useMemo } from "react";
 import Layout from "../../components/Layout";
 import { useNavigate } from "react-router-dom";
 import API from "../../components/config/axiosConfig";
-import { Copy, CheckCircle, AlertCircle, RefreshCw } from "lucide-react";
+import FilterDrawer from "../../components/FilterDrawer";
+import ActiveFilterChips from "../../components/ActiveFilterChips";
+import TableSkeleton from "../../components/TableSkeleton";
+import { Copy, CheckCircle, AlertCircle, RefreshCw, Search, SlidersHorizontal, ArrowDownAZ, ArrowUpZA, Check, ArrowLeft } from "lucide-react";
 
 function MyTransactions() {
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [toast, setToast] = useState({ show: false, message: "", type: "info" });
+    const [copiedHash, setCopiedHash] = useState(null);
     const navigate = useNavigate();
 
-    // Filter States
+    // Filter & Sort States
     const [searchTerm, setSearchTerm] = useState("");
     const [filterStatus, setFilterStatus] = useState("All Status");
-    const [filterMonth, setFilterMonth] = useState(""); // "YYYY-MM" format
+    const [filterMonth, setFilterMonth] = useState("");
     const [entriesPerPage, setEntriesPerPage] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
+    const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
+    const [sortConfig, setSortConfig] = useState({ key: "createdAt", direction: "desc" });
 
     const triggerToast = (message, type = "info") => {
         setToast({ show: true, message, type });
@@ -47,26 +53,17 @@ function MyTransactions() {
         fetchTransactions();
     }, []);
 
-    const getStatusStyle = (status) => {
-        switch (status?.toLowerCase()) {
-            case "recorded": return "bg-[#E1FFEB] text-[#15803d]";
-            case "pending": return "bg-[#FFFDE1] text-[#854d0e]";
-            case "failed": return "bg-[#FFE1E1] text-[#b91c1c]";
-            default: return "bg-gray-100 text-gray-600";
-        }
-    };
-
     const filteredTransactions = useMemo(() => {
         return transactions.filter((tx) => {
             const matchesSearch =
                 tx.referenceNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 tx.nameOfStudent?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                tx.studentIDNumber?.toLowerCase().includes(searchTerm.toLowerCase());
+                tx.studentIDNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                tx.typeOfDocument?.toLowerCase().includes(searchTerm.toLowerCase());
 
             const matchesStatus =
                 filterStatus === "All Status" || tx.blockchainStatus === filterStatus;
 
-            // Single month filter: "YYYY-MM"
             let matchesMonth = true;
             if (filterMonth) {
                 const txDate = new Date(tx.createdAt);
@@ -75,8 +72,23 @@ function MyTransactions() {
             }
 
             return matchesSearch && matchesStatus && matchesMonth;
+        }).sort((a, b) => {
+            let valA = a[sortConfig.key];
+            let valB = b[sortConfig.key];
+            
+            if (sortConfig.key === "createdAt") {
+                valA = new Date(valA).getTime();
+                valB = new Date(valB).getTime();
+            } else if (typeof valA === "string") {
+                valA = valA.toLowerCase();
+                valB = (valB || "").toLowerCase();
+            }
+
+            if (valA < valB) return sortConfig.direction === "asc" ? -1 : 1;
+            if (valA > valB) return sortConfig.direction === "asc" ? 1 : -1;
+            return 0;
         });
-    }, [transactions, searchTerm, filterStatus, filterMonth]);
+    }, [transactions, searchTerm, filterStatus, filterMonth, sortConfig]);
 
     const totalPages = Math.ceil(filteredTransactions.length / entriesPerPage);
     const paginatedTransactions = filteredTransactions.slice(
@@ -86,191 +98,212 @@ function MyTransactions() {
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchTerm, filterStatus, filterMonth, entriesPerPage]);
+    }, [searchTerm, filterStatus, filterMonth, entriesPerPage, sortConfig]);
 
     const statuses = ["All Status", "Pending", "Recorded", "Failed"];
 
     const copyToClipboard = (text) => {
+        if (!text) return;
         navigator.clipboard.writeText(text);
-        triggerToast("Copied to clipboard", "success");
+        setCopiedHash(text);
+        triggerToast("TX hash copied to clipboard", "success");
+        setTimeout(() => setCopiedHash(null), 3000);
     };
 
-    if (loading) {
-        return (
-            <Layout>
-                <div className="p-6 flex items-center justify-center min-h-screen">
-                    <div className="flex flex-col items-center gap-3 text-gray-600">
-                        <RefreshCw size={28} className="animate-spin text-[#1D2D44]" />
-                        <p className="text-sm font-medium">Loading transactions...</p>
-                    </div>
-                </div>
-            </Layout>
-        );
-    }
+    const renderStatusBadge = (status) => {
+        const s = (status || "").toLowerCase();
+        if (s === "recorded") {
+            return (
+                <span className="inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    <span>Recorded</span>
+                </span>
+            );
+        } else if (s === "pending") {
+            return (
+                <span className="inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200/80">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                    <span>Pending</span>
+                </span>
+            );
+        } else {
+            return (
+                <span className="inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider bg-red-50 text-red-700 border border-red-200/80">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                    <span>{status || "Failed"}</span>
+                </span>
+            );
+        }
+    };
 
     return (
         <Layout>
-            <div className="p-6 bg-[#F8F9FA] min-h-screen font-sans">
-                <button
-                    onClick={() => navigate('/blockchain')}
-                    className="flex items-center gap-2 text-slate-700 hover:text-blue-600 hover:bg-white font-bold bg-slate-100 px-4 py-2 rounded-xl border border-slate-200 shadow-sm transition-all text-sm w-fit mb-4"
-                >
-                    <i className="fa-solid fa-arrow-left text-xs"></i>
-                    Back to Blockchain
-                </button>
+            <div className="py-2 px-2 sm:px-4 font-sans space-y-4 relative">
+                
+                {/* Back Button */}
+                <div className="flex items-center justify-between">
+                    <button
+                        onClick={() => navigate('/blockchain')}
+                        className="bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs px-4 py-1.5 rounded-full border border-slate-200 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 transition-all flex items-center gap-2 cursor-pointer"
+                    >
+                        <ArrowLeft size={13} />
+                        <span>Back to Blockchain</span>
+                    </button>
+                </div>
 
                 {/* Toast Notification */}
                 {toast.show && (
-                    <div className={`fixed top-5 left-1/2 -translate-x-1/2 z-[10001] flex items-center gap-3 px-6 py-3 rounded-lg shadow-2xl ${toast.type === "success" ? "bg-[#28A745] text-white" : "bg-[#DC3545] text-white"
-                        }`}>
-                        {toast.type === "success" ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
-                        <p className="font-bold text-sm">{toast.message}</p>
+                    <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[10001] flex items-center gap-3 px-6 py-3 rounded-2xl shadow-2xl bg-[#2c3543] text-white animate-fade-in border border-slate-700/50">
+                        {toast.type === "success" ? <CheckCircle size={18} className="text-emerald-400" /> : <AlertCircle size={18} className="text-red-400" />}
+                        <p className="font-bold text-xs tracking-wide">{toast.message}</p>
                     </div>
                 )}
 
-                <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+                {/* Main Card Container */}
+                <div className="rounded-[22px] bg-white shadow-[0_8px_24px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.02)] border border-slate-100/90 overflow-hidden">
 
-                    {/* Top Controls */}
-                    <div className="p-6 border-b border-gray-100">
-                        <div className="flex flex-wrap items-center justify-between gap-4">
-
-                            {/* Left: entries + search */}
-                            <div className="flex items-center gap-3 flex-1 min-w-0">
-                                <div className="flex items-center gap-2 text-[14px] text-[#4D5E80] shrink-0">
-                                    <span>Show</span>
-                                    <select
-                                        aria-label="Entries per page"
-                                        className="appearance-none bg-white border border-[#DDE2EF] rounded-[6px] px-3 py-1 outline-none text-[#4D5E80] cursor-pointer hover:border-gray-400"
-                                        value={entriesPerPage}
-                                        onChange={(e) => setEntriesPerPage(Number(e.target.value))}
-                                    >
-                                        <option value={10}>10</option>
-                                        <option value={25}>25</option>
-                                        <option value={50}>50</option>
-                                    </select>
-                                    <span>entries</span>
-                                </div>
-                                <input
-                                    type="text"
-                                    aria-label="Search transactions"
-                                    className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-[#1D2D44] min-w-0"
-                                    placeholder="Search by Reference Number, Student Name, or ID Number"
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                />
+                    {/* Top Toolbar */}
+                    <div className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/40 flex flex-col gap-3.5">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div className="flex items-center gap-2 text-xs text-slate-500 font-bold">
+                                <span>Show</span>
+                                <select
+                                    aria-label="Entries per page"
+                                    className="border border-slate-200 rounded-lg px-2 py-1 bg-white font-bold text-slate-700 focus:outline-none focus:border-blue-500 cursor-pointer shadow-2xs"
+                                    value={entriesPerPage}
+                                    onChange={(e) => setEntriesPerPage(Number(e.target.value))}
+                                >
+                                    <option value={10}>10</option>
+                                    <option value={25}>25</option>
+                                    <option value={50}>50</option>
+                                </select>
+                                <span>entries</span>
                             </div>
 
-                            {/* Right: status + month + refresh */}
-                            <div className="flex items-center gap-3 flex-wrap shrink-0">
-                                <select
-                                    aria-label="Filter by status"
-                                    value={filterStatus}
-                                    onChange={(e) => setFilterStatus(e.target.value)}
-                                    className="border border-gray-300 rounded px-2 py-2 text-sm bg-white min-w-[130px] outline-none"
-                                >
-                                    {statuses.map((s) => <option key={s}>{s}</option>)}
-                                </select>
-
-                                {/* Single month picker */}
-                                <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2.5 flex-wrap">
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
                                     <input
-                                        type="month"
-                                        aria-label="Filter by month"
-                                        className="border border-gray-300 rounded px-2 py-2 text-sm text-gray-600 outline-none focus:border-[#1D2D44]"
-                                        value={filterMonth}
-                                        onChange={(e) => setFilterMonth(e.target.value)}
+                                        type="text"
+                                        aria-label="Search transactions"
+                                        className="w-56 sm:w-64 rounded-full border border-slate-200 bg-white py-1.5 pl-8 pr-3.5 text-[12px] font-medium outline-none focus:border-blue-500 shadow-2xs"
+                                        placeholder="Search by Ref, Name, ID..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
                                     />
-                                    {filterMonth && (
-                                        <button
-                                            onClick={() => setFilterMonth("")}
-                                            className="text-xs text-gray-600 hover:text-gray-600 underline"
-                                        >
-                                            Clear
-                                        </button>
-                                    )}
                                 </div>
 
-                                {/* Refresh Button */}
+                                <button 
+                                    type="button"
+                                    onClick={() => setIsFilterDrawerOpen(true)}
+                                    className="bg-white hover:bg-slate-50 text-slate-700 px-3.5 py-1.5 rounded-full font-bold text-[11.5px] border border-slate-200 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 transition-all flex items-center gap-1.5 cursor-pointer"
+                                >
+                                    <SlidersHorizontal size={13} />
+                                    <span>Filters & Sort</span>
+                                </button>
+
                                 <button
                                     onClick={() => fetchTransactions(true)}
                                     disabled={refreshing}
                                     title="Refresh transactions"
-                                    className="flex items-center gap-2 px-4 py-2 bg-[#1D2D44] text-white text-sm font-semibold rounded-lg hover:bg-[#2d3d54] transition disabled:opacity-60 disabled:cursor-not-allowed"
+                                    className="bg-[#2c3543] hover:bg-[#1f2631] text-white py-1.5 px-3.5 rounded-full text-[11.5px] font-bold border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(0,0,0,0.25)] active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
                                 >
-                                    <RefreshCw size={15} className={refreshing ? "animate-spin" : ""} />
-                                    {refreshing ? "Refreshing..." : "Refresh"}
+                                    <RefreshCw size={12} className={refreshing ? "animate-spin" : ""} />
+                                    <span>{refreshing ? "Refreshing..." : "Refresh"}</span>
                                 </button>
                             </div>
                         </div>
+
+                        <ActiveFilterChips 
+                            filters={[
+                                { label: 'Status', value: filterStatus, key: 'filterStatus' },
+                                { label: 'Month', value: filterMonth, key: 'filterMonth' },
+                            ]}
+                            onRemove={(key) => {
+                                if (key === 'filterStatus') setFilterStatus('All Status');
+                                if (key === 'filterMonth') setFilterMonth('');
+                            }}
+                        />
                     </div>
 
-                    {/* Table */}
+                    {/* Table View */}
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
+                        <table className="w-full text-left border-collapse table-auto">
                             <thead>
-                                <tr className="text-[13px] text-gray-800 border-b border-gray-200 uppercase font-bold bg-gray-50">
-                                    <th className="px-6 py-4">Reference Number</th>
-                                    <th className="px-6 py-4">Owner Name</th>
-                                    <th className="px-6 py-4">ID Number</th>
-                                    <th className="px-6 py-4">Document Type</th>
-                                    <th className="px-6 py-4">Year / Course</th>
-                                    <th className="px-6 py-4">Status</th>
-                                    <th className="px-6 py-4">TX Hash</th>
-                                    <th className="px-6 py-4">Created</th>
+                                <tr className="bg-slate-50/70 text-[11.5px] font-extrabold uppercase tracking-wider text-slate-500 border-b border-slate-100">
+                                    <th className="py-3.5 px-5">Reference Number</th>
+                                    <th className="py-3.5 px-5">Owner Name</th>
+                                    <th className="py-3.5 px-5">ID Number</th>
+                                    <th className="py-3.5 px-5">Document Type</th>
+                                    <th className="py-3.5 px-5">Year / Course</th>
+                                    <th className="py-3.5 px-5 text-center">Status</th>
+                                    <th className="py-3.5 px-5 text-center">TX Hash</th>
+                                    <th className="py-3.5 px-5 text-right">Created</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                {paginatedTransactions.length > 0 ? (
+                            <tbody className="divide-y divide-slate-100 text-[12.5px]">
+                                {loading ? (
+                                    <TableSkeleton columns={8} rows={entriesPerPage || 10} />
+                                ) : paginatedTransactions.length > 0 ? (
                                     paginatedTransactions.map((tx) => (
-                                        <tr key={tx._id} className="border-b border-gray-200 hover:bg-gray-50 transition">
-                                            <td className="px-6 py-4 text-sm font-mono text-[#1D2D44]">{tx.referenceNumber}</td>
-                                            <td className="px-6 py-4 text-sm">
-                                                <div className="flex flex-col">
-                                                    <span>{tx.nameOfStudent}</span>
-                                                    <span className="text-[10px] text-gray-600 uppercase tracking-wider">{tx.ownerType || 'Student'}</span>
+                                        <tr key={tx._id} className="hover:bg-slate-50/80 transition-colors">
+                                            <td className="py-3.5 px-5 align-middle">
+                                                <span className="bg-slate-100 px-2 py-0.5 rounded-md text-slate-700 font-mono text-[11.5px] font-bold">
+                                                    {tx.referenceNumber}
+                                                </span>
+                                            </td>
+                                            <td className="py-3.5 px-5 align-middle">
+                                                <div className="flex items-baseline gap-1.5">
+                                                    <span className="text-[13px] font-bold text-slate-900">{tx.nameOfStudent}</span>
+                                                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">({tx.ownerType || 'Student'})</span>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 text-sm">{tx.studentIDNumber}</td>
-                                            <td className="px-6 py-4 text-sm">{tx.typeOfDocument}</td>
-                                            <td className="px-6 py-4 text-sm text-center">
+                                            <td className="py-3.5 px-5 align-middle text-[12px] text-slate-600 font-mono">
+                                                {tx.studentIDNumber}
+                                            </td>
+                                            <td className="py-3.5 px-5 align-middle text-[12.5px] text-slate-700 font-medium">
+                                                <span className="inline-flex items-center gap-1.5">
+                                                    <i className="fa-solid fa-file-lines text-blue-500 text-xs"></i>
+                                                    <span>{tx.typeOfDocument}</span>
+                                                </span>
+                                            </td>
+                                            <td className="py-3.5 px-5 align-middle text-slate-700 text-xs font-medium">
                                                 {(tx.ownerType === 'Alumni') 
                                                     ? tx.yearGraduated 
                                                     : (tx.course || tx.yearLevel) 
                                                         ? `${tx.course || ''} ${tx.yearLevel || ''}`.trim()
                                                         : tx.yearGraduated}
                                             </td>
-                                            <td className="px-6 py-4 text-sm">
-                                                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusStyle(tx.blockchainStatus)}`}>
-                                                    {tx.blockchainStatus}
-                                                </span>
+                                            <td className="py-3.5 px-5 align-middle text-center">
+                                                {renderStatusBadge(tx.blockchainStatus)}
                                             </td>
-                                            <td className="px-6 py-4 text-sm">
+                                            <td className="py-3.5 px-5 align-middle text-center">
                                                 {tx.blockchainTxHash ? (
                                                     <button
                                                         onClick={() => copyToClipboard(tx.blockchainTxHash)}
-                                                        className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-mono text-xs"
-                                                        title="Click to copy"
+                                                        className="font-mono text-[11px] bg-white border border-slate-200/80 px-2.5 py-0.5 rounded-full text-slate-600 hover:border-blue-400 hover:text-blue-600 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+                                                        title="Click to copy full hash"
                                                     >
-                                                        {tx.blockchainTxHash.substring(0, 8)}...
-                                                        <Copy size={14} />
+                                                        <span>{tx.blockchainTxHash.substring(0, 10)}...</span>
+                                                        {copiedHash === tx.blockchainTxHash ? <Check size={11} className="text-emerald-600" /> : <Copy size={11} className="text-slate-400" />}
                                                     </button>
                                                 ) : (
-                                                    <span className="text-gray-600 text-xs">—</span>
+                                                    <span className="text-slate-400 text-xs">—</span>
                                                 )}
                                             </td>
-                                            <td className="px-6 py-4 text-sm text-gray-600">
-                                                {new Date(tx.createdAt).toLocaleDateString()}
+                                            <td className="py-3.5 px-5 align-middle text-right text-[12px] text-slate-500 font-medium">
+                                                {new Date(tx.createdAt).toLocaleDateString('en-US', {
+                                                    year: 'numeric',
+                                                    month: '2-digit',
+                                                    day: '2-digit'
+                                                })}
                                             </td>
                                         </tr>
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan="8" className="px-6 py-12 text-center">
-                                            <div className="flex flex-col items-center gap-2 text-gray-600">
-                                                <span className="text-3xl">📭</span>
-                                                <p className="text-sm font-medium">No transactions found</p>
-                                                <p className="text-xs">Try adjusting your filters or create a new transaction</p>
-                                            </div>
+                                        <td colSpan="8" className="py-16 text-center text-slate-400 italic">
+                                            No blockchain transactions found matching your filters.
                                         </td>
                                     </tr>
                                 )}
@@ -278,47 +311,112 @@ function MyTransactions() {
                         </table>
                     </div>
 
-                    {/* Pagination */}
-                    {totalPages > 1 && (
-                        <div className="p-6 border-t border-gray-100 flex items-center justify-between">
-                            <p className="text-sm text-gray-600">
-                                Showing {paginatedTransactions.length > 0 ? (currentPage - 1) * entriesPerPage + 1 : 0} to{" "}
-                                {Math.min(currentPage * entriesPerPage, filteredTransactions.length)} of{" "}
-                                {filteredTransactions.length}
-                            </p>
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                                    disabled={currentPage === 1}
-                                    className="px-3 py-1 border border-gray-300 rounded text-sm disabled:text-gray-600 disabled:bg-gray-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                                >
-                                    Previous
-                                </button>
-                                <div className="flex items-center gap-1">
-                                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    {/* Pagination Footer */}
+                    <div className="p-4 border-t border-slate-100 flex justify-center bg-slate-50/30">
+                        <div className="flex items-center gap-1.5">
+                            <button
+                                disabled={currentPage === 1}
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                className={`text-xs px-2.5 py-1 rounded-md ${currentPage === 1 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:bg-slate-200 cursor-pointer font-bold'}`}
+                            >
+                                Previous
+                            </button>
+
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                                if (page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)) {
+                                    return (
                                         <button
                                             key={page}
                                             onClick={() => setCurrentPage(page)}
-                                            className={`px-3 py-1 rounded text-sm ${currentPage === page
-                                                ? "bg-[#1D2D44] text-white"
-                                                : "border border-gray-300 hover:bg-gray-50"
+                                            className={`w-7 h-7 rounded-lg text-xs transition-colors font-bold ${currentPage === page
+                                                ? 'bg-[#2c3543] text-white shadow-2xs'
+                                                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                                                 }`}
                                         >
                                             {page}
                                         </button>
-                                    ))}
-                                </div>
-                                <button
-                                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                                    disabled={currentPage === totalPages}
-                                    className="px-3 py-1 border border-gray-300 rounded text-sm disabled:text-gray-600 disabled:bg-gray-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                                    );
+                                } else if (page === currentPage - 2 || page === currentPage + 2) {
+                                    return <span key={page} className="text-slate-400 text-xs px-1">...</span>;
+                                }
+                                return null;
+                            })}
+
+                            <button
+                                disabled={currentPage === totalPages || totalPages === 0}
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                className={`text-xs px-2.5 py-1 rounded-md ${currentPage === totalPages || totalPages === 0 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:bg-slate-200 cursor-pointer font-bold'}`}
+                            >
+                                Next
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Filter Drawer */}
+                <FilterDrawer 
+                    isOpen={isFilterDrawerOpen} 
+                    onClose={() => setIsFilterDrawerOpen(false)}
+                    onClearAll={() => {
+                        setFilterStatus('All Status');
+                        setFilterMonth('');
+                        setSortConfig({ key: 'createdAt', direction: 'desc' });
+                    }}
+                >
+                    <div className="flex flex-col gap-4">
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Sorting</h3>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-xs font-bold text-slate-700">Sort By:</label>
+                                <select 
+                                    className="border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-blue-500 bg-white"
+                                    value={sortConfig.key}
+                                    onChange={(e) => setSortConfig({ ...sortConfig, key: e.target.value })}
                                 >
-                                    Next
+                                    <option value="createdAt">Date Created</option>
+                                    <option value="referenceNumber">Reference Number</option>
+                                    <option value="nameOfStudent">Owner Name</option>
+                                    <option value="blockchainStatus">Status</option>
+                                </select>
+                            </div>
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-xs font-bold text-slate-700">Order:</label>
+                                <button 
+                                    onClick={() => setSortConfig({ ...sortConfig, direction: sortConfig.direction === 'asc' ? 'desc' : 'asc' })}
+                                    className="border border-slate-200 rounded-xl px-3 py-2 text-xs bg-white flex items-center justify-between hover:bg-slate-50 transition-colors"
+                                >
+                                    <span>{sortConfig.direction === 'asc' ? 'Ascending' : 'Descending'}</span>
+                                    {sortConfig.direction === 'asc' ? <ArrowUpZA size={14} className="text-slate-500"/> : <ArrowDownAZ size={14} className="text-slate-500"/>}
                                 </button>
                             </div>
                         </div>
-                    )}
-                </div>
+
+                        <div className="border-t border-slate-100 my-1"></div>
+
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Filtering</h3>
+                        
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-xs font-bold text-slate-700">Blockchain Status:</label>
+                            <select
+                                value={filterStatus}
+                                onChange={(e) => setFilterStatus(e.target.value)}
+                                className="border border-slate-200 rounded-xl px-3 py-2 text-xs bg-white outline-none focus:border-blue-500 text-slate-800"
+                            >
+                                {statuses.map((s) => <option key={s}>{s}</option>)}
+                            </select>
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-xs font-bold text-slate-700">Filter by Month:</label>
+                            <input
+                                type="month"
+                                className="border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 outline-none focus:border-blue-500 bg-white"
+                                value={filterMonth}
+                                onChange={(e) => setFilterMonth(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                </FilterDrawer>
             </div>
         </Layout>
     );

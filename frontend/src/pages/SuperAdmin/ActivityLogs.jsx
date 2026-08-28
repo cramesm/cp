@@ -2,10 +2,15 @@ import { useState, useMemo, useEffect } from 'react';
 import Layout from '../../components/Layout';
 import api from '../../api';
 import TableSkeleton from '../../components/TableSkeleton';
+import FilterDrawer from '../../components/FilterDrawer';
+import ActiveFilterChips from '../../components/ActiveFilterChips';
+import { Search, SlidersHorizontal, ArrowDownAZ, ArrowUpZA } from 'lucide-react';
 
 export default function ActivityLogs() {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Filter States
   const [searchTerm, setSearchTerm] = useState('');
   const [filterUser, setFilterUser] = useState('All Users');
   const [filterAction, setFilterAction] = useState('All Actions');
@@ -15,6 +20,8 @@ export default function ActivityLogs() {
   const [endDate, setEndDate] = useState('');
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
+  const [sortConfig, setSortConfig] = useState({ key: 'timestamp', direction: 'desc' });
 
   // Fetch activity logs from API
   useEffect(() => {
@@ -31,20 +38,44 @@ export default function ActivityLogs() {
     fetchLogs();
   }, []);
 
-  const getStatusStyle = (status) => {
-    switch (status) {
-      case 'Successful': return 'bg-[#C6E7FF] text-[#2D6A8E]';
-      case 'Process': return 'bg-[#FCF7B0] text-[#857A00]';
-      case 'Failed': return 'bg-[#FFC1C1] text-[#A32A2A]';
-      case 'Canceled': return 'bg-[#E5E7EB] text-gray-600';
-      default: return 'bg-gray-100 text-gray-600';
+  const renderStatusBadge = (status) => {
+    const s = (status || '').toLowerCase();
+    if (s === 'successful' || s === 'completed') {
+      return (
+        <span className="inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+          <span>Successful</span>
+        </span>
+      );
+    } else if (s === 'process' || s === 'pending') {
+      return (
+        <span className="inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200/80">
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+          <span>Process</span>
+        </span>
+      );
+    } else if (s === 'canceled') {
+      return (
+        <span className="inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200/80">
+          <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+          <span>Canceled</span>
+        </span>
+      );
+    } else {
+      return (
+        <span className="inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider bg-red-50 text-red-700 border border-red-200/80">
+          <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+          <span>{status || 'Failed'}</span>
+        </span>
+      );
     }
   };
 
   const filteredLogs = useMemo(() => {
     return logs.filter((log) => {
       const matchesSearch = log.userName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            log.action?.toLowerCase().includes(searchTerm.toLowerCase());
+                            log.action?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            log.type?.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesUser = filterUser === 'All Users' || log.userName === filterUser;
       const matchesAction = filterAction === 'All Actions' || log.action === filterAction;
       const matchesType = filterType === 'All Document' || log.type === filterType;
@@ -65,8 +96,23 @@ export default function ActivityLogs() {
       }
 
       return matchesSearch && matchesUser && matchesAction && matchesType && matchesStatus && matchesDate;
+    }).sort((a, b) => {
+      let valA = a[sortConfig.key];
+      let valB = b[sortConfig.key];
+      
+      if (sortConfig.key === 'timestamp') {
+        valA = new Date(valA).getTime();
+        valB = new Date(valB).getTime();
+      } else if (typeof valA === 'string') {
+        valA = valA.toLowerCase();
+        valB = (valB || '').toLowerCase();
+      }
+
+      if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
     });
-  }, [logs, searchTerm, filterUser, filterAction, filterType, filterStatus, startDate, endDate]);
+  }, [logs, searchTerm, filterUser, filterAction, filterType, filterStatus, startDate, endDate, sortConfig]);
 
   const totalPages = Math.ceil(filteredLogs.length / entriesPerPage);
   const paginatedLogs = filteredLogs.slice(
@@ -76,201 +122,297 @@ export default function ActivityLogs() {
 
   useEffect(() => {
       setCurrentPage(1);
-  }, [searchTerm, filterUser, filterAction, filterType, filterStatus, startDate, endDate, entriesPerPage]);
+  }, [searchTerm, filterUser, filterAction, filterType, filterStatus, startDate, endDate, entriesPerPage, sortConfig]);
 
-  const users = ['All Users', ...new Set(logs.map(l => l.userName))];
-  const actions = ['All Actions', ...new Set(logs.map(l => l.action))];
-  const types = ['All Document', ...new Set(logs.map(l => l.type))];
+  const users = ['All Users', ...new Set(logs.map(l => l.userName).filter(Boolean))];
+  const actions = ['All Actions', ...new Set(logs.map(l => l.action).filter(Boolean))];
+  const types = ['All Document', ...new Set(logs.map(l => l.type).filter(Boolean))];
   const statuses = ['All Status', 'Successful', 'Process', 'Failed', 'Canceled'];
 
   return (
     <Layout>
-      <div className="p-8 bg-[#f8fafc] min-h-screen">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">System Logs</h1>
-          <p className="text-sm text-gray-500">Audit trail and record of all system activities.</p>
-        </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="py-2 px-2 sm:px-4 font-sans space-y-4 relative">
+        
+        {/* Main Card */}
+        <div className="rounded-[22px] bg-white shadow-[0_8px_24px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.02)] border border-slate-100/90 overflow-hidden">
           
-          {/* Top Header Filter */}
-          <div className="p-6 border-b border-gray-100">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
-              <div className="flex items-center gap-6">
-                {/* Updated Show Entries to match image style */}
-                <div className="flex items-center gap-2 text-[14px] text-gray-700">
-                  <span>Show</span>
-                  <select 
-                    aria-label="Entries per page"
-                    className="appearance-none bg-white border border-[#DDE2EF] rounded-[6px] px-3 py-1 pr-8 outline-none text-[#4D5E80] cursor-pointer bg-no-repeat bg-[right_10px_center] transition-all hover:border-gray-400"
-                    style={{
-                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%237E84A3'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
-                      backgroundSize: '12px'
-                    }}
-                    value={entriesPerPage}
-                    onChange={(e) => setEntriesPerPage(Number(e.target.value))}
-                  >
-                    <option value={10}>10</option>
-                    <option value={25}>25</option>
-                    <option value={50}>50</option>
-                  </select>
-                  <span>entries</span>
-                </div>
+          {/* Top Toolbar */}
+          <div className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/40 flex flex-col gap-3.5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2 text-xs text-slate-500 font-bold">
+                <span>Show</span>
+                <select 
+                  aria-label="Entries per page"
+                  className="border border-slate-200 rounded-lg px-2 py-1 bg-white font-bold text-slate-700 focus:outline-none focus:border-blue-500 cursor-pointer shadow-2xs"
+                  value={entriesPerPage}
+                  onChange={(e) => setEntriesPerPage(Number(e.target.value))}
+                >
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                </select>
+                <span>entries</span>
+              </div>
 
+              <div className="flex items-center gap-2.5 flex-wrap">
                 <div className="relative">
-                   <input 
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
+                  <input 
                     type="text" 
-                    placeholder="Search logs..." 
+                    placeholder="Search logs, actions, user..." 
                     aria-label="Search logs"
-                    className="border border-gray-300 rounded-md px-3 py-2 text-xs w-64 outline-none focus:border-[#1D2D44]"
+                    className="w-56 sm:w-64 rounded-full border border-slate-200 bg-white py-1.5 pl-8 pr-3.5 text-[12px] font-medium outline-none focus:border-blue-500 shadow-2xs"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
+
+                <button 
+                  type="button"
+                  onClick={() => setIsFilterDrawerOpen(true)}
+                  className="bg-white hover:bg-slate-50 text-slate-700 px-3.5 py-1.5 rounded-full font-bold text-[11.5px] border border-slate-200 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <SlidersHorizontal size={13} />
+                  <span>Filters & Sort</span>
+                </button>
               </div>
             </div>
 
-            {/* Filter Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              <FilterSelect label="User:" value={filterUser} onChange={setFilterUser} options={users} />
-              <FilterSelect label="Action:" value={filterAction} onChange={setFilterAction} options={actions} />
-              <FilterSelect label="Document Type:" value={filterType} onChange={setFilterType} options={types} />
-              <FilterSelect label="Status:" value={filterStatus} onChange={setFilterStatus} options={statuses} />
-              
-              <div className="flex flex-col gap-1">
-                <label htmlFor="startDate" className="text-[11px] font-bold text-gray-600 uppercase tracking-tight">Start Date:</label>
-                <input 
-                  id="startDate"
-                  type="date" 
-                  className="border border-gray-300 rounded px-2 py-1.5 text-[12px] text-gray-500 bg-white outline-none focus:border-[#1D2D44]" 
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label htmlFor="endDate" className="text-[11px] font-bold text-gray-600 uppercase tracking-tight">End Date:</label>
-                <input 
-                  id="endDate"
-                  type="date" 
-                  className="border border-gray-300 rounded px-2 py-1.5 text-[12px] text-gray-500 bg-white outline-none focus:border-[#1D2D44]" 
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                />
-              </div>
-            </div>
+            <ActiveFilterChips 
+                filters={[
+                    { label: 'User', value: filterUser, key: 'filterUser' },
+                    { label: 'Action', value: filterAction, key: 'filterAction' },
+                    { label: 'Doc Type', value: filterType, key: 'filterType' },
+                    { label: 'Status', value: filterStatus, key: 'filterStatus' },
+                    { label: 'From', value: startDate, key: 'startDate' },
+                    { label: 'To', value: endDate, key: 'endDate' },
+                ]}
+                onRemove={(key) => {
+                    if (key === 'filterUser') setFilterUser('All Users');
+                    if (key === 'filterAction') setFilterAction('All Actions');
+                    if (key === 'filterType') setFilterType('All Document');
+                    if (key === 'filterStatus') setFilterStatus('All Status');
+                    if (key === 'startDate') setStartDate('');
+                    if (key === 'endDate') setEndDate('');
+                }}
+            />
           </div>
 
           {/* Table */}
-          <div className="overflow-x-auto min-h-[450px]">
-            <table className="w-full text-left border-collapse">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse table-auto">
               <thead>
-                <tr className="border-b border-gray-200 text-gray-800 font-bold text-[13px]">
-                  <th className="py-5 px-6">Timestamp</th>
-                  <th className="py-5 px-2">Date</th>
-                  <th className="py-5 px-2">User Name</th>
-                  <th className="py-5 px-2">Action</th>
-                  <th className="py-5 px-2">Document Type</th>
-                  <th className="py-5 px-6 text-center">Status</th>
+                <tr className="bg-slate-50/70 text-[11.5px] font-extrabold uppercase tracking-wider text-slate-500 border-b border-slate-100">
+                  <th className="py-3.5 px-5">Timestamp</th>
+                  <th className="py-3.5 px-5">Date</th>
+                  <th className="py-3.5 px-5">User Name</th>
+                  <th className="py-3.5 px-5">Action</th>
+                  <th className="py-3.5 px-5">Document Type</th>
+                  <th className="py-3.5 px-5 text-center">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 text-[13px]">
+              <tbody className="divide-y divide-slate-100 text-[12.5px]">
                 {loading ? (
                   <TableSkeleton columns={6} rows={entriesPerPage || 10} />
                 ) : paginatedLogs.length > 0 ? (
                   paginatedLogs.map((log, index) => {
                     const logDate = new Date(log.timestamp);
                     const timeStr = logDate.toLocaleTimeString('en-US', { hour12: false });
-                    const day = String(logDate.getDate()).padStart(2, '0');
-                    const month = String(logDate.getMonth() + 1).padStart(2, '0');
-                    const year = logDate.getFullYear();
-                    const dateStr = `${day}/${month}/${year}`;
+                    const dateStr = logDate.toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: '2-digit',
+                      day: '2-digit'
+                    });
                     return (
-                      <tr key={log._id || index} className={`transition-colors ${index % 2 !== 0 ? 'bg-[#F9FAFF]' : 'bg-white hover:bg-gray-50'}`}>
-                        <td className="py-4 px-6 font-mono text-gray-500">{timeStr}</td>
-                        <td className="py-4 px-2 text-gray-600">{dateStr}</td>
-                        <td className="py-4 px-2 font-semibold text-gray-800">{log.userName}</td>
-                        <td className="py-4 px-2 font-medium text-gray-600">{log.action}</td>
-                        <td className="py-4 px-2 text-gray-500">{log.type}</td>
-                        <td className="py-4 px-6">
-                          <div className="flex justify-center">
-                            <span className={`min-w-[100px] text-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${getStatusStyle(log.status)}`}>
-                              {log.status}
+                      <tr key={log._id || index} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="py-3.5 px-5 align-middle font-mono text-[11.5px] text-slate-500">{timeStr}</td>
+                        <td className="py-3.5 px-5 align-middle text-[12px] text-slate-500 font-medium">{dateStr}</td>
+                        <td className="py-3.5 px-5 align-middle text-[13px] font-bold text-slate-900">{log.userName}</td>
+                        <td className="py-3.5 px-5 align-middle text-[12.5px] font-semibold text-slate-700">{log.action}</td>
+                        <td className="py-3.5 px-5 align-middle text-[12.5px] text-slate-700 font-medium">
+                          {log.type ? (
+                            <span className="inline-flex items-center gap-1.5">
+                              <i className="fa-solid fa-file-lines text-blue-500 text-xs"></i>
+                              <span>{log.type}</span>
                             </span>
-                          </div>
+                          ) : (
+                            <span className="text-slate-400">—</span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-5 align-middle text-center">
+                          {renderStatusBadge(log.status)}
                         </td>
                       </tr>
                     );
                   })
                 ) : (
-                  <tr><td colSpan="6" className="py-20 text-center text-gray-400 italic">No activity logs found.</td></tr>
+                  <tr>
+                    <td colSpan="6" className="py-16 text-center text-slate-400 italic">
+                      No activity logs found matching your filters.
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>
-            {paginatedLogs.length === 0 && (
-                <div className="text-center py-24 text-gray-400 italic text-sm">No activity logs match your current filters.</div>
-            )}
           </div>
 
-          {/* Pagination */}
-          <div className="flex justify-center items-center py-6 border-t border-gray-100 gap-2">
-            <button 
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                className={`text-xs px-2 ${currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-black hover:underline cursor-pointer'}`}
-            >
-                Previous
-            </button>
-            
-            {Array.from({ length: totalPages }).map((_, idx) => {
-                const pageNumber = idx + 1;
-                if (pageNumber === 1 || pageNumber === totalPages || (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)) {
-                    return (
-                        <button
-                            key={pageNumber}
-                            onClick={() => setCurrentPage(pageNumber)}
-                            className={`w-8 h-8 rounded text-xs transition-colors font-bold ${
-                                currentPage === pageNumber 
-                                    ? 'bg-[#1D2D44] text-white' 
-                                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                            }`}
-                        >
-                            {pageNumber}
-                        </button>
-                    );
-                } else if (pageNumber === currentPage - 2 || pageNumber === currentPage + 2) {
-                    return <span key={pageNumber} className="text-gray-400 mt-2 text-xs">...</span>;
-                }
-                return null;
-            })}
+          {/* Pagination Footer */}
+          <div className="p-4 border-t border-slate-100 flex justify-center bg-slate-50/30">
+            <div className="flex items-center gap-1.5">
+              <button 
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  className={`text-xs px-2.5 py-1 rounded-md ${currentPage === 1 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:bg-slate-200 cursor-pointer font-bold'}`}
+              >
+                  Previous
+              </button>
+              
+              {Array.from({ length: totalPages }).map((_, idx) => {
+                  const pageNumber = idx + 1;
+                  if (pageNumber === 1 || pageNumber === totalPages || (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)) {
+                      return (
+                          <button
+                              key={pageNumber}
+                              onClick={() => setCurrentPage(pageNumber)}
+                              className={`w-7 h-7 rounded-lg text-xs transition-colors font-bold ${
+                                  currentPage === pageNumber 
+                                      ? 'bg-[#2c3543] text-white shadow-2xs' 
+                                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                              }`}
+                          >
+                              {pageNumber}
+                          </button>
+                      );
+                  } else if (pageNumber === currentPage - 2 || pageNumber === currentPage + 2) {
+                      return <span key={pageNumber} className="text-slate-400 text-xs px-1">...</span>;
+                  }
+                  return null;
+              })}
 
-            <button 
-                disabled={currentPage === totalPages || totalPages === 0}
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                className={`text-xs px-2 ${currentPage === totalPages || totalPages === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-black hover:underline cursor-pointer'}`}
-            >
-                Next
-            </button>
+              <button 
+                  disabled={currentPage === totalPages || totalPages === 0}
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  className={`text-xs px-2.5 py-1 rounded-md ${currentPage === totalPages || totalPages === 0 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:bg-slate-200 cursor-pointer font-bold'}`}
+              >
+                  Next
+              </button>
+            </div>
           </div>
         </div>
+
+        {/* Filter Drawer */}
+        <FilterDrawer 
+          isOpen={isFilterDrawerOpen} 
+          onClose={() => setIsFilterDrawerOpen(false)}
+          onClearAll={() => {
+            setFilterUser('All Users');
+            setFilterAction('All Actions');
+            setFilterType('All Document');
+            setFilterStatus('All Status');
+            setStartDate('');
+            setEndDate('');
+            setSortConfig({ key: 'timestamp', direction: 'desc' });
+          }}
+        >
+          <div className="flex flex-col gap-4">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Sorting</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-slate-700">Sort By:</label>
+                <select 
+                  className="border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-blue-500 bg-white"
+                  value={sortConfig.key}
+                  onChange={(e) => setSortConfig({ ...sortConfig, key: e.target.value })}
+                >
+                  <option value="timestamp">Timestamp</option>
+                  <option value="userName">User Name</option>
+                  <option value="action">Action</option>
+                  <option value="status">Status</option>
+                </select>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-slate-700">Order:</label>
+                <button 
+                  onClick={() => setSortConfig({ ...sortConfig, direction: sortConfig.direction === 'asc' ? 'desc' : 'asc' })}
+                  className="border border-slate-200 rounded-xl px-3 py-2 text-xs bg-white flex items-center justify-between hover:bg-slate-50 transition-colors"
+                >
+                  <span>{sortConfig.direction === 'asc' ? 'Ascending' : 'Descending'}</span>
+                  {sortConfig.direction === 'asc' ? <ArrowUpZA size={14} className="text-slate-500"/> : <ArrowDownAZ size={14} className="text-slate-500"/>}
+                </button>
+              </div>
+            </div>
+
+            <div className="border-t border-slate-100 my-1"></div>
+
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Filtering</h3>
+            
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-slate-700">User:</label>
+              <select
+                value={filterUser}
+                onChange={(e) => setFilterUser(e.target.value)}
+                className="border border-slate-200 rounded-xl px-3 py-2 text-xs bg-white outline-none focus:border-blue-500 text-slate-800"
+              >
+                {users.map((u) => <option key={u} value={u}>{u}</option>)}
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-slate-700">Action:</label>
+              <select
+                value={filterAction}
+                onChange={(e) => setFilterAction(e.target.value)}
+                className="border border-slate-200 rounded-xl px-3 py-2 text-xs bg-white outline-none focus:border-blue-500 text-slate-800"
+              >
+                {actions.map((a) => <option key={a} value={a}>{a}</option>)}
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-slate-700">Document Type:</label>
+              <select
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+                className="border border-slate-200 rounded-xl px-3 py-2 text-xs bg-white outline-none focus:border-blue-500 text-slate-800"
+              >
+                {types.map((t) => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-slate-700">Status:</label>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="border border-slate-200 rounded-xl px-3 py-2 text-xs bg-white outline-none focus:border-blue-500 text-slate-800"
+              >
+                {statuses.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 mt-1">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-slate-700">Start Date:</label>
+                <input 
+                  type="date" 
+                  className="border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-blue-500 bg-white text-slate-800"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-slate-700">End Date:</label>
+                <input 
+                  type="date" 
+                  className="border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-blue-500 bg-white text-slate-800"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+        </FilterDrawer>
       </div>
     </Layout>
-  );
-}
-
-
-function FilterSelect({ label, value, onChange, options }) {
-  const selectId = `filter-${label.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}`;
-  return (
-    <div className="flex flex-col gap-1">
-      <label htmlFor={selectId} className="text-[11px] font-bold text-gray-600 uppercase tracking-tight">{label}</label>
-      <select 
-        id={selectId}
-        aria-label={label.replace(':', '')}
-        className="border border-gray-300 rounded px-2 py-1.5 text-[12px] text-gray-700 bg-white outline-none cursor-pointer hover:border-gray-400 focus:border-[#1D2D44]"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      >
-        {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-      </select>
-    </div>
   );
 }

@@ -240,73 +240,81 @@ const Transactions = () => {
 
   return (
     <Layout>
-      <div className="p-6 bg-[#F8F9FA] min-h-screen font-sans relative">
+      <div className="py-2 px-2 sm:px-4 font-sans space-y-4 relative">
 
         {/* Toast Notification */}
         {toast.show && (
-          <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[10001] flex items-center gap-3 px-6 py-3 rounded-lg shadow-2xl bg-[#1D2D44] text-white animate-fade-in">
-            <CheckCircle size={18} />
-            <p className="font-bold text-sm">{toast.message}</p>
+          <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[10001] flex items-center gap-3 px-6 py-3 rounded-2xl shadow-2xl bg-[#2c3543] text-white animate-fade-in border border-slate-700/50">
+            <CheckCircle size={18} className="text-emerald-400" />
+            <p className="font-bold text-xs tracking-wide">{toast.message}</p>
           </div>
         )}
 
-        {/* Tab Bar */}
-        <div className="flex items-center gap-1 mb-6">
-          <button
-            onClick={() => setActiveTab('payments')}
-            className={`px-6 py-3 rounded-t-lg text-sm font-bold transition-all ${
-              activeTab === 'payments'
-                ? 'bg-white text-[#1D2D44] border border-b-0 border-gray-200 shadow-sm'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            All Payments
-          </button>
-          <button
-            onClick={() => setActiveTab('refunds')}
-            className={`px-6 py-3 rounded-t-lg text-sm font-bold transition-all relative ${
-              activeTab === 'refunds'
-                ? 'bg-white text-[#1D2D44] border border-b-0 border-gray-200 shadow-sm'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            Refund Requests
-          </button>
+        {/* 3D Segmented Tab Switcher */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="inline-flex bg-slate-200/70 p-1 rounded-full border border-slate-200 shadow-inner">
+            <button
+              onClick={() => setActiveTab('payments')}
+              className={`px-5 py-1.5 rounded-full text-xs font-extrabold transition-all cursor-pointer ${
+                activeTab === 'payments'
+                  ? 'bg-[#2c3543] text-white shadow-[0_2px_6px_rgba(0,0,0,0.25)] border-t border-white/20 scale-[1.02]'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+              }`}
+            >
+              All Payments
+            </button>
+            <button
+              onClick={() => setActiveTab('refunds')}
+              className={`px-5 py-1.5 rounded-full text-xs font-extrabold transition-all cursor-pointer ${
+                activeTab === 'refunds'
+                  ? 'bg-[#2c3543] text-white shadow-[0_2px_6px_rgba(0,0,0,0.25)] border-t border-white/20 scale-[1.02]'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+              }`}
+            >
+              Refund Requests
+            </button>
+          </div>
         </div>
+
         {/* ====== PAYMENTS TAB ====== */}
         {activeTab === 'payments' && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-            {/* Top Controls Section */}
-            <div className="p-6 border-b border-gray-100">
-              <div className="flex flex-wrap items-center justify-between gap-6 pb-4 mb-4">
-                <div className="flex items-center gap-3 flex-1 max-md">
-                  <div className="flex items-center gap-2 text-[14px] text-[#4D5E80]">
-                    <span>Show</span>
-                    <select
-                      aria-label="Entries per page"
-                      className="appearance-none bg-white border border-[#DDE2EF] rounded-[6px] px-3 py-1 pr-8 outline-none text-[#4D5E80] cursor-pointer transition-all hover:border-gray-400"
-                      value={entriesPerPage}
-                      onChange={(e) => setEntriesPerPage(Number(e.target.value))}
-                    >
-                      <option value={10}>10</option>
-                      <option value={25}>25</option>
-                      <option value={50}>50</option>
-                    </select>
-                    <span>entries</span>
+          <div className="rounded-[22px] bg-white shadow-[0_8px_24px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.02)] border border-slate-100/90 overflow-hidden">
+            
+            {/* Top Toolbar Section */}
+            <div className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/40 flex flex-col gap-3.5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-xs text-slate-500 font-bold">
+                  <span>Show</span>
+                  <select
+                    aria-label="Entries per page"
+                    className="border border-slate-200 rounded-lg px-2 py-1 bg-white font-bold text-slate-700 focus:outline-none focus:border-blue-500 cursor-pointer shadow-2xs"
+                    value={entriesPerPage}
+                    onChange={(e) => setEntriesPerPage(Number(e.target.value))}
+                  >
+                    <option value={10}>10</option>
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                  </select>
+                  <span>entries</span>
+                </div>
+
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      className="w-56 sm:w-64 rounded-full border border-slate-200 bg-white py-1.5 pl-4 pr-3.5 text-[12px] font-medium outline-none focus:border-blue-500 shadow-2xs"
+                      placeholder="Search by ID, Name, or Payer..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
                   </div>
-                  <input
-                    type="text"
-                    className="w-full max-w-md border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-[#1D2D44]"
-                    placeholder="Search by ID, Name, or Payer..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
                   <button 
                     type="button"
                     onClick={() => setIsFilterDrawerOpen(true)}
-                    className="bg-gray-100 text-gray-700 px-4 py-2 rounded font-bold text-sm hover:bg-gray-200 transition-colors flex items-center gap-2 border border-gray-200"
+                    className="bg-white hover:bg-slate-50 text-slate-700 px-3.5 py-1.5 rounded-full font-bold text-[11.5px] border border-slate-200 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 transition-all flex items-center gap-1.5 cursor-pointer"
                   >
-                    <SlidersHorizontal size={16} /> Filters & Sort
+                    <SlidersHorizontal size={13} />
+                    <span>Filters & Sort</span>
                   </button>
                 </div>
               </div>
@@ -349,13 +357,13 @@ const Transactions = () => {
                 }}
             >
                 <div className="flex flex-col gap-4">
-                    <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">Sorting</h3>
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Sorting</h3>
                     <div className="grid grid-cols-2 gap-3">
                         <div className="flex flex-col gap-1.5">
-                            <label className="text-sm font-bold text-[#1D2D44]">Sort By:</label>
+                            <label className="text-xs font-bold text-slate-700">Sort By:</label>
                             <select 
                                 aria-label="Sort by"
-                                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#1D2D44] bg-white"
+                                className="border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-blue-500 bg-white"
                                 value={sortConfig.key}
                                 onChange={(e) => setSortConfig({ ...sortConfig, key: e.target.value })}
                             >
@@ -367,53 +375,53 @@ const Transactions = () => {
                             </select>
                         </div>
                         <div className="flex flex-col gap-1.5">
-                            <label className="text-sm font-bold text-[#1D2D44]">Order:</label>
+                            <label className="text-xs font-bold text-slate-700">Order:</label>
                             <button 
                                 aria-label="Toggle sort direction"
                                 onClick={() => setSortConfig({ ...sortConfig, direction: sortConfig.direction === 'asc' ? 'desc' : 'asc' })}
-                                className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white flex items-center justify-between hover:bg-gray-50 transition-colors"
+                                className="border border-slate-200 rounded-xl px-3 py-2 text-xs bg-white flex items-center justify-between hover:bg-slate-50 transition-colors"
                             >
-                                {sortConfig.direction === 'asc' ? 'Ascending' : 'Descending'}
-                                {sortConfig.direction === 'asc' ? <ArrowUpZA size={16} className="text-gray-500"/> : <ArrowDownAZ size={16} className="text-gray-500"/>}
+                                <span>{sortConfig.direction === 'asc' ? 'Ascending' : 'Descending'}</span>
+                                {sortConfig.direction === 'asc' ? <ArrowUpZA size={14} className="text-slate-500"/> : <ArrowDownAZ size={14} className="text-slate-500"/>}
                             </button>
                         </div>
                     </div>
 
-                    <div className="border-t border-gray-100 my-2"></div>
+                    <div className="border-t border-slate-100 my-1"></div>
 
-                    <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">Filtering</h3>
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Filtering</h3>
                     
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-sm font-bold text-[#1D2D44]">Payment Mode:</label>
+                      <label className="text-xs font-bold text-slate-700">Payment Mode:</label>
                       <select
                         aria-label="Filter by payment mode"
                         value={filterPaymentMode}
                         onChange={(e) => setFilterPaymentMode(e.target.value)}
-                        className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white outline-none focus:border-[#1D2D44]"
+                        className="border border-slate-200 rounded-xl px-3 py-2 text-xs bg-white outline-none focus:border-blue-500 text-slate-800"
                       >
                         {paymentModes.map(mode => <option key={mode} value={mode}>{mode}</option>)}
                       </select>
                     </div>
 
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-sm font-bold text-[#1D2D44]">Status:</label>
+                      <label className="text-xs font-bold text-slate-700">Status:</label>
                       <select
                         aria-label="Filter by status"
                         value={filterStatus}
                         onChange={(e) => setFilterStatus(e.target.value)}
-                        className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white outline-none focus:border-[#1D2D44]"
+                        className="border border-slate-200 rounded-xl px-3 py-2 text-xs bg-white outline-none focus:border-blue-500 text-slate-800"
                       >
                         {statuses.map(s => <option key={s} value={s}>{s}</option>)}
                       </select>
                     </div>
 
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-sm font-bold text-[#1D2D44]">User Role:</label>
+                      <label className="text-xs font-bold text-slate-700">User Role:</label>
                       <select
                         aria-label="Filter by user role"
                         value={filterUserRole}
                         onChange={(e) => setFilterUserRole(e.target.value)}
-                        className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white outline-none focus:border-[#1D2D44]"
+                        className="border border-slate-200 rounded-xl px-3 py-2 text-xs bg-white outline-none focus:border-blue-500 text-slate-800"
                       >
                         <option value="All">All Users</option>
                         <option value="Student">Student</option>
@@ -422,12 +430,12 @@ const Transactions = () => {
                     </div>
 
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-sm font-bold text-[#1D2D44]">Program Level:</label>
+                      <label className="text-xs font-bold text-slate-700">Program Level:</label>
                       <select
                         aria-label="Filter by program level"
                         value={filterProgram}
                         onChange={(e) => setFilterProgram(e.target.value)}
-                        className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white outline-none focus:border-[#1D2D44]"
+                        className="border border-slate-200 rounded-xl px-3 py-2 text-xs bg-white outline-none focus:border-blue-500 text-slate-800"
                       >
                         <option value="All">All Programs</option>
                         <option value="Bachelors">Bachelors</option>
@@ -437,12 +445,12 @@ const Transactions = () => {
                     </div>
 
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-sm font-bold text-[#1D2D44]">User Status:</label>
+                      <label className="text-xs font-bold text-slate-700">User Status:</label>
                       <select
                         aria-label="Filter by user status"
                         value={filterUserStatus}
                         onChange={(e) => setFilterUserStatus(e.target.value)}
-                        className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white outline-none focus:border-[#1D2D44]"
+                        className="border border-slate-200 rounded-xl px-3 py-2 text-xs bg-white outline-none focus:border-blue-500 text-slate-800"
                       >
                         <option value="All">All Statuses</option>
                         <option value="Active">Active</option>
@@ -450,23 +458,23 @@ const Transactions = () => {
                       </select>
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-3 mt-2">
+                    <div className="grid grid-cols-2 gap-3 mt-1">
                         <div className="flex flex-col gap-1.5">
-                            <label className="text-sm font-bold text-[#1D2D44]">Start Date:</label>
+                            <label className="text-xs font-bold text-slate-700">Start Date:</label>
                             <input 
                                 aria-label="Start date"
                                 type="date" 
-                                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#1D2D44] bg-white"
+                                className="border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-blue-500 bg-white"
                                 value={startDate}
                                 onChange={(e) => setStartDate(e.target.value)}
                             />
                         </div>
                         <div className="flex flex-col gap-1.5">
-                            <label className="text-sm font-bold text-[#1D2D44]">End Date:</label>
+                            <label className="text-xs font-bold text-slate-700">End Date:</label>
                             <input 
                                 aria-label="End date"
                                 type="date" 
-                                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#1D2D44] bg-white"
+                                className="border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-blue-500 bg-white"
                                 value={endDate}
                                 onChange={(e) => setEndDate(e.target.value)}
                             />
@@ -477,21 +485,21 @@ const Transactions = () => {
 
             {/* Table */}
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+              <table className="w-full text-left border-collapse table-auto">
                 <thead>
-                  <tr className="text-[13px] text-gray-800 border-b border-gray-200 uppercase font-bold">
-                    <th className="px-6 py-4">Payment ID</th>
-                    <th className="px-6 py-4">Request ID</th>
-                    <th className="px-6 py-4">Payer Name</th>
-                    <th className="px-6 py-4">Type</th>
-                    <th className="px-6 py-4">Amount</th>
-                    <th className="px-6 py-4">Mode</th>
-                    <th className="px-6 py-4">Date</th>
-                    <th className="px-6 py-4 text-center">Status</th>
-                    <th className="px-6 py-4 text-center">Action</th>
+                  <tr className="bg-slate-50/70 text-[11.5px] font-extrabold uppercase tracking-wider text-slate-500 border-b border-slate-100">
+                    <th className="py-3.5 px-5">Payment ID</th>
+                    <th className="py-3.5 px-5">Request ID</th>
+                    <th className="py-3.5 px-5">Payer Name</th>
+                    <th className="py-3.5 px-5">Type</th>
+                    <th className="py-3.5 px-5">Amount</th>
+                    <th className="py-3.5 px-5">Mode</th>
+                    <th className="py-3.5 px-5">Date</th>
+                    <th className="py-3.5 px-5 text-center">Status</th>
+                    <th className="py-3.5 px-5 text-right">Action</th>
                   </tr>
                 </thead>
-                <tbody className="text-[13px]">
+                <tbody className="divide-y divide-slate-100 text-[12.5px]">
                   {loading ? (
                     <TableSkeleton columns={9} rows={entriesPerPage || 10} />
                   ) : paginatedTransactions.length > 0 ? (
@@ -501,50 +509,83 @@ const Transactions = () => {
                         year: 'numeric', month: '2-digit', day: '2-digit'
                       });
                       return (
-                        <tr key={tx._id || idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-[#F9FAFF]'}>
-                          <td className="px-6 py-4 text-gray-600 font-mono">{tx.transactionId}</td>
-                          <td className="px-6 py-4 text-gray-600">{tx.requestId}</td>
-                          <td className="px-6 py-4 font-bold text-gray-800">{tx.payerName || tx.name}</td>
-                          <td className="px-6 py-4 text-gray-600">{tx.documentType}</td>
-                          <td className="px-6 py-4 text-gray-700 font-semibold">₱{tx.amount || '0.00'}</td>
-                          <td className="px-6 py-4">
-                            <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${getPaymentModeStyle(tx.paymentMode)}`}>
+                        <tr key={tx._id || idx} className="hover:bg-slate-50/80 transition-colors">
+                          <td className="py-3.5 px-5 align-middle">
+                            <span className="bg-slate-100 px-2 py-0.5 rounded-md text-slate-700 font-mono text-[11.5px] font-bold">
+                              {tx.transactionId}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-5 align-middle">
+                            <span className="bg-slate-100 px-2 py-0.5 rounded-md text-slate-700 font-mono text-[11.5px]">
+                              {tx.requestId}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-5 align-middle text-[13px] font-bold text-slate-900">
+                            {tx.payerName || tx.name}
+                          </td>
+                          <td className="py-3.5 px-5 align-middle text-[12.5px] text-slate-700 font-medium">
+                            <span className="inline-flex items-center gap-1.5">
+                              <i className="fa-solid fa-file-lines text-blue-500 text-xs"></i>
+                              <span>{tx.documentType}</span>
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-5 align-middle text-slate-900 font-bold">
+                            ₱{tx.amount || '0.00'}
+                          </td>
+                          <td className="py-3.5 px-5 align-middle">
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${getPaymentModeStyle(tx.paymentMode)}`}>
                               {tx.paymentMode}
                             </span>
                           </td>
-                          <td className="px-6 py-4 text-gray-600">{formattedDate}</td>
-                          <td className="px-6 py-4">
-                            <div className="flex justify-center">
-                              <span className={`min-w-[120px] text-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${getStatusStyle(tx.status)}`}>
-                                {tx.status}
-                              </span>
-                            </div>
+                          <td className="py-3.5 px-5 align-middle text-[12px] text-slate-500 font-medium">
+                            {formattedDate}
                           </td>
-                          <td className="px-6 py-4 text-center">
-                            <div className="flex justify-center gap-2">
-                              {tx.status === 'Pending Verification' ? (
-                                <button
-                                  onClick={() => { setSelectedTx(tx); setAdminNote(''); setError(''); }}
-                                  className="min-w-[120px] py-2 rounded-full text-[11px] font-bold bg-[#1D2D44] text-white shadow-md hover:bg-[#152030] transition-all flex items-center justify-center gap-1.5"
-                                >
-                                  <Receipt size={13} /> Verify Receipt
-                                </button>
-                              ) : (
-                                <button
-                                  onClick={() => navigate(`/transactions/${tx.transactionId}`)}
-                                  className="min-w-[120px] py-2 rounded-full text-[11px] font-bold bg-[#E5E7EB] text-gray-700 hover:bg-gray-300 transition-all flex items-center justify-center gap-1.5"
-                                >
-                                  <Eye size={13} /> View Details
-                                </button>
-                              )}
-                            </div>
+                          <td className="py-3.5 px-5 align-middle text-center">
+                            {tx.status === 'Completed' ? (
+                              <span className="inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                <span>Completed</span>
+                              </span>
+                            ) : tx.status === 'Pending Verification' ? (
+                              <span className="inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200/80">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                <span>Pending Verification</span>
+                              </span>
+                            ) : tx.status === 'Needs Update' ? (
+                              <span className="inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider bg-orange-50 text-orange-700 border border-orange-200/80">
+                                <span className="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
+                                <span>Needs Update</span>
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider bg-red-50 text-red-700 border border-red-200/80">
+                                <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                                <span>{tx.status}</span>
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3.5 px-5 align-middle text-right">
+                            {tx.status === 'Pending Verification' ? (
+                              <button
+                                onClick={() => { setSelectedTx(tx); setAdminNote(''); setError(''); }}
+                                className="bg-[#2c3543] hover:bg-[#1f2631] text-white py-1 px-3.5 rounded-full text-[11.5px] font-bold border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(0,0,0,0.25)] active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-1.5 cursor-pointer ml-auto"
+                              >
+                                <Receipt size={12} /> Verify Receipt
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => navigate(`/transactions/${tx.transactionId}`)}
+                                className="bg-[#2c3543] hover:bg-[#1f2631] text-white py-1 px-3.5 rounded-full text-[11.5px] font-bold border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(0,0,0,0.25)] active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-1.5 cursor-pointer ml-auto"
+                              >
+                                <Eye size={12} /> View Details
+                              </button>
+                            )}
                           </td>
                         </tr>
                       );
                     })
                   ) : (
                     <tr>
-                      <td colSpan="9" className="px-6 py-20 text-center text-gray-500 italic text-[16px]">
+                      <td colSpan="9" className="py-16 text-center text-slate-400 italic">
                         No payments found matching your filters.
                       </td>
                     </tr>
@@ -554,65 +595,67 @@ const Transactions = () => {
             </div>
 
             {/* Pagination */}
-            <div className="bg-white p-6 border-t border-gray-100 flex justify-center gap-2">
-              <button
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                className={`text-xs px-2 ${currentPage === 1 ? 'text-gray-500 cursor-not-allowed' : 'text-gray-600 hover:text-black hover:underline cursor-pointer'}`}
-              >
-                Previous
-              </button>
+            <div className="p-4 border-t border-slate-100 flex justify-center bg-slate-50/30">
+              <div className="flex items-center gap-1.5">
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  className={`text-xs px-2.5 py-1 rounded-md ${currentPage === 1 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:bg-slate-200 cursor-pointer font-bold'}`}
+                >
+                  Previous
+                </button>
 
-              {Array.from({ length: totalPages }).map((_, idx) => {
-                const pageNumber = idx + 1;
-                if (pageNumber === 1 || pageNumber === totalPages || (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)) {
-                  return (
-                    <button
-                      key={pageNumber}
-                      onClick={() => setCurrentPage(pageNumber)}
-                      className={`w-8 h-8 rounded text-xs transition-colors ${currentPage === pageNumber
-                        ? 'bg-[#2f3947] text-white font-bold'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                        }`}
-                    >
-                      {pageNumber}
-                    </button>
-                  );
-                } else if (pageNumber === currentPage - 2 || pageNumber === currentPage + 2) {
-                  return <span key={pageNumber} className="text-gray-500 mt-2 text-xs">...</span>;
-                }
-                return null;
-              })}
+                {Array.from({ length: totalPages }).map((_, idx) => {
+                  const pageNumber = idx + 1;
+                  if (pageNumber === 1 || pageNumber === totalPages || (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)) {
+                    return (
+                      <button
+                        key={pageNumber}
+                        onClick={() => setCurrentPage(pageNumber)}
+                        className={`w-7 h-7 rounded-lg text-xs transition-colors font-bold ${currentPage === pageNumber
+                          ? 'bg-[#2c3543] text-white shadow-2xs'
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                          }`}
+                      >
+                        {pageNumber}
+                      </button>
+                    );
+                  } else if (pageNumber === currentPage - 2 || pageNumber === currentPage + 2) {
+                    return <span key={pageNumber} className="text-slate-400 text-xs px-1">...</span>;
+                  }
+                  return null;
+                })}
 
-              <button
-                disabled={currentPage === totalPages || totalPages === 0}
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                className={`text-xs px-2 ${currentPage === totalPages || totalPages === 0 ? 'text-gray-500 cursor-not-allowed' : 'text-gray-600 hover:text-black hover:underline cursor-pointer'}`}
-              >
-                Next
-              </button>
+                <button
+                  disabled={currentPage === totalPages || totalPages === 0}
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  className={`text-xs px-2.5 py-1 rounded-md ${currentPage === totalPages || totalPages === 0 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:bg-slate-200 cursor-pointer font-bold'}`}
+                >
+                  Next
+                </button>
+              </div>
             </div>
           </div>
         )}
 
         {/* ====== REFUND REQUESTS TAB ====== */}
         {activeTab === 'refunds' && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+          <div className="rounded-[22px] bg-white shadow-[0_8px_24px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.02)] border border-slate-100/90 overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+              <table className="w-full text-left border-collapse table-auto">
                 <thead>
-                  <tr className="text-[13px] text-gray-800 border-b border-gray-200 uppercase font-bold">
-                    <th className="px-6 py-4">Refund ID</th>
-                    <th className="px-6 py-4">Transaction ID</th>
-                    <th className="px-6 py-4">Name</th>
-                    <th className="px-6 py-4">Amount</th>
-                    <th className="px-6 py-4">Reason</th>
-                    <th className="px-6 py-4">Date Submitted</th>
-                    <th className="px-6 py-4 text-center">Status</th>
-                    <th className="px-6 py-4 text-center">Action</th>
+                  <tr className="bg-slate-50/70 text-[11.5px] font-extrabold uppercase tracking-wider text-slate-500 border-b border-slate-100">
+                    <th className="py-3.5 px-5">Refund ID</th>
+                    <th className="py-3.5 px-5">Transaction ID</th>
+                    <th className="py-3.5 px-5">Name</th>
+                    <th className="py-3.5 px-5">Amount</th>
+                    <th className="py-3.5 px-5">Reason</th>
+                    <th className="py-3.5 px-5">Date Submitted</th>
+                    <th className="py-3.5 px-5 text-center">Status</th>
+                    <th className="py-3.5 px-5 text-right">Action</th>
                   </tr>
                 </thead>
-                <tbody className="text-[13px]">
+                <tbody className="divide-y divide-slate-100 text-[12.5px]">
                   {refundsLoading ? (
                     <TableSkeleton columns={8} rows={10} />
                   ) : refunds.length > 0 ? (
@@ -626,30 +669,49 @@ const Transactions = () => {
                       const displayName = refund.accountName || refund.studentName || relatedTx?.payerName || relatedTx?.name || 'Unknown';
 
                       return (
-                        <tr key={refund._id || idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-[#F9FAFF]'}>
-                          <td className="px-6 py-4 text-gray-600 font-mono">{refund.refundId || refund._id}</td>
-                          <td className="px-6 py-4 text-gray-600 font-mono">{refund.transactionId}</td>
-                          <td className="px-6 py-4 font-bold text-gray-800">{displayName}</td>
-                          <td className="px-6 py-4 text-gray-700 font-semibold">₱{refund.amount || '0.00'}</td>
-                          <td className="px-6 py-4 text-gray-600">{refund.reason === 'Other' ? refund.otherReason : refund.reason}</td>
-                          <td className="px-6 py-4 text-gray-600">{formattedDate}</td>
-                          <td className="px-6 py-4">
-                            <div className="flex justify-center">
-                              <span className={`min-w-[100px] text-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${getRefundStatusStyle(refund.status)}`}>
-                                {refund.status}
-                              </span>
-                            </div>
+                        <tr key={refund._id || idx} className="hover:bg-slate-50/80 transition-colors">
+                          <td className="py-3.5 px-5 align-middle">
+                            <span className="bg-slate-100 px-2 py-0.5 rounded-md text-slate-700 font-mono text-[11.5px] font-bold">
+                              {refund.refundId || refund._id}
+                            </span>
                           </td>
-                          <td className="px-6 py-4 text-center">
+                          <td className="py-3.5 px-5 align-middle">
+                            <span className="bg-slate-100 px-2 py-0.5 rounded-md text-slate-700 font-mono text-[11.5px]">
+                              {refund.transactionId}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-5 align-middle text-[13px] font-bold text-slate-900">{displayName}</td>
+                          <td className="py-3.5 px-5 align-middle text-slate-900 font-bold">₱{refund.amount || '0.00'}</td>
+                          <td className="py-3.5 px-5 align-middle text-slate-600">{refund.reason === 'Other' ? refund.otherReason : refund.reason}</td>
+                          <td className="py-3.5 px-5 align-middle text-[12px] text-slate-500 font-medium">{formattedDate}</td>
+                          <td className="py-3.5 px-5 align-middle text-center">
+                            {refund.status?.toLowerCase() === 'approved' ? (
+                              <span className="inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                <span>Approved</span>
+                              </span>
+                            ) : refund.status?.toLowerCase() === 'pending' ? (
+                              <span className="inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200/80">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                <span>Pending</span>
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider bg-red-50 text-red-700 border border-red-200/80">
+                                <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                                <span>{refund.status}</span>
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3.5 px-5 align-middle text-right">
                             {refund.status?.toLowerCase() === 'pending' ? (
                               <button
                                 onClick={() => { setSelectedRefund(refund); setRefundRemarks(''); }}
-                                className="min-w-[100px] py-2 rounded-full text-[11px] font-bold bg-[#1D2D44] text-white shadow-md hover:bg-[#152030] transition-all flex items-center justify-center gap-1.5 mx-auto"
+                                className="bg-[#2c3543] hover:bg-[#1f2631] text-white py-1 px-3.5 rounded-full text-[11.5px] font-bold border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(0,0,0,0.25)] active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-1.5 cursor-pointer ml-auto"
                               >
-                                <Eye size={13} /> Review
+                                <Eye size={12} /> Review
                               </button>
                             ) : (
-                              <span className="text-xs text-gray-500 italic">
+                              <span className="text-xs text-slate-400 italic">
                                 {refund.status === 'Approved' ? 'Approved' : 'Rejected'}
                                 {refund.processedBy && ` by ${refund.processedBy.split('@')[0]}`}
                               </span>
@@ -660,7 +722,7 @@ const Transactions = () => {
                     })
                   ) : (
                     <tr>
-                      <td colSpan="8" className="px-6 py-20 text-center text-gray-500 italic text-[16px]">
+                      <td colSpan="8" className="py-16 text-center text-slate-400 italic">
                         No refund requests found.
                       </td>
                     </tr>
