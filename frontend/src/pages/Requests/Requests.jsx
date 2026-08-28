@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { SlidersHorizontal, ArrowDownAZ, ArrowUpZA } from 'lucide-react';
+import { SlidersHorizontal, ArrowDownAZ, ArrowUpZA, Search } from 'lucide-react';
 import Layout from '../../components/Layout';
 import FilterDrawer from '../../components/FilterDrawer';
 import ActiveFilterChips from '../../components/ActiveFilterChips';
@@ -85,22 +85,12 @@ const Requests = () => {
         fetchRequests();
     }, []);
 
-    // Helper for Status Badge Styling
-    const getStatusStyle = (status) => {
-        switch (status?.toLowerCase()) {
-            case 'released': return 'bg-[#E1FFEB] text-[#1E7E34]';
-            case 'pending': return 'bg-[#FFF9DB] text-[#B8860B]';
-            case 'rejected': return 'bg-[#FFE1E1] text-[#B02A37]';
-            case 'in process': return 'bg-[#DBEAFE] text-[#1D4ED8]';
-            default: return 'bg-gray-100 text-gray-600';
-        }
-    };
-
     // Filter Logic
     const filteredRequests = useMemo(() => {
         return requests.filter((req) => {
             const matchesSearch = req.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                req.requestId?.toLowerCase().includes(searchTerm.toLowerCase());
+                                req.requestId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                (req.documentType && req.documentType.toLowerCase().includes(searchTerm.toLowerCase()));
             const matchesStatus = filterStatus === 'All Status' || req.status === filterStatus;
             const matchesType = filterType === 'All Document' || req.documentType === filterType;
 
@@ -112,7 +102,7 @@ const Requests = () => {
             const reqDate = new Date(req.dateRequested);
             const start = startDate ? new Date(startDate) : null;
             const end = endDate ? new Date(endDate) : null;
-            if (end) end.setHours(23, 59, 59, 999); // Include the entire end day
+            if (end) end.setHours(23, 59, 59, 999);
             const matchesDate = (!start || reqDate >= start) && (!end || reqDate <= end);
 
             return matchesSearch && matchesStatus && matchesType && matchesDate && matchesRole && matchesProgram && matchesUserStatus;
@@ -120,7 +110,6 @@ const Requests = () => {
             let valA = a[sortConfig.key];
             let valB = b[sortConfig.key];
             
-            // Special handling for nested or specific types
             if (sortConfig.key === 'dateRequested') {
                 valA = new Date(valA).getTime();
                 valB = new Date(valB).getTime();
@@ -133,7 +122,7 @@ const Requests = () => {
             if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
             return 0;
         });
-    }, [requests, searchTerm, filterStatus, filterType, filterUserRole, filterProgram, filterUserStatus, startDate, endDate]);
+    }, [requests, searchTerm, filterStatus, filterType, filterUserRole, filterProgram, filterUserStatus, startDate, endDate, sortConfig]);
 
     // Pagination Logic
     const totalPages = Math.ceil(filteredRequests.length / entriesPerPage);
@@ -151,68 +140,217 @@ const Requests = () => {
     const documentTypes = ['All Document', ...new Set(requests.map(r => r.documentType))];
     const statuses = ['All Status', 'Pending', 'In Process', 'Released', 'Rejected'];
 
+    const renderStatusBadge = (status) => {
+        const s = (status || 'Pending').toLowerCase();
+        if (s === 'released' || s === 'approved') {
+            return (
+                <span className="inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    <span>Released</span>
+                </span>
+            );
+        } else if (s === 'in process') {
+            return (
+                <span className="inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider bg-purple-50 text-purple-700 border border-purple-200/80">
+                    <span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
+                    <span>In Process</span>
+                </span>
+            );
+        } else if (s === 'rejected') {
+            return (
+                <span className="inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider bg-red-50 text-red-700 border border-red-200/80">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                    <span>Rejected</span>
+                </span>
+            );
+        } else {
+            return (
+                <span className="inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200/80">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                    <span>Pending</span>
+                </span>
+            );
+        }
+    };
+
     return (
         <Layout>
-            <div className="p-8 bg-[#F8FAFC] min-h-screen font-sans">
+            <div className="py-2 px-2 sm:px-4 font-sans space-y-4 relative">
                 
-                {/* --- FILTER SECTION (Matches Image) --- */}
-                <div className="bg-white p-6 rounded-t-lg border-x border-t border-gray-200">
-                    <div className="flex justify-between items-center mb-6">
-                        <div className="flex items-center gap-2 text-sm text-gray-500">
-                            Show 
-                            <select 
-                                aria-label="Entries per page"
-                                value={entriesPerPage}
-                                onChange={(e) => setEntriesPerPage(Number(e.target.value))}
-                                className="border border-gray-300 rounded px-1 py-1 focus:outline-none"
-                            >
-                                <option>10</option>
-                                <option>25</option>
-                                <option>50</option>
-                            </select> 
-                            entries
+                {/* --- MAIN CARD CONTAINER --- */}
+                <div className="rounded-[22px] bg-white shadow-[0_8px_24px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.02)] border border-slate-100/90 overflow-hidden">
+                    
+                    {/* Header & Filter Section */}
+                    <div className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/40 flex flex-col gap-3.5">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div className="flex items-center gap-2 text-xs text-slate-500 font-bold">
+                                <span>Show</span>
+                                <select 
+                                    aria-label="Entries per page"
+                                    value={entriesPerPage}
+                                    onChange={(e) => setEntriesPerPage(Number(e.target.value))}
+                                    className="border border-slate-200 rounded-lg px-2 py-1 bg-white font-bold text-slate-700 focus:outline-none focus:border-blue-500 cursor-pointer shadow-2xs"
+                                >
+                                    <option value={10}>10</option>
+                                    <option value={25}>25</option>
+                                    <option value={50}>50</option>
+                                </select> 
+                                <span>entries</span>
+                            </div>
+
+                            {/* Search & Action Controls */}
+                            <div className="flex items-center gap-2.5 flex-wrap">
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
+                                    <input 
+                                        type="text" 
+                                        placeholder="Search by name, ID, doc..." 
+                                        className="w-56 sm:w-64 rounded-full border border-slate-200 bg-white py-1.5 pl-8 pr-3.5 text-[12px] font-medium outline-none focus:border-blue-500 shadow-2xs"
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                    />
+                                </div>
+                                <button 
+                                    type="button"
+                                    onClick={() => setIsFilterDrawerOpen(true)}
+                                    className="bg-white hover:bg-slate-50 text-slate-700 px-3.5 py-1.5 rounded-full font-bold text-[11.5px] border border-slate-200 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 transition-all flex items-center gap-1.5 cursor-pointer"
+                                >
+                                    <SlidersHorizontal size={13} />
+                                    <span>Filters & Sort</span>
+                                </button>
+                            </div>
                         </div>
-                        <form onSubmit={(e) => { e.preventDefault(); document.activeElement?.blur(); }} className="flex gap-2">
-                            <input 
-                                type="text" 
-                                placeholder="Search by name or action..." 
-                                className="border border-gray-300 rounded px-4 py-2 w-80 text-sm focus:outline-none focus:ring-1 focus:ring-slate-400"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                            <button type="submit" className="bg-[#20354D] text-white px-6 py-2 rounded font-bold text-sm hover:bg-slate-800 transition-colors">
-                                Search
-                            </button>
-                            <button 
-                                type="button"
-                                onClick={() => setIsFilterDrawerOpen(true)}
-                                className="bg-gray-100 text-gray-700 px-4 py-2 rounded font-bold text-sm hover:bg-gray-200 transition-colors flex items-center gap-2 border border-gray-200"
-                            >
-                                <SlidersHorizontal size={16} /> Filters & Sort
-                            </button>
-                        </form>
+
+                        <ActiveFilterChips 
+                            filters={[
+                                { label: 'Role', value: filterUserRole, key: 'filterUserRole' },
+                                { label: 'Program', value: filterProgram, key: 'filterProgram' },
+                                { label: 'User Status', value: filterUserStatus, key: 'filterUserStatus' },
+                                { label: 'Doc Type', value: filterType, key: 'filterType' },
+                                { label: 'Status', value: filterStatus, key: 'filterStatus' },
+                                { label: 'From', value: startDate, key: 'startDate' },
+                                { label: 'To', value: endDate, key: 'endDate' },
+                            ]}
+                            onRemove={(key) => {
+                                if (key === 'filterUserRole') setFilterUserRole('All');
+                                if (key === 'filterProgram') setFilterProgram('All');
+                                if (key === 'filterUserStatus') setFilterUserStatus('All');
+                                if (key === 'filterType') setFilterType('All Document');
+                                if (key === 'filterStatus') setFilterStatus('All Status');
+                                if (key === 'startDate') setStartDate('');
+                                if (key === 'endDate') setEndDate('');
+                            }}
+                        />
                     </div>
 
-                    <ActiveFilterChips 
-                        filters={[
-                            { label: 'Role', value: filterUserRole, key: 'filterUserRole' },
-                            { label: 'Program', value: filterProgram, key: 'filterProgram' },
-                            { label: 'User Status', value: filterUserStatus, key: 'filterUserStatus' },
-                            { label: 'Doc Type', value: filterType, key: 'filterType' },
-                            { label: 'Status', value: filterStatus, key: 'filterStatus' },
-                            { label: 'From', value: startDate, key: 'startDate' },
-                            { label: 'To', value: endDate, key: 'endDate' },
-                        ]}
-                        onRemove={(key) => {
-                            if (key === 'filterUserRole') setFilterUserRole('All');
-                            if (key === 'filterProgram') setFilterProgram('All');
-                            if (key === 'filterUserStatus') setFilterUserStatus('All');
-                            if (key === 'filterType') setFilterType('All Document');
-                            if (key === 'filterStatus') setFilterStatus('All Status');
-                            if (key === 'startDate') setStartDate('');
-                            if (key === 'endDate') setEndDate('');
-                        }}
-                    />
+                    {/* --- TABLE SECTION --- */}
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse table-auto">
+                            <thead>
+                                <tr className="bg-slate-50/70 text-[11.5px] font-extrabold uppercase tracking-wider text-slate-500 border-b border-slate-100">
+                                    <th className="py-3.5 px-5">Request ID</th>
+                                    <th className="py-3.5 px-5">Student Name</th>
+                                    <th className="py-3.5 px-5">Document Type</th>
+                                    <th className="py-3.5 px-5">Date Requested</th>
+                                    <th className="py-3.5 px-5 text-center">Status</th>
+                                    <th className="py-3.5 px-5 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100 text-[12.5px]">
+                                {loading ? (
+                                    <TableSkeleton columns={6} rows={entriesPerPage || 10} />
+                                ) : paginatedRequests.length > 0 ? (
+                                    paginatedRequests.map((req, idx) => (
+                                        <tr key={req._id || idx} className="hover:bg-slate-50/80 transition-colors">
+                                            <td className="py-3.5 px-5 align-middle">
+                                                <span className="bg-slate-100 px-2 py-0.5 rounded-md text-slate-700 font-mono text-[11.5px] font-bold">
+                                                    {req.requestId}
+                                                </span>
+                                            </td>
+                                            <td className="py-3.5 px-5 align-middle text-[13px] text-slate-900 font-bold">
+                                                {req.name}
+                                            </td>
+                                            <td className="py-3.5 px-5 align-middle text-[12.5px] text-slate-700 font-medium">
+                                                <span className="inline-flex items-center gap-1.5">
+                                                    <i className="fa-solid fa-file-lines text-blue-500 text-xs"></i>
+                                                    <span>{req.documentType || 'Diploma (2nd Copy)'}</span>
+                                                </span>
+                                            </td>
+                                            <td className="py-3.5 px-5 align-middle text-[12px] text-slate-500 font-medium">
+                                                {req.dateRequested ? (
+                                                    new Date(req.dateRequested).toLocaleDateString('en-US', {
+                                                        year: 'numeric',
+                                                        month: '2-digit',
+                                                        day: '2-digit'
+                                                    })
+                                                ) : '2026-08-21'}
+                                            </td>
+                                            <td className="py-3.5 px-5 align-middle text-center">
+                                                {renderStatusBadge(req.status)}
+                                            </td>
+                                            <td className="py-3.5 px-5 align-middle text-right">
+                                                <button
+                                                    onClick={() => navigate(`/requests/${req.requestId}`)}
+                                                    className="bg-[#2c3543] hover:bg-[#1f2631] text-white py-1 px-4 rounded-full text-[11.5px] font-bold border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(0,0,0,0.25)] active:translate-y-0.5 active:border-b-0 transition-all cursor-pointer"
+                                                >
+                                                    View Details
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan="6" className="py-16 text-center text-slate-400 italic">
+                                            No document requests found matching your filters.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* --- PAGINATION FOOTER --- */}
+                    <div className="p-4 border-t border-slate-100 flex justify-center bg-slate-50/30">
+                        <div className="flex items-center gap-1.5">
+                            <button 
+                                disabled={currentPage === 1}
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                className={`text-xs px-2.5 py-1 rounded-md ${currentPage === 1 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:bg-slate-200 cursor-pointer font-bold'}`}
+                            >
+                                Previous
+                            </button>
+                            
+                            {Array.from({ length: totalPages }).map((_, idx) => {
+                                const pageNumber = idx + 1;
+                                if (pageNumber === 1 || pageNumber === totalPages || (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)) {
+                                    return (
+                                        <button
+                                            key={pageNumber}
+                                            onClick={() => setCurrentPage(pageNumber)}
+                                            className={`w-7 h-7 rounded-lg text-xs transition-colors font-bold ${
+                                                currentPage === pageNumber 
+                                                    ? 'bg-[#2c3543] text-white shadow-2xs' 
+                                                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                            }`}
+                                        >
+                                            {pageNumber}
+                                        </button>
+                                    );
+                                } else if (pageNumber === currentPage - 2 || pageNumber === currentPage + 2) {
+                                    return <span key={pageNumber} className="text-slate-400 text-xs px-1">...</span>;
+                                }
+                                return null;
+                            })}
+
+                            <button 
+                                disabled={currentPage === totalPages || totalPages === 0}
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                className={`text-xs px-2.5 py-1 rounded-md ${currentPage === totalPages || totalPages === 0 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:bg-slate-200 cursor-pointer font-bold'}`}
+                            >
+                                Next
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Filter Drawer */}
@@ -231,13 +369,13 @@ const Requests = () => {
                     }}
                 >
                     <div className="flex flex-col gap-4">
-                        <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">Sorting</h3>
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Sorting</h3>
                         <div className="grid grid-cols-2 gap-3">
                             <div className="flex flex-col gap-1.5">
-                                <label htmlFor="sortBy" className="text-sm font-bold text-[#1D2D44]">Sort By:</label>
+                                <label htmlFor="sortBy" className="text-xs font-bold text-slate-700">Sort By:</label>
                                 <select 
                                     id="sortBy"
-                                    className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#1D2D44] bg-white"
+                                    className="border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-blue-500 bg-white"
                                     value={sortConfig.key}
                                     onChange={(e) => setSortConfig({ ...sortConfig, key: e.target.value })}
                                 >
@@ -248,20 +386,20 @@ const Requests = () => {
                                 </select>
                             </div>
                             <div className="flex flex-col gap-1.5">
-                                <label className="text-sm font-bold text-[#1D2D44]">Order:</label>
+                                <label className="text-xs font-bold text-slate-700">Order:</label>
                                 <button 
                                     onClick={() => setSortConfig({ ...sortConfig, direction: sortConfig.direction === 'asc' ? 'desc' : 'asc' })}
-                                    className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white flex items-center justify-between hover:bg-gray-50 transition-colors"
+                                    className="border border-slate-200 rounded-xl px-3 py-2 text-xs bg-white flex items-center justify-between hover:bg-slate-50 transition-colors"
                                 >
-                                    {sortConfig.direction === 'asc' ? 'Ascending' : 'Descending'}
-                                    {sortConfig.direction === 'asc' ? <ArrowUpZA size={16} className="text-gray-500"/> : <ArrowDownAZ size={16} className="text-gray-500"/>}
+                                    <span>{sortConfig.direction === 'asc' ? 'Ascending' : 'Descending'}</span>
+                                    {sortConfig.direction === 'asc' ? <ArrowUpZA size={14} className="text-slate-500"/> : <ArrowDownAZ size={14} className="text-slate-500"/>}
                                 </button>
                             </div>
                         </div>
 
-                        <div className="border-t border-gray-100 my-2"></div>
+                        <div className="border-t border-slate-100 my-1"></div>
 
-                        <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">Filtering</h3>
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Filtering</h3>
                         
                         <FilterDropdown label="Document Type:" value={filterType} onChange={setFilterType} options={documentTypes} />
                         <FilterDropdown label="Status:" value={filterStatus} onChange={setFilterStatus} options={statuses} />
@@ -269,23 +407,23 @@ const Requests = () => {
                         <FilterDropdown label="Program Level:" value={filterProgram} onChange={setFilterProgram} options={['All', 'Bachelors', 'Masters', 'Doctorate']} />
                         <FilterDropdown label="Account Status:" value={filterUserStatus} onChange={setFilterUserStatus} options={['All', 'Active', 'Inactive']} />
                         
-                        <div className="grid grid-cols-2 gap-3 mt-2">
+                        <div className="grid grid-cols-2 gap-3 mt-1">
                             <div className="flex flex-col gap-1.5">
-                                <label htmlFor="startDate" className="text-sm font-bold text-[#1D2D44]">Start Date:</label>
+                                <label htmlFor="startDate" className="text-xs font-bold text-slate-700">Start Date:</label>
                                 <input 
                                     id="startDate"
                                     type="date" 
-                                    className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#1D2D44] bg-white"
+                                    className="border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-blue-500 bg-white"
                                     value={startDate}
                                     onChange={(e) => setStartDate(e.target.value)}
                                 />
                             </div>
                             <div className="flex flex-col gap-1.5">
-                                <label htmlFor="endDate" className="text-sm font-bold text-[#1D2D44]">End Date:</label>
+                                <label htmlFor="endDate" className="text-xs font-bold text-slate-700">End Date:</label>
                                 <input 
                                     id="endDate"
                                     type="date" 
-                                    className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#1D2D44] bg-white"
+                                    className="border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-blue-500 bg-white"
                                     value={endDate}
                                     onChange={(e) => setEndDate(e.target.value)}
                                 />
@@ -293,100 +431,6 @@ const Requests = () => {
                         </div>
                     </div>
                 </FilterDrawer>
-
-                {/* --- TABLE SECTION --- */}
-                <div className="bg-white shadow-sm border border-gray-200 overflow-hidden min-h-[600px]">
-                    <table className="w-full text-left">
-                        <thead>
-                            <tr className="text-[15px] font-bold text-black border-b border-gray-100">
-                                <th className="px-8 py-5">Request ID</th>
-                                <th className="px-8 py-5">Name</th>
-                                <th className="px-8 py-5">Document Type</th>
-                                <th className="px-8 py-5">Date</th>
-                                <th className="px-8 py-5">Status</th>
-                                <th className="px-8 py-5 text-right"><span className="sr-only">Actions</span></th>
-                            </tr>
-                        </thead>
-                            <tbody className="divide-y divide-gray-100 text-[13px]">
-                                {loading ? (
-                                    <TableSkeleton columns={6} rows={entriesPerPage || 10} />
-                                ) : paginatedRequests.length > 0 ? (
-                                paginatedRequests.map((req, idx) => {
-                                    const reqDate = new Date(req.dateRequested);
-                                    const formattedDate = reqDate.toLocaleDateString('en-US', {
-                                        year: 'numeric',
-                                        month: '2-digit',
-                                        day: '2-digit'
-                                    });
-                                    return (
-                                        <tr key={req._id || idx} className="hover:bg-gray-50/50 transition-colors">
-                                            <td className="px-8 py-5 text-[13px] text-gray-700">{req.requestId}</td>
-                                            <td className="px-8 py-5 text-[13px] text-gray-700">{req.name}</td>
-                                            <td className="px-8 py-5 text-[13px] text-gray-700">{req.documentType}</td>
-                                            <td className="px-8 py-5 text-[13px] text-gray-700">{formattedDate}</td>
-                                            <td className="px-8 py-5">
-                                                <span className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${getStatusStyle(req.status)}`}>
-                                                    {req.status}
-                                                </span>
-                                            </td>
-                                            <td className="px-8 py-5 text-right">
-                                                <button
-                                                    onClick={() => navigate(`/requests/${req.requestId}`)}
-                                                    className="bg-[#2c3543] hover:bg-[#1f2631] text-white px-4 py-1.5 rounded-full text-[11.5px] font-bold border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_6px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(0,0,0,0.25)] active:translate-y-0.5 active:border-b-0 transition-all cursor-pointer"
-                                                >
-                                                    View Request
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    );
-                                })
-                            ) : (
-                                <tr><td colSpan="6" className="py-20 text-center text-gray-500 italic">No requests found matching your filters.</td></tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-
-                {/* --- PAGINATION --- */}
-                <div className="bg-white p-6 border-x border-b border-gray-200 rounded-b-lg flex justify-center gap-2">
-                    <button 
-                        disabled={currentPage === 1}
-                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                        className={`text-xs px-2 ${currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-black hover:underline cursor-pointer'}`}
-                    >
-                        Previous
-                    </button>
-                    
-                    {Array.from({ length: totalPages }).map((_, idx) => {
-                        const pageNumber = idx + 1;
-                        if (pageNumber === 1 || pageNumber === totalPages || (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)) {
-                            return (
-                                <button
-                                    key={pageNumber}
-                                    onClick={() => setCurrentPage(pageNumber)}
-                                    className={`w-8 h-8 rounded text-xs transition-colors ${
-                                        currentPage === pageNumber 
-                                            ? 'bg-[#2f3947] text-white font-bold' 
-                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                    }`}
-                                >
-                                    {pageNumber}
-                                </button>
-                            );
-                        } else if (pageNumber === currentPage - 2 || pageNumber === currentPage + 2) {
-                            return <span key={pageNumber} className="text-gray-500 mt-2 text-xs">...</span>;
-                        }
-                        return null;
-                    })}
-
-                    <button 
-                        disabled={currentPage === totalPages || totalPages === 0}
-                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                        className={`text-xs px-2 ${currentPage === totalPages || totalPages === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-black hover:underline cursor-pointer'}`}
-                    >
-                        Next
-                    </button>
-                </div>
             </div>
         </Layout>
     );
@@ -396,11 +440,11 @@ const Requests = () => {
 function FilterDropdown({ label, value, onChange, options }) {
     return (
         <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-bold text-[#1D2D44]">{label}</label>
+            <label className="text-xs font-bold text-slate-700">{label}</label>
             <select 
                 value={value} 
                 onChange={(e) => onChange(e.target.value)}
-                className="border border-gray-300 rounded-md px-3 py-2 text-sm text-[#1D2D44] font-medium bg-white cursor-pointer outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44] transition-all shadow-sm"
+                className="border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 font-medium bg-white cursor-pointer outline-none focus:border-blue-500 shadow-2xs"
             >
                 {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
             </select>
