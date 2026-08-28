@@ -278,102 +278,57 @@ const Layout = ({ children }) => {
 
             <div className={`flex flex-col w-full ${isCollapsed ? 'md:ml-[96px] md:w-[calc(100%-96px)]' : 'md:ml-[280px] md:w-[calc(100%-280px)]'} transition-all duration-300 main-content min-w-0`}>
                 
-                {/* 3D Elevated Floating Top Navigation Header */}
-                <header className="flex items-center justify-between px-6 sm:px-8 bg-gradient-to-r from-[#44627d] via-[#4d6f8c] to-[#547794] m-4 rounded-[28px] sticky top-4 z-[990] h-[72px] shadow-[0_12px_32px_rgba(44,53,67,0.14),0_2px_6px_rgba(0,0,0,0.04)] border border-white/20 backdrop-blur-md">
-                    <div className="flex items-center gap-3 sm:gap-4">
-                        <button
-                            onClick={handleToggle}
-                            className="w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer focus:outline-none flex items-center justify-center border border-white/15 shadow-inner"
-                            title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-                            aria-label={isCollapsed ? "Expand sidebar navigation" : "Collapse sidebar navigation"}
-                            aria-expanded={!isCollapsed}
-                        >
-                            <i className="fa-solid fa-angles-left text-lg"></i>
-                        </button>
-                        <h2 className="text-white text-[20px] sm:text-[22px] font-extrabold m-0 tracking-tight drop-shadow-xs truncate max-w-[280px] sm:max-w-none">
-                            {getPageTitle()}
-                        </h2>
-                    </div>
+                {/* Sticky Header Wrapper (Prevents scroll gap content bleed) */}
+                <div className="sticky top-0 z-[990] pt-4 pb-2 px-4 bg-[#e9e9e9]/95 backdrop-blur-md transition-colors">
+                    <header className="flex items-center justify-between px-6 sm:px-8 bg-gradient-to-r from-[#44627d] via-[#4d6f8c] to-[#547794] rounded-[26px] h-[70px] shadow-[0_10px_30px_rgba(44,53,67,0.14),0_2px_6px_rgba(0,0,0,0.04)] border border-white/20">
+                        <div className="flex items-center gap-3 sm:gap-4">
+                            <button
+                                onClick={handleToggle}
+                                className="w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer focus:outline-none flex items-center justify-center border border-white/15 shadow-inner"
+                                title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+                                aria-label={isCollapsed ? "Expand sidebar navigation" : "Collapse sidebar navigation"}
+                                aria-expanded={!isCollapsed}
+                            >
+                                <i className="fa-solid fa-angles-left text-lg"></i>
+                            </button>
+                            <h2 className="text-white text-[20px] sm:text-[22px] font-extrabold m-0 tracking-tight drop-shadow-xs truncate max-w-[280px] sm:max-w-none">
+                                {getPageTitle()}
+                            </h2>
+                        </div>
 
-                    <div className="flex items-center gap-3 sm:gap-4 relative" ref={dropdownRef}>
-                        {/* Notification Pill Button */}
-                        <button
-                            type="button"
-                            onClick={() => navigate('/notifications')}
-                            className="w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all border border-white/15 shadow-inner relative"
-                            aria-label={`View notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
-                        >
-                            <i className="fa-solid fa-bell text-[15px]"></i>
-                            {unreadCount > 0 && (
-                                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-red-500 text-white text-[10px] font-extrabold rounded-full ring-2 ring-[#4d6f8c] shadow-sm animate-pulse">
-                                    {unreadCount}
-                                </span>
-                            )}
-                        </button>
-
-                        {/* User Profile Pill */}
-                        <div 
-                            className="flex items-center gap-2.5 p-1 pl-1.5 pr-3 bg-white/15 hover:bg-white/25 rounded-full border border-white/20 transition-all cursor-pointer shadow-sm select-none" 
-                            onClick={toggleMenu}
-                        >
-                            <div className="w-8 h-8 rounded-full bg-white text-[#547794] flex items-center justify-center font-extrabold text-xs shadow-sm overflow-hidden flex-shrink-0">
-                                {adminUser.profilePic ? (
-                                    <img src={adminUser.profilePic.startsWith('http') ? adminUser.profilePic : `http://localhost:5000${adminUser.profilePic}`} alt="Profile" className="w-full h-full object-cover" />
-                                ) : (
-                                    <span className="tracking-tight">{getInitials(adminUser.name || 'Registrar Name')}</span>
+                        <div className="flex items-center gap-3 sm:gap-4">
+                            {/* Notification Pill Button */}
+                            <button
+                                type="button"
+                                onClick={() => navigate('/notifications')}
+                                className="w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all border border-white/15 shadow-inner relative"
+                                aria-label={`View notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
+                            >
+                                <i className="fa-solid fa-bell text-[15px]"></i>
+                                {unreadCount > 0 && (
+                                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-red-500 text-white text-[10px] font-extrabold rounded-full ring-2 ring-[#4d6f8c] shadow-sm animate-pulse">
+                                        {unreadCount}
+                                    </span>
                                 )}
-                            </div>
-                            <div className="hidden md:flex flex-col text-left">
-                                <span className="text-white text-[13px] font-bold m-0 leading-tight truncate max-w-[120px]">{adminUser.name || 'Registrar Name'}</span>
-                                <span className="text-white/80 text-[10.5px] font-medium m-0 leading-tight lowercase truncate max-w-[120px]">{adminUser.email || `${userRole.replace(' ', '')}name@sample.com`}</span>
-                            </div>
-                            <i className="fa-solid fa-chevron-down text-white/70 text-[10px] ml-0.5 hidden sm:block"></i>
-                        </div>
+                            </button>
 
-                        {/* Dropdown Menu */}
-                        <div
-                            className={`absolute right-0 top-[58px] bg-white shadow-2xl border border-slate-100 rounded-3xl flex-col min-w-[210px] z-[10000] overflow-hidden p-1.5 transition-all duration-200 origin-top-right ${
-                                menuOpen ? 'flex opacity-100 scale-100' : 'hidden opacity-0 scale-95'
-                            }`}
-                            role="menu"
-                        >
-                            <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/80 rounded-t-2xl">
-                                <p className="text-sm font-extrabold text-slate-800 capitalize leading-tight truncate">{adminUser.name || 'Registrar Name'}</p>
-                                <p className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider capitalize mt-0.5">{userRole || 'Super Admin'}</p>
-                            </div>
-                            
-                            <div className="py-1">
-                                <NavLink
-                                    to="/profile/info"
-                                    onClick={() => setMenuOpen(false)}
-                                    className="text-slate-700 px-3.5 py-2.5 no-underline text-[13px] font-semibold transition-colors hover:bg-slate-100 hover:text-blue-600 rounded-xl flex items-center gap-3"
-                                    role="menuitem"
-                                >
-                                    <i className="fa-regular fa-id-badge text-slate-400"></i> Profile Info
-                                </NavLink>
-                                <NavLink
-                                    to="/profile"
-                                    onClick={() => setMenuOpen(false)}
-                                    className="text-slate-700 px-3.5 py-2.5 no-underline text-[13px] font-semibold transition-colors hover:bg-slate-100 hover:text-blue-600 rounded-xl flex items-center gap-3"
-                                    role="menuitem"
-                                >
-                                    <i className="fa-solid fa-sliders text-slate-400"></i> Settings
-                                </NavLink>
-                            </div>
-
-                            <div className="pt-1 border-t border-slate-100">
-                                <button
-                                    type="button"
-                                    onClick={handleLogout}
-                                    className="text-red-600 px-3.5 py-2.5 text-[13px] font-bold text-left bg-transparent w-full cursor-pointer transition-colors hover:bg-red-50 rounded-xl flex items-center gap-3"
-                                    role="menuitem"
-                                >
-                                    <i className="fa-solid fa-arrow-right-from-bracket"></i> Logout
-                                </button>
+                            {/* Non-Clickable User Profile Badge */}
+                            <div className="flex items-center gap-2.5 p-1 pl-1.5 pr-3.5 bg-white/15 rounded-full border border-white/20 shadow-sm select-none cursor-default">
+                                <div className="w-8 h-8 rounded-full bg-white text-[#547794] flex items-center justify-center font-extrabold text-xs shadow-sm overflow-hidden flex-shrink-0">
+                                    {adminUser.profilePic ? (
+                                        <img src={adminUser.profilePic.startsWith('http') ? adminUser.profilePic : `http://localhost:5000${adminUser.profilePic}`} alt="Profile" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <span className="tracking-tight">{getInitials(adminUser.name || 'Registrar Name')}</span>
+                                    )}
+                                </div>
+                                <div className="hidden md:flex flex-col text-left">
+                                    <span className="text-white text-[13px] font-bold m-0 leading-tight truncate max-w-[130px]">{adminUser.name || 'Registrar Name'}</span>
+                                    <span className="text-white/80 text-[10.5px] font-medium m-0 leading-tight lowercase truncate max-w-[130px]">{adminUser.email || `${userRole.replace(' ', '')}name@sample.com`}</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </header>
+                    </header>
+                </div>
 
                 <main id="main-content" className="flex-1 w-full px-4 sm:px-6 py-2">
                     <Breadcrumb />

@@ -201,9 +201,9 @@ const Dashboard = () => {
                             </div>
                             <button 
                                 onClick={() => navigate('/blockchain/my-transactions')} 
-                                className="text-[12px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 bg-blue-50 px-3 py-1.5 rounded-full transition-colors"
+                                className="text-[12px] font-bold text-sky-600 hover:text-sky-700 flex items-center gap-1 bg-sky-50 px-3 py-1.5 rounded-full transition-colors"
                             >
-                                <span>Explorer</span>
+                                <span>View all</span>
                                 <ArrowUpRight size={12} />
                             </button>
                         </div>
