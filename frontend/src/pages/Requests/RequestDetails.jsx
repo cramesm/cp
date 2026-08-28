@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronRight, FileText, Upload, CheckCircle2, AlertCircle, ShieldCheck, Printer, FileSearch, Trash2, Shield, Search } from 'lucide-react';
+import { ChevronRight, ArrowLeft, FileText, Upload, CheckCircle2, AlertCircle, ShieldCheck, Printer, FileSearch, Trash2, Shield, Search } from 'lucide-react';
 import Layout from '../../components/Layout';
 import ConfirmModal from '../../components/ConfirmModal';
 import FeedbackModal from '../../components/FeedbackModal';
@@ -262,31 +262,40 @@ const RequestDetails = () => {
 
     return (
         <Layout>
-            <div className="flex flex-col min-h-screen bg-[#f8fafc] font-sans">
-                <div className="max-w-6xl mx-auto w-full p-8 flex-grow">
-                    {/* Top Navigation */}
-                    <div className="mb-6">
-                        <button 
-                            onClick={() => navigate('/requests')}
-                            className="flex items-center gap-2 text-slate-700 hover:text-blue-600 hover:bg-white font-bold bg-slate-100 px-4 py-2 rounded-xl border border-slate-200 shadow-sm transition-all text-sm"
-                        >
-                            <ChevronRight size={16} className="rotate-180" /> Back to Document Requests
-                        </button>
-                    </div>
-
-                    <div className="flex items-center justify-between mb-8">
-                        <div>
-                            <h1 className="text-3xl font-bold text-slate-800">Process Document Request</h1>
-                            <p className="text-slate-500 mt-1">Request ID: <span className="font-mono">{requestData.requestId}</span></p>
-                        </div>
-                        <span className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest shadow-sm border ${status === 'Pending' ? 'bg-amber-50 text-amber-600 border-amber-200' :
-                                status === 'In Process' ? 'bg-blue-50 text-blue-600 border-blue-200' :
-                                    status === 'Released' ? 'bg-green-50 text-green-600 border-green-200' :
-                                        'bg-red-50 text-red-600 border-red-200'
+            <div className="py-2 px-2 sm:px-4 font-sans space-y-4 relative">
+                
+                {/* Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-[22px] shadow-[0_8px_24px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.02)] border border-slate-100/90">
+                    <div>
+                        <div className="flex items-center gap-2.5 flex-wrap">
+                            <h1 className="text-[18px] font-black text-slate-900 m-0">Process Document Request</h1>
+                            <span className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[10.5px] uppercase tracking-wider font-extrabold border ${
+                                status === 'Pending' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                                status === 'In Process' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                                status === 'Released' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                'bg-red-50 text-red-700 border-red-200'
                             }`}>
-                            {status}
-                        </span>
+                                <span className={`w-1.5 h-1.5 rounded-full ${
+                                    status === 'Pending' ? 'bg-amber-500' :
+                                    status === 'In Process' ? 'bg-purple-500' :
+                                    status === 'Released' ? 'bg-emerald-500' :
+                                    'bg-red-500'
+                                }`}></span>
+                                <span>{status}</span>
+                            </span>
+                        </div>
+                        <p className="text-xs text-slate-400 font-medium m-0 mt-1">
+                            Request ID: <span className="bg-slate-100 px-2 py-0.5 rounded-md text-slate-700 font-mono text-[11.5px] font-bold">{requestData.requestId}</span>
+                        </p>
                     </div>
+                    <button 
+                        onClick={() => navigate('/requests')}
+                        className="bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs px-4 py-1.5 rounded-full border border-slate-200 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 transition-all flex items-center gap-2 cursor-pointer w-fit"
+                    >
+                        <ArrowLeft size={13} />
+                        <span>Back to Document Requests</span>
+                    </button>
+                </div>
 
                     {status === 'Rejected' && (
                         <div className="bg-red-50 p-6 rounded-2xl border border-red-200 mb-8 flex flex-col md:flex-row md:items-start justify-between gap-4">
@@ -740,7 +749,6 @@ const RequestDetails = () => {
                         </div>
                     )}
                 </div>
-            </div>
             {confirmConfig && (
                 <ConfirmModal
                     isOpen={!!confirmConfig}

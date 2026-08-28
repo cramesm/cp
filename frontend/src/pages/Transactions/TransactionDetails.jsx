@@ -5,7 +5,6 @@ import api from '../../api';
 import { ArrowLeft, CheckCircle, XCircle, Clock, Image as ImageIcon, Eye, CreditCard, AlertCircle, User, FileText, RefreshCw, Edit3 } from 'lucide-react';
 import ConfirmModal from '../../components/ConfirmModal';
 import FeedbackModal from '../../components/FeedbackModal';
-import { useModals } from '../../hooks/useModals';
 
 const API_BASE = (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : '') || 'http://127.0.0.1:5000';
 
@@ -99,10 +98,10 @@ const TransactionDetails = () => {
     if (loading) {
         return (
             <Layout>
-                <div className="p-8 flex items-center justify-center min-h-[400px] text-gray-400">
+                <div className="p-8 flex items-center justify-center min-h-[400px] text-slate-400">
                     <div className="flex flex-col items-center gap-3">
-                        <div className="w-8 h-8 border-3 border-gray-300 border-t-[#1D2D44] rounded-full animate-spin"></div>
-                        <span className="text-sm font-medium">Loading Transaction...</span>
+                        <div className="w-8 h-8 border-3 border-slate-200 border-t-[#2c3543] rounded-full animate-spin"></div>
+                        <span className="text-xs font-bold text-slate-500">Loading Transaction...</span>
                     </div>
                 </div>
             </Layout>
@@ -112,15 +111,16 @@ const TransactionDetails = () => {
     if (!txData) {
         return (
             <Layout>
-                <div className="flex flex-col items-center justify-center min-h-[500px] text-gray-500">
+                <div className="flex flex-col items-center justify-center min-h-[500px] text-slate-500">
                     <AlertCircle size={48} className="mb-4 text-red-400" />
-                    <h2 className="text-xl font-bold">Transaction Not Found</h2>
-                    <p className="text-sm text-gray-400 mt-1">Transaction ID: {id}</p>
+                    <h2 className="text-lg font-black text-slate-800">Transaction Not Found</h2>
+                    <p className="text-xs text-slate-400 mt-1 font-mono">Transaction ID: {id}</p>
                     <button
                         onClick={() => navigate('/transactions')}
-                        className="flex items-center gap-2 text-slate-700 hover:text-blue-600 hover:bg-white font-bold bg-slate-100 px-4 py-2 mt-6 rounded-xl border border-slate-200 shadow-sm transition-all text-sm w-fit"
+                        className="bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold text-xs py-2 px-4 mt-6 rounded-full border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_6px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-2 cursor-pointer"
                     >
-                        <ArrowLeft size={16} /> Back to Transactions
+                        <ArrowLeft size={13} />
+                        <span>Back to Transactions</span>
                     </button>
                 </div>
             </Layout>
@@ -128,14 +128,37 @@ const TransactionDetails = () => {
     }
 
     const getStatusBadge = (status) => {
-        switch (status) {
-            case 'Completed': return { style: 'text-[#2D6A8E] bg-[#C6E7FF]', icon: <CheckCircle size={14} /> };
-            case 'Pending Verification': return { style: 'text-[#857A00] bg-[#FCF7B0]', icon: <Clock size={14} /> };
-            case 'Needs Update': return { style: 'text-[#A32A2A] bg-[#FFC1C1]', icon: <RefreshCw size={14} /> };
-            case 'Rejected': return { style: 'text-[#F04438] bg-[#FFD1D1]', icon: <XCircle size={14} /> };
-            case 'Refunded': return { style: 'text-[#7C3AED] bg-[#E8D5F5]', icon: <RefreshCw size={14} /> };
-            default: return { style: 'text-gray-600 bg-gray-100', icon: <Clock size={14} /> };
+        const s = (status || '').toLowerCase();
+        if (s === 'completed') {
+            return {
+                style: 'bg-emerald-50 text-emerald-700 border-emerald-200/80',
+                dotColor: 'bg-emerald-500'
+            };
+        } else if (s === 'pending verification') {
+            return {
+                style: 'bg-amber-50 text-amber-700 border-amber-200/80',
+                dotColor: 'bg-amber-500'
+            };
+        } else if (s === 'needs update') {
+            return {
+                style: 'bg-orange-50 text-orange-700 border-orange-200/80',
+                dotColor: 'bg-orange-500'
+            };
+        } else if (s === 'rejected') {
+            return {
+                style: 'bg-red-50 text-red-700 border-red-200/80',
+                dotColor: 'bg-red-500'
+            };
+        } else if (s === 'refunded') {
+            return {
+                style: 'bg-purple-50 text-purple-700 border-purple-200/80',
+                dotColor: 'bg-purple-500'
+            };
         }
+        return {
+            style: 'bg-slate-100 text-slate-600 border-slate-200/80',
+            dotColor: 'bg-slate-400'
+        };
     };
 
     const getPaymentModeStyle = (mode) => {
@@ -143,7 +166,7 @@ const TransactionDetails = () => {
             case 'GCash': return 'bg-[#E0F0FF] text-[#0070E0]';
             case 'Maya': return 'bg-[#E8F5E8] text-[#2E7D32]';
             case 'GoThyme': return 'bg-[#FFF3E0] text-[#E65100]';
-            default: return 'bg-gray-100 text-gray-600';
+            default: return 'bg-slate-100 text-slate-600';
         }
     };
 
@@ -161,143 +184,146 @@ const TransactionDetails = () => {
                 <ConfirmModal 
                     {...confirmConfig} 
                     isOpen={!!confirmConfig} 
-                    onClose={closeConfirm} 
+                    onClose={() => setConfirmConfig(null)} 
                 />
             )}
-            <div className="p-8 bg-[#F8F9FA] min-h-[calc(100vh-64px)] font-sans relative">
+            <div className="py-2 px-2 sm:px-4 font-sans space-y-4 relative">
 
                 {/* Header */}
-                <div className="max-w-[1100px] mx-auto mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-[22px] shadow-[0_8px_24px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.02)] border border-slate-100/90">
                     <div>
-                        <h2 className="text-[22px] font-bold text-[#1D2D44] flex items-center gap-3">
-                            Transaction: {txData.transactionId}
-                            <span className={`inline-flex items-center gap-1.5 px-4 py-1 rounded-full text-xs uppercase tracking-widest font-bold ${statusBadge.style}`}>
-                                {statusBadge.icon} {txData.status}
+                        <div className="flex items-center gap-2.5 flex-wrap">
+                            <h2 className="text-[18px] font-black text-slate-900 m-0">
+                                Transaction: <span className="font-mono">{txData.transactionId}</span>
+                            </h2>
+                            <span className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[10.5px] uppercase tracking-wider font-extrabold border ${statusBadge.style}`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${statusBadge.dotColor}`}></span>
+                                <span>{txData.status}</span>
                             </span>
-                        </h2>
-                        <p className="text-sm text-gray-400 mt-1">
+                        </div>
+                        <p className="text-xs text-slate-400 font-medium m-0 mt-1">
                             Submitted on {formattedDate} at {formattedTime}
                         </p>
                     </div>
                     <button
                         onClick={() => navigate('/transactions')}
-                        className="flex items-center gap-2 text-slate-700 hover:text-blue-600 hover:bg-white font-bold bg-slate-100 px-4 py-2 rounded-xl border border-slate-200 shadow-sm transition-all text-sm w-fit"
+                        className="bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs px-4 py-1.5 rounded-full border border-slate-200 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 transition-all flex items-center gap-2 cursor-pointer w-fit"
                     >
-                        <ArrowLeft size={16} /> Back to Transactions
+                        <ArrowLeft size={13} />
+                        <span>Back to Transactions</span>
                     </button>
                 </div>
 
-                <div className="max-w-[1100px] mx-auto space-y-6">
+                <div className="space-y-4">
 
                     {/* Row 1: Payer Info + Payment Summary */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
                         {/* Payer Information */}
-                        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-                            <h4 className="text-[14px] font-bold text-[#1D2D44] mb-5 border-b border-gray-50 pb-3 uppercase tracking-wider flex items-center gap-2">
-                                <User size={16} /> Payer Information
+                        <div className="bg-white p-6 rounded-[22px] border border-slate-100/90 shadow-[0_8px_24px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.02)]">
+                            <h4 className="text-[13px] font-black text-[#2c3543] mb-4 border-b border-slate-100 pb-3 uppercase tracking-wider flex items-center gap-2">
+                                <User size={15} /> Payer Information
                             </h4>
-                            <div className="grid grid-cols-[140px_1fr] gap-y-4 text-[13px]">
-                                <span className="text-gray-400 font-bold">Payer Name:</span>
-                                <span className="text-[#1D2D44] font-bold">{txData.payerName || txData.name}</span>
+                            <div className="grid grid-cols-[130px_1fr] gap-y-3 text-[12.5px]">
+                                <span className="text-slate-400 font-bold">Payer Name:</span>
+                                <span className="text-slate-900 font-bold">{txData.payerName || txData.name}</span>
 
-                                <span className="text-gray-400 font-bold">Email:</span>
-                                <span className="text-gray-700">{txData.payerEmail || 'Not provided'}</span>
+                                <span className="text-slate-400 font-bold">Email:</span>
+                                <span className="text-slate-700 font-medium">{txData.payerEmail || 'Not provided'}</span>
 
-                                <span className="text-gray-400 font-bold">Type:</span>
-                                <span className="text-gray-700 font-medium">{txData.payerType || 'Student'}</span>
+                                <span className="text-slate-400 font-bold">Type:</span>
+                                <span className="text-slate-700 font-medium">{txData.payerType || 'Student'}</span>
 
-                                <span className="text-gray-400 font-bold">Request ID:</span>
-                                <span className="text-gray-700 font-mono">{txData.requestId}</span>
+                                <span className="text-slate-400 font-bold">Request ID:</span>
+                                <span className="bg-slate-100 px-2 py-0.5 rounded-md text-slate-700 font-mono text-[11.5px] font-bold w-fit">
+                                    {txData.requestId}
+                                </span>
                             </div>
                         </div>
 
                         {/* Payment Summary */}
-                        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-                            <h4 className="text-[14px] font-bold text-[#1D2D44] mb-5 border-b border-gray-50 pb-3 uppercase tracking-wider flex items-center gap-2">
-                                <CreditCard size={16} /> Payment Summary
+                        <div className="bg-white p-6 rounded-[22px] border border-slate-100/90 shadow-[0_8px_24px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.02)]">
+                            <h4 className="text-[13px] font-black text-[#2c3543] mb-4 border-b border-slate-100 pb-3 uppercase tracking-wider flex items-center gap-2">
+                                <CreditCard size={15} /> Payment Summary
                             </h4>
-                            <div className="grid grid-cols-[140px_1fr] gap-y-4 text-[13px]">
-                                <span className="text-gray-400 font-bold">Document:</span>
-                                <span className="text-gray-800 font-medium">{txData.documentType}</span>
+                            <div className="grid grid-cols-[130px_1fr] gap-y-3 text-[12.5px]">
+                                <span className="text-slate-400 font-bold">Document:</span>
+                                <span className="text-slate-800 font-bold flex items-center gap-1.5">
+                                    <i className="fa-solid fa-file-lines text-blue-500 text-xs"></i>
+                                    <span>{txData.documentType}</span>
+                                </span>
 
-                                <span className="text-gray-400 font-bold">Amount:</span>
-                                <span className="text-[#1D2D44] font-bold text-[16px]">₱{txData.amount || '0.00'}</span>
+                                <span className="text-slate-400 font-bold">Amount:</span>
+                                <span className="text-slate-900 font-black text-[15px]">₱{txData.amount || '0.00'}</span>
 
-                                <span className="text-gray-400 font-bold">Payment Mode:</span>
-                                <span className={`inline-flex items-center w-fit px-3 py-1 rounded text-[10px] font-bold uppercase ${getPaymentModeStyle(txData.paymentMode)}`}>
+                                <span className="text-slate-400 font-bold">Payment Mode:</span>
+                                <span className={`inline-flex items-center w-fit px-2.5 py-0.5 rounded-md text-[11px] font-extrabold uppercase ${getPaymentModeStyle(txData.paymentMode)}`}>
                                     {txData.paymentMode}
                                 </span>
 
-                                <span className="text-gray-400 font-bold">Status:</span>
-                                <span className={`inline-flex items-center gap-1.5 w-fit px-3 py-1 rounded-full text-[10px] font-bold uppercase ${statusBadge.style}`}>
-                                    {statusBadge.icon} {txData.status}
+                                <span className="text-slate-400 font-bold">Status:</span>
+                                <span className={`inline-flex items-center gap-1.5 w-fit px-3 py-0.5 rounded-full text-[10.5px] font-extrabold uppercase border ${statusBadge.style}`}>
+                                    <span className={`w-1.5 h-1.5 rounded-full ${statusBadge.dotColor}`}></span>
+                                    <span>{txData.status}</span>
                                 </span>
                             </div>
                         </div>
                     </div>
 
                     {/* Row 2: Receipt Image + Verification Status */}
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
 
                         {/* Receipt Image */}
-                        <div className="lg:col-span-7 bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-                            <h4 className="text-[14px] font-bold text-[#1D2D44] mb-5 border-b border-gray-50 pb-3 uppercase tracking-wider flex items-center gap-2">
-                                <FileText size={16} /> Uploaded Payment Receipt
+                        <div className="lg:col-span-7 bg-white p-6 rounded-[22px] border border-slate-100/90 shadow-[0_8px_24px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.02)]">
+                            <h4 className="text-[13px] font-black text-[#2c3543] mb-4 border-b border-slate-100 pb-3 uppercase tracking-wider flex items-center gap-2">
+                                <FileText size={15} /> Uploaded Payment Receipt
                             </h4>
-                            <div className="bg-[#F9FAFF] border border-dashed border-gray-200 rounded-xl p-6">
+                            <div className="bg-slate-50 border border-dashed border-slate-200 rounded-2xl p-6">
                                 {(txData.imageUrl || txData.receiptImage) && !(txData.imageUrl || txData.receiptImage).includes('undefined') ? (
                                     <div className="flex flex-col items-center gap-4">
                                         <img
                                             src={(txData.imageUrl || txData.receiptImage).startsWith('http') ? (txData.imageUrl || txData.receiptImage) : `${API_BASE}${txData.receiptImage}`}
                                             alt="Payment Receipt"
-                                            className="max-h-[400px] object-contain rounded-lg shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+                                            className="max-h-[380px] object-contain rounded-xl shadow-xs cursor-pointer hover:shadow-md transition-shadow"
                                             onClick={() => setZoomedImage(true)}
                                         />
                                         <button
                                             onClick={() => setZoomedImage(true)}
-                                            className="bg-[#1D2D44] text-white px-8 py-2.5 rounded-full font-bold text-xs flex items-center gap-2 hover:bg-[#152030] transition-all"
+                                            className="bg-[#2c3543] hover:bg-[#1f2631] text-white px-6 py-2 rounded-full font-bold text-xs flex items-center gap-2 border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all cursor-pointer"
                                         >
-                                            <Eye size={16} /> View Full Size
+                                            <Eye size={14} /> 
+                                            <span>View Full Size</span>
                                         </button>
                                     </div>
                                 ) : (
-                                    <div className="flex flex-col items-center text-center gap-4 py-10">
-                                        <div className="bg-gray-200 p-4 rounded-full text-gray-400">
-                                            <ImageIcon size={32} />
+                                    <div className="flex flex-col items-center text-center gap-3 py-10">
+                                        <div className="bg-slate-200 p-3.5 rounded-full text-slate-400">
+                                            <ImageIcon size={28} />
                                         </div>
-                                        <p className="text-[14px] font-bold text-gray-400">No valid receipt image uploaded</p>
+                                        <p className="text-xs font-bold text-slate-400 m-0">No valid receipt image uploaded</p>
                                     </div>
                                 )}
                             </div>
                         </div>
 
                         {/* Verification Status */}
-                        <div className="lg:col-span-5 bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col">
-                            <h4 className="text-[14px] font-bold text-[#1D2D44] mb-5 border-b border-gray-50 pb-3 uppercase tracking-wider">
+                        <div className="lg:col-span-5 bg-white p-6 rounded-[22px] border border-slate-100/90 shadow-[0_8px_24px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.02)] flex flex-col">
+                            <h4 className="text-[13px] font-black text-[#2c3543] mb-4 border-b border-slate-100 pb-3 uppercase tracking-wider">
                                 Verification Status
                             </h4>
 
-                            <div className="flex-1 space-y-5">
+                            <div className="flex-1 space-y-4">
                                 {/* Status Indicator */}
-                                <div className={`flex items-center gap-3 p-4 rounded-lg border ${
-                                    txData.status === 'Completed' ? 'bg-[#E1FFEB] border-[#C3E6CB]' :
-                                    txData.status === 'Needs Update' ? 'bg-[#FFF3CD] border-[#FFEAA7]' :
-                                    txData.status === 'Rejected' ? 'bg-[#FFE8E8] border-[#FFD1D1]' :
-                                    'bg-[#FCF7B0] border-[#F0E68C]'
+                                <div className={`flex items-center gap-3 p-3.5 rounded-xl border ${
+                                    txData.status === 'Completed' ? 'bg-emerald-50/80 border-emerald-200' :
+                                    txData.status === 'Needs Update' ? 'bg-amber-50/80 border-amber-200' :
+                                    txData.status === 'Rejected' ? 'bg-red-50/80 border-red-200' :
+                                    'bg-amber-50/80 border-amber-200'
                                 }`}>
-                                    {txData.status === 'Completed' ? (
-                                        <CheckCircle size={20} className="text-green-600" />
-                                    ) : txData.status === 'Rejected' ? (
-                                        <XCircle size={20} className="text-red-500" />
-                                    ) : txData.status === 'Needs Update' ? (
-                                        <RefreshCw size={20} className="text-amber-600" />
-                                    ) : (
-                                        <Clock size={20} className="text-amber-600" />
-                                    )}
+                                    <span className={`w-2.5 h-2.5 rounded-full ${statusBadge.dotColor}`}></span>
                                     <div>
-                                        <p className="text-[12px] font-bold uppercase text-gray-500">Current Status</p>
-                                        <p className="text-[14px] font-bold text-gray-800">{txData.status}</p>
+                                        <p className="text-[10.5px] font-extrabold uppercase text-slate-400 m-0">Current Status</p>
+                                        <p className="text-[13px] font-black text-slate-900 m-0">{txData.status}</p>
                                     </div>
                                     {isSuperAdmin && !isEditingStatus && (
                                         <button 
@@ -305,19 +331,20 @@ const TransactionDetails = () => {
                                                 setNewStatus(txData.status);
                                                 setIsEditingStatus(true);
                                             }}
-                                            className="ml-auto text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                                            className="ml-auto text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 cursor-pointer"
                                         >
-                                            <Edit3 size={12} /> Edit
+                                            <Edit3 size={12} /> 
+                                            <span>Edit</span>
                                         </button>
                                     )}
                                 </div>
 
                                 {/* Super Admin Status Edit Mode */}
                                 {isSuperAdmin && isEditingStatus && (
-                                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 mt-3 animate-in fade-in">
-                                        <p className="text-xs font-bold text-blue-800 mb-2 uppercase tracking-wide">Super Admin Override</p>
+                                    <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 animate-in fade-in">
+                                        <p className="text-[10.5px] font-extrabold text-blue-800 mb-2 uppercase tracking-wide">Super Admin Override</p>
                                         <select 
-                                            className="w-full p-2 border border-blue-200 rounded-md text-sm mb-3 outline-none"
+                                            className="w-full p-2 border border-blue-200 rounded-lg text-xs mb-3 outline-none bg-white font-bold text-slate-800"
                                             value={newStatus}
                                             onChange={(e) => setNewStatus(e.target.value)}
                                         >
@@ -329,14 +356,14 @@ const TransactionDetails = () => {
                                         </select>
                                         <div className="flex gap-2">
                                             <button 
-                                                className="flex-1 py-2 text-xs font-bold text-gray-500 hover:bg-blue-100 rounded-md transition-colors"
+                                                className="flex-1 py-1.5 text-xs font-bold text-slate-600 hover:bg-blue-100 rounded-lg transition-colors cursor-pointer"
                                                 onClick={() => setIsEditingStatus(false)}
                                                 disabled={actionLoading}
                                             >
                                                 Cancel
                                             </button>
                                             <button 
-                                                className="flex-1 py-2 text-xs font-bold bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+                                                className="flex-1 py-1.5 text-xs font-bold bg-[#2c3543] text-white rounded-lg hover:bg-[#1f2631] transition-colors disabled:opacity-50 cursor-pointer"
                                                 onClick={handleUpdateStatus}
                                                 disabled={actionLoading}
                                             >
@@ -348,11 +375,11 @@ const TransactionDetails = () => {
 
                                 {/* Verified By */}
                                 {txData.verifiedBy && (
-                                    <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
-                                        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Verified By</p>
-                                        <p className="text-[13px] font-bold text-[#1D2D44]">{txData.verifiedBy}</p>
+                                    <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-100">
+                                        <p className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Verified By</p>
+                                        <p className="text-xs font-bold text-slate-900 m-0">{txData.verifiedBy}</p>
                                         {txData.verifiedAt && (
-                                            <p className="text-[11px] text-gray-400 mt-1">
+                                            <p className="text-[11px] text-slate-400 mt-1 m-0">
                                                 {new Date(txData.verifiedAt).toLocaleString('en-US', {
                                                     year: 'numeric', month: 'long', day: 'numeric',
                                                     hour: '2-digit', minute: '2-digit'
@@ -364,24 +391,24 @@ const TransactionDetails = () => {
 
                                 {/* Admin Remarks */}
                                 {txData.adminRemarks && (
-                                    <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
-                                        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Admin Remarks</p>
-                                        <p className="text-[13px] text-gray-700 leading-relaxed">{txData.adminRemarks}</p>
+                                    <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-100">
+                                        <p className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Admin Remarks</p>
+                                        <p className="text-xs text-slate-700 leading-relaxed m-0 font-medium">{txData.adminRemarks}</p>
                                     </div>
                                 )}
 
                                 {/* Timestamps */}
-                                <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
-                                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Timeline</p>
-                                    <div className="space-y-2 text-[12px]">
+                                <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-100">
+                                    <p className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider mb-2">Timeline</p>
+                                    <div className="space-y-1.5 text-xs">
                                         <div className="flex justify-between">
-                                            <span className="text-gray-500">Submitted</span>
-                                            <span className="text-gray-700 font-medium">{formattedDate}, {formattedTime}</span>
+                                            <span className="text-slate-400 font-medium">Submitted</span>
+                                            <span className="text-slate-700 font-bold">{formattedDate}, {formattedTime}</span>
                                         </div>
                                         {txData.verifiedAt && (
                                             <div className="flex justify-between">
-                                                <span className="text-gray-500">Verified</span>
-                                                <span className="text-gray-700 font-medium">
+                                                <span className="text-slate-400 font-medium">Verified</span>
+                                                <span className="text-slate-700 font-bold">
                                                     {new Date(txData.verifiedAt).toLocaleDateString('en-US', {
                                                         year: 'numeric', month: 'long', day: 'numeric'
                                                     })}
@@ -393,9 +420,9 @@ const TransactionDetails = () => {
 
                                 {/* Needs Update Notification Info */}
                                 {txData.status === 'Needs Update' && (
-                                    <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
-                                        <p className="text-[11px] font-bold text-amber-700 uppercase tracking-wider mb-2">Awaiting Re-upload</p>
-                                        <p className="text-[12px] text-amber-600">The user has been notified to upload a new receipt via the mobile app. Awaiting user action.</p>
+                                    <div className="p-3.5 bg-amber-50 rounded-xl border border-amber-200">
+                                        <p className="text-[10.5px] font-bold text-amber-700 uppercase tracking-wider mb-1">Awaiting Re-upload</p>
+                                        <p className="text-xs text-amber-600 m-0">The user has been notified to upload a new receipt via the mobile app.</p>
                                     </div>
                                 )}
                             </div>
@@ -406,13 +433,13 @@ const TransactionDetails = () => {
                 {/* Image Zoom Overlay */}
                 {zoomedImage && (txData.imageUrl || txData.receiptImage) && (
                     <div
-                        className="fixed inset-0 z-[1001] bg-black/80 flex items-center justify-center cursor-zoom-out"
+                        className="fixed inset-0 z-[1001] bg-black/80 flex items-center justify-center cursor-zoom-out p-4"
                         onClick={() => setZoomedImage(false)}
                     >
                         <img
                             src={(txData.imageUrl || txData.receiptImage).startsWith('http') ? (txData.imageUrl || txData.receiptImage) : `${API_BASE}${txData.receiptImage}`}
                             alt="Receipt Zoomed"
-                            className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl"
+                            className="max-w-[90vw] max-h-[90vh] object-contain rounded-2xl shadow-2xl"
                         />
                     </div>
                 )}
@@ -422,7 +449,7 @@ const TransactionDetails = () => {
                     <FeedbackModal 
                         {...feedbackConfig} 
                         isOpen={!!feedbackConfig} 
-                        onClose={closeFeedback} 
+                        onClose={() => setFeedbackConfig(null)} 
                     />
                 )}
             </div>
