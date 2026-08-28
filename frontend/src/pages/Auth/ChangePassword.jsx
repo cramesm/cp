@@ -1,23 +1,20 @@
 import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import api from '../../api';
-
-// Import local assets
-import loginImage from '../../assets/verifitor-login.png';
-import smallLogo from '../../assets/verifitor_logo.png';
 
 const ChangePassword = () => {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     const [modal, setModal] = useState({ show: false, title: '', message: '', type: 'error' });
     const navigate = useNavigate();
     const location = useLocation();
     const resetToken = location.state?.resetToken;
 
     const validatePassword = (pwd) => {
-        return pwd.length >= 8; // simplified validation for this step
+        return pwd.length >= 8;
     };
 
     const handleSave = async (e) => {
@@ -27,7 +24,7 @@ const ChangePassword = () => {
             setModal({
                 show: true,
                 title: 'Password Mismatch',
-                message: 'The entered passwords do not match. Please try again.',
+                message: 'The entered passwords do not match. Please make sure both fields match.',
                 type: 'error'
             });
             return;
@@ -46,13 +43,14 @@ const ChangePassword = () => {
         if (!resetToken) {
             setModal({
                 show: true,
-                title: 'Error',
-                message: 'Missing reset token. Please restart the password reset process.',
+                title: 'Session Expired',
+                message: 'Missing or expired reset token. Please restart the password reset process.',
                 type: 'error'
             });
             return;
         }
 
+        setIsLoading(true);
         try {
             const response = await api.post('/auth/reset-password', {
                 resetToken,
@@ -62,123 +60,160 @@ const ChangePassword = () => {
             if (response.data.success) {
                 setModal({
                     show: true,
-                    title: 'Success',
-                    message: 'Your password has been changed successfully.',
+                    title: 'Success!',
+                    message: 'Your password has been changed successfully. You can now log in.',
                     type: 'success'
                 });
             }
         } catch (err) {
             setModal({
                 show: true,
-                title: 'Error',
+                title: 'Reset Failed',
                 message: err.response?.data?.message || 'Failed to reset password. Please try again.',
                 type: 'error'
             });
+        } finally {
+            setIsLoading(false);
         }
     };
 
     return (
-        <div className="min-h-screen flex font-sans bg-[#F5F6F8]">
-            {/* Left Column */}
-            <div className="hidden lg:flex lg:w-1/2 relative p-4">
+        <div className="min-h-screen flex font-sans bg-[#ffffff]">
+            {/* Left Column - Branding Banner */}
+            <div className="hidden lg:flex lg:w-1/2 relative p-5 bg-[#ffffff] items-center justify-center">
                 <img 
-                    src={loginImage} 
+                    src="/verifitor-login.webp" 
                     alt="Verifitor Login Design" 
-                    className="w-full h-full object-cover rounded-2xl shadow-xl"
+                    className="w-full h-full max-h-[96vh] object-cover rounded-3xl shadow-xl"
+                    width="1414"
+                    height="2000"
+                    fetchPriority="high"
                 />
             </div>
 
-            {/* Right Column */}
-            <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-8 sm:p-12 bg-[#F2F2F2] relative">
+            {/* Right Column - Form */}
+            <main className="w-full lg:w-1/2 flex flex-col items-center justify-center p-6 sm:p-12 bg-[#ffffff] relative overflow-y-auto">
                 
                 {/* Back Arrow */}
                 <button 
-                    onClick={() => navigate('/login')}
-                    className="absolute top-8 left-8 w-10 h-10 border border-gray-400 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors"
+                    onClick={() => navigate('/')}
+                    className="absolute top-6 left-6 sm:top-8 sm:left-8 w-11 h-11 border border-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all duration-200 shadow-sm focus:outline-none"
+                    aria-label="Back to Login"
                 >
-                    <i className="fa-solid fa-arrow-left"></i>
+                    <i className="fa-solid fa-arrow-left text-[14px]"></i>
                 </button>
 
-                <div className="w-full max-w-[400px]">
+                <div className="w-full max-w-[420px]">
                     {/* Logo Header */}
-                    <div className="mb-8 flex justify-center">
-                        <img src={smallLogo} alt="Verifitor Logo" className="w-[95%] max-w-[400px] object-contain drop-shadow-md" />
+                    <div className="mb-6 flex justify-center">
+                        <img 
+                            src="/verifitor_logo.webp" 
+                            alt="Verifitor Logo" 
+                            className="w-[80%] max-w-[300px] max-h-[120px] object-contain drop-shadow-sm" 
+                            width="621" 
+                            height="213" 
+                            fetchPriority="high" 
+                        />
                     </div>
 
-                    <h2 className="text-[32px] font-black text-center text-[#000000] mb-2">RESET PASSWORD</h2>
-                    <p className="text-center text-[13px] text-[#333333] font-normal mb-8">Enter your new password below</p>
+                    {/* Header */}
+                    <div className="text-center mb-8">
+                        <h2 className="text-[30px] sm:text-[34px] font-extrabold text-[#111827] mb-2 tracking-tight">
+                            Reset password
+                        </h2>
+                        <p className="text-[#6B7280] text-[13.5px] font-normal leading-relaxed">
+                            Create a strong new password for your account (min. 8 characters)
+                        </p>
+                    </div>
                     
-                    <form onSubmit={handleSave} id="reset-form" className="flex flex-col items-center w-full">
-                        <div className="w-full space-y-6 mb-6">
+                    <form onSubmit={handleSave} id="reset-form" className="space-y-5">
+                        <div className="space-y-4">
+                            {/* New Password Pill Input */}
                             <div className="relative">
                                 <input 
                                     type={showPassword ? "text" : "password"} 
                                     id="new-password" 
                                     placeholder="New Password"
-                                    className="w-full px-4 py-3.5 bg-white border border-gray-300 rounded-md text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-[#213448] shadow-sm pr-12" 
+                                    className="w-full px-6 py-3.5 pr-14 bg-white border border-gray-300 rounded-full text-[14px] text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#213448] focus:ring-4 focus:ring-[#213448]/10 transition-all duration-200 shadow-sm hover:border-gray-400" 
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     required 
+                                    disabled={isLoading}
                                 />
                                 <button
                                     type="button"
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors focus:outline-none"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors focus:outline-none"
                                     onClick={() => setShowPassword(!showPassword)}
+                                    aria-label={showPassword ? "Hide password" : "Show password"}
                                 >
-                                    <i className={`fa-solid ${showPassword ? 'fa-eye' : 'fa-eye-slash'} text-lg`}></i>
+                                    <i className={`fa-solid ${showPassword ? 'fa-eye' : 'fa-eye-slash'} text-[15px]`}></i>
                                 </button>
                             </div>
 
+                            {/* Confirm Password Pill Input */}
                             <div className="relative">
                                 <input 
                                     type={showConfirmPassword ? "text" : "password"} 
                                     id="confirm-password" 
-                                    placeholder="Confirm Password"
-                                    className="w-full px-4 py-3.5 bg-white border border-gray-300 rounded-md text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-[#213448] shadow-sm pr-12" 
+                                    placeholder="Confirm New Password"
+                                    className="w-full px-6 py-3.5 pr-14 bg-white border border-gray-300 rounded-full text-[14px] text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#213448] focus:ring-4 focus:ring-[#213448]/10 transition-all duration-200 shadow-sm hover:border-gray-400" 
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
                                     required 
+                                    disabled={isLoading}
                                 />
                                 <button
                                     type="button"
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors focus:outline-none"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors focus:outline-none"
                                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
                                 >
-                                    <i className={`fa-solid ${showConfirmPassword ? 'fa-eye' : 'fa-eye-slash'} text-lg`}></i>
+                                    <i className={`fa-solid ${showConfirmPassword ? 'fa-eye' : 'fa-eye-slash'} text-[15px]`}></i>
                                 </button>
                             </div>
                         </div>
 
-                        <div className="w-full flex justify-center mb-4">
-                            <button type="submit" className="w-[80%] py-3 bg-[#243547] text-white rounded-md font-bold text-[16px] tracking-wide shadow-md flex justify-center items-center hover:bg-[#1a2634] transition-colors">
-                                Reset Password
+                        {/* Submit Pill Button */}
+                        <div className="pt-2">
+                            <button 
+                                type="submit" 
+                                disabled={isLoading}
+                                className={`w-full py-3.5 bg-[#111827] text-white rounded-full font-bold text-[15px] tracking-wide shadow-md flex justify-center items-center gap-2 transition-all duration-200 active:scale-[0.99] ${isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-[#213448] hover:shadow-lg'}`}
+                            >
+                                {isLoading ? (
+                                    <>
+                                        <i className="fa-solid fa-spinner animate-spin"></i>
+                                        Saving Password...
+                                    </>
+                                ) : 'Save New Password'}
                             </button>
                         </div>
                     </form>
 
-                    <div className="text-center mt-2">
-                        <Link to="/login" className="block text-[13px] text-[#73A9D4] font-medium hover:underline">
-                            Back to Login
+                    <div className="text-center mt-8">
+                        <Link to="/" className="inline-flex items-center gap-1.5 text-[13px] text-[#2B6D9B] hover:text-[#184869] font-medium transition-colors">
+                            <i className="fa-solid fa-chevron-left text-[10px]"></i>
+                            <span>Back to Login</span>
                         </Link>
                     </div>
                 </div>
-            </div>
+            </main>
 
             {/* Modal */}
             {modal.show && (
-                <div id="error-modal" className="fixed top-0 left-0 w-full h-full bg-black/50 z-[1000] flex justify-center items-center">
-                    <div className="bg-white w-[320px] p-[30px] rounded-xl text-center shadow-[0_10px_25px_rgba(0,0,0,0.2)]">
-                        <div className={`text-[40px] mb-[15px] ${modal.type === 'success' ? 'text-green-500' : 'text-[#e74c3c]'}`}>
-                            <i className={`fa-solid ${modal.type === 'success' ? 'fa-check-circle' : 'fa-triangle-exclamation'}`}></i>
+                <div id="error-modal" className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[1000] flex justify-center items-center p-4">
+                    <div className="bg-white w-full max-w-[340px] p-6 rounded-3xl text-center shadow-2xl animate-scaleIn">
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 text-xl ${modal.type === 'success' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
+                            <i className={`fa-solid ${modal.type === 'success' ? 'fa-circle-check' : 'fa-triangle-exclamation'}`}></i>
                         </div>
-                        <h3 className="m-0 mb-2.5 text-[#333] text-[18px]">{modal.title}</h3>
-                        <p id="modal-message" className="text-[#666] text-[14px] mb-[25px] leading-relaxed">{modal.message}</p>
+                        <h3 className="text-[18px] font-bold text-gray-900 mb-2">{modal.title}</h3>
+                        <p id="modal-message" className="text-gray-500 text-[13.5px] mb-6 leading-relaxed">{modal.message}</p>
                         <button 
-                            className="bg-[#213448] text-white border-none py-[10px] px-[30px] rounded-lg font-semibold cursor-pointer w-full transition-colors duration-200 hover:bg-[#1a252f]" 
+                            className="bg-[#111827] text-white py-3 px-6 rounded-full font-semibold text-sm cursor-pointer w-full transition-colors hover:bg-[#213448]" 
                             onClick={() => {
                                 setModal({ show: false, title: '', message: '', type: 'error' });
                                 if (modal.type === 'success') {
-                                    navigate('/login');
+                                    navigate('/');
                                 }
                             }}
                         >
