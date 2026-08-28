@@ -272,7 +272,7 @@ const Dashboard = () => {
                                 <div className="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-xs font-bold border border-purple-200/60">
                                     <i className="fa-solid fa-bell"></i>
                                 </div>
-                                <h3 className="text-slate-900 text-[15px] font-extrabold m-0 leading-tight">Live Notifications</h3>
+                                <h3 className="text-slate-900 text-[15px] font-extrabold m-0 leading-tight">Notifications</h3>
                             </div>
                             <button 
                                 onClick={() => navigate('/notifications')} 
