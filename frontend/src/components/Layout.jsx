@@ -189,33 +189,28 @@ const Layout = ({ children }) => {
                 ></div>
             )}
 
-            {/* Floating 3D Dock Sidebar */}
-            <aside className={`fixed top-4 left-4 bottom-4 bg-white/95 backdrop-blur-xl border border-white/80 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.03)] flex flex-col z-[1000] sidebar transition-all duration-300 ${
-                isMobileOpen ? 'translate-x-0 w-[245px]' : '-translate-x-[120%] md:translate-x-0'
-            } ${isCollapsed ? 'md:w-[76px]' : 'md:w-[245px]'}`}>
+            {/* 3D Floating Dock Sidebar with Original Colors & Logos */}
+            <aside className={`fixed top-4 left-4 bottom-4 bg-[#2c3543] rounded-[28px] shadow-[0_20px_50px_rgba(0,0,0,0.35),0_6px_20px_rgba(0,0,0,0.2)] border border-slate-700/50 flex flex-col z-[1000] sidebar transition-all duration-300 overflow-hidden ${
+                isMobileOpen ? 'translate-x-0 w-[260px]' : '-translate-x-[120%] md:translate-x-0'
+            } ${isCollapsed ? 'md:w-[80px]' : 'md:w-[260px]'}`}>
                 
-                {/* 3D Elevated Logo Header */}
-                <div className={`p-4 flex items-center justify-center border-b border-gray-100/80 ${isCollapsed ? 'px-2' : 'px-5'}`}>
-                    <div 
-                        onClick={() => navigate('/dashboard')}
-                        className="flex items-center gap-3 cursor-pointer select-none"
-                    >
-                        <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#213448] to-[#3B82F6] flex items-center justify-center shadow-md shadow-blue-500/20 flex-shrink-0 transition-transform hover:scale-105">
-                            <i className="fa-solid fa-cube text-white text-lg drop-shadow-sm"></i>
+                {/* White Logo Container with 3D inset/border */}
+                <div className={`h-[110px] bg-white flex items-center justify-center overflow-hidden transition-all duration-300 rounded-t-[28px] shadow-sm border-b border-gray-100 ${isCollapsed ? 'px-2' : 'px-6'}`}>
+                    {isCollapsed ? (
+                        <div className="w-[44px] h-[44px] flex items-center justify-center flex-shrink-0 transition-transform duration-300 hover:scale-105">
+                            <img src={verifitorIcon} alt="Verifitor Icon" className="w-full h-full object-contain" />
                         </div>
-                        {!isCollapsed && (
-                            <div className="flex flex-col text-left overflow-hidden">
-                                <span className="font-black text-[17px] tracking-tight text-gray-900 leading-tight">VeriFitor</span>
-                                <span className="text-[10px] uppercase tracking-wider font-extrabold text-blue-600 leading-tight">
-                                    {userRole === 'super admin' ? 'Super Admin' : 'Registrar'}
-                                </span>
-                            </div>
-                        )}
-                    </div>
+                    ) : (
+                        <img
+                            src={verifitorLogo}
+                            alt="Verifitor"
+                            className="w-full max-w-[170px] object-contain transition-all duration-300 hover:scale-105"
+                        />
+                    )}
                 </div>
 
-                {/* 3D Floating Navigation Items */}
-                <nav className="flex-1 px-3 py-4 overflow-y-auto space-y-1.5 custom-scrollbar" aria-label="Main navigation">
+                {/* Navigation Items in Original Dark Colors with 3D Floating Elevation */}
+                <nav className="flex-1 px-3.5 py-5 overflow-y-auto space-y-2 custom-scrollbar" aria-label="Main navigation">
                     {menuItems.map((item) => (
                         <NavLink
                             key={item.path}
@@ -228,25 +223,22 @@ const Layout = ({ children }) => {
                                 }
                             }}
                             className={({ isActive }) =>
-                                `group relative flex items-center gap-3.5 px-3.5 py-3 rounded-2xl font-semibold text-[13.5px] transition-all duration-200 ${
+                                `group relative flex items-center gap-3.5 px-3.5 py-3 rounded-2xl font-bold text-[14px] transition-all duration-200 ${
                                     isActive
-                                        ? 'bg-[#111827] text-white shadow-lg shadow-black/15 scale-[1.01]'
-                                        : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100/80 hover:shadow-2xs active:scale-[0.98]'
+                                        ? 'bg-[#374151] text-white shadow-md shadow-black/30 border-l-4 border-white translate-x-1'
+                                        : 'text-[#9ba4b5] hover:text-white hover:bg-[#374151]/80 hover:shadow-xs'
                                 } ${isCollapsed ? 'justify-center px-0' : ''}`
                             }
                         >
                             {({ isActive }) => (
                                 <>
                                     <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 ${
-                                        isActive ? 'text-white' : 'text-gray-500 group-hover:text-gray-900'
+                                        isActive ? 'text-white' : 'text-[#9ba4b5] group-hover:text-white'
                                     }`}>
-                                        <i className={`${item.icon} ${isCollapsed ? 'text-[17px]' : 'text-[15px]'}`}></i>
+                                        <i className={`${item.icon} ${isCollapsed ? 'text-[18px]' : 'text-[16px]'}`}></i>
                                     </div>
                                     {!isCollapsed && (
-                                        <span className="tracking-tight truncate">{item.label}</span>
-                                    )}
-                                    {isActive && (
-                                        <span className="absolute left-1.5 w-1 h-5 bg-blue-500 rounded-full shadow-sm shadow-blue-400"></span>
+                                        <span className="tracking-wide truncate">{item.label}</span>
                                     )}
                                 </>
                             )}
@@ -254,11 +246,11 @@ const Layout = ({ children }) => {
                     ))}
                 </nav>
 
-                {/* Bottom Dock Actions (Collapse & Logout) */}
-                <div className="p-3 border-t border-gray-100/80 space-y-1.5">
+                {/* Bottom Dock Actions (Collapse & Logout) with Original Styling */}
+                <div className="p-3.5 border-t border-slate-700/60 space-y-2">
                     <button 
                         onClick={toggleSidebar}
-                        className="hidden md:flex w-full items-center justify-center p-2.5 rounded-2xl text-gray-400 hover:text-gray-700 hover:bg-gray-100/80 transition-all focus:outline-none"
+                        className="hidden md:flex w-full items-center justify-center p-2 rounded-xl text-[#9ba4b5] hover:text-white hover:bg-[#374151]/80 transition-all focus:outline-none"
                         title={isCollapsed ? "Expand Dock" : "Collapse Dock"}
                     >
                         <i className={`fa-solid ${isCollapsed ? 'fa-angles-right' : 'fa-angles-left'} text-[13px]`}></i>
@@ -266,16 +258,16 @@ const Layout = ({ children }) => {
 
                     <button 
                         onClick={handleLogout}
-                        className={`w-full flex items-center gap-3 p-2.5 rounded-2xl text-red-600 hover:bg-red-50 font-bold text-[13px] transition-all ${isCollapsed ? 'justify-center px-0' : 'px-3.5'}`}
-                        title={isCollapsed ? "Sign Out" : ""}
+                        className={`w-full bg-white text-[#2c3543] py-2.5 rounded-2xl font-bold flex justify-center items-center gap-2 hover:bg-gray-100 shadow-md transition-all active:scale-[0.98] ${isCollapsed ? 'px-0' : 'px-4'}`}
+                        title={isCollapsed ? "Logout" : ""}
                     >
-                        <i className="fa-solid fa-arrow-right-from-bracket text-[15px]"></i>
-                        {!isCollapsed && <span>Sign Out</span>}
+                        <i className="fa-solid fa-arrow-right-from-bracket text-base"></i>
+                        {!isCollapsed && <span className="text-[14px]">Logout</span>}
                     </button>
                 </div>
             </aside>
 
-            <div className={`flex flex-col w-full ${isCollapsed ? 'md:ml-[92px] md:w-[calc(100%-92px)]' : 'md:ml-[264px] md:w-[calc(100%-264px)]'} transition-all duration-300 main-content`}>
+            <div className={`flex flex-col w-full ${isCollapsed ? 'md:ml-[96px] md:w-[calc(100%-96px)]' : 'md:ml-[280px] md:w-[calc(100%-280px)]'} transition-all duration-300 main-content`}>
                 <header className="flex items-center justify-between px-8 bg-[#547794] m-4 rounded-xl sticky top-4 z-[990] h-[72px] shadow-sm">
                     <div className="flex items-center gap-4">
                         <button
