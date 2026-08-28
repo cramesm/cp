@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import Breadcrumb from './Breadcrumb';
 import verifitorLogo from '../assets/verifitor_logo.png';
 import verifitorIcon from '../assets/logo-verifitor.png';
 import api from '../api';
@@ -327,7 +326,6 @@ const Layout = ({ children }) => {
                 </div>
 
                 <main id="main-content" className="flex-1 w-full px-3 sm:px-4 py-1.5">
-                    <Breadcrumb />
                     <motion.div
                         initial={{ opacity: 0, y: 6 }}
                         animate={{ opacity: 1, y: 0 }}
