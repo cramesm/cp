@@ -195,35 +195,39 @@ const Layout = ({ children }) => {
             } ${isCollapsed ? 'md:w-[76px]' : 'md:w-[245px]'}`}>
                 
                 {/* White Logo Container with 3D inset/border */}
-                <div className={`h-[96px] bg-white flex items-center justify-center overflow-hidden transition-all duration-300 rounded-t-[24px] shadow-xs border-b border-gray-100 ${isCollapsed ? 'px-2' : 'px-5'}`}>
+                <div className={`h-[96px] bg-white flex items-center justify-center overflow-hidden transition-all duration-300 rounded-t-[24px] shadow-xs border-b border-gray-100 select-none ${isCollapsed ? 'px-2' : 'px-5'}`}>
                     {isCollapsed ? (
-                        <div className="w-[40px] h-[40px] flex items-center justify-center flex-shrink-0 transition-transform duration-300 hover:scale-105">
-                            <img src={verifitorIcon} alt="Verifitor Icon" className="w-full h-full object-contain" />
+                        <div className="w-[40px] h-[40px] flex items-center justify-center flex-shrink-0 transition-transform duration-300 hover:scale-105 select-none">
+                            <img src={verifitorIcon} alt="Verifitor Icon" draggable="false" onDragStart={(e) => e.preventDefault()} className="w-full h-full object-contain pointer-events-none" />
                         </div>
                     ) : (
                         <img
                             src={verifitorLogo}
                             alt="Verifitor"
-                            className="w-full max-w-[155px] object-contain transition-all duration-300 hover:scale-105"
+                            draggable="false"
+                            onDragStart={(e) => e.preventDefault()}
+                            className="w-full max-w-[155px] object-contain transition-all duration-300 hover:scale-105 pointer-events-none"
                         />
                     )}
                 </div>
 
                 {/* Navigation Items in Original Dark Colors with Tactile 3D Shaped Buttons */}
-                <nav className="flex-1 px-2.5 py-3 overflow-y-auto space-y-1.5 custom-scrollbar" aria-label="Main navigation">
+                <nav className="flex-1 px-2.5 py-3 overflow-y-auto space-y-1.5 custom-scrollbar select-none" aria-label="Main navigation">
                     {menuItems.map((item) => (
                         <NavLink
                             key={item.path}
                             to={item.path}
                             end={item.path === '/dashboard'}
                             title={isCollapsed ? item.label : ''}
+                            draggable="false"
+                            onDragStart={(e) => e.preventDefault()}
                             onClick={() => {
                                 if (window.innerWidth < 768) {
                                     setIsMobileOpen(false);
                                 }
                             }}
                             className={({ isActive }) =>
-                                `group relative flex items-center gap-3 px-3 py-2 rounded-xl font-bold text-[13px] transition-all duration-200 select-none ${
+                                `group relative flex items-center gap-3 px-3 py-2 rounded-xl font-bold text-[13px] transition-all duration-200 select-none cursor-pointer ${
                                     isActive
                                         ? 'bg-gradient-to-b from-[#3e4c5e] to-[#2d3846] text-white border-t border-white/20 border-b-2 border-black/40 shadow-[0_4px_12px_rgba(0,0,0,0.35),inset_0_1px_1px_rgba(255,255,255,0.2)] scale-[1.01]'
                                         : 'bg-[#252d3a]/60 text-[#9ba4b5] border-t border-white/5 border-b border-black/20 hover:bg-gradient-to-b hover:from-[#354253] hover:to-[#293442] hover:text-white hover:shadow-[0_3px_10px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 active:translate-y-0.5'

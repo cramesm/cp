@@ -19,6 +19,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Disable native browser link/image dragging badge */
+a, button, [role="button"], img, nav, .sidebar {
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+
 /* Modern slim scrollbar rules */
 html {
   overflow-y: auto;
