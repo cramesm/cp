@@ -220,9 +220,6 @@ const Dashboard = () => {
                                                         ? `${tx.referenceNumber || tx.requestId || '1786296589063-932'}` 
                                                         : `TXN-${tx.referenceNumber || tx.requestId || '1786296589063-932'}`}
                                                 </span>
-                                                <span className="text-[10px] text-slate-400 font-medium block">
-                                                    Block Confirmation Verified
-                                                </span>
                                             </div>
                                         </div>
                                         
@@ -235,7 +232,11 @@ const Dashboard = () => {
                                                 <span>{tx.blockchainTxHash || tx.transactionHash || '0x305babaefe2c95bae9fd86f6ba72...'}</span>
                                                 {copiedHash === (tx.blockchainTxHash || tx.transactionHash) ? <Check size={11} className="text-emerald-600" /> : <Copy size={11} className="text-slate-400" />}
                                             </span>
-                                            <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.8)]"></span>
+                                            <span className={`w-2 h-2 rounded-full ${
+                                                tx.status === 'Failed' 
+                                                    ? 'bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.8)]' 
+                                                    : 'bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.8)]'
+                                            }`}></span>
                                         </div>
                                     </div>
                                 ))
@@ -248,12 +249,14 @@ const Dashboard = () => {
                                             </div>
                                             <div>
                                                 <span className="text-[12.5px] font-extrabold text-slate-900 block">TXN-1786296589063-932</span>
-                                                <span className="text-[10px] text-slate-400 font-medium block">Block Confirmed</span>
                                             </div>
                                         </div>
-                                        <span className="font-mono text-[11px] bg-white border border-slate-200/80 px-2.5 py-0.5 rounded-full text-slate-600 truncate max-w-[160px]">
-                                            0x305babaefe2c95bae9fd86f6ba72...
-                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-mono text-[11px] bg-white border border-slate-200/80 px-2.5 py-0.5 rounded-full text-slate-600 truncate max-w-[160px]">
+                                                0x305babaefe2c95bae9fd86f6ba72...
+                                            </span>
+                                            <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.8)]"></span>
+                                        </div>
                                     </div>
                                 ))
                             )}
