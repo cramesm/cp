@@ -210,13 +210,6 @@ export default function RegistrarInformation() {
           </div>
         ) : (
           <div className="max-w-6xl mx-auto w-full space-y-4">
-            {/* Breadcrumb */}
-            <div className="flex items-center gap-2 text-[11.5px] text-slate-400 font-extrabold uppercase tracking-wider">
-              <span className="cursor-pointer hover:text-slate-900 transition-colors" onClick={() => navigate('/manage-registrar')}>Manage Staff</span>
-              <ChevronRight size={13} />
-              <span className="text-slate-900">Registrar Details</span>
-            </div>
-
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
               {/* Left Section: Info Card */}
               <div className="lg:col-span-7 space-y-4">

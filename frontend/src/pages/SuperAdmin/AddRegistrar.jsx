@@ -198,12 +198,6 @@ export default function AddRegistrar() {
         )}
 
         <div className="max-w-5xl mx-auto space-y-4">
-          <div className="flex items-center gap-2 text-[11.5px] text-slate-400 font-extrabold uppercase tracking-wider">
-            <span className="cursor-pointer hover:text-slate-900 transition-colors" onClick={() => navigate('/manage-registrar')}>Manage Registrar</span>
-            <ChevronRight size={13} />
-            <span className="text-slate-900">Add New Registrar</span>
-          </div>
-
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="space-y-4">
               <section className="bg-white p-6 rounded-[22px] shadow-[0_8px_24px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.02)] border border-slate-100/90">
