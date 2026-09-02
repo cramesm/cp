@@ -43,6 +43,17 @@ const batchEnrichRequests = async (requestsList) => {
   }
 };
 
+// Single item enrichment helper (reuses batchEnrichRequests)
+const enrichRequestWithStudentData = async (reqObj) => {
+  try {
+    const result = await batchEnrichRequests([reqObj]);
+    return result[0] || reqObj;
+  } catch (err) {
+    console.error('Error in enrichRequestWithStudentData:', err);
+    return reqObj;
+  }
+};
+
 // Get all requests (Filtered for students/alumni if authenticated, unfiltered for staff/admin)
 router.get('/', protect, async (req, res) => {
   try {
@@ -50,7 +61,7 @@ router.get('/', protect, async (req, res) => {
     
     // Apply smart role-based filtering since we now require authentication
     if (req.user && (req.user.role === 'student' || req.user.role === 'alumni')) {
-      query = { requesterEmail: req.user.email };
+      query = { email: req.user.email };
     }
 
     const requests = await Request.find(query).sort({ dateRequested: 1 }).lean();
@@ -60,20 +71,22 @@ router.get('/', protect, async (req, res) => {
     
     res.json(enrichedRequests);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching requests' });
+    console.error('Error fetching requests:', error);
+    res.status(500).json({ message: 'Error fetching requests', error: error.message });
   }
 });
 
 // Get a single request by ID
 router.get('/:id', protect, async (req, res) => {
     try {
-        const request = await Request.findOne({ requestId: req.params.id });
+        const request = await Request.findOne({ requestId: req.params.id }).lean();
         if (!request) return res.status(404).json({ message: 'Request not found' });
         
-        const enrichedRequest = await enrichRequestWithStudentData(request.toObject());
+        const enrichedRequest = await enrichRequestWithStudentData(request);
         res.json(enrichedRequest);
     } catch (error) {
-        res.status(500).json({ message: 'Error fetching request' });
+        console.error('Error fetching single request:', error);
+        res.status(500).json({ message: 'Error fetching request details' });
     }
 });
 

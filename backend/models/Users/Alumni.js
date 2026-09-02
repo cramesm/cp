@@ -62,4 +62,4 @@ alumniSchema.methods.comparePassword = async function(candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-module.exports = mongoose.model('Alumni', alumniSchema, 'alumni');
+module.exports = mongoose.models.Alumni || mongoose.model('Alumni', alumniSchema, 'alumni');
