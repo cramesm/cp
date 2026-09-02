@@ -31,7 +31,9 @@ const RequestDetails = () => {
     const [manualRejectionReason, setManualRejectionReason] = useState('');
     const [showRejectForm, setShowRejectForm] = useState(false);
     const [paymentAction, setPaymentAction] = useState('Completed');
-    const [confirmConfig, setConfirmConfig] = useState(null);
+
+    // Modals
+    const { confirmConfig, feedbackConfig, showConfirm, showFeedback, closeConfirm, closeFeedback } = useModals();
 
     // Blockchain Data State
     const [blockchainData, setBlockchainData] = useState({
@@ -43,38 +45,6 @@ const RequestDetails = () => {
         yearGraduated: new Date().getFullYear(),
     });
     const [blockchainResult, setBlockchainResult] = useState(null);
-
-    // Bug 4: Double-click guard using a ref-like flag
-    let isExecuting = false;
-    const showConfirm = ({ title, message, onConfirm, type = 'info', confirmText = 'Confirm', cancelText = 'Cancel' }) => {
-        setConfirmConfig({
-            title,
-            message,
-            onConfirm: async () => {
-                if (isExecuting) return; // Bug 4: prevent double-click
-                isExecuting = true;
-                setConfirmConfig(prev => ({ ...prev, isLoading: true }));
-                try {
-                    await onConfirm();
-                } catch (err) {
-                    console.error(err);
-                } finally {
-                    isExecuting = false;
-                    setConfirmConfig(null);
-                }
-            },
-            type,
-            confirmText,
-            cancelText,
-            isLoading: false
-        });
-    };
-
-    // Feedback Modal
-    const [feedbackConfig, setFeedbackConfig] = useState(null);
-    const showFeedback = ({ title, message, type = 'error' }) => {
-        setFeedbackConfig({ title, message, type });
-    };
 
     const fetchData = async () => {
         try {
@@ -280,7 +250,7 @@ const RequestDetails = () => {
                                     status === 'In Process' ? 'bg-purple-500' :
                                     status === 'Released' ? 'bg-emerald-500' :
                                     'bg-red-500'
-                                }`}></span>
+                                }}`}></span>
                                 <span>{status}</span>
                             </span>
                         </div>
@@ -306,7 +276,7 @@ const RequestDetails = () => {
                                     <p className="text-red-800 bg-red-100/50 p-3 rounded-lg border border-red-100 text-sm">
                                         <span className="font-bold">Reason:</span> {
                                             requestData.rejectionReason === 'incomplete' ? 'Incomplete Requirements' :
-                                            requestData.rejectionReason === 'invalid' ? 'Invalid Information' :
+                                             requestData.rejectionReason === 'invalid' ? 'Invalid Information' :
                                             requestData.rejectionReason === 'unpaid' ? 'Payment Issue' :
                                             requestData.rejectionReason
                                         }

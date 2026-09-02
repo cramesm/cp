@@ -38,38 +38,8 @@ const StudentManagement = () => {
     const [adding, setAdding] = useState(false);
     const [addError, setAddError] = useState(null);
 
-    // Confirm Modal
-    const [confirmConfig, setConfirmConfig] = useState(null);
-    let isExecuting = false;
-    const showConfirm = ({ title, message, onConfirm, type = 'info', confirmText = 'Confirm', cancelText = 'Cancel' }) => {
-        setConfirmConfig({
-            title,
-            message,
-            onConfirm: async () => {
-                if (isExecuting) return;
-                isExecuting = true;
-                setConfirmConfig(prev => ({ ...prev, isLoading: true }));
-                try {
-                    await onConfirm();
-                } catch (err) {
-                    console.error(err);
-                } finally {
-                    isExecuting = false;
-                    setConfirmConfig(null);
-                }
-            },
-            type,
-            confirmText,
-            cancelText,
-            isLoading: false
-        });
-    };
-
-    // Feedback Modal
-    const [feedbackConfig, setFeedbackConfig] = useState(null);
-    const showFeedback = ({ title, message, type = 'error' }) => {
-        setFeedbackConfig({ title, message, type });
-    };
+    // Modals
+    const { confirmConfig, feedbackConfig, showConfirm, showFeedback, closeConfirm, closeFeedback } = useModals();
 
     const fetchUsers = async () => {
         try {

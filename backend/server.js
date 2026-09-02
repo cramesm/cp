@@ -39,16 +39,24 @@ app.use(helmet({
 // Apply Global Rate Limiter
 app.use('/api', globalLimiter);
 
-// Allow CORS dynamically for all Vercel environments
+// Allow CORS dynamically for all Vercel environments and localhost
 const corsOptions = {
   origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+
     const allowedOrigins = [
       process.env.FRONTEND_URL,
       'https://verifitor-frontend.vercel.app',
       'http://localhost:3000',
       'http://localhost:5173'
-    ];
-    if (!origin || allowedOrigins.includes(origin)) {
+    ].filter(Boolean);
+
+    const isAllowed = allowedOrigins.includes(origin) || 
+                      origin.endsWith('.vercel.app') ||
+                      origin.includes('localhost') || 
+                      origin.includes('127.0.0.1');
+
+    if (isAllowed) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
