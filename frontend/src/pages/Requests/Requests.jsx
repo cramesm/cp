@@ -54,6 +54,7 @@ const Requests = () => {
                         api.get('/v1/alumni').catch(() => ({ data: { data: [] } }))
                     ]);
                     const users = [...(stuRes.data?.data || []), ...(alumRes.data?.data || [])];
+                    const userMap = {};
                     users.forEach(u => {
                         if (u.email) userMap[u.email] = u;
                     });
