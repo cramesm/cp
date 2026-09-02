@@ -4,7 +4,7 @@ const multer = require('multer');
 const path = require('path');
 const Transaction = require('../models/Transaction');
 const ActivityLog = require('../models/ActivityLog');
-const { protect } = require('../middleware/authMiddleware');
+const { protect, superAdminOnly } = require('../middleware/authMiddleware');
 const { uploadStream } = require('../utils/cloudinary');
 
 // --- Multer Configuration for Receipt Uploads ---
@@ -394,6 +394,68 @@ router.put('/refunds/:id/process', protect, async (req, res) => {
   } catch (error) {
     console.error('Process refund error:', error);
     res.status(500).json({ message: 'Error processing refund request' });
+  }
+});
+
+// Bulk delete transactions (Super Admin only)
+router.post('/bulk-delete', protect, superAdminOnly, async (req, res) => {
+  try {
+    const { transactionIds } = req.body;
+    if (!Array.isArray(transactionIds) || transactionIds.length === 0) {
+      return res.status(400).json({ success: false, message: 'Please provide an array of transaction IDs to delete.' });
+    }
+
+    const result = await Transaction.deleteMany({
+      $or: [
+        { transactionId: { $in: transactionIds } },
+        { _id: { $in: transactionIds.filter(id => id && id.match(/^[0-9a-fA-F]{24}$/)) } }
+      ]
+    });
+
+    await ActivityLog.create({
+      userEmail: req.user.email,
+      userName: req.user.name || 'Super Admin',
+      action: 'Bulk Delete Transactions',
+      type: 'Transaction',
+      status: 'Successful',
+      details: `Bulk deleted ${result.deletedCount} transaction record(s).`
+    });
+
+    res.json({ success: true, message: `Successfully deleted ${result.deletedCount} transaction(s).`, deletedCount: result.deletedCount });
+  } catch (error) {
+    console.error('Error bulk deleting transactions:', error);
+    res.status(500).json({ success: false, message: 'Failed to bulk delete transactions.', error: error.message });
+  }
+});
+
+// Delete single transaction (Super Admin only)
+router.delete('/:id', protect, superAdminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const transaction = await Transaction.findOneAndDelete({
+      $or: [
+        { transactionId: id },
+        ...(id.match(/^[0-9a-fA-F]{24}$/) ? [{ _id: id }] : [])
+      ]
+    });
+
+    if (!transaction) {
+      return res.status(404).json({ success: false, message: 'Transaction not found.' });
+    }
+
+    await ActivityLog.create({
+      userEmail: req.user.email,
+      userName: req.user.name || 'Super Admin',
+      action: 'Delete Transaction',
+      type: 'Transaction',
+      status: 'Successful',
+      details: `Deleted transaction ${transaction.transactionId} (${transaction.payerName || transaction.name || 'User'}).`
+    });
+
+    res.json({ success: true, message: `Transaction ${transaction.transactionId} deleted successfully.` });
+  } catch (error) {
+    console.error('Error deleting transaction:', error);
+    res.status(500).json({ success: false, message: 'Failed to delete transaction.', error: error.message });
   }
 });
 

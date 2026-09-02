@@ -246,6 +246,99 @@ getMyTransactions: async (req, res) => {
                 error: error.message,
             });
         }
+    },
+
+    /* BULK DELETE BLOCKCHAIN TRANSACTIONS (Super Admin only) */
+    bulkDeleteTransactions: async (req, res) => {
+        try {
+            const { transactionIds, referenceNumbers } = req.body;
+            const idsToDelete = transactionIds || referenceNumbers;
+
+            if (!Array.isArray(idsToDelete) || idsToDelete.length === 0) {
+                return res.status(400).json({ success: false, message: "Please provide an array of transaction IDs or reference numbers to delete." });
+            }
+
+            const objectIds = idsToDelete.filter(id => typeof id === 'string' && id.match(/^[0-9a-fA-F]{24}$/));
+
+            const result = await BlockchainTransaction.deleteMany({
+                $or: [
+                    { referenceNumber: { $in: idsToDelete } },
+                    { _id: { $in: objectIds } }
+                ]
+            });
+
+            try {
+                const ActivityLog = require("../../models/ActivityLog");
+                await ActivityLog.create({
+                    userEmail: req.user?.email || 'admin@verifitor.com',
+                    userName: req.user?.name || 'Super Admin',
+                    action: 'Bulk Delete Blockchain Transactions',
+                    type: 'Blockchain',
+                    status: 'Successful',
+                    details: `Bulk deleted ${result.deletedCount} blockchain transaction record(s).`
+                });
+            } catch (logErr) {
+                console.warn('Failed to create activity log for bulk blockchain deletion:', logErr.message);
+            }
+
+            return res.json({
+                success: true,
+                message: `Successfully deleted ${result.deletedCount} blockchain transaction(s).`,
+                deletedCount: result.deletedCount
+            });
+        } catch (error) {
+            console.error("Bulk delete blockchain transactions error:", error);
+            return res.status(500).json({
+                success: false,
+                message: "Failed to bulk delete blockchain transactions",
+                error: error.message
+            });
+        }
+    },
+
+    /* DELETE SINGLE BLOCKCHAIN TRANSACTION (Super Admin only) */
+    deleteTransaction: async (req, res) => {
+        try {
+            const { id } = req.params;
+
+            const isObjectId = typeof id === 'string' && id.match(/^[0-9a-fA-F]{24}$/);
+            const transaction = await BlockchainTransaction.findOneAndDelete({
+                $or: [
+                    { referenceNumber: id },
+                    ...(isObjectId ? [{ _id: id }] : [])
+                ]
+            });
+
+            if (!transaction) {
+                return res.status(404).json({ success: false, message: "Blockchain transaction not found." });
+            }
+
+            try {
+                const ActivityLog = require("../../models/ActivityLog");
+                await ActivityLog.create({
+                    userEmail: req.user?.email || 'admin@verifitor.com',
+                    userName: req.user?.name || 'Super Admin',
+                    action: 'Delete Blockchain Transaction',
+                    type: 'Blockchain',
+                    status: 'Successful',
+                    details: `Deleted blockchain transaction ${transaction.referenceNumber} (${transaction.nameOfStudent || 'User'}).`
+                });
+            } catch (logErr) {
+                console.warn('Failed to create activity log for blockchain deletion:', logErr.message);
+            }
+
+            return res.json({
+                success: true,
+                message: `Blockchain transaction ${transaction.referenceNumber} deleted successfully.`
+            });
+        } catch (error) {
+            console.error("Delete blockchain transaction error:", error);
+            return res.status(500).json({
+                success: false,
+                message: "Failed to delete blockchain transaction",
+                error: error.message
+            });
+        }
     }
 };
 

@@ -3,7 +3,7 @@ const router = express.Router();
 const crypto = require('crypto');
 const Request = require('../models/Request');
 const ActivityLog = require('../models/ActivityLog');
-const { protect } = require('../middleware/authMiddleware');
+const { protect, superAdminOnly } = require('../middleware/authMiddleware');
 
 const Student = require('../models/Users/Student');
 const Alumni = require('../models/Users/Alumni');
@@ -261,6 +261,68 @@ router.post('/', protect, async (req, res) => {
   } catch (error) {
     console.error('Error creating request:', error);
     res.status(500).json({ message: 'Error creating request', error: error.message });
+  }
+});
+
+// Bulk delete requests (Super Admin only)
+router.post('/bulk-delete', protect, superAdminOnly, async (req, res) => {
+  try {
+    const { requestIds } = req.body;
+    if (!Array.isArray(requestIds) || requestIds.length === 0) {
+      return res.status(400).json({ success: false, message: 'Please provide an array of request IDs to delete.' });
+    }
+
+    const result = await Request.deleteMany({
+      $or: [
+        { requestId: { $in: requestIds } },
+        { _id: { $in: requestIds.filter(id => id && id.match(/^[0-9a-fA-F]{24}$/)) } }
+      ]
+    });
+
+    await ActivityLog.create({
+      userEmail: req.user.email,
+      userName: req.user.name || 'Super Admin',
+      action: 'Bulk Delete Requests',
+      type: 'Request',
+      status: 'Successful',
+      details: `Bulk deleted ${result.deletedCount} document request(s).`
+    });
+
+    res.json({ success: true, message: `Successfully deleted ${result.deletedCount} request(s).`, deletedCount: result.deletedCount });
+  } catch (error) {
+    console.error('Error bulk deleting requests:', error);
+    res.status(500).json({ success: false, message: 'Failed to bulk delete requests.', error: error.message });
+  }
+});
+
+// Delete single request (Super Admin only)
+router.delete('/:id', protect, superAdminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const request = await Request.findOneAndDelete({
+      $or: [
+        { requestId: id },
+        ...(id.match(/^[0-9a-fA-F]{24}$/) ? [{ _id: id }] : [])
+      ]
+    });
+
+    if (!request) {
+      return res.status(404).json({ success: false, message: 'Request not found.' });
+    }
+
+    await ActivityLog.create({
+      userEmail: req.user.email,
+      userName: req.user.name || 'Super Admin',
+      action: 'Delete Request',
+      type: request.documentType || 'Request',
+      status: 'Successful',
+      details: `Deleted request ${request.requestId} for ${request.name || 'User'}.`
+    });
+
+    res.json({ success: true, message: `Request ${request.requestId} deleted successfully.` });
+  } catch (error) {
+    console.error('Error deleting request:', error);
+    res.status(500).json({ success: false, message: 'Failed to delete request.', error: error.message });
   }
 });
 

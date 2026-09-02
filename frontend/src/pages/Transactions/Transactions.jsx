@@ -2,11 +2,13 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Layout from '../../components/Layout';
 import ConfirmModal from '../../components/ConfirmModal';
+import FeedbackModal from '../../components/FeedbackModal';
 import FilterDrawer from '../../components/FilterDrawer';
 import ActiveFilterChips from '../../components/ActiveFilterChips';
 import api from '../../api';
 import TableSkeleton from '../../components/TableSkeleton';
-import { X, ZoomIn, CheckCircle, Image as ImageIcon, Send, AlertCircle, RefreshCw, Receipt, Eye, XCircle, Undo2, SlidersHorizontal, ArrowDownAZ, ArrowUpZA } from 'lucide-react';
+import { useModals } from '../../hooks/useModals';
+import { X, ZoomIn, CheckCircle, Image as ImageIcon, Send, AlertCircle, RefreshCw, Receipt, Eye, XCircle, Undo2, SlidersHorizontal, ArrowDownAZ, ArrowUpZA, Trash2 } from 'lucide-react';
 
 const API_BASE = (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : '') || 'http://127.0.0.1:5000';
 
@@ -15,6 +17,13 @@ const Transactions = () => {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'payments'); // 'payments' | 'refunds'
+
+  // Super Admin Check & Selection States
+  const userRole = (localStorage.getItem('userRole') || '').toLowerCase();
+  const isSuperAdmin = userRole === 'super admin';
+  const [selectedTxIds, setSelectedTxIds] = useState([]);
+  const [selectedRefundIds, setSelectedRefundIds] = useState([]);
+  const { confirmConfig, feedbackConfig, showConfirm, showFeedback, closeConfirm, closeFeedback } = useModals();
 
   // Refund states
   const [refunds, setRefunds] = useState([]);
@@ -60,20 +69,20 @@ const Transactions = () => {
           return prev;
         });
       }
-    } catch (error) {
-      console.error("Error fetching transactions:", error);
+    } catch (err) {
+      console.error('Error fetching transactions:', err);
     } finally {
       setLoading(false);
     }
   };
 
   const fetchRefunds = async () => {
-    setRefundsLoading(true);
     try {
-      const res = await api.get('/transactions/refunds');
-      setRefunds(res.data || []);
-    } catch (error) {
-      console.error("Error fetching refunds:", error);
+      setRefundsLoading(true);
+      const res = await api.get('/refunds');
+      setRefunds(res.data?.refunds || []);
+    } catch (err) {
+      console.error('Error fetching refunds:', err);
     } finally {
       setRefundsLoading(false);
     }
@@ -83,8 +92,8 @@ const Transactions = () => {
 
   useEffect(() => {
     const fetchUsers = async () => {
-      const userRole = localStorage.getItem('userRole') || '';
-      if (userRole.toLowerCase() !== 'super admin') return;
+      const role = localStorage.getItem('userRole') || '';
+      if (role.toLowerCase() !== 'super admin') return;
 
       try {
         const [stuRes, alumRes] = await Promise.all([
@@ -106,125 +115,253 @@ const Transactions = () => {
   useEffect(() => {
     const tab = searchParams.get('tab');
     if (tab) setActiveTab(tab);
-    
     const status = searchParams.get('status');
     if (status) setFilterStatus(status);
   }, [searchParams]);
 
-  const triggerToast = (message, type = 'info') => {
-    setToast({ show: true, message, type });
-    setTimeout(() => setToast({ show: false, message: '', type: 'info' }), 4000);
+  // --- Deletion Handlers for Transactions ---
+  const handleDeleteSingleTx = (tx) => {
+    const id = tx.transactionId || tx._id;
+    showConfirm({
+      title: 'Delete Payment Transaction',
+      message: `Are you sure you want to permanently delete transaction "${tx.transactionId}" (${tx.payerName || tx.name || 'User'})? This action cannot be undone.`,
+      type: 'danger',
+      confirmText: 'Delete Payment',
+      onConfirm: async () => {
+        try {
+          await api.delete(`/transactions/${id}`);
+          setTransactions(prev => prev.filter(t => t.transactionId !== tx.transactionId && t._id !== tx._id));
+          setSelectedTxIds(prev => prev.filter(x => x !== tx.transactionId && x !== tx._id));
+          showFeedback({
+            title: 'Payment Deleted',
+            message: `Transaction ${tx.transactionId} has been permanently deleted.`,
+            type: 'success'
+          });
+        } catch (err) {
+          console.error('Error deleting transaction:', err);
+          showFeedback({
+            title: 'Deletion Failed',
+            message: err.response?.data?.message || 'Failed to delete transaction.',
+            type: 'error'
+          });
+        }
+      }
+    });
   };
 
-  const handleVerifyAction = async (type) => {
-    if (!adminNote.trim() && type === 'Needs Update') {
-      setError('Please enter remarks to send to the student/alumni.');
-      return;
-    }
+  const handleBulkDeleteTx = () => {
+    if (selectedTxIds.length === 0) return;
+    const count = selectedTxIds.length;
+    showConfirm({
+      title: 'Bulk Delete Payments',
+      message: `Are you sure you want to permanently delete ${count} selected payment transaction(s)? This action cannot be undone.`,
+      type: 'danger',
+      confirmText: `Delete ${count} Payments`,
+      onConfirm: async () => {
+        try {
+          const res = await api.post('/transactions/bulk-delete', { transactionIds: selectedTxIds });
+          setTransactions(prev => prev.filter(t => !selectedTxIds.includes(t.transactionId) && !selectedTxIds.includes(t._id)));
+          setSelectedTxIds([]);
+          showFeedback({
+            title: 'Bulk Deletion Completed',
+            message: res.data?.message || `Successfully deleted ${count} transaction(s).`,
+            type: 'success'
+          });
+        } catch (err) {
+          console.error('Error bulk deleting transactions:', err);
+          showFeedback({
+            title: 'Bulk Deletion Failed',
+            message: err.response?.data?.message || 'Failed to delete selected transactions.',
+            type: 'error'
+          });
+        }
+      }
+    });
+  };
 
+  // --- Deletion Handlers for Refunds ---
+  const handleDeleteSingleRefund = (refund) => {
+    const id = refund.refundId || refund._id;
+    showConfirm({
+      title: 'Delete Refund Record',
+      message: `Are you sure you want to permanently delete refund record "${refund.refundId || refund._id}"? This action cannot be undone.`,
+      type: 'danger',
+      confirmText: 'Delete Refund',
+      onConfirm: async () => {
+        try {
+          await api.delete(`/refunds/${id}`);
+          setRefunds(prev => prev.filter(r => r.refundId !== refund.refundId && r._id !== refund._id));
+          setSelectedRefundIds(prev => prev.filter(x => x !== refund.refundId && x !== refund._id));
+          showFeedback({
+            title: 'Refund Record Deleted',
+            message: `Refund ${refund.refundId || refund._id} has been permanently deleted.`,
+            type: 'success'
+          });
+        } catch (err) {
+          console.error('Error deleting refund:', err);
+          showFeedback({
+            title: 'Deletion Failed',
+            message: err.response?.data?.message || 'Failed to delete refund record.',
+            type: 'error'
+          });
+        }
+      }
+    });
+  };
+
+  const handleBulkDeleteRefunds = () => {
+    if (selectedRefundIds.length === 0) return;
+    const count = selectedRefundIds.length;
+    showConfirm({
+      title: 'Bulk Delete Refunds',
+      message: `Are you sure you want to permanently delete ${count} selected refund record(s)? This action cannot be undone.`,
+      type: 'danger',
+      confirmText: `Delete ${count} Refunds`,
+      onConfirm: async () => {
+        try {
+          const res = await api.post('/refunds/bulk-delete', { refundIds: selectedRefundIds });
+          setRefunds(prev => prev.filter(r => !selectedRefundIds.includes(r.refundId) && !selectedRefundIds.includes(r._id)));
+          setSelectedRefundIds([]);
+          showFeedback({
+            title: 'Bulk Deletion Completed',
+            message: res.data?.message || `Successfully deleted ${count} refund record(s).`,
+            type: 'success'
+          });
+        } catch (err) {
+          console.error('Error bulk deleting refunds:', err);
+          showFeedback({
+            title: 'Bulk Deletion Failed',
+            message: err.response?.data?.message || 'Failed to delete selected refund records.',
+            type: 'error'
+          });
+        }
+      }
+    });
+  };
+
+  const triggerToast = (message, type = 'info') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => {
+      setToast({ show: false, message: '', type: 'info' });
+    }, 4000);
+  };
+
+  const handleVerify = async (status) => {
+    if (!selectedTx) return;
     try {
-      const statusMap = {
-        'Approve': 'Completed',
-        'Needs Update': 'Needs Update',
-        'Reject': 'Rejected'
-      };
-
-      await api.put(`/transactions/${selectedTx.transactionId}/verify`, {
-        status: statusMap[type],
+      const response = await api.put(`/transactions/${selectedTx.transactionId}/verify`, {
+        status,
         adminRemarks: adminNote
       });
 
-      const messages = {
-        'Approve': `Payment approved for ${selectedTx.name}.`,
-        'Needs Update': `Update requested for ${selectedTx.name}.`,
-        'Reject': `Payment rejected for ${selectedTx.name}.`
-      };
-
-      triggerToast(messages[type], 'success');
-      setSelectedTx(null);
-      setAdminNote('');
-      setError('');
-      fetchTransactions();
+      if (response.data.success) {
+        setTransactions(prev => prev.map(tx =>
+          tx.transactionId === selectedTx.transactionId
+            ? { ...tx, status, adminRemarks: adminNote }
+            : tx
+        ));
+        setSelectedTx(null);
+        setAdminNote('');
+        triggerToast(`Payment marked as ${status}`, 'success');
+      }
     } catch (err) {
       console.error('Verification error:', err);
-      triggerToast('Failed to update payment. Please try again.', 'error');
+      setError(err.response?.data?.message || 'Failed to update transaction status.');
     }
   };
 
-  // Refund processing
+  // Open confirmation modal for refund processing
   const handleProcessRefund = (refundId, status) => {
     setRefundConfirmModal({ isOpen: true, refundId, status });
   };
 
+  // Execute refund action after confirmation
   const executeProcessRefund = async () => {
     const { refundId, status } = refundConfirmModal;
-    if (!refundId || refundActionLoading) return;
-    setRefundActionLoading(true);
+    if (!refundId || !status) return;
+
     try {
-      await api.put(`/transactions/refunds/${refundId}/process`, {
+      setRefundActionLoading(true);
+      const res = await api.put(`/transactions/refunds/${refundId}/process`, {
         status,
         adminRemarks: refundRemarks
       });
-      triggerToast(`Refund ${status.toLowerCase()} successfully.`, 'success');
-      setSelectedRefund(null);
-      setRefundRemarks('');
-      fetchRefunds();
-      fetchTransactions(); // Refresh in case transaction status changed
+
+      if (res.data.success) {
+        setRefunds(prev => prev.map(r =>
+          (r.refundId === refundId || r._id === refundId)
+            ? { ...r, status, processedBy: 'admin', processedAt: new Date() }
+            : r
+        ));
+
+        // Update corresponding transaction status
+        if (status === 'Approved') {
+          const targetRefund = refunds.find(r => r.refundId === refundId || r._id === refundId);
+          if (targetRefund) {
+            setTransactions(prev => prev.map(t =>
+              t.transactionId === targetRefund.transactionId
+                ? { ...t, status: 'Refunded' }
+                : t
+            ));
+          }
+        }
+
+        setSelectedRefund(null);
+        setRefundRemarks('');
+        setRefundConfirmModal({ isOpen: false, refundId: null, status: null });
+        triggerToast(`Refund request ${status.toLowerCase()} successfully!`, 'success');
+      }
     } catch (err) {
-      console.error('Refund processing error:', err);
-      triggerToast('Failed to process refund. Please try again.', 'error');
+      console.error('Process refund error:', err);
+      triggerToast(err.response?.data?.message || 'Failed to process refund', 'error');
     } finally {
       setRefundActionLoading(false);
-      setRefundConfirmModal({ isOpen: false, refundId: null, status: null });
     }
   };
 
-  // Filter Logic — Bug 8 fix: end date set to end-of-day
+  // Filter & Sort Logic
   const filteredTransactions = useMemo(() => {
-    return transactions.filter((tx) => {
-      const matchesSearch =
-        tx.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        tx.transactionId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        tx.requestId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        tx.payerName?.toLowerCase().includes(searchTerm.toLowerCase());
+    return transactions.filter(tx => {
+      const name = (tx.payerName || tx.name || '').toLowerCase();
+      const id = (tx.transactionId || '').toLowerCase();
+      const ref = (tx.referenceNumber || '').toLowerCase();
+      const payer = (tx.payerEmail || '').toLowerCase();
+      const search = searchTerm.toLowerCase();
 
-      const matchesStatus = filterStatus === 'All Status' || tx.status === filterStatus;
+      const matchesSearch = name.includes(search) || id.includes(search) || ref.includes(search) || payer.includes(search);
       const matchesMode = filterPaymentMode === 'All Modes' || tx.paymentMode === filterPaymentMode;
+      const matchesStatus = filterStatus === 'All Status' || tx.status === filterStatus;
 
       const user = userMap[tx.payerEmail] || {};
-      const userRole = user.role || 'student';
-      const programLevel = user.programLevel || 'Bachelors';
-      const userStatus = user.status || 'Active';
+      const matchesRole = filterUserRole === 'All' || (user.role || 'student').toLowerCase() === filterUserRole.toLowerCase();
+      const matchesProgram = filterProgram === 'All' || (user.programLevel || 'Bachelors').toLowerCase() === filterProgram.toLowerCase();
+      const matchesUserStatus = filterUserStatus === 'All' || (user.status || 'Active').toLowerCase() === filterUserStatus.toLowerCase();
 
-      const matchesRole = filterUserRole === 'All' || userRole.toLowerCase() === filterUserRole.toLowerCase();
-      const matchesProgram = filterProgram === 'All' || programLevel === filterProgram;
-      const matchesUserStatus = filterUserStatus === 'All' || userStatus === filterUserStatus;
+      let matchesDate = true;
+      if (tx.date) {
+        const txDate = new Date(tx.date).toLocaleDateString('en-CA');
+        if (startDate && txDate < startDate) matchesDate = false;
+        if (endDate && txDate > endDate) matchesDate = false;
+      }
 
-      const txDate = new Date(tx.date);
-      const start = startDate ? new Date(startDate) : null;
-      const end = endDate ? new Date(endDate) : null;
-      if (end) end.setHours(23, 59, 59, 999); // Bug 8: include entire end day
-      const matchesDate = (!start || txDate >= start) && (!end || txDate <= end);
-
-      return matchesSearch && matchesStatus && matchesMode && matchesDate && matchesRole && matchesProgram && matchesUserStatus;
+      return matchesSearch && matchesMode && matchesStatus && matchesRole && matchesProgram && matchesUserStatus && matchesDate;
     }).sort((a, b) => {
       let valA = a[sortConfig.key];
       let valB = b[sortConfig.key];
-      
-      // Special handling for nested or specific types
+
       if (sortConfig.key === 'date') {
-          valA = new Date(valA).getTime();
-          valB = new Date(valB).getTime();
-      } else if (sortConfig.key === 'name' || sortConfig.key === 'payerName') {
-          valA = valA ? valA.toLowerCase() : '';
-          valB = valB ? valB.toLowerCase() : '';
+        valA = new Date(valA || Date.now()).getTime();
+        valB = new Date(valB || Date.now()).getTime();
+      } else if (typeof valA === 'string') {
+        valA = valA.toLowerCase();
+        valB = (valB || '').toLowerCase();
       }
 
       if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
       if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
       return 0;
     });
-  }, [transactions, searchTerm, filterStatus, filterPaymentMode, filterUserRole, filterProgram, filterUserStatus, startDate, endDate, userMap, sortConfig]);
+  }, [transactions, searchTerm, filterPaymentMode, filterStatus, filterUserRole, filterProgram, filterUserStatus, startDate, endDate, userMap, sortConfig]);
 
   const totalPages = Math.ceil(filteredTransactions.length / entriesPerPage);
   const paginatedTransactions = filteredTransactions.slice(
@@ -234,18 +371,34 @@ const Transactions = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, filterStatus, filterPaymentMode, filterUserRole, filterProgram, filterUserStatus, startDate, endDate, entriesPerPage]);
+  }, [searchTerm, filterPaymentMode, filterStatus, filterUserRole, filterProgram, filterUserStatus, startDate, endDate, entriesPerPage]);
 
-  const paymentModes = ['All Modes', 'GCash', 'Maya', 'GoThyme', 'Other Online Payment'];
+  const paymentModes = ['All Modes', 'GCash', 'Maya', 'GoThyme'];
   const statuses = ['All Status', 'Pending Verification', 'Completed', 'Needs Update', 'Rejected', 'Refunded'];
 
-  const pendingRefundCount = refunds.filter(r => r.status?.toLowerCase() === 'pending').length;
+  const isCurrentTxPageAllSelected = paginatedTransactions.length > 0 && paginatedTransactions.every(t => selectedTxIds.includes(t.transactionId || t._id));
+  const isCurrentRefundPageAllSelected = refunds.length > 0 && refunds.every(r => selectedRefundIds.includes(r.refundId || r._id));
 
   return (
     <Layout>
+      {confirmConfig && (
+        <ConfirmModal 
+          {...confirmConfig} 
+          isOpen={!!confirmConfig} 
+          onClose={closeConfirm} 
+        />
+      )}
+      {feedbackConfig && (
+        <FeedbackModal 
+          {...feedbackConfig} 
+          isOpen={!!feedbackConfig} 
+          onClose={closeFeedback} 
+        />
+      )}
+
       <div className="py-2 px-2 sm:px-4 font-sans space-y-4 relative">
 
-        {/* Toast Notification */}
+        {/* Global Toast Notification */}
         {toast.show && (
           <div className="fixed top-5 left-1/2 -translate-x-1/2 z-[10001] flex items-center gap-3 px-6 py-3 rounded-2xl shadow-2xl bg-[#2c3543] text-white animate-fade-in border border-slate-700/50">
             <CheckCircle size={18} className="text-emerald-400" />
@@ -322,6 +475,40 @@ const Transactions = () => {
                 </div>
               </div>
 
+              {/* Super Admin Bulk Action Toolbar */}
+              {isSuperAdmin && selectedTxIds.length > 0 && (
+                <div className="flex items-center justify-between bg-blue-50/90 border border-blue-200 px-4 py-2.5 rounded-2xl animate-fade-in text-xs font-bold text-blue-900 shadow-xs">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="bg-blue-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black">
+                      {selectedTxIds.length}
+                    </span>
+                    <span>{selectedTxIds.length} payment{selectedTxIds.length > 1 ? 's' : ''} selected</span>
+                    <button 
+                      type="button" 
+                      onClick={() => setSelectedTxIds(filteredTransactions.map(t => t.transactionId || t._id))}
+                      className="text-blue-700 hover:text-blue-900 underline font-extrabold cursor-pointer ml-1"
+                    >
+                      Select all {filteredTransactions.length}
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={() => setSelectedTxIds([])}
+                      className="text-slate-500 hover:text-slate-700 underline font-medium cursor-pointer ml-1"
+                    >
+                      Deselect all
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleBulkDeleteTx}
+                    className="flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white px-3.5 py-1.5 rounded-full font-bold shadow-xs hover:-translate-y-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+                  >
+                    <Trash2 size={13} />
+                    <span>Delete Selected ({selectedTxIds.length})</span>
+                  </button>
+                </div>
+              )}
+
               <ActiveFilterChips 
                   filters={[
                       { label: 'Role', value: filterUserRole, key: 'filterUserRole' },
@@ -349,14 +536,14 @@ const Transactions = () => {
                 isOpen={isFilterDrawerOpen} 
                 onClose={() => setIsFilterDrawerOpen(false)}
                 onClearAll={() => {
-                    setFilterUserRole('All');
-                    setFilterProgram('All');
-                    setFilterUserStatus('All');
-                    setFilterPaymentMode('All Modes');
-                    setFilterStatus('All Status');
-                    setStartDate('');
-                    setEndDate('');
-                    setSortConfig({ key: 'date', direction: 'desc' });
+                  setFilterPaymentMode('All Modes');
+                  setFilterStatus('All Status');
+                  setFilterUserRole('All');
+                  setFilterProgram('All');
+                  setFilterUserStatus('All');
+                  setStartDate('');
+                  setEndDate(new Date().toLocaleDateString('en-CA'));
+                  setSortConfig({ key: 'date', direction: 'desc' });
                 }}
             >
                 <div className="flex flex-col gap-4">
@@ -370,17 +557,17 @@ const Transactions = () => {
                                 value={sortConfig.key}
                                 onChange={(e) => setSortConfig({ ...sortConfig, key: e.target.value })}
                             >
-                                <option value="date">Date</option>
-                                <option value="name">Requestor Name</option>
+                                <option value="date">Payment Date</option>
+                                <option value="transactionId">Transaction ID</option>
                                 <option value="payerName">Payer Name</option>
+                                <option value="amount">Amount</option>
                                 <option value="status">Status</option>
-                                <option value="paymentMode">Payment Mode</option>
                             </select>
                         </div>
                         <div className="flex flex-col gap-1.5">
                             <label className="text-xs font-bold text-slate-700">Order:</label>
                             <button 
-                                aria-label="Toggle sort direction"
+                                type="button"
                                 onClick={() => setSortConfig({ ...sortConfig, direction: sortConfig.direction === 'asc' ? 'desc' : 'asc' })}
                                 className="border border-slate-200 rounded-xl px-3 py-2 text-xs bg-white flex items-center justify-between hover:bg-slate-50 transition-colors"
                             >
@@ -491,6 +678,24 @@ const Transactions = () => {
               <table className="w-full text-left border-collapse table-auto">
                 <thead>
                   <tr className="bg-slate-50/70 text-[11.5px] font-extrabold uppercase tracking-wider text-slate-500 border-b border-slate-100">
+                    {isSuperAdmin && (
+                      <th className="py-3.5 px-4 w-10 text-center">
+                        <input 
+                          type="checkbox"
+                          aria-label="Select all payments on this page"
+                          className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer accent-blue-600"
+                          checked={isCurrentTxPageAllSelected}
+                          onChange={(e) => {
+                            const pageIds = paginatedTransactions.map(tx => tx.transactionId || tx._id);
+                            if (e.target.checked) {
+                              setSelectedTxIds(prev => [...new Set([...prev, ...pageIds])]);
+                            } else {
+                              setSelectedTxIds(prev => prev.filter(id => !pageIds.includes(id)));
+                            }
+                          }}
+                        />
+                      </th>
+                    )}
                     <th className="py-3.5 px-5">Payment ID</th>
                     <th className="py-3.5 px-5">Request ID</th>
                     <th className="py-3.5 px-5">Payer Name</th>
@@ -504,15 +709,30 @@ const Transactions = () => {
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-[12.5px]">
                   {loading ? (
-                    <TableSkeleton columns={9} rows={entriesPerPage || 10} />
+                    <TableSkeleton columns={isSuperAdmin ? 10 : 9} rows={entriesPerPage || 10} />
                   ) : paginatedTransactions.length > 0 ? (
                     paginatedTransactions.map((tx, idx) => {
+                      const txId = tx.transactionId || tx._id;
+                      const isSelected = selectedTxIds.includes(txId);
                       const txDate = new Date(tx.date);
                       const formattedDate = txDate.toLocaleDateString('en-US', {
                         year: 'numeric', month: '2-digit', day: '2-digit'
                       });
                       return (
-                        <tr key={tx._id || idx} className="hover:bg-slate-50/80 transition-colors">
+                        <tr key={tx._id || idx} className={`hover:bg-slate-50/80 transition-colors ${isSelected ? 'bg-blue-50/40' : ''}`}>
+                          {isSuperAdmin && (
+                            <td className="py-3.5 px-4 text-center align-middle" onClick={(e) => e.stopPropagation()}>
+                              <input 
+                                type="checkbox"
+                                aria-label={`Select transaction ${tx.transactionId}`}
+                                className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer accent-blue-600"
+                                checked={isSelected}
+                                onChange={() => {
+                                  setSelectedTxIds(prev => prev.includes(txId) ? prev.filter(x => x !== txId) : [...prev, txId]);
+                                }}
+                              />
+                            </td>
+                          )}
                           <td className="py-3.5 px-5 align-middle">
                             <span className="bg-slate-100 px-2 py-0.5 rounded-md text-slate-700 font-mono text-[11.5px] font-bold">
                               {tx.transactionId}
@@ -559,6 +779,11 @@ const Transactions = () => {
                                 <span className="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
                                 <span>Needs Update</span>
                               </span>
+                            ) : tx.status === 'Refunded' ? (
+                              <span className="inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider bg-purple-50 text-purple-700 border border-purple-200/80">
+                                <span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
+                                <span>Refunded</span>
+                              </span>
                             ) : (
                               <span className="inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider bg-red-50 text-red-700 border border-red-200/80">
                                 <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
@@ -567,28 +792,42 @@ const Transactions = () => {
                             )}
                           </td>
                           <td className="py-3.5 px-5 align-middle text-right">
-                            {tx.status === 'Pending Verification' ? (
-                              <button
-                                onClick={() => { setSelectedTx(tx); setAdminNote(''); setError(''); }}
-                                className="bg-[#2c3543] hover:bg-[#1f2631] text-white py-1 px-3.5 rounded-full text-[11.5px] font-bold border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(0,0,0,0.25)] active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-1.5 cursor-pointer ml-auto"
-                              >
-                                <Receipt size={12} /> Verify Receipt
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => navigate(`/transactions/${tx.transactionId}`)}
-                                className="bg-[#2c3543] hover:bg-[#1f2631] text-white py-1 px-3.5 rounded-full text-[11.5px] font-bold border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(0,0,0,0.25)] active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-1.5 cursor-pointer ml-auto"
-                              >
-                                <Eye size={12} /> View Details
-                              </button>
-                            )}
+                            <div className="flex items-center justify-end gap-1.5">
+                              {tx.status === 'Pending Verification' ? (
+                                <button
+                                  onClick={() => { setSelectedTx(tx); setAdminNote(''); setError(''); }}
+                                  className="bg-[#2c3543] hover:bg-[#1f2631] text-white py-1 px-3.5 rounded-full text-[11.5px] font-bold border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(0,0,0,0.25)] active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-1.5 cursor-pointer"
+                                >
+                                  <Receipt size={12} />
+                                  <span>Verify Receipt</span>
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => navigate(`/transactions/${tx.transactionId}`)}
+                                  className="bg-[#2c3543] hover:bg-[#1f2631] text-white py-1 px-3.5 rounded-full text-[11.5px] font-bold border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(0,0,0,0.25)] active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-1.5 cursor-pointer"
+                                >
+                                  <Eye size={12} />
+                                  <span>View Details</span>
+                                </button>
+                              )}
+                              {isSuperAdmin && (
+                                <button
+                                  onClick={() => handleDeleteSingleTx(tx)}
+                                  className="w-7 h-7 rounded-full bg-red-50 hover:bg-red-600 hover:text-white text-red-600 flex items-center justify-center transition-all shadow-2xs border border-red-200/60 hover:-translate-y-0.5 active:translate-y-0.5 cursor-pointer"
+                                  title="Delete Payment"
+                                  aria-label={`Delete payment ${tx.transactionId}`}
+                                >
+                                  <Trash2 size={12} />
+                                </button>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       );
                     })
                   ) : (
                     <tr>
-                      <td colSpan="9" className="py-16 text-center text-slate-400 italic">
+                      <td colSpan={isSuperAdmin ? 10 : 9} className="py-16 text-center text-slate-400 italic">
                         No payments found matching your filters.
                       </td>
                     </tr>
@@ -644,10 +883,64 @@ const Transactions = () => {
         {/* ====== REFUND REQUESTS TAB ====== */}
         {activeTab === 'refunds' && (
           <div className="rounded-[22px] bg-white shadow-[0_8px_24px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.02)] border border-slate-100/90 overflow-hidden">
+            {/* Super Admin Bulk Action Toolbar for Refunds */}
+            {isSuperAdmin && selectedRefundIds.length > 0 && (
+              <div className="p-4 border-b border-slate-100 bg-slate-50/40">
+                <div className="flex items-center justify-between bg-blue-50/90 border border-blue-200 px-4 py-2.5 rounded-2xl animate-fade-in text-xs font-bold text-blue-900 shadow-xs">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="bg-blue-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black">
+                      {selectedRefundIds.length}
+                    </span>
+                    <span>{selectedRefundIds.length} refund{selectedRefundIds.length > 1 ? 's' : ''} selected</span>
+                    <button 
+                      type="button" 
+                      onClick={() => setSelectedRefundIds(refunds.map(r => r.refundId || r._id))}
+                      className="text-blue-700 hover:text-blue-900 underline font-extrabold cursor-pointer ml-1"
+                    >
+                      Select all {refunds.length}
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={() => setSelectedRefundIds([])}
+                      className="text-slate-500 hover:text-slate-700 underline font-medium cursor-pointer ml-1"
+                    >
+                      Deselect all
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleBulkDeleteRefunds}
+                    className="flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white px-3.5 py-1.5 rounded-full font-bold shadow-xs hover:-translate-y-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+                  >
+                    <Trash2 size={13} />
+                    <span>Delete Selected ({selectedRefundIds.length})</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse table-auto">
                 <thead>
                   <tr className="bg-slate-50/70 text-[11.5px] font-extrabold uppercase tracking-wider text-slate-500 border-b border-slate-100">
+                    {isSuperAdmin && (
+                      <th className="py-3.5 px-4 w-10 text-center">
+                        <input 
+                          type="checkbox"
+                          aria-label="Select all refunds on this page"
+                          className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer accent-blue-600"
+                          checked={isCurrentRefundPageAllSelected}
+                          onChange={(e) => {
+                            const refundIds = refunds.map(r => r.refundId || r._id);
+                            if (e.target.checked) {
+                              setSelectedRefundIds(prev => [...new Set([...prev, ...refundIds])]);
+                            } else {
+                              setSelectedRefundIds(prev => prev.filter(id => !refundIds.includes(id)));
+                            }
+                          }}
+                        />
+                      </th>
+                    )}
                     <th className="py-3.5 px-5">Refund ID</th>
                     <th className="py-3.5 px-5">Transaction ID</th>
                     <th className="py-3.5 px-5">Name</th>
@@ -660,9 +953,11 @@ const Transactions = () => {
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-[12.5px]">
                   {refundsLoading ? (
-                    <TableSkeleton columns={8} rows={10} />
+                    <TableSkeleton columns={isSuperAdmin ? 9 : 8} rows={10} />
                   ) : refunds.length > 0 ? (
                     refunds.map((refund, idx) => {
+                      const refundId = refund.refundId || refund._id;
+                      const isSelected = selectedRefundIds.includes(refundId);
                       const refundDate = new Date(refund.createdAt);
                       const formattedDate = refundDate.toLocaleDateString('en-US', {
                         year: 'numeric', month: '2-digit', day: '2-digit'
@@ -672,7 +967,20 @@ const Transactions = () => {
                       const displayName = refund.accountName || refund.studentName || relatedTx?.payerName || relatedTx?.name || 'Unknown';
 
                       return (
-                        <tr key={refund._id || idx} className="hover:bg-slate-50/80 transition-colors">
+                        <tr key={refund._id || idx} className={`hover:bg-slate-50/80 transition-colors ${isSelected ? 'bg-blue-50/40' : ''}`}>
+                          {isSuperAdmin && (
+                            <td className="py-3.5 px-4 text-center align-middle" onClick={(e) => e.stopPropagation()}>
+                              <input 
+                                type="checkbox"
+                                aria-label={`Select refund ${refund.refundId || refund._id}`}
+                                className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer accent-blue-600"
+                                checked={isSelected}
+                                onChange={() => {
+                                  setSelectedRefundIds(prev => prev.includes(refundId) ? prev.filter(x => x !== refundId) : [...prev, refundId]);
+                                }}
+                              />
+                            </td>
+                          )}
                           <td className="py-3.5 px-5 align-middle">
                             <span className="bg-slate-100 px-2 py-0.5 rounded-md text-slate-700 font-mono text-[11.5px] font-bold">
                               {refund.refundId || refund._id}
@@ -706,26 +1014,39 @@ const Transactions = () => {
                             )}
                           </td>
                           <td className="py-3.5 px-5 align-middle text-right">
-                            {refund.status?.toLowerCase() === 'pending' ? (
-                              <button
-                                onClick={() => { setSelectedRefund(refund); setRefundRemarks(''); }}
-                                className="bg-[#2c3543] hover:bg-[#1f2631] text-white py-1 px-3.5 rounded-full text-[11.5px] font-bold border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(0,0,0,0.25)] active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-1.5 cursor-pointer ml-auto"
-                              >
-                                <Eye size={12} /> Review
-                              </button>
-                            ) : (
-                              <span className="text-xs text-slate-400 italic">
-                                {refund.status === 'Approved' ? 'Approved' : 'Rejected'}
-                                {refund.processedBy && ` by ${refund.processedBy.split('@')[0]}`}
-                              </span>
-                            )}
+                            <div className="flex items-center justify-end gap-1.5">
+                              {refund.status?.toLowerCase() === 'pending' ? (
+                                <button
+                                  onClick={() => { setSelectedRefund(refund); setRefundRemarks(''); }}
+                                  className="bg-[#2c3543] hover:bg-[#1f2631] text-white py-1 px-3.5 rounded-full text-[11.5px] font-bold border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(0,0,0,0.25)] active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-1.5 cursor-pointer"
+                                >
+                                  <Eye size={12} />
+                                  <span>Review</span>
+                                </button>
+                              ) : (
+                                <span className="text-xs text-slate-400 italic">
+                                  {refund.status === 'Approved' ? 'Approved' : 'Rejected'}
+                                  {refund.processedBy && ` by ${refund.processedBy.split('@')[0]}`}
+                                </span>
+                              )}
+                              {isSuperAdmin && (
+                                <button
+                                  onClick={() => handleDeleteSingleRefund(refund)}
+                                  className="w-7 h-7 rounded-full bg-red-50 hover:bg-red-600 hover:text-white text-red-600 flex items-center justify-center transition-all shadow-2xs border border-red-200/60 hover:-translate-y-0.5 active:translate-y-0.5 cursor-pointer"
+                                  title="Delete Refund"
+                                  aria-label={`Delete refund ${refund.refundId || refund._id}`}
+                                >
+                                  <Trash2 size={12} />
+                                </button>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       );
                     })
                   ) : (
                     <tr>
-                      <td colSpan="8" className="py-16 text-center text-slate-400 italic">
+                      <td colSpan={isSuperAdmin ? 9 : 8} className="py-16 text-center text-slate-400 italic">
                         No refund requests found.
                       </td>
                     </tr>
@@ -749,124 +1070,102 @@ const Transactions = () => {
                     {selectedTx.transactionId} • {selectedTx.payerName || selectedTx.name} • via {selectedTx.paymentMode}
                   </p>
                 </div>
-                <button onClick={() => setSelectedTx(null)} className="hover:bg-white/10 p-2 rounded-full transition-colors">
+                <button
+                  onClick={() => setSelectedTx(null)}
+                  className="text-white/60 hover:text-white transition-colors"
+                >
                   <X size={24} />
                 </button>
               </div>
 
               {/* Modal Body */}
-              <div className="p-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
 
-                {/* Left: Receipt Image */}
-                <div className="lg:col-span-7">
-                  <h4 className="text-[12px] font-bold text-gray-500 uppercase mb-3 flex justify-between">
-                    Uploaded Receipt
-                    {selectedTx.receiptImage && (
-                      <span
-                        className="text-[#1D2D44] cursor-pointer flex items-center gap-1 hover:underline"
-                        onClick={() => setZoomedImage(!zoomedImage)}
-                      >
-                        <ZoomIn size={14} /> {zoomedImage ? 'Fit' : 'Zoom'}
-                      </span>
-                    )}
-                  </h4>
-                  <div className="relative group overflow-hidden rounded-lg bg-gray-50 flex items-center justify-center border border-gray-100 min-h-[320px]">
-                    {(selectedTx.imageUrl || selectedTx.receiptImage) ? (
+                {/* Left Column: Receipt Preview */}
+                <div className="flex flex-col items-center justify-center bg-gray-50 border border-gray-100 rounded-xl p-4 min-h-[300px]">
+                  {(selectedTx.imageUrl || selectedTx.receiptImage) ? (
+                    <div className="relative group cursor-pointer" onClick={() => setZoomedImage(true)}>
                       <img
                         src={(selectedTx.imageUrl || selectedTx.receiptImage).startsWith('http') ? (selectedTx.imageUrl || selectedTx.receiptImage) : `${API_BASE}${selectedTx.receiptImage}`}
-                        alt="Receipt"
-                        className={`rounded-lg shadow-sm transition-all duration-300 ${zoomedImage ? 'max-w-none w-auto' : 'max-h-[300px] object-contain'}`}
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.nextSibling.style.display = 'flex';
-                        }}
+                        alt="Payment Receipt"
+                        className="max-h-[350px] object-contain rounded-lg shadow-md transition-transform group-hover:scale-[1.02]"
                       />
-                    ) : null}
-                    <div className={`flex-col items-center text-gray-500 ${(selectedTx.imageUrl || selectedTx.receiptImage) ? 'hidden' : 'flex'}`}>
-                      <ImageIcon size={48} className="mb-2 opacity-50" />
-                      <span className="text-xs font-bold text-center">No receipt image uploaded</span>
+                      <div className="absolute inset-0 bg-black/30 rounded-lg opacity-0 group-hover:opacity-100 flex items-center justify-center text-white font-bold text-xs gap-1.5 transition-opacity">
+                        <ZoomIn size={16} /> Click to Enlarge
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="text-center text-gray-400">
+                      <ImageIcon size={48} className="mx-auto mb-2 opacity-40" />
+                      <p className="text-xs font-semibold">No receipt image attached</p>
+                    </div>
+                  )}
                 </div>
 
-                {/* Right: Details & Actions */}
-                <div className="lg:col-span-5 flex flex-col gap-6">
-
-                  {/* Payment Info */}
-                  <div className="bg-[#F9FAFF] p-5 rounded-xl border border-[#DDE2EF]">
-                    <h4 className="text-[11px] font-bold text-[#1D2D44] uppercase mb-4 tracking-wider">Payment Details</h4>
-                    <div className="space-y-3 text-sm text-gray-600 font-medium">
-                      <div className="flex justify-between">
-                        <span>Payer</span>
-                        <span className="font-bold text-gray-800">{selectedTx.payerName || selectedTx.name}</span>
+                {/* Right Column: Transaction Details & Decision */}
+                <div className="flex flex-col justify-between">
+                  <div className="space-y-4 text-xs">
+                    <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl">
+                      <div>
+                        <span className="text-gray-400 font-bold block mb-1">AMOUNT DUE</span>
+                        <span className="text-base font-black text-[#1D2D44]">₱{selectedTx.amount || '0.00'}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span>Type</span>
-                        <span className="font-semibold text-gray-700">{selectedTx.payerType || 'Student'}</span>
+                      <div>
+                        <span className="text-gray-400 font-bold block mb-1">REFERENCE NUMBER</span>
+                        <span className="font-mono text-gray-700 break-all font-semibold">{selectedTx.referenceNumber || 'N/A'}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span>Amount</span>
-                        <span className="font-bold text-[#1D2D44]">₱{selectedTx.amount || '0.00'}</span>
+                      <div>
+                        <span className="text-gray-400 font-bold block mb-1">DOCUMENT TYPE</span>
+                        <span className="font-semibold text-gray-700">{selectedTx.documentType}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span>Payment Mode</span>
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${getPaymentModeStyle(selectedTx.paymentMode)}`}>
-                          {selectedTx.paymentMode}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Document</span>
-                        <span className="text-gray-700">{selectedTx.documentType}</span>
+                      <div>
+                        <span className="text-gray-400 font-bold block mb-1">PAYMENT MODE</span>
+                        <span className="font-semibold text-gray-700">{selectedTx.paymentMode}</span>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Admin Remarks */}
-                  <div className="flex-1">
-                    <label className="block text-[11px] font-bold text-gray-500 uppercase mb-2 tracking-wider">
-                      Admin Remarks
-                    </label>
-                    <textarea
-                      className={`w-full h-32 p-4 border rounded-xl text-sm outline-none transition-all resize-none ${error ? 'border-red-500 bg-red-50' : 'border-gray-200 focus:border-[#1D2D44]'
-                        }`}
-                      placeholder="Enter remarks (required for requesting updates or rejections)..."
-                      value={adminNote}
-                      onChange={(e) => { setAdminNote(e.target.value); setError(''); }}
-                    />
+                    <div>
+                      <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">
+                        Admin Remarks / Note
+                      </label>
+                      <textarea
+                        className="w-full h-24 p-3 border border-gray-200 rounded-xl text-xs outline-none focus:border-[#1D2D44] resize-none"
+                        placeholder="Add remarks (optional for approval, required for rejection or update request)..."
+                        value={adminNote}
+                        onChange={(e) => setAdminNote(e.target.value)}
+                      />
+                    </div>
+
                     {error && (
-                      <p className="text-red-500 text-[10px] font-bold mt-2 flex items-center gap-1">
-                        <AlertCircle size={12} /> {error}
-                      </p>
+                      <div className="p-3 bg-red-50 text-red-600 rounded-xl text-xs flex items-center gap-2">
+                        <AlertCircle size={14} /> {error}
+                      </div>
                     )}
                   </div>
-                </div>
-              </div>
 
-              {/* Modal Footer */}
-              <div className="p-6 bg-gray-50 border-t flex justify-between items-center">
-                <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded text-[10px] font-bold uppercase tracking-wider">
-                  Pending Verification
-                </span>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => handleVerifyAction('Reject')}
-                    className="px-5 py-2.5 rounded-full border-2 border-red-500 text-red-500 font-bold text-xs uppercase hover:bg-red-50 transition-all tracking-widest flex items-center gap-2"
-                  >
-                    <XCircle size={14} /> Reject
-                  </button>
-                  <button
-                    onClick={() => handleVerifyAction('Needs Update')}
-                    className="px-5 py-2.5 rounded-full border-2 border-amber-500 text-amber-600 font-bold text-xs uppercase hover:bg-amber-50 transition-all tracking-widest flex items-center gap-2"
-                  >
-                    <RefreshCw size={14} /> Request Update
-                  </button>
-                  <button
-                    onClick={() => handleVerifyAction('Approve')}
-                    className="px-8 py-2.5 rounded-full bg-[#1D2D44] text-white font-bold text-xs uppercase hover:bg-[#152030] shadow-md flex items-center gap-2 tracking-widest"
-                  >
-                    <Send size={14} /> Approve
-                  </button>
+                  {/* Actions */}
+                  <div className="flex gap-2 pt-4 border-t border-gray-100">
+                    <button
+                      onClick={() => handleVerify('Rejected')}
+                      className="flex-1 py-2.5 rounded-xl border border-red-500 text-red-500 font-bold text-xs uppercase hover:bg-red-50 transition-all flex items-center justify-center gap-1"
+                    >
+                      <X size={14} /> Reject
+                    </button>
+                    <button
+                      onClick={() => handleVerify('Needs Update')}
+                      className="flex-1 py-2.5 rounded-xl border border-orange-500 text-orange-500 font-bold text-xs uppercase hover:bg-orange-50 transition-all flex items-center justify-center gap-1"
+                    >
+                      <RefreshCw size={14} /> Request Update
+                    </button>
+                    <button
+                      onClick={() => handleVerify('Completed')}
+                      className="flex-1 py-2.5 rounded-xl bg-green-600 text-white font-bold text-xs uppercase hover:bg-green-700 shadow-md flex items-center justify-center gap-1"
+                    >
+                      <CheckCircle size={14} /> Approve
+                    </button>
+                  </div>
                 </div>
+
               </div>
             </div>
           </div>
@@ -875,114 +1174,91 @@ const Transactions = () => {
         {/* ====== REFUND REVIEW MODAL ====== */}
         {selectedRefund && (
           <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-            <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden">
-
-              <div className="bg-[#1D2D44] p-6 text-white flex justify-between items-center">
+            <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-scale-up">
+              
+              {/* Header */}
+              <div className="bg-[#1D2D44] p-5 text-white flex justify-between items-center">
                 <div>
-                  <h3 className="text-xl font-bold">Review Refund Request</h3>
-                  <p className="text-xs opacity-70 mt-1 uppercase tracking-widest font-semibold">
-                    {selectedRefund.refundId}
+                  <h3 className="text-lg font-bold">Review Refund Request</h3>
+                  <p className="text-xs opacity-70 mt-0.5 uppercase tracking-widest font-semibold">
+                    {selectedRefund.refundId || selectedRefund._id} • {selectedRefund.accountName || selectedRefund.studentName || 'Student'}
                   </p>
                 </div>
-                <button onClick={() => setSelectedRefund(null)} className="hover:bg-white/10 p-2 rounded-full transition-colors">
-                  <X size={24} />
+                <button
+                  onClick={() => setSelectedRefund(null)}
+                  className="text-white/60 hover:text-white transition-colors"
+                >
+                  <X size={20} />
                 </button>
               </div>
 
-              <div className="p-6">
-                <div className="bg-[#F9FAFF] p-5 rounded-xl border border-[#DDE2EF] mb-6">
-                  <h4 className="text-[11px] font-bold text-[#1D2D44] uppercase mb-4 tracking-wider">Refund Details</h4>
-                  <div className="space-y-3 text-sm text-gray-600 font-medium">
-                    <div className="flex justify-between">
-                      <span>Name</span>
-                      <span className="font-bold text-gray-800">
-                        {selectedRefund.accountName || 
-                         selectedRefund.studentName || 
-                         transactions.find(t => t.transactionId === selectedRefund.transactionId || t._id === selectedRefund.transactionId)?.payerName || 
-                         transactions.find(t => t.transactionId === selectedRefund.transactionId || t._id === selectedRefund.transactionId)?.name || 
-                         'Unknown'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Email</span>
-                      <span className="text-gray-700">{selectedRefund.email || selectedRefund.studentEmail || 'N/A'}</span>
-                    </div>
-                    {userMap[selectedRefund.email || selectedRefund.studentEmail] && (
-                      <>
-                        <div className="flex justify-between">
-                          <span>User Type</span>
-                          <span className="text-gray-700 capitalize">{userMap[selectedRefund.email || selectedRefund.studentEmail].role || 'Student'}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Program</span>
-                          <span className="text-gray-700">{userMap[selectedRefund.email || selectedRefund.studentEmail].programLevel || 'N/A'}</span>
-                        </div>
-                      </>
-                    )}
-                    <div className="flex justify-between border-t border-gray-100 pt-3 mt-3">
-                      <span>Transaction ID</span>
-                      <span className="font-mono text-gray-700">{selectedRefund.transactionId}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Document Type</span>
-                      <span className="font-semibold text-[#1D2D44]">
-                        {selectedRefund.docName || 
-                         transactions.find(t => t.transactionId === selectedRefund.transactionId || t._id === selectedRefund.transactionId)?.documentType || 
-                         'N/A'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Amount</span>
-                      <span className="font-bold text-[#1D2D44]">₱{selectedRefund.amount}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Reason</span>
-                      <span className="text-gray-700">{selectedRefund.reason === 'Other' ? selectedRefund.otherReason : selectedRefund.reason}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Submitted</span>
-                      <span className="text-gray-700">{new Date(selectedRefund.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                    </div>
+              {/* Body */}
+              <div className="p-6 space-y-4 text-xs">
+                <div className="grid grid-cols-2 gap-3 bg-gray-50 p-4 rounded-xl">
+                  <div>
+                    <span className="text-gray-400 font-bold block mb-0.5">REFUND AMOUNT</span>
+                    <span className="text-base font-black text-[#1D2D44]">₱{selectedRefund.amount || '0.00'}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400 font-bold block mb-0.5">PAYMENT METHOD</span>
+                    <span className="font-semibold text-gray-700">{selectedRefund.paymentMethod || selectedRefund.paymentMode || 'Original Method'}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400 font-bold block mb-0.5">ACCOUNT NAME</span>
+                    <span className="font-semibold text-gray-700">{selectedRefund.accountName || selectedRefund.studentName || 'N/A'}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400 font-bold block mb-0.5">ACCOUNT NUMBER</span>
+                    <span className="font-mono text-gray-700 font-semibold">{selectedRefund.accountNumber || 'N/A'}</span>
                   </div>
                 </div>
 
-                <label className="block text-[11px] font-bold text-gray-500 uppercase mb-2 tracking-wider">
-                  Admin Remarks
-                </label>
-                <textarea
-                  className="w-full h-24 p-4 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#1D2D44] resize-none mb-4"
-                  placeholder="Add remarks (optional for approval, recommended for rejection)..."
-                  value={refundRemarks}
-                  onChange={(e) => setRefundRemarks(e.target.value)}
-                />
+                <div>
+                  <span className="text-gray-400 font-bold block mb-1">REASON FOR REFUND</span>
+                  <div className="p-3 bg-amber-50/60 border border-amber-200/60 rounded-xl text-amber-900 font-medium leading-relaxed">
+                    {selectedRefund.reason === 'Other' ? (selectedRefund.otherReason || 'Other reason') : selectedRefund.reason}
+                  </div>
+                </div>
 
-                <div className="flex gap-3">
-                  {selectedRefund.status === 'Pending' ? (
-                    <>
+                <div>
+                  <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">
+                    Admin Remarks
+                  </label>
+                  <textarea
+                    className="w-full h-24 p-4 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#1D2D44] resize-none mb-4"
+                    placeholder="Add remarks (optional for approval, recommended for rejection)..."
+                    value={refundRemarks}
+                    onChange={(e) => setRefundRemarks(e.target.value)}
+                  />
+
+                  <div className="flex gap-3">
+                    {selectedRefund.status === 'Pending' ? (
+                      <>
+                        <button
+                          onClick={() => handleProcessRefund(selectedRefund.refundId || selectedRefund._id, 'Rejected')}
+                          disabled={refundActionLoading}
+                          className="flex-1 py-3 rounded-xl border-2 border-red-500 text-red-500 font-bold text-sm uppercase hover:bg-red-50 transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                        >
+                          <XCircle size={16} /> Reject Refund
+                        </button>
+                        <button
+                          onClick={() => handleProcessRefund(selectedRefund.refundId || selectedRefund._id, 'Approved')}
+                          disabled={refundActionLoading}
+                          className="flex-1 py-3 rounded-xl bg-green-600 text-white font-bold text-sm uppercase hover:bg-green-700 shadow-md flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                        >
+                          <CheckCircle size={16} /> Approve Refund
+                        </button>
+                      </>
+                    ) : (
                       <button
-                        onClick={() => handleProcessRefund(selectedRefund.refundId || selectedRefund._id, 'Rejected')}
+                        onClick={() => handleProcessRefund(selectedRefund.refundId || selectedRefund._id, 'Pending')}
                         disabled={refundActionLoading}
-                        className="flex-1 py-3 rounded-xl border-2 border-red-500 text-red-500 font-bold text-sm uppercase hover:bg-red-50 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                        className="flex-1 py-3 rounded-xl border-2 border-orange-500 text-orange-600 font-bold text-sm uppercase hover:bg-orange-50 transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
                       >
-                        <XCircle size={16} /> Reject Refund
+                        <Undo2 size={16} /> Revert to Pending
                       </button>
-                      <button
-                        onClick={() => handleProcessRefund(selectedRefund.refundId || selectedRefund._id, 'Approved')}
-                        disabled={refundActionLoading}
-                        className="flex-1 py-3 rounded-xl bg-green-600 text-white font-bold text-sm uppercase hover:bg-green-700 shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
-                      >
-                        <CheckCircle size={16} /> Approve Refund
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      onClick={() => handleProcessRefund(selectedRefund.refundId || selectedRefund._id, 'Pending')}
-                      disabled={refundActionLoading}
-                      className="flex-1 py-3 rounded-xl border-2 border-orange-500 text-orange-600 font-bold text-sm uppercase hover:bg-orange-50 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                    >
-                      <Undo2 size={16} /> Revert to Pending
-                    </button>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -1019,28 +1295,6 @@ const Transactions = () => {
     </Layout>
   );
 };
-
-// Helper: Status Badge Styles (updated with Refunded)
-function getStatusStyle(status) {
-  switch (status) {
-    case 'Pending Verification': return 'bg-[#FCF7B0] text-[#857A00]';
-    case 'Completed': return 'bg-[#C6E7FF] text-[#2D6A8E]';
-    case 'Needs Update': return 'bg-[#FFC1C1] text-[#A32A2A]';
-    case 'Rejected': return 'bg-[#FFD1D1] text-[#F04438]';
-    case 'Refunded': return 'bg-[#E8D5F5] text-[#7C3AED]';
-    default: return 'bg-gray-100 text-gray-600';
-  }
-}
-
-// Helper: Refund Status Styles
-function getRefundStatusStyle(status) {
-  switch (status?.toLowerCase()) {
-    case 'pending': return 'bg-[#FCF7B0] text-[#857A00]';
-    case 'approved': return 'bg-[#C6FFD5] text-[#1B7A2E]';
-    case 'rejected': return 'bg-[#FFD1D1] text-[#F04438]';
-    default: return 'bg-gray-100 text-gray-600';
-  }
-}
 
 // Helper: Payment Mode Badge Styles
 function getPaymentModeStyle(mode) {
