@@ -19,5 +19,4 @@ const notificationSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-delete mongoose.models.Notification;
-module.exports = mongoose.model('Notification', notificationSchema);
+module.exports = mongoose.models.Notification || mongoose.model('Notification', notificationSchema);

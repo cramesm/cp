@@ -73,4 +73,4 @@ const torSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-module.exports = mongoose.model('TOR', torSchema);
+module.exports = mongoose.models.TOR || mongoose.model('TOR', torSchema);

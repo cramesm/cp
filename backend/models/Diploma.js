@@ -41,4 +41,4 @@ const diplomaSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-module.exports = mongoose.model('Diploma', diplomaSchema);
+module.exports = mongoose.models.Diploma || mongoose.model('Diploma', diplomaSchema);

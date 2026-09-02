@@ -46,4 +46,4 @@ registrarSchema.methods.comparePassword = async function(candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-module.exports = mongoose.model('Registrar', registrarSchema);
+module.exports = mongoose.models.Registrar || mongoose.model('Registrar', registrarSchema);

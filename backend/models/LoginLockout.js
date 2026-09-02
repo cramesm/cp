@@ -22,4 +22,4 @@ const loginLockoutSchema = new mongoose.Schema({
   }
 });
 
-module.exports = mongoose.model('LoginLockout', loginLockoutSchema);
+module.exports = mongoose.models.LoginLockout || mongoose.model('LoginLockout', loginLockoutSchema);
