@@ -83,6 +83,9 @@ const Transactions = () => {
 
   useEffect(() => {
     const fetchUsers = async () => {
+      const userRole = localStorage.getItem('userRole') || '';
+      if (userRole.toLowerCase() !== 'super admin') return;
+
       try {
         const [stuRes, alumRes] = await Promise.all([
           api.get('/v1/students').catch(() => ({ data: { data: [] } })),

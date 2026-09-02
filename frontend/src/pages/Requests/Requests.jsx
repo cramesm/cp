@@ -43,33 +43,39 @@ const Requests = () => {
     useEffect(() => {
         const fetchRequests = async () => {
             try {
-                const [reqRes, stuRes, alumRes] = await Promise.all([
-                    api.get('/requests'),
-                    api.get('/v1/students').catch(() => ({ data: { data: [] } })),
-                    api.get('/v1/alumni').catch(() => ({ data: { data: [] } }))
-                ]);
-                
-                const users = [...(stuRes.data?.data || []), ...(alumRes.data?.data || [])];
-                const userMap = {};
-                users.forEach(u => {
-                    if (u.email) userMap[u.email] = u;
-                });
+                const userRole = localStorage.getItem('userRole') || '';
+                const isSuperAdmin = userRole.toLowerCase() === 'super admin';
 
-                const enrichedRequests = (reqRes.data || []).map(req => {
-                    const user = userMap[req.email] || {};
-                    return {
-                        ...req,
-                        userRole: user.role || 'student',
-                        programLevel: user.programLevel || 'Bachelors',
-                        userStatus: user.status || 'Active'
-                    };
-                });
+                let finalRequests = [];
+                if (isSuperAdmin) {
+                    const [reqRes, stuRes, alumRes] = await Promise.all([
+                        api.get('/requests'),
+                        api.get('/v1/students').catch(() => ({ data: { data: [] } })),
+                        api.get('/v1/alumni').catch(() => ({ data: { data: [] } }))
+                    ]);
+                    const users = [...(stuRes.data?.data || []), ...(alumRes.data?.data || [])];
+                    users.forEach(u => {
+                        if (u.email) userMap[u.email] = u;
+                    });
+                    finalRequests = (reqRes.data || []).map(req => {
+                        const user = userMap[req.email] || {};
+                        return {
+                            ...req,
+                            userRole: req.userRole || user.role || 'student',
+                            programLevel: req.programLevel || user.programLevel || 'Bachelors',
+                            userStatus: req.userStatus || user.status || 'Active'
+                        };
+                    });
+                } else {
+                    const reqRes = await api.get('/requests');
+                    finalRequests = reqRes.data || [];
+                }
 
-                setRequests(enrichedRequests);
-                if (enrichedRequests.length > 0) {
+                setRequests(finalRequests);
+                if (finalRequests.length > 0) {
                     setStartDate(prev => {
                         if (!prev) {
-                            const oldest = new Date(Math.min(...enrichedRequests.map(req => new Date(req.dateRequested))));
+                            const oldest = new Date(Math.min(...finalRequests.map(req => new Date(req.dateRequested))));
                             return oldest.toLocaleDateString('en-CA');
                         }
                         return prev;

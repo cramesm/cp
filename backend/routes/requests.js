@@ -5,38 +5,42 @@ const Request = require('../models/Request');
 const ActivityLog = require('../models/ActivityLog');
 const { protect } = require('../middleware/authMiddleware');
 
-// Helper to enrich a request with student profile data if missing
-const enrichRequestWithStudentData = async (reqObj) => {
+const Student = require('../models/Users/Student');
+const Alumni = require('../models/Users/Alumni');
+
+// Batch helper to enrich requests with student/alumni profile data in 2 queries instead of 2*N queries
+const batchEnrichRequests = async (requestsList) => {
   try {
-    const Student = require('../models/Users/Student');
-    const Alumni = require('../models/Users/Alumni');
-    let student = null;
+    const studentIds = [...new Set(requestsList.map(r => r.studentId).filter(Boolean))];
     
-    // 1. Try to find by studentId if present
-    if (reqObj.studentId) {
-      student = await Student.findOne({ studentId: reqObj.studentId });
-      if (!student) {
-        student = await Alumni.findOne({ studentId: reqObj.studentId });
+    if (studentIds.length === 0) return requestsList;
+
+    const [students, alumni] = await Promise.all([
+      Student.find({ studentId: { $in: studentIds } }).lean(),
+      Alumni.find({ studentId: { $in: studentIds } }).lean()
+    ]);
+
+    const studentMap = {};
+    students.forEach(s => { studentMap[s.studentId] = s; });
+    alumni.forEach(a => { studentMap[a.studentId] = a; });
+
+    return requestsList.map(reqObj => {
+      const student = reqObj.studentId ? studentMap[reqObj.studentId] : null;
+      if (student) {
+        reqObj.studentId = student.studentId || reqObj.studentId || '';
+        reqObj.course = student.course || reqObj.course || '';
+        reqObj.yearLevel = student.yearLevel || reqObj.yearLevel || '';
+        
+        if (reqObj.name && reqObj.name.toLowerCase() === 'user' && (student.firstName || student.lastName)) {
+          reqObj.name = `${student.firstName || ''} ${student.lastName || ''}`.trim();
+        }
       }
-    }
-    
-    // 2. We no longer guess by name to maintain data integrity. 
-    // If studentId isn't provided, we can't reliably link the profile.
-    
-    if (student) {
-      reqObj.studentId = student.studentId || reqObj.studentId || '';
-      reqObj.course = student.course || reqObj.course || '';
-      reqObj.yearLevel = student.yearLevel || reqObj.yearLevel || '';
-      
-      // Upgrade generic "User" names with their real registered name
-      if (reqObj.name.toLowerCase() === 'user' && (student.firstName || student.lastName)) {
-        reqObj.name = `${student.firstName || ''} ${student.lastName || ''}`.trim();
-      }
-    }
+      return reqObj;
+    });
   } catch (err) {
-    console.error('Error enriching request with student data:', err);
+    console.error('Error batch enriching requests:', err);
+    return requestsList;
   }
-  return reqObj;
 };
 
 // Get all requests (Filtered for students/alumni if authenticated, unfiltered for staff/admin)
@@ -49,12 +53,10 @@ router.get('/', protect, async (req, res) => {
       query = { requesterEmail: req.user.email };
     }
 
-    const requests = await Request.find(query).sort({ dateRequested: 1 });
+    const requests = await Request.find(query).sort({ dateRequested: 1 }).lean();
     
-    // Dynamically enrich requests with student profile details (ID, Course, Year) for seamless UX
-    const enrichedRequests = await Promise.all(
-      requests.map(r => enrichRequestWithStudentData(r.toObject()))
-    );
+    // Batch enrich requests with student profile details in high-performance lookup
+    const enrichedRequests = await batchEnrichRequests(requests);
     
     res.json(enrichedRequests);
   } catch (error) {
