@@ -145,8 +145,11 @@ router.put('/:id', protect, async (req, res) => {
                 await Notification.create({
                     message,
                     isRead: false,
-                    email: request.email || ''
+                    email: request.email || '',
+                    targetRole: 'student',
+                    type: 'request'
                 });
+
             } catch (err) {
                 console.error('Failed to create request status update notification:', err);
             }
@@ -253,9 +256,13 @@ router.post('/', protect, async (req, res) => {
     // Auto-notify registrars about the new request
     const Notification = require('../models/Notification');
     await Notification.create({
-      message: `New document request (${req.body.documentType}) from ${userName}`,
-      isRead: false
+      message: `New document request received: ${req.body.documentType} from ${userName} (ID: ${studentId || 'N/A'}) — Request #${requestId}`,
+      isRead: false,
+      targetRole: 'admin',
+      type: 'request',
+      link: '/requests'
     });
+
 
     res.json(newDoc);
   } catch (error) {

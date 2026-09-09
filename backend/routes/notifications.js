@@ -3,25 +3,49 @@ const router = express.Router();
 const Notification = require('../models/Notification');
 const { protect } = require('../middleware/authMiddleware');
 
-// Get all notifications (Admin)
+// Helper filter for admin-actionable notifications
+const getAdminNotificationFilter = () => ({
+  $or: [
+    { targetRole: 'admin' },
+    { targetRole: 'all' },
+    // Backward compatibility for legacy records:
+    // Exclude student-addressed messages ("Your request...", "Your refund...", etc.)
+    {
+      targetRole: { $exists: false },
+      message: { $not: /^(your request|your refund|your account|your password|your profile)/i }
+    }
+  ]
+});
+
+// Get actionable notifications for Admin/Registrar
 router.get('/', async (req, res) => {
   try {
-    const notifications = await Notification.find().sort({ date: -1 });
+    const filter = getAdminNotificationFilter();
+    const notifications = await Notification.find(filter).sort({ date: -1, createdAt: -1 });
     res.json(notifications);
   } catch (error) {
+    console.error('Error fetching admin notifications:', error);
     res.status(500).json({ message: 'Error fetching notifications' });
   }
 });
 
-// Get user specific notifications
+// Get user specific notifications (Student / Alumni)
 router.get('/mine', protect, async (req, res) => {
   try {
-    const notifications = await Notification.find({ email: req.user.email }).sort({ date: -1 });
+    const notifications = await Notification.find({
+      $or: [
+        { email: req.user.email },
+        { targetRole: 'student', email: req.user.email },
+        { targetRole: 'all' }
+      ]
+    }).sort({ date: -1, createdAt: -1 });
     res.json({ success: true, notifications });
   } catch (error) {
+    console.error('Error fetching user notifications:', error);
     res.status(500).json({ success: false, message: 'Error fetching notifications' });
   }
 });
+
 
 // Mark all as read
 router.put('/mark-all-read', async (req, res) => {

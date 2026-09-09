@@ -175,6 +175,20 @@ router.post('/', protect, async (req, res) => {
             details: `Submitted transaction to blockchain for Request: ${req.body.requestId || 'Unknown'}`
         });
 
+        // Auto-notify admin about incoming payment receipt
+        try {
+          const Notification = require('../models/Notification');
+          await Notification.create({
+            message: `New payment receipt submitted for Request #${req.body.requestId || 'N/A'} (${req.body.documentType || 'Document'}) by ${req.body.payerName || req.user.name || 'Student'} — ₱${req.body.amount || '0.00'}`,
+            isRead: false,
+            targetRole: 'admin',
+            type: 'payment',
+            link: '/payments'
+          });
+        } catch (notifErr) {
+          console.error('Failed to notify admin of new payment:', notifErr);
+        }
+
         res.json(newTx);
     } catch (error) {
         res.status(500).json({ message: 'Error recording transaction' });
@@ -218,7 +232,9 @@ router.put('/:id/verify', protect, async (req, res) => {
         await Notification.create({
           message: `Your request #${updatedReq.requestId} for ${updatedReq.documentType} is now In Process!`,
           isRead: false,
-          email: updatedReq.email || ''
+          email: updatedReq.email || '',
+          targetRole: 'student',
+          type: 'request'
         });
       }
     }
@@ -235,10 +251,13 @@ router.put('/:id/verify', protect, async (req, res) => {
         await Notification.create({
           message: `Your request #${updatedReq.requestId} for ${updatedReq.documentType} was rejected. Reason: Payment Issue`,
           isRead: false,
-          email: updatedReq.email || ''
+          email: updatedReq.email || '',
+          targetRole: 'student',
+          type: 'payment'
         });
       }
     }
+
 
     // Log the verification activity
     await ActivityLog.create({
@@ -318,8 +337,11 @@ router.post('/refund-request', async (req, res) => {
     // Notify registrar staff about the refund request
     const Notification = require('../models/Notification');
     await Notification.create({
-      message: `New refund request (${refundId}) from ${refund.studentName} for ₱${refund.amount} — Reason: ${reason === 'Other' ? otherReason : reason}`,
-      isRead: false
+      message: `New refund request (${refundId}) received from ${refund.studentName} for ₱${refund.amount} — Awaiting review`,
+      isRead: false,
+      targetRole: 'admin',
+      type: 'refund',
+      link: '/payments?tab=refunds'
     });
 
     res.status(201).json({ success: true, message: 'Refund request submitted', refund });
@@ -377,8 +399,11 @@ router.put('/refunds/:id/process', protect, async (req, res) => {
     await Notification.create({
       message: statusMessage,
       isRead: false,
-      email: refund.email || refund.studentEmail || ''
+      email: refund.email || refund.studentEmail || '',
+      targetRole: 'student',
+      type: 'refund'
     });
+
 
     // Log the activity
     await ActivityLog.create({

@@ -62,6 +62,20 @@ router.post('/', protect, async (req, res) => {
             details: `Requested refund for transaction ${transactionId}`
         });
 
+        // Auto-notify admin about incoming refund request
+        try {
+            const Notification = require('../models/Notification');
+            await Notification.create({
+                message: `New refund request (${refundId}) submitted by ${req.user.name || req.user.email} for ₱${transaction.amount} — Awaiting review`,
+                isRead: false,
+                targetRole: 'admin',
+                type: 'refund',
+                link: '/payments?tab=refunds'
+            });
+        } catch (notifErr) {
+            console.error('Failed to create refund notification:', notifErr);
+        }
+
         res.status(201).json({ success: true, message: 'Refund requested successfully', refund });
     } catch (error) {
         console.error('Create refund error:', error);
@@ -101,6 +115,24 @@ router.patch('/:id/status', protect, async (req, res) => {
                 { status: 'Refunded', adminRemarks: 'Refund processed' }
             );
         }
+
+        // Notify student of refund decision
+        try {
+            const Notification = require('../models/Notification');
+            const statusMessage = status === 'Approved'
+                ? `Your refund request for ₱${refund.amount} has been approved!`
+                : `Your refund request was rejected. ${adminRemarks ? 'Reason: ' + adminRemarks : ''}`;
+            await Notification.create({
+                message: statusMessage,
+                isRead: false,
+                email: refund.studentEmail || '',
+                targetRole: 'student',
+                type: 'refund'
+            });
+        } catch (nErr) {
+            console.error('Failed to notify student of refund update:', nErr);
+        }
+
 
         res.json({ success: true, message: 'Refund updated', refund });
     } catch (error) {

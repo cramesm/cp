@@ -25,6 +25,12 @@ a, button, [role="button"], img, nav, .sidebar {
   user-drag: none;
 }
 
+/* Hide native Edge / IE password reveal and clear buttons to avoid duplicate visibility icons */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}
+
 /* Modern slim scrollbar rules */
 html {
   overflow-y: auto;

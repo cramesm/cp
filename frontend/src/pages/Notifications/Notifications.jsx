@@ -1,17 +1,20 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Layout from '../../components/Layout';
 import api from '../../api';
-import { AlertCircle, Info, X, Search, SlidersHorizontal, ArrowDownAZ, ArrowUpZA, CheckCircle2, RefreshCw, CheckCheck } from 'lucide-react';
+import { AlertCircle, Info, X, Search, SlidersHorizontal, ArrowDownAZ, ArrowUpZA, CheckCircle2, RefreshCw, CheckCheck, ArrowUpRight } from 'lucide-react';
 import FilterDrawer from '../../components/FilterDrawer';
 import ActiveFilterChips from '../../components/ActiveFilterChips';
 import TableSkeleton from '../../components/TableSkeleton';
 
 const Notifications = () => {
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [toast, setToast] = useState({ show: false, message: '', type: 'info' });
+
 
   // Filter States
   const [searchTerm, setSearchTerm] = useState('');
@@ -230,24 +233,88 @@ const Notifications = () => {
                       hour12: true
                     }) : 'Recent');
 
+                    const msg = n.message?.toLowerCase() || '';
+                    let notifConfig = {
+                      icon: 'fa-solid fa-bell',
+                      iconBg: 'bg-purple-100 text-purple-700',
+                      badge: 'Alert',
+                      badgeColor: 'bg-purple-50 text-purple-700 border-purple-200/80',
+                      link: n.link || ''
+                    };
+
+                    if (n.type === 'refund' || msg.includes('refund')) {
+                      notifConfig = {
+                        icon: 'fa-solid fa-rotate-left',
+                        iconBg: 'bg-amber-100 text-amber-700',
+                        badge: 'Refund',
+                        badgeColor: 'bg-amber-50 text-amber-700 border-amber-200/80',
+                        link: n.link || '/payments?tab=refunds'
+                      };
+                    } else if (n.type === 'payment' || msg.includes('payment') || msg.includes('receipt')) {
+                      notifConfig = {
+                        icon: 'fa-solid fa-receipt',
+                        iconBg: 'bg-emerald-100 text-emerald-700',
+                        badge: 'Payment',
+                        badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200/80',
+                        link: n.link || '/payments'
+                      };
+                    } else if (n.type === 'request' || msg.includes('document request') || msg.includes('request')) {
+                      notifConfig = {
+                        icon: 'fa-solid fa-file-lines',
+                        iconBg: 'bg-blue-100 text-blue-700',
+                        badge: 'Request',
+                        badgeColor: 'bg-blue-50 text-blue-700 border-blue-200/80',
+                        link: n.link || '/requests'
+                      };
+                    }
+
+                    const handleRowClick = async () => {
+                      if (!n.isRead && (n._id || n.id)) {
+                        try {
+                          await api.put(`/notifications/${n._id || n.id}/read`);
+                          setNotifications(prev => prev.map(item => (item._id === n._id ? { ...item, isRead: true } : item)));
+                        } catch (err) {
+                          // silent
+                        }
+                      }
+                      if (notifConfig.link) {
+                        navigate(notifConfig.link);
+                      }
+                    };
+
                     return (
-                      <tr key={n._id || idx} className="hover:bg-slate-50/80 transition-colors">
+                      <tr 
+                        key={n._id || idx} 
+                        onClick={handleRowClick}
+                        className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
+                      >
                         <td className="py-3.5 px-5 align-middle">
                           <div className="flex items-center gap-3">
-                            <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-xs ${
+                            <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 text-xs transition-transform group-hover:scale-105 ${
                               n.isRead 
                                 ? 'bg-slate-100 text-slate-500' 
-                                : 'bg-blue-100 text-blue-700 shadow-2xs'
+                                : notifConfig.iconBg + ' shadow-2xs'
                             }`}>
-                              <i className="fa-solid fa-bell text-[11px]"></i>
+                              <i className={notifConfig.icon}></i>
                             </div>
-                            <span className={`text-[13px] leading-snug ${
-                              n.isRead 
-                                ? 'text-slate-700 font-medium' 
-                                : 'text-slate-900 font-bold'
-                            }`}>
-                              {n.message}
-                            </span>
+                            <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2.5">
+                              <span className={`inline-flex items-center w-max px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider border ${notifConfig.badgeColor}`}>
+                                {notifConfig.badge}
+                              </span>
+                              <span className={`text-[13px] leading-snug ${
+                                n.isRead 
+                                  ? 'text-slate-700 font-medium' 
+                                  : 'text-slate-900 font-bold'
+                              }`}>
+                                {n.message}
+                              </span>
+                            </div>
+                            {notifConfig.link && (
+                              <span className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 group-hover:text-blue-600 text-xs flex items-center gap-1 font-bold pr-2 flex-shrink-0">
+                                <span>Accommodate</span>
+                                <ArrowUpRight size={13} />
+                              </span>
+                            )}
                           </div>
                         </td>
                         <td className="py-3.5 px-5 align-middle text-[12px] text-slate-500 font-medium font-mono whitespace-nowrap">
@@ -259,6 +326,7 @@ const Notifications = () => {
                       </tr>
                     );
                   })
+
                 ) : (
                   <tr>
                     <td colSpan="3" className="py-16 text-center text-slate-400 italic">

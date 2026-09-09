@@ -203,7 +203,7 @@ const AdminLogin = () => {
 
                             <div
                                 className="flex-1 bg-gray-50 border border-gray-200 rounded-2xl p-3.5 cursor-pointer hover:border-amber-500 hover:bg-amber-50/50 hover:shadow-sm transition-all focus:outline-none"
-                                onClick={() => { setEmail('sysadmin@verifitor.com'); setPassword('sysadmin123'); }}
+                                onClick={() => { setEmail('sysadmin@verifitor.com'); setPassword('admin123'); }}
                                 role="button"
                                 tabIndex={0}
                             >

@@ -115,7 +115,7 @@ async function seedUsers() {
         if (!existingSuperAdmin) {
             await SuperAdmin.create({
                 email: 'sysadmin@verifitor.com',
-                password: process.env.DEFAULT_ADMIN_PASSWORD || 'sysadmin123', // Model handles hashing
+                password: process.env.DEFAULT_ADMIN_PASSWORD || 'admin123', // Model handles hashing
                 role: 'super admin',
                 name: 'Super Admin'
             });

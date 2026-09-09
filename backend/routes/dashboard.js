@@ -33,7 +33,18 @@ router.get('/stats', async (req, res) => {
 router.get('/recent', async (req, res) => {
    try {
      const transactions = await Blockchain_Transaction.find().sort({ createdAt: -1 }).limit(5);
-     const notifications = await Notification.find().sort({ date: -1 }).limit(5);
+     
+     const adminFilter = {
+       $or: [
+         { targetRole: 'admin' },
+         { targetRole: 'all' },
+         {
+           targetRole: { $exists: false },
+           message: { $not: /^(your request|your refund|your account|your password|your profile)/i }
+         }
+       ]
+     };
+     const notifications = await Notification.find(adminFilter).sort({ date: -1, createdAt: -1 }).limit(5);
      const pendingRequests = await Request.find({ status: 'Pending' }).sort({ dateRequested: -1 }).limit(5);
 
      res.json({
@@ -42,8 +53,10 @@ router.get('/recent', async (req, res) => {
          pendingRequests
      });
    } catch (error) {
+     console.error('Error fetching recent activity:', error);
      res.status(500).json({ message: 'Error fetching recent activity' });
    }
 });
+
 
 module.exports = router;
