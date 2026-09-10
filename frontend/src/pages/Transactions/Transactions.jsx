@@ -8,7 +8,12 @@ import ActiveFilterChips from '../../components/ActiveFilterChips';
 import api from '../../api';
 import TableSkeleton from '../../components/TableSkeleton';
 import { useModals } from '../../hooks/useModals';
-import { X, ZoomIn, CheckCircle, Image as ImageIcon, Send, AlertCircle, RefreshCw, Receipt, Eye, XCircle, Undo2, SlidersHorizontal, ArrowDownAZ, ArrowUpZA, Trash2 } from 'lucide-react';
+import { 
+  X, ZoomIn, CheckCircle, Image as ImageIcon, Send, AlertCircle, RefreshCw, 
+  Receipt, Eye, XCircle, Undo2, SlidersHorizontal, ArrowDownAZ, ArrowUpZA, 
+  Trash2, Download, Copy, Check, FileSpreadsheet, TrendingUp, Clock, RotateCcw, 
+  XOctagon 
+} from 'lucide-react';
 
 const API_BASE = (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : '') || 'http://127.0.0.1:5000';
 
@@ -37,6 +42,7 @@ const Transactions = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterPaymentMode, setFilterPaymentMode] = useState('All Modes');
   const [filterStatus, setFilterStatus] = useState(searchParams.get('status') || 'All Status');
+  const [filterDocType, setFilterDocType] = useState('All Types');
   const [filterUserRole, setFilterUserRole] = useState('All');
   const [filterProgram, setFilterProgram] = useState('All');
   const [filterUserStatus, setFilterUserStatus] = useState('All');
@@ -46,6 +52,8 @@ const Transactions = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const [sortConfig, setSortConfig] = useState({ key: 'date', direction: 'desc' });
+  const [copiedId, setCopiedId] = useState(null);
+
 
   // Modal & Toast States
   const [selectedTx, setSelectedTx] = useState(null);
@@ -319,6 +327,138 @@ const Transactions = () => {
     }
   };
 
+  const paymentModes = ['All Modes', 'Pay with QR', 'Cash'];
+  const statuses = ['All Status', 'Pending Verification', 'Completed', 'Needs Update', 'Rejected', 'Refunded'];
+  const docTypes = [
+    'All Types',
+    'Transcript of Records (TOR)',
+    'Diploma (2nd Copy)',
+    'Certificate of Enrollment (COE)',
+    'Good Moral Certificate',
+    'Certified True Copy (CTC)',
+    'Form 137 (F-137)'
+  ];
+
+  // Financial KPI Metrics Computation
+  const statsSummary = useMemo(() => {
+    let collectedAmount = 0;
+    let collectedCount = 0;
+    let pendingAmount = 0;
+    let pendingCount = 0;
+    let refundedAmount = 0;
+    let refundedCount = 0;
+    let rejectedCount = 0;
+
+    transactions.forEach(tx => {
+      const amt = parseFloat(String(tx.amount || '0').replace(/[^0-9.-]+/g, '')) || 0;
+      if (tx.status === 'Completed' || tx.status === 'Released') {
+        collectedAmount += amt;
+        collectedCount++;
+      } else if (tx.status === 'Pending Verification' || tx.status === 'Pending') {
+        pendingAmount += amt;
+        pendingCount++;
+      } else if (tx.status === 'Refunded') {
+        refundedAmount += amt;
+        refundedCount++;
+      } else if (tx.status === 'Rejected') {
+        rejectedCount++;
+      }
+    });
+
+    refunds.forEach(rf => {
+      if (rf.status === 'Approved') {
+        const rAmt = parseFloat(String(rf.amount || '0').replace(/[^0-9.-]+/g, '')) || 0;
+        // Avoid double-counting if transaction is already marked Refunded
+        const linkedTx = transactions.find(t => t.transactionId === rf.transactionId);
+        if (!linkedTx || linkedTx.status !== 'Refunded') {
+          refundedAmount += rAmt;
+          refundedCount++;
+        }
+      }
+    });
+
+    return {
+      collectedAmount,
+      collectedCount,
+      pendingAmount,
+      pendingCount,
+      refundedAmount,
+      refundedCount,
+      rejectedCount
+    };
+  }, [transactions, refunds]);
+
+  // Export to CSV Handler
+  const handleExportCSV = () => {
+    if (activeTab === 'payments') {
+      const headers = ['Payment Date', 'Transaction ID', 'Request ID', 'Payer Name', 'Payer Email', 'Document Type', 'Payment Mode', 'Amount (PHP)', 'Status', 'Admin Remarks'];
+      const rows = filteredTransactions.map(tx => [
+        `"${new Date(tx.date || tx.createdAt || Date.now()).toLocaleString()}"`,
+        `"${tx.transactionId || ''}"`,
+        `"${tx.requestId || ''}"`,
+        `"${(tx.payerName || tx.name || '').replace(/"/g, '""')}"`,
+        `"${tx.payerEmail || ''}"`,
+        `"${(tx.documentType || '').replace(/"/g, '""')}"`,
+        `"${tx.paymentMode || 'Pay with QR'}"`,
+        `"${tx.amount || '0.00'}"`,
+        `"${tx.status || ''}"`,
+        `"${(tx.adminRemarks || '').replace(/"/g, '""')}"`
+      ]);
+
+      const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement('a');
+      link.setAttribute('href', encodedUri);
+      link.setAttribute('download', `payments_report_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      triggerToast('Payments records exported to CSV successfully!', 'success');
+    } else {
+      const headers = ['Request Date', 'Refund ID', 'Transaction ID', 'Student Name', 'Student Email', 'Reason', 'Payment Method', 'Account Name', 'Account Number', 'Amount (PHP)', 'Status', 'Admin Remarks'];
+      const rows = refunds.map(rf => [
+        `"${new Date(rf.createdAt || Date.now()).toLocaleString()}"`,
+        `"${rf.refundId || rf._id}"`,
+        `"${rf.transactionId || ''}"`,
+        `"${(rf.studentName || '').replace(/"/g, '""')}"`,
+        `"${rf.studentEmail || ''}"`,
+        `"${(rf.reason === 'Other' ? (rf.otherReason || 'Other') : rf.reason || '').replace(/"/g, '""')}"`,
+        `"${rf.paymentMethod || rf.paymentMode || 'Original Method'}"`,
+        `"${(rf.accountName || '').replace(/"/g, '""')}"`,
+        `"${rf.accountNumber || ''}"`,
+        `"${rf.amount || '0.00'}"`,
+        `"${rf.status || ''}"`,
+        `"${(rf.adminRemarks || '').replace(/"/g, '""')}"`
+      ]);
+
+      const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement('a');
+      link.setAttribute('href', encodedUri);
+      link.setAttribute('download', `refunds_report_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      triggerToast('Refund records exported to CSV successfully!', 'success');
+    }
+  };
+
+  const formatShortId = (id, prefix = 'TXN') => {
+    if (!id) return `#${prefix}-001`;
+    const str = String(id);
+    if (str.length <= 10) return str.startsWith('#') ? str : `#${str}`;
+    const lastPart = str.split('-').pop() || str.slice(-4);
+    return `#${prefix}-${lastPart.length > 6 ? lastPart.slice(-4) : lastPart}`;
+  };
+
+  const handleCopy = (text, id) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    triggerToast(`Copied ${text} to clipboard`, 'info');
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
   // Filter & Sort Logic
   const filteredTransactions = useMemo(() => {
     return transactions.filter(tx => {
@@ -326,11 +466,20 @@ const Transactions = () => {
       const id = (tx.transactionId || '').toLowerCase();
       const ref = (tx.referenceNumber || '').toLowerCase();
       const payer = (tx.payerEmail || '').toLowerCase();
+      const docType = (tx.documentType || '').toLowerCase();
       const search = searchTerm.toLowerCase();
 
-      const matchesSearch = name.includes(search) || id.includes(search) || ref.includes(search) || payer.includes(search);
-      const matchesMode = filterPaymentMode === 'All Modes' || tx.paymentMode === filterPaymentMode;
+      const matchesSearch = name.includes(search) || id.includes(search) || ref.includes(search) || payer.includes(search) || docType.includes(search);
+      
+      let matchesMode = true;
+      if (filterPaymentMode === 'Cash') {
+        matchesMode = tx.paymentMode === 'Cash';
+      } else if (filterPaymentMode === 'Pay with QR') {
+        matchesMode = tx.paymentMode === 'Pay with QR' || tx.paymentMode === 'GCash' || tx.paymentMode === 'Maya' || tx.paymentMode === 'GoThyme';
+      }
+
       const matchesStatus = filterStatus === 'All Status' || tx.status === filterStatus;
+      const matchesDocType = filterDocType === 'All Types' || (tx.documentType || '').toLowerCase().includes(filterDocType.toLowerCase().split(' ')[0]);
 
       const user = userMap[tx.payerEmail] || {};
       const matchesRole = filterUserRole === 'All' || (user.role || 'student').toLowerCase() === filterUserRole.toLowerCase();
@@ -344,7 +493,7 @@ const Transactions = () => {
         if (endDate && txDate > endDate) matchesDate = false;
       }
 
-      return matchesSearch && matchesMode && matchesStatus && matchesRole && matchesProgram && matchesUserStatus && matchesDate;
+      return matchesSearch && matchesMode && matchesStatus && matchesDocType && matchesRole && matchesProgram && matchesUserStatus && matchesDate;
     }).sort((a, b) => {
       let valA = a[sortConfig.key];
       let valB = b[sortConfig.key];
@@ -361,7 +510,7 @@ const Transactions = () => {
       if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
       return 0;
     });
-  }, [transactions, searchTerm, filterPaymentMode, filterStatus, filterUserRole, filterProgram, filterUserStatus, startDate, endDate, userMap, sortConfig]);
+  }, [transactions, searchTerm, filterPaymentMode, filterStatus, filterDocType, filterUserRole, filterProgram, filterUserStatus, startDate, endDate, userMap, sortConfig]);
 
   const totalPages = Math.ceil(filteredTransactions.length / entriesPerPage);
   const paginatedTransactions = filteredTransactions.slice(
@@ -371,10 +520,7 @@ const Transactions = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, filterPaymentMode, filterStatus, filterUserRole, filterProgram, filterUserStatus, startDate, endDate, entriesPerPage]);
-
-  const paymentModes = ['All Modes', 'GCash', 'Maya', 'GoThyme'];
-  const statuses = ['All Status', 'Pending Verification', 'Completed', 'Needs Update', 'Rejected', 'Refunded'];
+  }, [searchTerm, filterPaymentMode, filterStatus, filterDocType, filterUserRole, filterProgram, filterUserStatus, startDate, endDate, entriesPerPage]);
 
   const isCurrentTxPageAllSelected = paginatedTransactions.length > 0 && paginatedTransactions.every(t => selectedTxIds.includes(t.transactionId || t._id));
   const isCurrentRefundPageAllSelected = refunds.length > 0 && refunds.every(r => selectedRefundIds.includes(r.refundId || r._id));
@@ -406,8 +552,95 @@ const Transactions = () => {
           </div>
         )}
 
+        {/* ========================================================================= */}
+        {/* FINANCIAL SUMMARY KPI CARDS                                               */}
+        {/* ========================================================================= */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+          
+          {/* Card 1: Total Revenue Collected */}
+          <div className="bg-white rounded-[20px] p-4 flex flex-col justify-between shadow-[0_4px_20px_rgba(0,0,0,0.03),0_1px_3px_rgba(0,0,0,0.02)] border border-slate-100/90 hover:border-slate-300 transition-all">
+            <div className="flex justify-between items-start">
+              <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200/60 flex items-center justify-center text-xs shadow-2xs">
+                <TrendingUp size={15} />
+              </div>
+              <span className="text-[10.5px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                {statsSummary.collectedCount} Paid
+              </span>
+            </div>
+            <div className="mt-2.5">
+              <span className="text-[22px] sm:text-[26px] font-black text-slate-900 leading-tight block">
+                ₱{statsSummary.collectedAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+              <span className="text-[11.5px] font-bold text-slate-500 block truncate">
+                Total Revenue Collected
+              </span>
+            </div>
+          </div>
+
+          {/* Card 2: Pending Verification */}
+          <div className="bg-white rounded-[20px] p-4 flex flex-col justify-between shadow-[0_4px_20px_rgba(0,0,0,0.03),0_1px_3px_rgba(0,0,0,0.02)] border border-slate-100/90 hover:border-slate-300 transition-all">
+            <div className="flex justify-between items-start">
+              <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 border border-amber-200/60 flex items-center justify-center text-xs shadow-2xs">
+                <Clock size={15} />
+              </div>
+              <span className="text-[10.5px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                {statsSummary.pendingCount} Pending
+              </span>
+            </div>
+            <div className="mt-2.5">
+              <span className="text-[22px] sm:text-[26px] font-black text-slate-900 leading-tight block">
+                ₱{statsSummary.pendingAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+              <span className="text-[11.5px] font-bold text-slate-500 block truncate">
+                Awaiting Verification
+              </span>
+            </div>
+          </div>
+
+          {/* Card 3: Total Refunded */}
+          <div className="bg-white rounded-[20px] p-4 flex flex-col justify-between shadow-[0_4px_20px_rgba(0,0,0,0.03),0_1px_3px_rgba(0,0,0,0.02)] border border-slate-100/90 hover:border-slate-300 transition-all">
+            <div className="flex justify-between items-start">
+              <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 border border-purple-200/60 flex items-center justify-center text-xs shadow-2xs">
+                <RotateCcw size={15} />
+              </div>
+              <span className="text-[10.5px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+                {statsSummary.refundedCount} Refunded
+              </span>
+            </div>
+            <div className="mt-2.5">
+              <span className="text-[22px] sm:text-[26px] font-black text-slate-900 leading-tight block">
+                ₱{statsSummary.refundedAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+              <span className="text-[11.5px] font-bold text-slate-500 block truncate">
+                Total Refunds Processed
+              </span>
+            </div>
+          </div>
+
+          {/* Card 4: Rejected Receipts */}
+          <div className="bg-white rounded-[20px] p-4 flex flex-col justify-between shadow-[0_4px_20px_rgba(0,0,0,0.03),0_1px_3px_rgba(0,0,0,0.02)] border border-slate-100/90 hover:border-slate-300 transition-all">
+            <div className="flex justify-between items-start">
+              <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 border border-rose-200/60 flex items-center justify-center text-xs shadow-2xs">
+                <XOctagon size={15} />
+              </div>
+              <span className="text-[10.5px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
+                Attention
+              </span>
+            </div>
+            <div className="mt-2.5">
+              <span className="text-[22px] sm:text-[26px] font-black text-slate-900 leading-tight block">
+                {statsSummary.rejectedCount}
+              </span>
+              <span className="text-[11.5px] font-bold text-slate-500 block truncate">
+                Rejected Payment Receipts
+              </span>
+            </div>
+          </div>
+
+        </div>
+
         {/* 3D Segmented Tab Switcher */}
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="inline-flex bg-slate-200/70 p-1 rounded-full border border-slate-200 shadow-inner">
             <button
               onClick={() => setActiveTab('payments')}
@@ -430,7 +663,18 @@ const Transactions = () => {
               Refund Requests
             </button>
           </div>
+
+          {/* Export Report Button */}
+          <button
+            type="button"
+            onClick={handleExportCSV}
+            className="bg-white hover:bg-slate-50 text-slate-700 px-4 py-1.5 rounded-full font-bold text-xs border border-slate-200 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 transition-all flex items-center gap-2 cursor-pointer"
+          >
+            <FileSpreadsheet size={14} className="text-emerald-600" />
+            <span>Export to CSV</span>
+          </button>
         </div>
+
 
         {/* ====== PAYMENTS TAB ====== */}
         {activeTab === 'payments' && (
@@ -515,6 +759,7 @@ const Transactions = () => {
                       { label: 'Program', value: filterProgram, key: 'filterProgram' },
                       { label: 'User Status', value: filterUserStatus, key: 'filterUserStatus' },
                       { label: 'Payment Mode', value: filterPaymentMode, key: 'filterPaymentMode' },
+                      { label: 'Type', value: filterDocType, key: 'filterDocType' },
                       { label: 'Status', value: filterStatus, key: 'filterStatus' },
                       { label: 'From', value: startDate, key: 'startDate' },
                       { label: 'To', value: endDate, key: 'endDate' },
@@ -524,6 +769,7 @@ const Transactions = () => {
                       if (key === 'filterProgram') setFilterProgram('All');
                       if (key === 'filterUserStatus') setFilterUserStatus('All');
                       if (key === 'filterPaymentMode') setFilterPaymentMode('All Modes');
+                      if (key === 'filterDocType') setFilterDocType('All Types');
                       if (key === 'filterStatus') setFilterStatus('All Status');
                       if (key === 'startDate') setStartDate('');
                       if (key === 'endDate') setEndDate('');
@@ -538,6 +784,7 @@ const Transactions = () => {
                 onClearAll={() => {
                   setFilterPaymentMode('All Modes');
                   setFilterStatus('All Status');
+                  setFilterDocType('All Types');
                   setFilterUserRole('All');
                   setFilterProgram('All');
                   setFilterUserStatus('All');
@@ -590,6 +837,18 @@ const Transactions = () => {
                         className="border border-slate-200 rounded-xl px-3 py-2 text-xs bg-white outline-none focus:border-blue-500 text-slate-800"
                       >
                         {paymentModes.map(mode => <option key={mode} value={mode}>{mode}</option>)}
+                      </select>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-bold text-slate-700">Document Type:</label>
+                      <select
+                        aria-label="Filter by document type"
+                        value={filterDocType}
+                        onChange={(e) => setFilterDocType(e.target.value)}
+                        className="border border-slate-200 rounded-xl px-3 py-2 text-xs bg-white outline-none focus:border-blue-500 text-slate-800"
+                      >
+                        {docTypes.map(d => <option key={d} value={d}>{d}</option>)}
                       </select>
                     </div>
 
@@ -734,14 +993,36 @@ const Transactions = () => {
                             </td>
                           )}
                           <td className="py-3.5 px-5 align-middle">
-                            <span className="bg-slate-100 px-2 py-0.5 rounded-md text-slate-700 font-mono text-[11.5px] font-bold">
-                              {tx.transactionId}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="bg-slate-100 px-2 py-0.5 rounded-md text-slate-800 font-mono text-[11.5px] font-bold" title={tx.transactionId}>
+                                {formatShortId(tx.transactionId, 'TXN')}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleCopy(tx.transactionId, `tx-${txId}`)}
+                                className="text-slate-400 hover:text-slate-700 transition-colors p-1 rounded hover:bg-slate-200/60 cursor-pointer"
+                                title="Copy Full Transaction ID"
+                              >
+                                {copiedId === `tx-${txId}` ? <Check size={11} className="text-emerald-600" /> : <Copy size={11} />}
+                              </button>
+                            </div>
                           </td>
                           <td className="py-3.5 px-5 align-middle">
-                            <span className="bg-slate-100 px-2 py-0.5 rounded-md text-slate-700 font-mono text-[11.5px]">
-                              {tx.requestId}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="bg-slate-100 px-2 py-0.5 rounded-md text-slate-700 font-mono text-[11.5px]" title={tx.requestId}>
+                                {formatShortId(tx.requestId, 'REQ')}
+                              </span>
+                              {tx.requestId && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopy(tx.requestId, `req-${txId}`)}
+                                  className="text-slate-400 hover:text-slate-700 transition-colors p-1 rounded hover:bg-slate-200/60 cursor-pointer"
+                                  title="Copy Full Request ID"
+                                >
+                                  {copiedId === `req-${txId}` ? <Check size={11} className="text-emerald-600" /> : <Copy size={11} />}
+                                </button>
+                              )}
+                            </div>
                           </td>
                           <td className="py-3.5 px-5 align-middle text-[13px] font-bold text-slate-900">
                             {tx.payerName || tx.name}
@@ -982,14 +1263,36 @@ const Transactions = () => {
                             </td>
                           )}
                           <td className="py-3.5 px-5 align-middle">
-                            <span className="bg-slate-100 px-2 py-0.5 rounded-md text-slate-700 font-mono text-[11.5px] font-bold">
-                              {refund.refundId || refund._id}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="bg-slate-100 px-2 py-0.5 rounded-md text-slate-800 font-mono text-[11.5px] font-bold" title={refund.refundId || refund._id}>
+                                {formatShortId(refund.refundId || refund._id, 'REF')}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleCopy(refund.refundId || refund._id, `rf-${refundId}`)}
+                                className="text-slate-400 hover:text-slate-700 transition-colors p-1 rounded hover:bg-slate-200/60 cursor-pointer"
+                                title="Copy Full Refund ID"
+                              >
+                                {copiedId === `rf-${refundId}` ? <Check size={11} className="text-emerald-600" /> : <Copy size={11} />}
+                              </button>
+                            </div>
                           </td>
                           <td className="py-3.5 px-5 align-middle">
-                            <span className="bg-slate-100 px-2 py-0.5 rounded-md text-slate-700 font-mono text-[11.5px]">
-                              {refund.transactionId}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="bg-slate-100 px-2 py-0.5 rounded-md text-slate-700 font-mono text-[11.5px]" title={refund.transactionId}>
+                                {formatShortId(refund.transactionId, 'TXN')}
+                              </span>
+                              {refund.transactionId && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopy(refund.transactionId, `rftx-${refundId}`)}
+                                  className="text-slate-400 hover:text-slate-700 transition-colors p-1 rounded hover:bg-slate-200/60 cursor-pointer"
+                                  title="Copy Full Transaction ID"
+                                >
+                                  {copiedId === `rftx-${refundId}` ? <Check size={11} className="text-emerald-600" /> : <Copy size={11} />}
+                                </button>
+                              )}
+                            </div>
                           </td>
                           <td className="py-3.5 px-5 align-middle text-[13px] font-bold text-slate-900">{displayName}</td>
                           <td className="py-3.5 px-5 align-middle text-slate-900 font-bold">₱{refund.amount || '0.00'}</td>
@@ -1299,10 +1602,15 @@ const Transactions = () => {
 // Helper: Payment Mode Badge Styles
 function getPaymentModeStyle(mode) {
   switch (mode) {
-    case 'GCash': return 'bg-[#E0F0FF] text-[#0070E0]';
-    case 'Maya': return 'bg-[#E8F5E8] text-[#2E7D32]';
-    case 'GoThyme': return 'bg-[#FFF3E0] text-[#E65100]';
-    default: return 'bg-gray-100 text-gray-600';
+    case 'Pay with QR':
+    case 'GCash':
+    case 'Maya':
+    case 'GoThyme':
+      return 'bg-blue-50 text-blue-700 border border-blue-200/80';
+    case 'Cash':
+      return 'bg-emerald-50 text-emerald-700 border border-emerald-200/80';
+    default:
+      return 'bg-slate-100 text-slate-700 border border-slate-200';
   }
 }
 

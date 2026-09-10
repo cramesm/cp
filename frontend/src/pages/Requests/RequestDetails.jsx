@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronRight, ArrowLeft, FileText, Upload, CheckCircle2, AlertCircle, ShieldCheck, Printer, FileSearch, Trash2, Shield, Search } from 'lucide-react';
+import { ChevronRight, ArrowLeft, FileText, Upload, CheckCircle2, AlertCircle, ShieldCheck, Printer, FileSearch, Trash2, Shield, Search, Download, Copy, Check } from 'lucide-react';
 import Layout from '../../components/Layout';
 import ConfirmModal from '../../components/ConfirmModal';
 import FeedbackModal from '../../components/FeedbackModal';
@@ -22,6 +22,7 @@ const RequestDetails = () => {
     const [paymentTx, setPaymentTx] = useState(null);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
+    const [copiedId, setCopiedId] = useState(null);
 
     // Wizard State
     const [currentStep, setCurrentStep] = useState(1);
@@ -34,6 +35,21 @@ const RequestDetails = () => {
 
     // Modals
     const { confirmConfig, feedbackConfig, showConfirm, showFeedback, closeConfirm, closeFeedback } = useModals();
+
+    const handleCopy = (text, idKey) => {
+        if (!text) return;
+        navigator.clipboard.writeText(text);
+        setCopiedId(idKey);
+        setTimeout(() => setCopiedId(null), 2000);
+    };
+
+    const formatShortId = (val, prefix = 'REQ') => {
+        if (!val) return `#${prefix}-001`;
+        const str = String(val);
+        if (str.length <= 10) return str.startsWith('#') ? str : `#${str}`;
+        const lastPart = str.split('-').pop() || str.slice(-4);
+        return `#${prefix}-${lastPart.length > 6 ? lastPart.slice(-4) : lastPart}`;
+    };
 
     // Blockchain Data State
     const [blockchainData, setBlockchainData] = useState({
@@ -250,21 +266,46 @@ const RequestDetails = () => {
                                     status === 'In Process' ? 'bg-purple-500' :
                                     status === 'Released' ? 'bg-emerald-500' :
                                     'bg-red-500'
-                                }}`}></span>
+                                }`}></span>
                                 <span>{status}</span>
                             </span>
                         </div>
-                        <p className="text-xs text-slate-400 font-medium m-0 mt-1">
-                            Request ID: <span className="bg-slate-100 px-2 py-0.5 rounded-md text-slate-700 font-mono text-[11.5px] font-bold">{requestData.requestId}</span>
-                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xs text-slate-400 font-medium">Request ID:</span>
+                            <span className="bg-slate-100 px-2 py-0.5 rounded-md text-slate-800 font-mono text-[11.5px] font-bold" title={requestData.requestId}>
+                                {formatShortId(requestData.requestId, 'REQ')}
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => handleCopy(requestData.requestId, 'hdr-req')}
+                                className="text-slate-400 hover:text-slate-700 transition-colors p-1 rounded hover:bg-slate-200/60 cursor-pointer"
+                                title="Copy Full Request ID"
+                            >
+                                {copiedId === 'hdr-req' ? <Check size={11} className="text-emerald-600" /> : <Copy size={11} />}
+                            </button>
+                        </div>
                     </div>
-                    <button 
-                        onClick={() => navigate('/requests')}
-                        className="bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold text-xs px-4 py-2 rounded-full border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-2 cursor-pointer w-fit"
-                    >
-                        <ArrowLeft size={13} />
-                        <span>Back to Document Requests</span>
-                    </button>
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                        {requestData.documentFile && (
+                            <a
+                                href={requestData.documentFile.startsWith('data:') ? requestData.documentFile : `${API_BASE}${requestData.documentFile}`}
+                                download={requestData.documentFile.startsWith('data:') ? `official-document-${requestData.requestId}.pdf` : undefined}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2 rounded-full border border-emerald-500 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 transition-all flex items-center gap-1.5 cursor-pointer"
+                            >
+                                <Download size={13} />
+                                <span>Download Official Soft Copy</span>
+                            </a>
+                        )}
+                        <button 
+                            onClick={() => navigate('/requests')}
+                            className="bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold text-xs px-4 py-2 rounded-full border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-2 cursor-pointer w-fit"
+                        >
+                            <ArrowLeft size={13} />
+                            <span>Back to Document Requests</span>
+                        </button>
+                    </div>
                 </div>
 
                     {status === 'Rejected' && (
@@ -676,15 +717,30 @@ const RequestDetails = () => {
 
                                         {blockchainResult && (
                                             <div className="bg-slate-50 p-5 rounded-xl border border-slate-200 text-left mb-8 max-w-lg mx-auto">
-                                                <h4 className="font-bold text-xs text-slate-400 uppercase tracking-widest mb-3">Blockchain Record</h4>
-                                                <div className="space-y-2">
+                                                <h4 className="font-bold text-xs text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                                                    <ShieldCheck size={14} className="text-blue-600" />
+                                                    <span>Secured Digital Ledger Record</span>
+                                                </h4>
+                                                <div className="space-y-2.5">
                                                     <div>
-                                                        <p className="text-[10.5px] font-bold text-slate-400 uppercase">Transaction Hash</p>
-                                                        <p className="font-mono text-xs text-slate-700 truncate">{blockchainResult.transactionHash}</p>
+                                                        <p className="text-[10.5px] font-bold text-slate-400 uppercase">Verification Hash</p>
+                                                        <div className="flex items-center gap-1.5 mt-0.5">
+                                                            <span className="font-mono text-xs text-slate-800 bg-white border border-slate-200 px-2 py-0.5 rounded font-bold" title={blockchainResult.transactionHash}>
+                                                                {formatShortId(blockchainResult.transactionHash, 'SEC')}
+                                                            </span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleCopy(blockchainResult.transactionHash, 'sec-hash')}
+                                                                className="text-slate-400 hover:text-slate-700 transition-colors p-1 rounded hover:bg-slate-200/60 cursor-pointer"
+                                                                title="Copy Full Transaction Hash"
+                                                            >
+                                                                {copiedId === 'sec-hash' ? <Check size={11} className="text-emerald-600" /> : <Copy size={11} />}
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                     <div>
-                                                        <p className="text-[10.5px] font-bold text-slate-400 uppercase">Reference / ID Number</p>
-                                                        <p className="font-bold text-slate-700 text-xs">{blockchainResult.referenceNumber} / {blockchainResult.studentIDNumber}</p>
+                                                        <p className="text-[10.5px] font-bold text-slate-400 uppercase">Reference / Student ID</p>
+                                                        <p className="font-bold text-slate-700 text-xs mt-0.5">{blockchainResult.referenceNumber} / {blockchainResult.studentIDNumber}</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -694,13 +750,13 @@ const RequestDetails = () => {
                                             {requestData.documentFile && (
                                                 <a
                                                     href={requestData.documentFile.startsWith('data:') ? requestData.documentFile : `${API_BASE}${requestData.documentFile}`}
-                                                    download={requestData.documentFile.startsWith('data:') ? `document-${requestData.requestId}.pdf` : undefined}
+                                                    download={requestData.documentFile.startsWith('data:') ? `official-document-${requestData.requestId}.pdf` : undefined}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-full font-bold text-xs flex items-center gap-2 shadow-xs transition-all"
+                                                    className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-full font-bold text-xs flex items-center gap-2 shadow-xs hover:-translate-y-0.5 active:translate-y-0.5 transition-all cursor-pointer"
                                                 >
-                                                    <FileText size={15} /> 
-                                                    <span>View / Download Document</span>
+                                                    <Download size={14} /> 
+                                                    <span>Download Official Soft Copy</span>
                                                 </a>
                                             )}
                                             <button

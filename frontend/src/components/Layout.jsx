@@ -46,10 +46,23 @@ const Layout = ({ children }) => {
         setMenuOpen((prev) => !prev);
     };
 
-    const handleLogout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('userRole');
-        navigate('/login');
+    const handleLogout = async () => {
+        try {
+            const adminUserStr = localStorage.getItem('adminUser');
+            const adminUser = adminUserStr ? JSON.parse(adminUserStr) : null;
+            await api.post('/auth/logout', {
+                userEmail: adminUser?.email,
+                userName: adminUser?.name || `${adminUser?.firstName || ''} ${adminUser?.lastName || ''}`.trim(),
+                userRole: localStorage.getItem('userRole') || adminUser?.role
+            });
+        } catch (err) {
+            console.error('Logout logging error:', err);
+        } finally {
+            localStorage.removeItem('token');
+            localStorage.removeItem('userRole');
+            localStorage.removeItem('adminUser');
+            navigate('/login');
+        }
     };
 
     const getPageTitle = () => {
@@ -65,7 +78,7 @@ const Layout = ({ children }) => {
             case '/notifications':
                 return 'Notifications';
             case '/blockchain':
-                return 'Blockchain Management';
+                return 'Secured Digital Records';
             case '/manage-registrar':
                 return 'Manage Registrars';
             case '/manage-users':
@@ -95,13 +108,13 @@ const Layout = ({ children }) => {
                     return 'TOR Details';
                 }
                 if (path === '/blockchain/create') {
-                    return 'Create Blockchain Record';
+                    return 'Create Secured Record';
                 }
                 if (path === '/blockchain/my-transactions') {
-                    return 'My Blockchain Records';
+                    return 'My Secured Records';
                 }
                 if (path === '/blockchain/verify') {
-                    return 'Verify Blockchain Record';
+                    return 'Verify Secured Record';
                 }
                 return 'Dashboard';
         }
@@ -113,9 +126,10 @@ const Layout = ({ children }) => {
         { path: '/dashboard', label: 'Dashboard', icon: 'fa-solid fa-table-cells-large' },
         { path: '/requests', label: 'Document Requests', icon: 'fa-solid fa-file-lines' },
         { path: '/transactions', label: 'Payments', icon: 'fa-solid fa-money-check-dollar' },
-        { path: '/blockchain', label: 'Blockchain', icon: 'fa-solid fa-cubes' },
+        { path: '/blockchain', label: 'Secured Records', icon: 'fa-solid fa-shield-halved' },
         { path: '/notifications', label: 'Notifications', icon: 'fa-solid fa-bell' }
     ];
+
 
     if (userRole === 'super admin') {
         menuItems.push(
@@ -246,11 +260,6 @@ const Layout = ({ children }) => {
 
                                     {!isCollapsed && (
                                         <span className="tracking-wide truncate">{item.label}</span>
-                                    )}
-
-                                    {/* 3D Active Indicator Pill */}
-                                    {isActive && (
-                                        <span className="absolute right-2 w-1.5 h-3.5 bg-blue-400 rounded-full shadow-[0_0_6px_rgba(96,165,250,0.9)]"></span>
                                     )}
                                 </>
                             )}

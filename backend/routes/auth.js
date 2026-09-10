@@ -258,6 +258,19 @@ router.post('/login', loginProgressiveLimiter, loginValidation, validate, async 
     }
 
     const token = generateToken(user);
+    const clientIp = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket.remoteAddress || req.ip || '127.0.0.1';
+
+    // If Registrar, update lastLoginIp and lastLoginAt
+    if (modelName === 'Registrar') {
+      try {
+        await Registrar.findByIdAndUpdate(user._id, {
+          lastLoginIp: clientIp,
+          lastLoginAt: new Date()
+        });
+      } catch (ipErr) {
+        console.error('Error updating registrar last login IP:', ipErr);
+      }
+    }
 
     // Log activity
     await ActivityLog.create({
@@ -266,13 +279,14 @@ router.post('/login', loginProgressiveLimiter, loginValidation, validate, async 
       action: 'Login',
       type: '------',
       status: 'Successful',
-      details: `${user.role} logged into the system`
+      details: `${user.role} logged into the system from IP ${clientIp}`,
+      ipAddress: clientIp
     });
 
     // Clear the progressive rate limiter on success
     const LoginLockout = require('../models/LoginLockout');
-    if (req.clientIp) {
-      await LoginLockout.deleteOne({ ip: req.clientIp });
+    if (req.clientIp || clientIp) {
+      await LoginLockout.deleteOne({ ip: req.clientIp || clientIp });
     }
 
     res.json({
@@ -297,6 +311,47 @@ router.post('/login', loginProgressiveLimiter, loginValidation, validate, async 
     console.error('Login error:', error.message);
     console.error('Login error stack:', error.stack);
     res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// @route   POST /api/auth/logout
+// @desc    Log out current user and record in ActivityLog
+router.post('/logout', async (req, res) => {
+  try {
+    let user = null;
+    let token;
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+      token = req.headers.authorization.split(' ')[1];
+    }
+    if (token) {
+      try {
+        user = jwt.verify(token, process.env.JWT_SECRET || 'supersecretverifitor123');
+      } catch (jwtErr) {
+        console.warn('Logout token verification warning:', jwtErr.message);
+      }
+    }
+
+    const clientIp = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket.remoteAddress || req.ip || '127.0.0.1';
+    const userName = user?.name || req.body?.userName || 'User';
+    const userEmail = user?.email || req.body?.userEmail || 'N/A';
+    const userRole = user?.role || req.body?.userRole || 'User';
+
+    // Log the logout action in ActivityLog
+    await ActivityLog.create({
+      userEmail: userEmail,
+      userName: userName,
+      action: 'Logout',
+      type: '------',
+      status: 'Successful',
+      details: `${userRole} (${userName}) logged out of the system from IP ${clientIp}`,
+      ipAddress: clientIp
+    });
+
+    console.log(`[ACTIVITY LOG] Logout recorded for ${userEmail} (${userName}) [IP: ${clientIp}]`);
+    res.json({ success: true, message: 'Logged out successfully' });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({ success: false, message: 'Server error during logout' });
   }
 });
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../../components/Layout';
 import { User, Edit3, LogOut } from 'lucide-react';
+import api from '../../api';
 
 const ProfileInfo = () => {
     const navigate = useNavigate();
@@ -26,10 +27,23 @@ const ProfileInfo = () => {
         }
     }, []);
 
-    const handleLogout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('adminUser');
-        navigate('/login');
+    const handleLogout = async () => {
+        try {
+            const adminUserStr = localStorage.getItem('adminUser');
+            const adminUser = adminUserStr ? JSON.parse(adminUserStr) : null;
+            await api.post('/auth/logout', {
+                userEmail: adminUser?.email || user.email,
+                userName: adminUser?.name || `${adminUser?.firstName || ''} ${adminUser?.lastName || ''}`.trim() || user.name,
+                userRole: localStorage.getItem('userRole') || adminUser?.role || user.role
+            });
+        } catch (err) {
+            console.error('Logout logging error:', err);
+        } finally {
+            localStorage.removeItem('token');
+            localStorage.removeItem('userRole');
+            localStorage.removeItem('adminUser');
+            navigate('/login');
+        }
     };
 
     return (

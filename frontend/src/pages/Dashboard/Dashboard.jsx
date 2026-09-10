@@ -102,14 +102,22 @@ const Dashboard = () => {
             subtitle: 'Claimed & verified records'
         },
         {
-            title: 'Blockchain Records',
+            title: 'Secured Records',
             value: stats.blockchainTransactions ?? 0,
-            icon: 'fa-solid fa-cubes',
+            icon: 'fa-solid fa-shield-halved',
             iconBg: 'bg-sky-50 text-sky-600 border border-sky-200/60',
             link: '/blockchain/my-transactions',
-            subtitle: 'Cryptographic ledger anchors'
+            subtitle: 'Tamper-proof digital ledger'
         }
     ];
+
+    const formatShortId = (id, prefix = 'TXN') => {
+        if (!id) return `#${prefix}-001`;
+        const str = String(id);
+        if (str.length <= 10) return str.startsWith('#') ? str : `#${str}`;
+        const lastPart = str.split('-').pop() || str.slice(-4);
+        return `#${prefix}-${lastPart.length > 6 ? lastPart.slice(-4) : lastPart}`;
+    };
 
     const filteredRequests = (recentData.pendingRequests || []).filter(req => {
         const matchesSearch = searchFilter === '' || 
@@ -138,14 +146,14 @@ const Dashboard = () => {
                 )}
 
                 {/* ========================================================================= */}
-                {/* 1. 3D ELEVATED STATS GRID                                                 */}
+                {/* 1. TOP SECTION: 6 ELEVATED STAT CARDS                                     */}
                 {/* ========================================================================= */}
-                <div className={`grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 transition-opacity ${loading ? 'opacity-60' : 'opacity-100'}`}>
-                    {statCards.map((card, idx) => (
-                        <div 
-                            key={idx}
+                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
+                    {statCards.map((card, index) => (
+                        <div
+                            key={index}
                             onClick={() => navigate(card.link)}
-                            className="bg-white rounded-[20px] p-4 shadow-[0_8px_24px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.02)] border border-slate-100/90 flex flex-col justify-between min-h-[125px] relative cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group"
+                            className="bg-white rounded-[20px] p-4 flex flex-col justify-between shadow-[0_4px_20px_rgba(0,0,0,0.03),0_1px_3px_rgba(0,0,0,0.02)] border border-slate-100/90 hover:border-slate-300 hover:shadow-[0_8px_25px_rgba(0,0,0,0.06)] hover:-translate-y-0.5 transition-all duration-200 cursor-pointer relative group overflow-hidden min-h-[110px]"
                         >
                             {/* Card Top Header with 3D Icon Badge & Arrow */}
                             <div className="flex justify-between items-start w-full">
@@ -178,20 +186,20 @@ const Dashboard = () => {
                 </div>
 
                 {/* ========================================================================= */}
-                {/* 2. MIDDLE SECTION: BLOCKCHAIN ACTIVITIES & SYSTEM NOTIFICATIONS           */}
+                {/* 2. MIDDLE SECTION: SECURED RECORDS ACTIVITIES & NOTIFICATIONS             */}
                 {/* ========================================================================= */}
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                     
-                    {/* Left Card: Blockchain Ledger Activities */}
+                    {/* Left Card: Secured Digital Ledger Activities */}
                     <div className="bg-white rounded-[22px] shadow-[0_8px_24px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.02)] border border-slate-100/90 flex flex-col h-[340px] overflow-hidden">
                         
                         {/* Header */}
                         <div className="py-3.5 px-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                             <div className="flex items-center gap-2.5">
                                 <div className="w-7 h-7 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center text-xs font-bold border border-sky-200/60">
-                                    <i className="fa-solid fa-cubes"></i>
+                                    <i className="fa-solid fa-shield-halved"></i>
                                 </div>
-                                <h3 className="text-slate-900 text-[15px] font-extrabold m-0 leading-tight">Blockchain Activities</h3>
+                                <h3 className="text-slate-900 text-[15px] font-extrabold m-0 leading-tight">Secured Records Activity</h3>
                             </div>
                             <button 
                                 onClick={() => navigate('/blockchain/my-transactions')} 
@@ -205,55 +213,60 @@ const Dashboard = () => {
                         {/* List Feed */}
                         <div className="flex-1 overflow-y-auto p-2.5 space-y-1.5 custom-scrollbar">
                             {recentData.transactions?.length > 0 ? (
-                                recentData.transactions.map((tx, idx) => (
-                                    <div 
-                                        key={idx} 
-                                        className="p-2.5 bg-slate-50/80 hover:bg-slate-100/90 rounded-xl transition-all flex items-center justify-between border border-slate-100/80 group"
-                                    >
-                                        <div className="flex items-center gap-2.5 overflow-hidden">
-                                            <div className="w-7 h-7 rounded-lg bg-white shadow-2xs flex items-center justify-center text-blue-600 flex-shrink-0">
-                                                <i className="fa-solid fa-cube text-[11px]"></i>
+                                recentData.transactions.map((tx, idx) => {
+                                    const rawId = tx.referenceNumber || tx.requestId || 'TXN-001';
+                                    const shortId = formatShortId(rawId, 'TXN');
+                                    const rawHash = tx.blockchainTxHash || tx.transactionHash || '0x305babaefe2c...';
+                                    const shortHash = rawHash.length > 18 ? `${rawHash.slice(0, 8)}...${rawHash.slice(-6)}` : rawHash;
+
+                                    return (
+                                        <div 
+                                            key={idx} 
+                                            className="p-2.5 bg-slate-50/80 hover:bg-slate-100/90 rounded-xl transition-all flex items-center justify-between border border-slate-100/80 group"
+                                        >
+                                            <div className="flex items-center gap-2.5 overflow-hidden">
+                                                <div className="w-7 h-7 rounded-lg bg-white shadow-2xs flex items-center justify-center text-sky-600 flex-shrink-0">
+                                                    <i className="fa-solid fa-file-shield text-[11px]"></i>
+                                                </div>
+                                                <div className="overflow-hidden">
+                                                    <span className="text-[12.5px] font-black text-slate-900 block truncate" title={rawId}>
+                                                        {shortId}
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <div className="overflow-hidden">
-                                                <span className="text-[12.5px] font-extrabold text-slate-900 block truncate">
-                                                    {`${tx.referenceNumber || tx.requestId || '1786296589063-932'}`.startsWith('TXN-') 
-                                                        ? `${tx.referenceNumber || tx.requestId || '1786296589063-932'}` 
-                                                        : `TXN-${tx.referenceNumber || tx.requestId || '1786296589063-932'}`}
+                                            
+                                            <div className="flex items-center gap-2">
+                                                <span 
+                                                    onClick={(e) => handleCopyHash(rawHash, e)}
+                                                    className="font-mono text-[11px] bg-white border border-slate-200/80 px-2.5 py-0.5 rounded-full text-slate-600 cursor-pointer hover:border-blue-400 hover:text-blue-600 transition-colors flex items-center gap-1.5 shadow-2xs"
+                                                    title={`Click to copy: ${rawHash}`}
+                                                >
+                                                    <span>{shortHash}</span>
+                                                    {copiedHash === rawHash ? <Check size={11} className="text-emerald-600" /> : <Copy size={11} className="text-slate-400" />}
                                                 </span>
+                                                <span className={`w-2 h-2 rounded-full ${
+                                                    tx.status === 'Failed' 
+                                                        ? 'bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.8)]' 
+                                                        : 'bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.8)]'
+                                                }`}></span>
                                             </div>
                                         </div>
-                                        
-                                        <div className="flex items-center gap-2">
-                                            <span 
-                                                onClick={(e) => handleCopyHash(tx.blockchainTxHash || tx.transactionHash || '0x305babaefe2c95bae9fd86f6ba72...', e)}
-                                                className="font-mono text-[11px] bg-white border border-slate-200/80 px-2 py-0.5 rounded-full text-slate-600 truncate max-w-[150px] sm:max-w-[190px] cursor-pointer hover:border-blue-400 hover:text-blue-600 transition-colors flex items-center gap-1.5"
-                                                title="Click to copy hash"
-                                            >
-                                                <span>{tx.blockchainTxHash || tx.transactionHash || '0x305babaefe2c95bae9fd86f6ba72...'}</span>
-                                                {copiedHash === (tx.blockchainTxHash || tx.transactionHash) ? <Check size={11} className="text-emerald-600" /> : <Copy size={11} className="text-slate-400" />}
-                                            </span>
-                                            <span className={`w-2 h-2 rounded-full ${
-                                                tx.status === 'Failed' 
-                                                    ? 'bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.8)]' 
-                                                    : 'bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.8)]'
-                                            }`}></span>
-                                        </div>
-                                    </div>
-                                ))
+                                    );
+                                })
                             ) : (
                                 [1, 2, 3, 4, 5].map((item) => (
                                     <div key={item} className="p-2.5 bg-slate-50/80 hover:bg-slate-100/90 rounded-xl transition-all flex items-center justify-between border border-slate-100/80">
                                         <div className="flex items-center gap-2.5">
-                                            <div className="w-7 h-7 rounded-lg bg-white shadow-2xs flex items-center justify-center text-blue-600 flex-shrink-0">
-                                                <i className="fa-solid fa-cube text-[11px]"></i>
+                                            <div className="w-7 h-7 rounded-lg bg-white shadow-2xs flex items-center justify-center text-sky-600 flex-shrink-0">
+                                                <i className="fa-solid fa-file-shield text-[11px]"></i>
                                             </div>
                                             <div>
-                                                <span className="text-[12.5px] font-extrabold text-slate-900 block">TXN-1786296589063-932</span>
+                                                <span className="text-[12.5px] font-black text-slate-900 block">#TXN-932</span>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <span className="font-mono text-[11px] bg-white border border-slate-200/80 px-2.5 py-0.5 rounded-full text-slate-600 truncate max-w-[160px]">
-                                                0x305babaefe2c95bae9fd86f6ba72...
+                                            <span className="font-mono text-[11px] bg-white border border-slate-200/80 px-2.5 py-0.5 rounded-full text-slate-600">
+                                                0x305b...72a9
                                             </span>
                                             <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.8)]"></span>
                                         </div>
@@ -262,6 +275,7 @@ const Dashboard = () => {
                             )}
                         </div>
                     </div>
+
 
                     {/* Right Card: Live Notifications Feed */}
                     <div className="bg-white rounded-[22px] shadow-[0_8px_24px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.02)] border border-slate-100/90 flex flex-col h-[340px] overflow-hidden">

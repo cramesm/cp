@@ -32,6 +32,13 @@ const registrarSchema = new mongoose.Schema({
     type: String,
     enum: ['Active', 'Inactive'],
     default: 'Inactive'
+  },
+  lastLoginIp: {
+    type: String,
+    default: ''
+  },
+  lastLoginAt: {
+    type: Date
   }
 }, { timestamps: true });
 

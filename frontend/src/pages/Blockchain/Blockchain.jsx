@@ -7,16 +7,16 @@ function Blockchain() {
 
     const features = [
         {
-            title: 'My Transactions',
-            description: 'View and search all recorded blockchain transactions with cryptographic hashes',
+            title: 'Secured Records Ledger',
+            description: 'View and search all verified academic records registered on the tamper-proof digital ledger',
             icon: Eye,
             iconBg: 'bg-blue-50 text-blue-600 border border-blue-200/60',
             path: '/blockchain/my-transactions',
-            actionText: 'View Transactions'
+            actionText: 'View Secured Records'
         },
         {
-            title: 'Verify Transaction',
-            description: 'Cryptographically verify an educational document or transaction on the ledger',
+            title: 'Verify Academic Record',
+            description: 'Instantly verify the authenticity, timestamp, and digital signature of any issued credential',
             icon: CheckCircle,
             iconBg: 'bg-emerald-50 text-emerald-600 border border-emerald-200/60',
             path: '/blockchain/verify',
@@ -68,16 +68,17 @@ function Blockchain() {
 
                 {/* Info Section */}
                 <div className="bg-white rounded-[22px] shadow-[0_8px_24px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.02)] border border-slate-100/90 p-6">
-                    <h3 className="text-[16px] font-black text-slate-900 tracking-tight mb-4">About Blockchain Verification</h3>
+                    <h3 className="text-[16px] font-black text-slate-900 tracking-tight mb-4">About Secured Digital Records & Ledger Verification</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs text-slate-600">
                         <div className="p-4 bg-slate-50/80 rounded-xl border border-slate-100">
                             <h4 className="font-bold text-slate-900 text-sm mb-1.5 flex items-center gap-2">
                                 <i className="fa-solid fa-shield-halved text-blue-600"></i>
-                                <span>Why Use Blockchain?</span>
+                                <span>Why Digital Ledger Verification?</span>
                             </h4>
-                            <p className="leading-relaxed">Blockchain technology ensures immutable and transparent verification of educational documents, providing tamper-proof records of student credentials.</p>
+                            <p className="leading-relaxed">Digital ledger and blockchain technology ensures immutable and transparent verification of educational documents, providing tamper-proof records of student credentials.</p>
                         </div>
                         <div className="p-4 bg-slate-50/80 rounded-xl border border-slate-100">
+
                             <h4 className="font-bold text-slate-900 text-sm mb-1.5 flex items-center gap-2">
                                 <i className="fa-solid fa-cube text-purple-600"></i>
                                 <span>How It Works</span>

@@ -9,10 +9,10 @@ const globalLimiter = rateLimit({
     message: 'Too many requests from this IP, please try again after 15 minutes'
 });
 
-// Stricter limiter for sensitive routes (e.g., login, auth)
+// Limiter for auth routes (login, logout, profile)
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 10, // Limit each IP to 10 requests per `window` for auth routes
+    max: 200, // Allow sufficient headroom for navigation, profile updates, and testing
     standardHeaders: true,
     legacyHeaders: false,
     message: 'Too many authentication attempts, please try again later'

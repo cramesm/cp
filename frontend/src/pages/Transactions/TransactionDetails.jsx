@@ -163,10 +163,15 @@ const TransactionDetails = () => {
 
     const getPaymentModeStyle = (mode) => {
         switch (mode) {
-            case 'GCash': return 'bg-[#E0F0FF] text-[#0070E0]';
-            case 'Maya': return 'bg-[#E8F5E8] text-[#2E7D32]';
-            case 'GoThyme': return 'bg-[#FFF3E0] text-[#E65100]';
-            default: return 'bg-slate-100 text-slate-600';
+            case 'Pay with QR':
+            case 'GCash':
+            case 'Maya':
+            case 'GoThyme':
+                return 'bg-blue-50 text-blue-700 border border-blue-200/80';
+            case 'Cash':
+                return 'bg-emerald-50 text-emerald-700 border border-emerald-200/80';
+            default:
+                return 'bg-slate-100 text-slate-700 border border-slate-200';
         }
     };
 

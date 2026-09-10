@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { SlidersHorizontal, ArrowDownAZ, ArrowUpZA, Search, Trash2, Eye, CheckSquare, Square } from 'lucide-react';
+import { SlidersHorizontal, ArrowDownAZ, ArrowUpZA, Search, Trash2, Eye, CheckSquare, Square, Copy, Check } from 'lucide-react';
 import Layout from '../../components/Layout';
 import FilterDrawer from '../../components/FilterDrawer';
 import ActiveFilterChips from '../../components/ActiveFilterChips';
@@ -13,6 +13,7 @@ import { useModals } from '../../hooks/useModals';
 const Requests = () => {
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [copiedId, setCopiedId] = useState(null);
     
     // Super Admin Selection State
     const [selectedIds, setSelectedIds] = useState([]);
@@ -40,6 +41,21 @@ const Requests = () => {
     const [sortConfig, setSortConfig] = useState({ key: 'dateRequested', direction: 'desc' });
 
     const navigate = useNavigate();
+
+    const formatShortId = (id, prefix = 'REQ') => {
+        if (!id) return `#${prefix}-001`;
+        const str = String(id);
+        if (str.length <= 10) return str.startsWith('#') ? str : `#${str}`;
+        const lastPart = str.split('-').pop() || str.slice(-4);
+        return `#${prefix}-${lastPart.length > 6 ? lastPart.slice(-4) : lastPart}`;
+    };
+
+    const handleCopy = (text, id) => {
+        if (!text) return;
+        navigator.clipboard.writeText(text);
+        setCopiedId(id);
+        setTimeout(() => setCopiedId(null), 2000);
+    };
 
     // Update filter if URL changes
     useEffect(() => {
@@ -417,9 +433,19 @@ const Requests = () => {
                                                     </td>
                                                 )}
                                                 <td className="py-3.5 px-5 align-middle">
-                                                    <span className="bg-slate-100 px-2 py-0.5 rounded-md text-slate-700 font-mono text-[11.5px] font-bold">
-                                                        {req.requestId}
-                                                    </span>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span className="bg-slate-100 px-2 py-0.5 rounded-md text-slate-800 font-mono text-[11.5px] font-bold" title={req.requestId}>
+                                                            {formatShortId(req.requestId, 'REQ')}
+                                                        </span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleCopy(req.requestId, `req-${reqId}`)}
+                                                            className="text-slate-400 hover:text-slate-700 transition-colors p-1 rounded hover:bg-slate-200/60 cursor-pointer"
+                                                            title="Copy Full Request ID"
+                                                        >
+                                                            {copiedId === `req-${reqId}` ? <Check size={11} className="text-emerald-600" /> : <Copy size={11} />}
+                                                        </button>
+                                                    </div>
                                                 </td>
                                                 <td className="py-3.5 px-5 align-middle text-[13px] text-slate-900 font-bold">
                                                     {req.name}

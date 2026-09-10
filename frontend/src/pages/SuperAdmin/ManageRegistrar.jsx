@@ -160,13 +160,14 @@ const ManageRegistrar = () => {
                   <th className="py-3 px-5">Registrar Name</th>
                   <th className="py-3 px-5 text-center">Role</th>
                   <th className="py-3 px-5">Email Address</th>
+                  <th className="py-3 px-5">Last Login IP</th>
                   <th className="py-3 px-5 text-center">Status</th>
                   <th className="py-3 px-5 text-right">Action</th>
                 </tr>
               </thead>
                 <tbody className="divide-y divide-slate-100 text-[12.5px]">
                   {loading ? (
-                    <TableSkeleton columns={6} rows={entriesPerPage || 10} />
+                    <TableSkeleton columns={7} rows={entriesPerPage || 10} />
                   ) : paginatedRegistrars.length > 0 ? (
                   paginatedRegistrars.map((item, idx) => (
                     <tr
@@ -185,6 +186,15 @@ const ManageRegistrar = () => {
                         </span>
                       </td>
                       <td className="py-3 px-5 text-slate-600">{item.email}</td>
+                      <td className="py-3 px-5">
+                        {item.lastLoginIp ? (
+                          <span className="bg-slate-100 px-2 py-0.5 rounded text-slate-700 font-mono text-[11px] font-bold">
+                            {item.lastLoginIp}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 font-mono text-[11px]">—</span>
+                        )}
+                      </td>
                       <td className="py-3 px-5 text-center">
                         <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider border ${
                             item.status === 'Active' 
@@ -217,7 +227,7 @@ const ManageRegistrar = () => {
                     </tr>
                   ))
                 ) : (
-                  <tr><td colSpan="6" className="py-12 text-center text-slate-400 italic">No registrars found.</td></tr>
+                  <tr><td colSpan="7" className="py-12 text-center text-slate-400 italic">No registrars found.</td></tr>
                 )}
               </tbody>
             </table>

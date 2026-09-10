@@ -16,7 +16,9 @@ export default function RegistrarInformation() {
     email: "",
     role: "Registrar Staff",
     employeeId: "",
-    status: "Inactive"
+    status: "Inactive",
+    lastLoginIp: "",
+    lastLoginAt: null
   });
 
   const [registrarId, setRegistrarId] = useState(''); // MongoDB _id for API calls
@@ -66,7 +68,9 @@ export default function RegistrarInformation() {
             email: registrar.email,
             role: registrar.role,
             employeeId: registrar.registrarId || '',
-            status: registrar.status || 'Inactive'
+            status: registrar.status || 'Inactive',
+            lastLoginIp: registrar.lastLoginIp || '',
+            lastLoginAt: registrar.lastLoginAt || null
           });
         } else {
           setToast({ show: true, message: 'Registrar not found', type: 'error' });
@@ -236,6 +240,20 @@ export default function RegistrarInformation() {
                     </div>
                     <InfoInput label="Account Role" name="role" value={formData.role} onChange={handleInputChange} />
                     <InfoInput label="Employee ID" name="employeeId" value={formData.employeeId} onChange={handleInputChange} />
+                    
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Last Login IP Address</label>
+                      <div className="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-mono font-bold text-slate-700">
+                        {formData.lastLoginIp || 'No login recorded yet'}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Last Login Timestamp</label>
+                      <div className="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-medium text-slate-700">
+                        {formData.lastLoginAt ? new Date(formData.lastLoginAt).toLocaleString('en-US') : 'No login recorded yet'}
+                      </div>
+                    </div>
                   </div>
 
                   <div className="flex gap-2.5 mt-8 pt-4 border-t border-slate-100">
