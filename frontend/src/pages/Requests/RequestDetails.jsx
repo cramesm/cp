@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ChevronRight, ArrowLeft, FileText, Upload, CheckCircle2, AlertCircle, ShieldCheck, Printer, FileSearch, Trash2, Shield, Search, Download, Copy, Check } from 'lucide-react';
 import Layout from '../../components/Layout';
 import ConfirmModal from '../../components/ConfirmModal';
@@ -12,6 +12,11 @@ const API_BASE = (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.re
 const RequestDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
+
+    // Read the page number passed from the Requests list so the Back button returns to the correct page
+    const fromPage = new URLSearchParams(location.search).get('fromPage') || '1';
+    const backToRequests = `/requests?page=${fromPage}`;
 
     const userRole = localStorage.getItem('userRole') || 'registrar';
     const isSuperAdmin = userRole === 'super admin';
@@ -80,16 +85,24 @@ const RequestDetails = () => {
             if (found && found.status === 'Released') {
                 setCurrentStep(isBlockchain ? 4 : 3);
             } else if (found && found.status === 'In Process') {
-                if (found.documentFile) {
-                    setCurrentStep(3); // Has uploaded, moving to secure/finalize
+                if (isBlockchain) {
+                    if (found.documentFile) {
+                        setCurrentStep(3); // Has uploaded, moving to secure
+                    } else {
+                        setCurrentStep(2); // Has verified payment/bypassed, moving to upload
+                    }
                 } else {
-                    setCurrentStep(2); // Has verified payment/bypassed, moving to upload
+                    setCurrentStep(2); // Non-blockchain: moving directly to finalize & release
                 }
             } else if (foundTx && foundTx.status === 'Completed') {
-                if (found && found.documentFile) {
-                    setCurrentStep(3);
+                if (isBlockchain) {
+                    if (found && found.documentFile) {
+                        setCurrentStep(3);
+                    } else {
+                        setCurrentStep(2);
+                    }
                 } else {
-                    setCurrentStep(2);
+                    setCurrentStep(2); // Non-blockchain: moving directly to finalize & release
                 }
             } else {
                 setCurrentStep(1); // Pending payment verification
@@ -111,7 +124,14 @@ const RequestDetails = () => {
         try {
             const updatePayload = { status: newStatus };
             if (newStatus === 'Rejected') {
-                updatePayload.rejectionReason = rejectionReason === 'others' ? manualRejectionReason : rejectionReason;
+                const trimmedManual = manualRejectionReason.trim();
+                let combinedReason = rejectionReason;
+                if (rejectionReason === 'others') {
+                    combinedReason = trimmedManual || 'Others';
+                } else if (trimmedManual) {
+                    combinedReason = `${rejectionReason}: ${trimmedManual}`;
+                }
+                updatePayload.rejectionReason = combinedReason;
             }
             await api.put(`/requests/${id}`, updatePayload);
             await fetchData();
@@ -219,7 +239,7 @@ const RequestDetails = () => {
             }
 
             await api.put(`/requests/${id}`, { status: "Released" });
-            setCurrentStep(4);
+            setCurrentStep(isBlockchainEligible ? 4 : 3);
             await fetchData();
         } catch (err) {
             showFeedback({
@@ -299,7 +319,7 @@ const RequestDetails = () => {
                             </a>
                         )}
                         <button 
-                            onClick={() => navigate('/requests')}
+                            onClick={() => navigate(backToRequests)}
                             className="bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold text-xs px-4 py-2 rounded-full border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-2 cursor-pointer w-fit"
                         >
                             <ArrowLeft size={13} />
@@ -343,7 +363,7 @@ const RequestDetails = () => {
                                 )}
                                 <button
                                     className="bg-slate-800 hover:bg-slate-900 text-white px-6 py-2 rounded-xl font-bold transition-all shadow-sm whitespace-nowrap"
-                                    onClick={() => navigate('/requests')}
+                                    onClick={() => navigate(backToRequests)}
                                 >
                                     Return to Requests
                                 </button>
@@ -376,7 +396,7 @@ const RequestDetails = () => {
                                             { step: 4, title: 'Release', desc: 'Document ready for pickup/delivery' }
                                         ] : [
                                             { step: 1, title: 'Verify & Payment', desc: 'Review request details and verify payment receipt' },
-                                            { step: 2, title: 'Upload & Finalize', desc: 'Upload the PDF document and finalize request' },
+                                            { step: 2, title: 'Finalize & Release', desc: 'Confirm and release request for issuance/pickup' },
                                             { step: 3, title: 'Release', desc: 'Document ready for pickup/delivery' }
                                         ]).map(s => (
                                             <div key={s.step} className={`flex gap-4 ${currentStep === s.step ? 'opacity-100' : 'opacity-40'}`}>
@@ -510,15 +530,18 @@ const RequestDetails = () => {
                                                         <option value="unpaid">Payment Issue</option>
                                                         <option value="others">Others (Please specify)</option>
                                                     </select>
-                                                    {rejectionReason === 'others' && (
+                                                    <div className="mb-4">
+                                                        <label className="block text-xs font-bold text-red-800 mb-1.5">
+                                                            {rejectionReason === 'others' ? 'Specify Reason *' : 'Detailed Remarks / Reason (Optional):'}
+                                                        </label>
                                                         <textarea
-                                                            className="w-full py-3 px-4 bg-white border border-red-200 rounded-lg outline-none focus:border-red-500 mb-4 text-sm"
-                                                            placeholder="Please type the specific reason for rejection..."
+                                                            className="w-full p-3.5 bg-white border border-red-200 rounded-lg outline-none focus:border-red-500 focus:ring-1 focus:ring-red-400 text-sm min-h-[100px] resize-y"
+                                                            placeholder={rejectionReason === 'others' ? 'Please type the specific reason for rejection...' : 'Provide specific details or instructions for the student (e.g., missing form, unpaid balance)...'}
                                                             rows="3"
                                                             value={manualRejectionReason}
                                                             onChange={(e) => setManualRejectionReason(e.target.value)}
                                                         ></textarea>
-                                                    )}
+                                                    </div>
                                                     <div className="flex gap-2">
                                                         <button className="flex-1 py-2 text-slate-500 font-bold hover:bg-red-100 rounded-lg" onClick={() => { setShowRejectForm(false); setRejectionReason(''); setManualRejectionReason(''); }}>Cancel</button>
                                                         <button
@@ -532,7 +555,7 @@ const RequestDetails = () => {
                                                 <div className="flex items-center justify-between gap-3 pt-2">
                                                     <button
                                                         type="button"
-                                                        onClick={() => navigate('/requests')}
+                                                        onClick={() => navigate(backToRequests)}
                                                         className="bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs px-4 py-2 rounded-full border border-slate-200 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 transition-all flex items-center gap-1.5 cursor-pointer"
                                                     >
                                                         <ArrowLeft size={13} />
@@ -552,8 +575,8 @@ const RequestDetails = () => {
                                     </div>
                                 )}
 
-                                {/* Step 2 Content */}
-                                {currentStep === 2 && (
+                                {/* Step 2 Content — Blockchain Eligible: Upload External PDF */}
+                                {currentStep === 2 && isBlockchainEligible && (
                                     <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 animate-in fade-in slide-in-from-right-4 duration-300">
                                         <h2 className="text-2xl font-bold text-slate-800 mb-2">Upload External PDF</h2>
                                         <p className="text-slate-500 mb-8">Upload the requested document as a PDF. If it is a TOR or Diploma, a QR code will be automatically embedded.</p>
@@ -590,20 +613,95 @@ const RequestDetails = () => {
                                     </div>
                                 )}
 
-                                {/* Step 3 Content — now handles BOTH blockchain and non-blockchain */}
-                                {currentStep === 3 && status !== 'Released' && (
+                                {/* Step 2 Content — Non-Blockchain: Direct Finalize & Release (No Upload Required) */}
+                                {currentStep === 2 && !isBlockchainEligible && status !== 'Released' && (
                                     <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 animate-in fade-in slide-in-from-right-4 duration-300">
-                                        <h2 className="text-2xl font-bold text-slate-800 mb-2">{isBlockchainEligible ? 'Secure & Finalize' : 'Finalize & Release'}</h2>
-
-                                        {isBlockchainEligible && (
+                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
                                             <div>
-                                                <div className="bg-blue-50 text-blue-800 p-4 rounded-xl border border-blue-100 mb-8 flex items-start gap-3">
-                                                    <ShieldCheck className="mt-1 shrink-0" />
-                                                    <div>
-                                                        <h4 className="font-bold">Blockchain Eligible Document</h4>
-                                                        <p className="text-sm">The uploaded PDF has been embedded with a unique QR code. Complete the details below to record this document immutably on the blockchain.</p>
-                                                    </div>
+                                                <h2 className="text-2xl font-bold text-slate-800">Finalize & Release Document</h2>
+                                                <p className="text-slate-500 text-sm mt-1">Review request details and approve release for the student. No document upload is required for this standard document.</p>
+                                            </div>
+                                            <span className="self-start sm:self-auto px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-bold uppercase tracking-wider">
+                                                Standard Document
+                                            </span>
+                                        </div>
+
+                                        <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200/80 mb-8">
+                                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Request Summary</h3>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 text-xs">
+                                                <div>
+                                                    <span className="text-slate-400 font-bold block mb-1">STUDENT NAME</span>
+                                                    <span className="font-bold text-slate-800 text-sm">{requestData.name}</span>
                                                 </div>
+                                                <div>
+                                                    <span className="text-slate-400 font-bold block mb-1">STUDENT ID</span>
+                                                    <span className="font-bold text-slate-800 text-sm">{requestData.studentId || 'N/A'}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-slate-400 font-bold block mb-1">DOCUMENT TYPE</span>
+                                                    <span className="font-bold text-slate-800 text-sm">{requestData.documentType || requestData.document_type}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-slate-400 font-bold block mb-1">PROGRAM / COURSE</span>
+                                                    <span className="font-semibold text-slate-700">{requestData.course || 'N/A'}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-slate-400 font-bold block mb-1">PURPOSE</span>
+                                                    <span className="font-semibold text-slate-700">{requestData.purpose || requestData.otherPurpose || 'Official Copy'}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-slate-400 font-bold block mb-1">QUANTITY</span>
+                                                    <span className="font-semibold text-slate-700">{requestData.quantity || 1} copy/copies</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-emerald-50 text-emerald-800 p-4 rounded-xl border border-emerald-200 mb-8 flex items-start gap-3 text-xs">
+                                            <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-600" size={18} />
+                                            <div>
+                                                <p className="font-bold text-emerald-900 mb-0.5">Payment Verified & Requirements Ready</p>
+                                                <p className="text-emerald-700 leading-relaxed">
+                                                    Payment has been verified. Finalizing will mark this request as <span className="font-bold">Released</span> and notify the student that their document is ready for issuance or pickup.
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-3 pt-6 border-t border-slate-100">
+                                            <button
+                                                className="bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs px-6 py-2.5 rounded-full border border-slate-200 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 transition-all flex items-center gap-1.5 cursor-pointer"
+                                                onClick={() => setCurrentStep(1)}
+                                            >
+                                                <ArrowLeft size={13} />
+                                                <span>Back to Step 1</span>
+                                            </button>
+                                            <button
+                                                className={`flex-1 text-white py-2.5 px-6 rounded-full font-bold text-xs border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 ${!hasProcessingAccess ? 'bg-slate-400' : 'bg-emerald-600 hover:bg-emerald-700'}`}
+                                                disabled={actionLoading || !hasProcessingAccess}
+                                                onClick={() => showConfirm({
+                                                    title: 'Finalize & Release Request',
+                                                    message: `Are you sure you want to finalize and release the ${requestData.documentType || 'document'} for ${requestData.name}?`,
+                                                    onConfirm: handleSecureDocument
+                                                })}
+                                            >
+                                                {actionLoading ? 'Finalizing...' : 'Finalize & Release Request'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Step 3 Content — Blockchain Eligible: Secure & Finalize */}
+                                {currentStep === 3 && isBlockchainEligible && status !== 'Released' && (
+                                    <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 animate-in fade-in slide-in-from-right-4 duration-300">
+                                        <h2 className="text-2xl font-bold text-slate-800 mb-2">Secure & Finalize</h2>
+
+                                        <div>
+                                            <div className="bg-blue-50 text-blue-800 p-4 rounded-xl border border-blue-100 mb-8 flex items-start gap-3">
+                                                <ShieldCheck className="mt-1 shrink-0" />
+                                                <div>
+                                                    <h4 className="font-bold">Blockchain Eligible Document</h4>
+                                                    <p className="text-sm">The uploaded PDF has been embedded with a unique QR code. Complete the details below to record this document immutably on the blockchain.</p>
+                                                </div>
+                                            </div>
 
                                                 <div className="grid grid-cols-2 gap-6 mb-8">
                                                     <div className="col-span-2">
@@ -679,7 +777,6 @@ const RequestDetails = () => {
                                                     </div>
                                                 </div>
                                             </div>
-                                        )}
 
                                         <div className="flex items-center gap-3 pt-6 border-t border-slate-100">
                                             <button
@@ -761,7 +858,7 @@ const RequestDetails = () => {
                                             )}
                                             <button
                                                 className="bg-[#2c3543] hover:bg-[#1f2631] text-white px-6 py-2.5 rounded-full font-bold text-xs border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-1.5 cursor-pointer"
-                                                onClick={() => navigate('/requests')}
+                                                onClick={() => navigate(backToRequests)}
                                             >
                                                 Return to Requests
                                             </button>

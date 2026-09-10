@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { SlidersHorizontal, ArrowDownAZ, ArrowUpZA, Search, Trash2, Eye, CheckSquare, Square, Copy, Check } from 'lucide-react';
 import Layout from '../../components/Layout';
@@ -27,6 +27,7 @@ const Requests = () => {
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
     const initialStatus = queryParams.get('status') || 'All Status';
+    const initialPage = parseInt(queryParams.get('page'), 10) || 1;
 
     const [filterStatus, setFilterStatus] = useState(initialStatus);
     const [filterType, setFilterType] = useState('All Document');
@@ -36,7 +37,7 @@ const Requests = () => {
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState(new Date().toLocaleDateString('en-CA'));
     const [entriesPerPage, setEntriesPerPage] = useState(10);
-    const [currentPage, setCurrentPage] = useState(1);
+    const [currentPage, setCurrentPage] = useState(initialPage);
     const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
     const [sortConfig, setSortConfig] = useState({ key: 'dateRequested', direction: 'desc' });
 
@@ -57,12 +58,16 @@ const Requests = () => {
         setTimeout(() => setCopiedId(null), 2000);
     };
 
-    // Update filter if URL changes
+    // Update filter and page if URL changes
     useEffect(() => {
         const params = new URLSearchParams(location.search);
         const status = params.get('status');
         if (status) {
             setFilterStatus(status);
+        }
+        const pageParam = parseInt(params.get('page'), 10);
+        if (pageParam && pageParam >= 1) {
+            setCurrentPage(pageParam);
         }
     }, [location.search]);
 
@@ -225,7 +230,26 @@ const Requests = () => {
         currentPage * entriesPerPage
     );
 
+    const isFirstRender = useRef(true);
+
+    const handlePageChange = (newPage) => {
+        const targetPage = Math.max(1, Math.min(totalPages || 1, newPage));
+        setCurrentPage(targetPage);
+        const params = new URLSearchParams(location.search);
+        if (targetPage > 1) {
+            params.set('page', targetPage);
+        } else {
+            params.delete('page');
+        }
+        const newSearch = params.toString();
+        navigate(`${location.pathname}${newSearch ? `?${newSearch}` : ''}`, { replace: true });
+    };
+
     useEffect(() => {
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
         setCurrentPage(1);
     }, [searchTerm, filterStatus, filterType, filterUserRole, filterProgram, filterUserStatus, startDate, endDate, entriesPerPage]);
 
@@ -471,7 +495,7 @@ const Requests = () => {
                                                 <td className="py-3.5 px-5 align-middle text-right">
                                                     <div className="flex items-center justify-end gap-1.5">
                                                         <button
-                                                            onClick={() => navigate(`/requests/${req.requestId}`)}
+                                                            onClick={() => navigate(`/requests/${req.requestId}?fromPage=${currentPage}`)}
                                                             className="bg-[#2c3543] hover:bg-[#1f2631] text-white py-1 px-3.5 rounded-full text-[11.5px] font-bold border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(0,0,0,0.25)] active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-1.5 cursor-pointer"
                                                         >
                                                             <Eye size={12} />
@@ -508,7 +532,7 @@ const Requests = () => {
                         <div className="flex items-center gap-1.5">
                             <button 
                                 disabled={currentPage === 1}
-                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                onClick={() => handlePageChange(currentPage - 1)}
                                 className={`text-xs px-2.5 py-1 rounded-md ${currentPage === 1 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:bg-slate-200 cursor-pointer font-bold'}`}
                             >
                                 Previous
@@ -520,7 +544,7 @@ const Requests = () => {
                                     return (
                                         <button
                                             key={pageNumber}
-                                            onClick={() => setCurrentPage(pageNumber)}
+                                            onClick={() => handlePageChange(pageNumber)}
                                             className={`w-7 h-7 rounded-lg text-xs transition-colors font-bold ${
                                                 currentPage === pageNumber 
                                                     ? 'bg-[#2c3543] text-white shadow-2xs' 
@@ -538,7 +562,7 @@ const Requests = () => {
 
                             <button 
                                 disabled={currentPage === totalPages || totalPages === 0}
-                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                onClick={() => handlePageChange(currentPage + 1)}
                                 className={`text-xs px-2.5 py-1 rounded-md ${currentPage === totalPages || totalPages === 0 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:bg-slate-200 cursor-pointer font-bold'}`}
                             >
                                 Next

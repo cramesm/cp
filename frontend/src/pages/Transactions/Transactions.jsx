@@ -1427,12 +1427,12 @@ const Transactions = () => {
                       </div>
                     </div>
 
-                    <div>
+                    <div className="flex flex-col flex-1">
                       <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">
                         Admin Remarks / Note
                       </label>
                       <textarea
-                        className="w-full h-24 p-3 border border-gray-200 rounded-xl text-xs outline-none focus:border-[#1D2D44] resize-none"
+                        className="w-full min-h-[120px] p-3.5 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44] resize-y"
                         placeholder="Add remarks (optional for approval, required for rejection or update request)..."
                         value={adminNote}
                         onChange={(e) => setAdminNote(e.target.value)}
@@ -1528,7 +1528,7 @@ const Transactions = () => {
                     Admin Remarks
                   </label>
                   <textarea
-                    className="w-full h-24 p-4 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#1D2D44] resize-none mb-4"
+                    className="w-full min-h-[120px] p-3.5 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44] resize-y mb-4"
                     placeholder="Add remarks (optional for approval, recommended for rejection)..."
                     value={refundRemarks}
                     onChange={(e) => setRefundRemarks(e.target.value)}

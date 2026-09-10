@@ -228,6 +228,31 @@ router.post('/', protect, async (req, res) => {
       console.error('Failed to auto-resolve student profile details for request:', err);
     }
 
+    // --- Duplicate Request Lock ---
+    // Prevent creating a request if an active (Pending / In Process) request for the same documentType already exists for this user
+    const documentType = req.body.documentType;
+    const userEmail = req.user?.email || req.body.email;
+    const userStudentId = studentId || req.body.studentId;
+
+    if (documentType && (userEmail || userStudentId)) {
+      const matchCriteria = [];
+      if (userEmail) matchCriteria.push({ email: userEmail });
+      if (userStudentId) matchCriteria.push({ studentId: userStudentId });
+
+      const existingActive = await Request.findOne({
+        $or: matchCriteria,
+        documentType: documentType,
+        status: { $in: ['Pending', 'In Process'] }
+      });
+      if (existingActive) {
+        return res.status(409).json({
+          message: `You already have an active request for "${documentType}" (Request ID: ${existingActive.requestId}). Please wait until your existing request is Released or Rejected before submitting a new one.`,
+          existingRequestId: existingActive.requestId,
+          existingStatus: existingActive.status
+        });
+      }
+    }
+
     const newDoc = await Request.create({
       requestId,
       name: userName,

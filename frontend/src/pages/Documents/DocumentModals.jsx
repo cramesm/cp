@@ -171,8 +171,8 @@ export const CreateDocumentModal = ({ activeTab, prefillData, onClose, onSuccess
                     {/* Notes */}
                     <div>
                         <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Notes</label>
-                        <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2}
-                            placeholder="Optional notes..." className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#6f8faa] resize-none" />
+                        <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3}
+                            placeholder="Optional notes..." className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#6f8faa] resize-y min-h-[80px]" />
                     </div>
 
                     {/* Actions */}
