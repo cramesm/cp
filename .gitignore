@@ -51,3 +51,6 @@ Thumbs.db
 .ssh/
 *.pem
 *.key
+
+# Vite temp files
+*.timestamp-*.mjs

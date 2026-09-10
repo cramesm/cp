@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { QrCode, FileSearch, ShieldCheck, ArrowRight, Upload, Info } from 'lucide-react';
+import { QrCode, FileSearch, ShieldCheck, ArrowRight, Upload, Info, HelpCircle } from 'lucide-react';
 import ValidationNavbar from '../../components/ValidationPageNavBar';
 import Footer from '../../components/Footer';
+import { useAccessibility } from '../../components/AccessibilityContext';
 
 const VerificationPortal = () => {
     const navigate = useNavigate();
+    const { openHelpGuide, simpleMode } = useAccessibility();
     const [activeTab, setActiveTab] = useState('upload');
     const [isHovered, setIsHovered] = useState(null);
 
@@ -31,13 +33,18 @@ const VerificationPortal = () => {
                 <div className="max-w-7xl mx-auto px-6 relative z-10 text-center">
                     <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/20 mb-6 animate-in fade-in slide-in-from-top-4 duration-700">
                         <ShieldCheck size={14} className="text-cyan-400" />
-                        <span className="text-[10px] font-bold uppercase tracking-[2px]">Blockchain Secured Verification</span>
+                        <span className="text-[10px] font-bold uppercase tracking-[2px]">
+                            {simpleMode ? 'Official Academic Verification' : 'Blockchain Secured Verification'}
+                        </span>
                     </div>
                     <h1 className="text-4xl lg:text-6xl font-bold mb-6 tracking-tight animate-in fade-in slide-in-from-top-8 duration-700 delay-100">
                         Employer & Verifier <span className="text-cyan-400">Portal</span>
                     </h1>
                     <p className="text-lg lg:text-xl text-slate-300 max-w-2xl mx-auto font-light leading-relaxed animate-in fade-in slide-in-from-top-12 duration-700 delay-200">
-                        Instantly verify the authenticity of academic documents using our secure blockchain-powered ledger.
+                        {simpleMode
+                            ? 'Quickly check and confirm official university transcripts and diplomas.'
+                            : 'Instantly verify the authenticity of academic documents using our secure blockchain-powered ledger.'
+                        }
                     </p>
                 </div>
             </header>
@@ -68,7 +75,9 @@ const VerificationPortal = () => {
                             <div className="animate-in fade-in duration-500">
                                 <div className="max-w-xl mx-auto text-center mb-10">
                                     <h2 className="text-2xl font-bold text-slate-800 mb-2">Verify by File or Code</h2>
-                                    <p className="text-slate-500 text-sm">Upload the digital Transcript of Records (PDF) or enter the unique verification hash found on the document.</p>
+                                    <p className="text-slate-500 text-sm">
+                                        Upload the digital Transcript of Records (PDF) or enter the unique verification code found on the document.
+                                    </p>
                                 </div>
 
                                 <form onSubmit={handleVerify} className="space-y-8">
@@ -96,7 +105,19 @@ const VerificationPortal = () => {
                                     </div>
 
                                     <div className="space-y-4">
-                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Verification Hash / Request ID</label>
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-xs font-bold text-slate-600 uppercase tracking-wider block">
+                                                Document Verification Code / Hash
+                                            </label>
+                                            <button
+                                                type="button"
+                                                onClick={openHelpGuide}
+                                                className="text-xs text-blue-600 hover:text-blue-800 font-bold inline-flex items-center gap-1 cursor-pointer"
+                                            >
+                                                <HelpCircle size={14} />
+                                                <span>Where to find this?</span>
+                                            </button>
+                                        </div>
                                         <div className="relative group">
                                             <input 
                                                 type="text" 
@@ -107,7 +128,7 @@ const VerificationPortal = () => {
                                             />
                                             <button 
                                                 type="submit"
-                                                className="absolute right-2 top-2 bottom-2 bg-[#2c3e50] text-white px-6 rounded-lg font-bold text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-[#1a252f] transition-all"
+                                                className="absolute right-2 top-2 bottom-2 bg-[#2c3e50] text-white px-6 rounded-lg font-bold text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-[#1a252f] transition-all cursor-pointer"
                                             >
                                                 Verify <ArrowRight size={14} />
                                             </button>

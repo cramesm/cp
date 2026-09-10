@@ -4,6 +4,10 @@ import { motion } from 'framer-motion';
 import verifitorLogo from '../assets/verifitor_logo.png';
 import verifitorIcon from '../assets/logo-verifitor.png';
 import api from '../api';
+import { useAccessibility } from './AccessibilityContext';
+import AccessibilityModal from './AccessibilityModal';
+import HelpGuideModal from './HelpGuideModal';
+import InteractiveTour from './InteractiveTour';
 
 const getInitials = (name) => {
     if (!name) return 'U';
@@ -21,6 +25,8 @@ const Layout = ({ children }) => {
     });
     const [isMobileOpen, setIsMobileOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
+
+    const { setSettingsModalOpen, simpleMode } = useAccessibility();
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -203,7 +209,7 @@ const Layout = ({ children }) => {
             )}
 
             {/* 3D Floating Dock Sidebar with Original Colors & Logos */}
-            <aside className={`fixed top-3 left-3 bottom-3 bg-[#2c3543] rounded-[24px] shadow-[0_16px_40px_rgba(0,0,0,0.3),0_4px_12px_rgba(0,0,0,0.18)] border border-slate-700/50 flex flex-col z-[1000] sidebar transition-all duration-300 overflow-hidden ${
+            <aside data-tour="sidebar" className={`fixed top-3 left-3 bottom-3 bg-[#2c3543] rounded-[24px] shadow-[0_16px_40px_rgba(0,0,0,0.3),0_4px_12px_rgba(0,0,0,0.18)] border border-slate-700/50 flex flex-col z-[1000] sidebar transition-all duration-300 overflow-hidden ${
                 isMobileOpen ? 'translate-x-0 w-[245px]' : '-translate-x-[120%] md:translate-x-0'
             } ${isCollapsed ? 'md:w-[76px]' : 'md:w-[245px]'}`}>
                 
@@ -285,7 +291,7 @@ const Layout = ({ children }) => {
                 {/* Sticky Header Wrapper (Tightened gap, no bleed) */}
                 <div className="sticky top-0 z-[990] pt-3 pb-1.5 px-3 sm:px-4 bg-[#e9e9e9]/95 backdrop-blur-md transition-colors">
                     <header className="flex items-center justify-between px-5 sm:px-6 bg-gradient-to-r from-[#44627d] via-[#4d6f8c] to-[#547794] rounded-[22px] h-[62px] shadow-[0_8px_24px_rgba(44,53,67,0.12),0_2px_6px_rgba(0,0,0,0.03)] border border-white/20">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3" data-tour="header-title">
                             <button
                                 onClick={handleToggle}
                                 className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer focus:outline-none flex items-center justify-center border border-white/15 shadow-inner"
@@ -301,11 +307,27 @@ const Layout = ({ children }) => {
                         </div>
 
                         <div className="flex items-center gap-2.5 sm:gap-3">
+                            {/* Display & Accessibility Settings Gear Button */}
+                            <button
+                                type="button"
+                                onClick={() => setSettingsModalOpen(true)}
+                                data-tour="gear-settings"
+                                className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all border border-white/15 shadow-inner relative group cursor-pointer"
+                                title="Display & Accessibility Settings (Simple Mode, Text Size, Guide)"
+                                aria-label="Open Display and Accessibility Settings"
+                            >
+                                <i className={`fa-solid fa-gear text-[14px] transition-transform duration-300 group-hover:rotate-45 ${simpleMode ? 'text-cyan-300' : ''}`}></i>
+                                {simpleMode && (
+                                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-cyan-400 rounded-full ring-2 ring-[#4d6f8c]"></span>
+                                )}
+                            </button>
+
                             {/* Notification Pill Button */}
                             <button
                                 type="button"
                                 onClick={() => navigate('/notifications')}
-                                className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all border border-white/15 shadow-inner relative"
+                                data-tour="notifications"
+                                className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all border border-white/15 shadow-inner relative cursor-pointer"
                                 aria-label={`View notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
                             >
                                 <i className="fa-solid fa-bell text-[14px]"></i>
@@ -334,7 +356,7 @@ const Layout = ({ children }) => {
                     </header>
                 </div>
 
-                <main id="main-content" className="flex-1 w-full px-3 sm:px-4 py-1.5">
+                <main id="main-content" data-tour="main-content" className="flex-1 w-full px-3 sm:px-4 py-1.5">
                     <motion.div
                         initial={{ opacity: 0, y: 6 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -343,6 +365,11 @@ const Layout = ({ children }) => {
                         {children}
                     </motion.div>
                 </main>
+
+                {/* Modals & Interactive Tour */}
+                <AccessibilityModal />
+                <HelpGuideModal />
+                <InteractiveTour />
             </div>
         </div>
     );

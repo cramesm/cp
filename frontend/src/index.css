@@ -91,3 +91,69 @@ html {
     width: 100% !important;
   }
 }
+
+/* ==========================================================================
+   Accessibility, Senior/Simple Mode, & Text Size Scaling Rules
+   ========================================================================== */
+
+/* Font Size Scaling */
+html.text-large {
+  font-size: 112% !important;
+}
+
+html.text-xl {
+  font-size: 125% !important;
+}
+
+/* Simple Mode (Senior / Easy View) enhancements */
+html.simple-mode body {
+  font-size: 1.05rem;
+  letter-spacing: 0.015em;
+}
+
+html.simple-mode .text-slate-400,
+html.simple-mode .text-slate-500 {
+  color: #334155 !important; /* Darken secondary text to slate-700 for high readability */
+}
+
+html.simple-mode .text-slate-300 {
+  color: #475569 !important;
+}
+
+html.simple-mode button,
+html.simple-mode [role="button"] {
+  min-height: 40px;
+  font-weight: 700;
+}
+
+html.simple-mode table th,
+html.simple-mode table td {
+  padding-top: 0.85rem !important;
+  padding-bottom: 0.85rem !important;
+  font-size: 0.95rem;
+}
+
+html.simple-mode .rounded-xl,
+html.simple-mode .rounded-2xl,
+html.simple-mode .rounded-3xl {
+  border-color: #cbd5e1 !important; /* Make card borders more distinct */
+}
+
+/* High Contrast Mode */
+html.high-contrast {
+  filter: contrast(110%);
+}
+
+html.high-contrast body {
+  background-color: #f1f5f9 !important;
+}
+
+html.high-contrast .border-slate-100,
+html.high-contrast .border-slate-200 {
+  border-color: #94a3b8 !important;
+}
+
+html.high-contrast button {
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2) !important;
+}
+
