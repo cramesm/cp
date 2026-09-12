@@ -83,69 +83,8 @@ app.use(auditLoggerMiddleware);
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-const connectDB = async () => {
-    try {
-        console.log('Connecting to primary MongoDB (Atlas)...');
-        await mongoose.connect(process.env.MONGODB_URI, { serverSelectionTimeoutMS: 4000 });
-        console.log('MongoDB (Atlas) connected successfully');
-        await seedUsers();
-    } catch (err) {
-        console.warn('MongoDB Atlas connection failed:', err.message);
-        console.log('Attempting local MongoDB fallback (mongodb://127.0.0.1:27017/verifitor)...');
-        try {
-            await mongoose.connect('mongodb://127.0.0.1:27017/verifitor', { serverSelectionTimeoutMS: 4000 });
-            console.log('MongoDB (Local Fallback) connected successfully!');
-            await seedUsers();
-        } catch (localErr) {
-            console.error('Critical Database Error: Both Atlas and Local MongoDB connections failed!');
-            console.error('Local error:', localErr.message);
-            process.exit(1);
-        }
-    }
-};
-
-// Initial seed function for MongoDB
-async function seedUsers() {
-    const SuperAdmin = require('./models/Users/SuperAdmin');
-    const Registrar = require('./models/Registrar');
-    
-    try {
-        // 1. Seed Super Admin
-        const existingSuperAdmin = await SuperAdmin.findOne({ email: 'sysadmin@verifitor.com' });
-        if (!existingSuperAdmin) {
-            await SuperAdmin.create({
-                email: 'sysadmin@verifitor.com',
-                password: process.env.DEFAULT_SUPER_ADMIN_PASSWORD || 'sysadmin123', // Model handles hashing
-                role: 'super admin',
-                name: 'Super Admin'
-            });
-            console.log('Default Super Admin created.');
-        }
-
-        // 2. Seed Standard Registrars
-        const registrarsToSeed = [
-            { email: 'admin@verifitor.com', password: process.env.DEFAULT_ADMIN_PASSWORD || 'admin123', name: 'Admin', registrarId: 'REG-001' },
-            { email: 'saetsmurf1@gmail.com', password: process.env.DEFAULT_ADMIN_PASSWORD || 'admin123', name: 'Primary Admin', registrarId: 'REG-002' }
-        ];
-
-        for (const reg of registrarsToSeed) {
-            const existingReg = await Registrar.findOne({ email: reg.email });
-            if (!existingReg) {
-                await Registrar.create({
-                    email: reg.email,
-                    password: reg.password,
-                    role: 'registrar',
-                    name: reg.name,
-                    registrarId: reg.registrarId
-                });
-                console.log(`Default Registrar created (${reg.email}).`);
-            }
-        }
-    } catch (error) {
-        console.error('Error seeding users:', error);
-    }
-}
-
+// Database Connection
+const connectDB = require('./config/db');
 connectDB();
 
 // Import Routes

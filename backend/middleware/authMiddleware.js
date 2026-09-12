@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 
-const protect = async (req, res, next) => {
+const auth = async (req, res, next) => {
   let token;
 
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
@@ -74,4 +74,4 @@ const registrarOrSuperAdmin = (req, res, next) => {
   }
 };
 
-module.exports = { protect, superAdminOnly, registrarOrSuperAdmin };
+module.exports = { auth, protect: auth, superAdminOnly, registrarOrSuperAdmin };

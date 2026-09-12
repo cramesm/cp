@@ -552,15 +552,7 @@ const RequestDetails = () => {
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <div className="flex items-center justify-between gap-3 pt-2">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => navigate(backToRequests)}
-                                                        className="bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs px-4 py-2 rounded-full border border-slate-200 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 transition-all flex items-center gap-1.5 cursor-pointer"
-                                                    >
-                                                        <ArrowLeft size={13} />
-                                                        <span>Back to Document Requests</span>
-                                                    </button>
+                                                <div className="flex items-center justify-end gap-3 pt-2">
                                                     <button
                                                         className="text-slate-400 hover:text-red-500 font-bold text-xs flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                                                         onClick={() => setShowRejectForm(true)}
