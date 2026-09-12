@@ -64,20 +64,25 @@ const StudentManagement = () => {
 
     const handleDelete = (userId, userRole, userName) => {
         showConfirm({
-            title: 'Delete User',
-            message: `Are you sure you want to permanently delete the account for ${userName}? This action cannot be undone.`,
-            type: 'danger',
-            confirmText: 'Delete',
+            title: 'Archive User',
+            message: `Are you sure you want to archive the account for ${userName}? This will hide the account from active lists.`,
+            type: 'warning',
+            confirmText: 'Archive',
             onConfirm: async () => {
                 try {
                     const endpoint = userRole === 'alumni' ? `/v1/alumni/${userId}` : `/v1/students/${userId}`;
                     await axiosInstance.delete(endpoint);
                     setUsers(prev => prev.filter(user => user._id !== userId));
-                } catch (err) {
-                    console.error('Error deleting user:', err);
                     showFeedback({
-                        title: 'Error Deleting User',
-                        message: 'Oops! We couldn\'t delete this user right now. Please try again later.',
+                        title: 'User Archived',
+                        message: `${userName}'s account has been successfully archived.`,
+                        type: 'success'
+                    });
+                } catch (err) {
+                    console.error('Error archiving user:', err);
+                    showFeedback({
+                        title: 'Error Archiving User',
+                        message: 'Oops! We couldn\'t archive this user right now. Please try again later.',
                         type: 'error'
                     });
                 }
@@ -436,10 +441,10 @@ const StudentManagement = () => {
                                                 <div className="flex justify-end gap-2">
                                                     <button
                                                         onClick={() => handleDelete(user._id, user.role || 'student', `${user.firstName} ${user.lastName}`)}
-                                                        className="w-7 h-7 rounded-full bg-red-50 hover:bg-red-600 hover:text-white text-red-600 flex items-center justify-center transition-all shadow-2xs border border-red-200/60 hover:-translate-y-0.5 active:translate-y-0.5"
-                                                        title="Delete User"
+                                                        className="w-7 h-7 rounded-full bg-amber-50 hover:bg-amber-600 hover:text-white text-amber-600 flex items-center justify-center transition-all shadow-2xs border border-amber-200/60 hover:-translate-y-0.5 active:translate-y-0.5"
+                                                        title="Archive User"
                                                     >
-                                                        <i className="fa-regular fa-trash-can text-xs"></i>
+                                                        <i className="fa-solid fa-box-archive text-xs"></i>
                                                     </button>
                                                 </div>
                                             </td>

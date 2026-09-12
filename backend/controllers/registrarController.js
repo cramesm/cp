@@ -6,15 +6,21 @@ const RegistrarController = {
   // @desc    Get all registrars and admins
   getAllRegistrars: async (req, res) => {
     try {
-      const registrars = await Registrar.find();
-      const admins = await Admin.find();
+      const registrars = await Registrar.find({
+        isArchived: { $ne: true },
+        status: { $ne: 'Archived' }
+      });
+      const admins = await Admin.find({
+        isArchived: { $ne: true },
+        status: { $ne: 'Archived' }
+      });
 
       const combined = [
         ...registrars,
         ...admins.map(a => ({
           ...a.toObject(),
           registrarId: 'ADMIN-' + a._id.toString().substring(0, 4),
-          status: 'Active'
+          status: a.status || 'Active'
         }))
       ];
 
@@ -40,7 +46,9 @@ const RegistrarController = {
         staff = await Registrar.findOne({ registrarId: req.params.id });
       }
 
-      if (!staff) return res.status(404).json({ message: 'User not found' });
+      if (!staff || staff.isArchived || staff.status === 'Archived') {
+        return res.status(404).json({ message: 'User not found' });
+      }
 
       let responseData = staff.toObject();
       if (isAdmin) {
@@ -131,7 +139,7 @@ const RegistrarController = {
     }
   },
 
-  // @desc    Delete registrar/admin
+  // @desc    Archive (soft delete) registrar/admin
   deleteRegistrar: async (req, res) => {
     try {
       let staff = await Registrar.findById(req.params.id);
@@ -145,21 +153,25 @@ const RegistrarController = {
       if (!staff) return res.status(404).json({ message: 'User not found' });
 
       const name = staff.name;
-      await model.findByIdAndDelete(req.params.id);
+      await model.findByIdAndUpdate(req.params.id, {
+        isArchived: true,
+        status: 'Archived',
+        archivedAt: new Date()
+      });
 
       await ActivityLog.create({
         userEmail: req.user.email,
         userName: req.user.name || 'Super Admin',
-        action: 'User Deleted',
+        action: 'User Archived',
         type: '------',
         status: 'Successful',
-        details: `Deleted staff account: ${name}`
+        details: `Archived staff account: ${name}`
       });
 
-      res.json({ message: 'User deleted successfully' });
+      res.json({ message: 'Staff account archived successfully' });
     } catch (error) {
-      console.error('Error deleting user:', error);
-      res.status(500).json({ message: 'Error deleting user' });
+      console.error('Error archiving staff account:', error);
+      res.status(500).json({ message: 'Error archiving staff account' });
     }
   }
 };

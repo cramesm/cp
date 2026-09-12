@@ -6,7 +6,10 @@ const AlumniController = {
     // Get all alumni
     getAllAlumni: async (req, res) => {
         try {
-            const alumni = await Alumni.find().sort({ createdAt: -1 });
+            const alumni = await Alumni.find({
+                isArchived: { $ne: true },
+                status: { $ne: 'Archived' }
+            }).sort({ createdAt: -1 });
             res.status(HttpStatus.OK).json({
                 success: true,
                 message: 'Alumni retrieved successfully',
@@ -75,7 +78,7 @@ const AlumniController = {
         }
     },
 
-    // Delete an alumni by ID
+    // Archive (soft delete) an alumni by ID
     deleteAlumni: async (req, res) => {
         try {
             const { id } = req.params;
@@ -88,9 +91,9 @@ const AlumniController = {
                 });
             }
 
-            const deletedAlumni = await Alumni.findByIdAndDelete(id);
+            const alumni = await Alumni.findById(id);
 
-            if (!deletedAlumni) {
+            if (!alumni) {
                 return res.status(HttpStatus.NOT_FOUND).json({ 
                     success: false, 
                     message: 'Alumni not found', 
@@ -98,16 +101,26 @@ const AlumniController = {
                 });
             }
 
+            const archivedAlumni = await Alumni.findByIdAndUpdate(
+                id,
+                {
+                    isArchived: true,
+                    status: 'Archived',
+                    archivedAt: new Date()
+                },
+                { new: true }
+            );
+
             res.status(HttpStatus.OK).json({ 
                 success: true, 
-                message: 'Alumni successfully deleted', 
-                data: deletedAlumni 
+                message: 'Alumni successfully archived', 
+                data: archivedAlumni 
             });
         } catch (error) {
-            console.error('Error deleting alumni:', error);
+            console.error('Error archiving alumni:', error);
             res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ 
                 success: false, 
-                message: 'Failed to delete alumni', 
+                message: 'Failed to archive alumni', 
                 data: error.message 
             });
         }

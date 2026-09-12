@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../../components/Layout';
 import ConfirmModal from '../../components/ConfirmModal';
-import { ChevronRight, User, Trash2, Edit3, X, CheckCircle, Lock, AlertTriangle, RefreshCw, Eye, EyeOff } from 'lucide-react';
+import { ChevronRight, User, Trash2, Archive, Edit3, X, CheckCircle, Lock, AlertTriangle, RefreshCw, Eye, EyeOff } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../../api';
 
@@ -163,31 +163,31 @@ export default function RegistrarInformation() {
     });
   };
 
-  // Delete registrar account
+  // Archive registrar account
   const handleDeleteAccount = () => {
     const consent = document.getElementById('consent');
     if (!consent?.checked) {
-      setToast({ show: true, message: 'Please check the confirmation box before deleting', type: 'error' });
+      setToast({ show: true, message: 'Please check the confirmation box before archiving', type: 'error' });
       setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
       return;
     }
 
     showConfirm({
-      title: 'Delete Account',
-      message: `Are you absolutely sure you want to permanently delete the registrar account for ${formData.firstName} ${formData.lastName}? This cannot be undone.`,
-      type: 'danger',
-      confirmText: 'Delete Permanently',
+      title: 'Archive Account',
+      message: `Are you sure you want to archive the registrar account for ${formData.firstName} ${formData.lastName}? This will deactivate the account and hide it from the active staff list.`,
+      type: 'warning',
+      confirmText: 'Archive Account',
       onConfirm: async () => {
         setDeleting(true);
         try {
           await api.delete(`/registrars/${registrarId || id}`);
-          setToast({ show: true, message: 'Registrar deleted successfully!', type: 'success' });
+          setToast({ show: true, message: 'Registrar archived successfully!', type: 'success' });
           setTimeout(() => {
             navigate('/manage-registrar');
           }, 1500);
         } catch (error) {
-          console.error('Error deleting registrar:', error);
-          setToast({ show: true, message: 'Failed to delete registrar.', type: 'error' });
+          console.error('Error archiving registrar:', error);
+          setToast({ show: true, message: 'Failed to archive registrar.', type: 'error' });
           setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
         } finally {
           setDeleting(false);
@@ -311,31 +311,31 @@ export default function RegistrarInformation() {
                   </div>
                 </section>
 
-                <section className="bg-rose-50/60 border border-rose-100 p-6 rounded-[22px] shadow-2xs">
-                  <div className="flex items-center gap-2 mb-3 text-rose-900">
-                    <Trash2 size={18} />
-                    <h3 className="text-[14px] font-black uppercase tracking-wider m-0">Delete Account</h3>
+                <section className="bg-amber-50/60 border border-amber-200/80 p-6 rounded-[22px] shadow-2xs">
+                  <div className="flex items-center gap-2 mb-3 text-amber-900">
+                    <Archive size={18} />
+                    <h3 className="text-[14px] font-black uppercase tracking-wider m-0">Archive Account</h3>
                   </div>
-                  <p className="text-[11.5px] text-rose-700 font-bold mb-3 flex items-center gap-1.5">
-                    <AlertTriangle size={13} /> Permanent: Account deletion cannot be undone.
+                  <p className="text-[11.5px] text-amber-800 font-bold mb-3 flex items-center gap-1.5">
+                    <AlertTriangle size={13} /> Archiving: This account will be deactivated and hidden from the active staff list. Historical data is preserved.
                   </p>
-                  <div className="flex items-center gap-2.5 mb-4 bg-white/70 p-2.5 rounded-xl border border-rose-200/60">
-                    <input type="checkbox" id="consent" className="w-3.5 h-3.5 accent-rose-600 cursor-pointer" />
-                    <label htmlFor="consent" className="text-[11px] text-rose-900 font-bold leading-tight cursor-pointer">
-                      I confirm that I want to permanently delete this account.
+                  <div className="flex items-center gap-2.5 mb-4 bg-white/80 p-2.5 rounded-xl border border-amber-200/60">
+                    <input type="checkbox" id="consent" className="w-3.5 h-3.5 accent-amber-600 cursor-pointer" />
+                    <label htmlFor="consent" className="text-[11px] text-amber-950 font-bold leading-tight cursor-pointer">
+                      I confirm that I want to archive this account.
                     </label>
                   </div>
                   <button
                     onClick={handleDeleteAccount}
                     disabled={deleting}
-                    className="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-2 rounded-full text-xs border-t border-white/20 border-b-2 border-rose-900 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all disabled:opacity-50 cursor-pointer"
+                    className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 rounded-full text-xs border-t border-white/20 border-b-2 border-amber-900 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all disabled:opacity-50 cursor-pointer"
                   >
                     {deleting ? (
                       <>
-                        <RefreshCw size={13} className="animate-spin inline mr-1.5" /> Deleting...
+                        <RefreshCw size={13} className="animate-spin inline mr-1.5" /> Archiving...
                       </>
                     ) : (
-                      'Delete Account'
+                      'Archive Account'
                     )}
                   </button>
                 </section>

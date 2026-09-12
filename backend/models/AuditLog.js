@@ -1,35 +1,42 @@
 const mongoose = require('mongoose');
 
 const auditLogSchema = new mongoose.Schema({
-  method: {
+  level: {
+    type: String,
+    enum: ['info', 'warn', 'error'],
+    default: 'info'
+  },
+  message: {
     type: String,
     required: true
+  },
+  metadata: {
+    type: mongoose.Schema.Types.Mixed
+  },
+  method: {
+    type: String
   },
   path: {
-    type: String,
-    required: true
+    type: String
   },
   ip: {
-    type: String,
-    required: true
+    type: String
   },
   userEmail: {
     type: String,
     default: 'Anonymous'
   },
   statusCode: {
-    type: Number,
-    required: true
+    type: Number
   },
   durationMs: {
-    type: Number,
-    required: true
+    type: Number
   },
   timestamp: {
     type: Date,
     default: Date.now,
-    expires: 30 * 24 * 60 * 60 // 30 days TTL (based on open question suggestion)
+    expires: 30 * 24 * 60 * 60 // 30 days TTL
   }
-});
+}, { timestamps: true });
 
 module.exports = mongoose.models.AuditLog || mongoose.model('AuditLog', auditLogSchema);

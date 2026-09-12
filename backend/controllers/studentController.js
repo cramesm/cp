@@ -6,7 +6,10 @@ const StudentController = {
     // Get all students
     getAllStudents: async (req, res) => {
         try {
-            const students = await Student.find().sort({ createdAt: -1 });
+            const students = await Student.find({
+                isArchived: { $ne: true },
+                status: { $ne: 'Archived' }
+            }).sort({ createdAt: -1 });
             res.status(HttpStatus.OK).json({
                 success: true,
                 message: 'Students retrieved successfully',
@@ -76,7 +79,7 @@ const StudentController = {
         }
     },
 
-    // Delete a student by ID
+    // Archive (soft delete) a student by ID
     deleteStudent: async (req, res) => {
         try {
             const { id } = req.params;
@@ -89,9 +92,9 @@ const StudentController = {
                 });
             }
 
-            const deletedStudent = await Student.findByIdAndDelete(id);
+            const student = await Student.findById(id);
 
-            if (!deletedStudent) {
+            if (!student) {
                 return res.status(HttpStatus.NOT_FOUND).json({ 
                     success: false, 
                     message: 'Student not found', 
@@ -99,16 +102,26 @@ const StudentController = {
                 });
             }
 
+            const archivedStudent = await Student.findByIdAndUpdate(
+                id,
+                {
+                    isArchived: true,
+                    status: 'Archived',
+                    archivedAt: new Date()
+                },
+                { new: true }
+            );
+
             res.status(HttpStatus.OK).json({ 
                 success: true, 
-                message: 'Student successfully deleted', 
-                data: deletedStudent 
+                message: 'Student successfully archived', 
+                data: archivedStudent 
             });
         } catch (error) {
-            console.error('Error deleting student:', error);
+            console.error('Error archiving student:', error);
             res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ 
                 success: false, 
-                message: 'Failed to delete student', 
+                message: 'Failed to archive student', 
                 data: error.message 
             });
         }

@@ -51,8 +51,15 @@ const studentSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['Active', 'Inactive', 'Stopped'],
+    enum: ['Active', 'Inactive', 'Stopped', 'Archived'],
     default: 'Inactive'
+  },
+  isArchived: {
+    type: Boolean,
+    default: false
+  },
+  archivedAt: {
+    type: Date
   }
 }, { timestamps: true });
 

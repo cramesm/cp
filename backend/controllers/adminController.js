@@ -5,7 +5,10 @@ const AdminController = {
   // @desc    Get all admins (without password)
   getAllAdmins: async (req, res) => {
     try {
-      const admins = await Admin.find().select('-password');
+      const admins = await Admin.find({
+        isArchived: { $ne: true },
+        status: { $ne: 'Archived' }
+      }).select('-password');
       res.json(admins);
     } catch (error) {
       console.error('Error fetching admins:', error);
@@ -99,28 +102,32 @@ const AdminController = {
     }
   },
 
-  // @desc    Delete admin
+  // @desc    Archive (soft delete) admin
   deleteAdmin: async (req, res) => {
     try {
       const adminToDelete = await Admin.findById(req.params.id);
       if (!adminToDelete) return res.status(404).json({ message: 'Admin not found' });
 
       const email = adminToDelete.email;
-      await Admin.findByIdAndDelete(req.params.id);
+      await Admin.findByIdAndUpdate(req.params.id, {
+        isArchived: true,
+        status: 'Archived',
+        archivedAt: new Date()
+      });
 
       await ActivityLog.create({
         userEmail: req.user.email,
         userName: req.user.name || 'Super Admin',
-        action: 'Delete Admin',
+        action: 'Archive Admin',
         type: '------',
         status: 'Successful',
-        details: `Deleted admin account: ${email}`
+        details: `Archived admin account: ${email}`
       });
 
-      res.json({ message: 'Admin deleted successfully' });
+      res.json({ message: 'Admin archived successfully' });
     } catch (error) {
-      console.error('Error deleting admin:', error);
-      res.status(500).json({ message: 'Error deleting admin' });
+      console.error('Error archiving admin:', error);
+      res.status(500).json({ message: 'Error archiving admin' });
     }
   }
 };

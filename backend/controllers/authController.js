@@ -240,6 +240,10 @@ const AuthController = {
       }
 
       // Check account status
+      if (user.isArchived || (user.status && user.status.toLowerCase() === 'archived')) {
+        return res.status(403).json({ success: false, message: 'This account has been archived. Please contact an administrator.' });
+      }
+
       if (user.status && ['inactive', 'stopped'].includes(user.status.toLowerCase())) {
         return res.status(403).json({ success: false, message: 'Account is currently inactive. Please contact an administrator.' });
       }
