@@ -311,25 +311,26 @@ const RequestController = {
         const qrCodeBuffer = await QRCode.toBuffer(validationUrl, {
           errorCorrectionLevel: 'H',
           margin: 1,
-          width: 150
+          width: 200
         });
 
         const existingPdfBytes = req.file.buffer;
         const pdfDoc = await PDFDocument.load(existingPdfBytes);
 
         const qrImage = await pdfDoc.embedPng(qrCodeBuffer);
-        const qrDims = qrImage.scale(1);
 
         const pages = pdfDoc.getPages();
         const firstPage = pages[0];
-        const { width } = firstPage.getSize();
+        const { width, height } = firstPage.getSize();
 
-        const padding = 30;
+        // Compact QR code positioned at top right corner
+        const qrSize = 75;
+        const padding = 25;
         firstPage.drawImage(qrImage, {
-          x: width - qrDims.width - padding,
-          y: padding,
-          width: qrDims.width,
-          height: qrDims.height,
+          x: width - qrSize - padding,
+          y: height - qrSize - padding,
+          width: qrSize,
+          height: qrSize,
         });
 
         const modifiedPdfBytes = await pdfDoc.save();
