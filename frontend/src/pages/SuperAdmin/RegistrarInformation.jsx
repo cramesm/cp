@@ -266,7 +266,7 @@ export default function RegistrarInformation() {
                     <button
                       onClick={handleUpdateInfo}
                       disabled={updating}
-                      className="flex-1 bg-[#2c3543] hover:bg-[#1f2631] text-white py-2 rounded-full font-bold text-xs border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_6px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                      className="flex-1 bg-[#2c3543] hover:bg-[#1f2631] text-white py-2 rounded-full font-bold text-xs border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_6px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
                     >
                       {updating ? (
                         <>
@@ -304,7 +304,7 @@ export default function RegistrarInformation() {
                     />
                     <button
                       onClick={handlePasswordUpdate}
-                      className="w-full bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold py-2 rounded-full text-xs border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_6px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all mt-2 cursor-pointer"
+                      className="w-full bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold py-2 rounded-full text-xs border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_6px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all mt-2 cursor-pointer"
                     >
                       Set New Password
                     </button>

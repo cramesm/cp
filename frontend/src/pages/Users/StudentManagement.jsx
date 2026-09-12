@@ -277,7 +277,7 @@ const StudentManagement = () => {
                             {/* 3D Add Button */}
                             <button 
                                 onClick={() => setShowModal(true)}
-                                className="flex items-center justify-center gap-1.5 rounded-full bg-[#2c3543] hover:bg-[#1f2631] px-4 py-1.5 text-[12px] font-bold text-white border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_6px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 hover:shadow-[0_4px_10px_rgba(0,0,0,0.3)] active:translate-y-0.5 active:border-b-0 transition-all self-start sm:self-auto"
+                                className="flex items-center justify-center gap-1.5 rounded-full bg-[#2c3543] hover:bg-[#1f2631] px-4 py-1.5 text-[12px] font-bold text-white border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_6px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 hover:shadow-[0_4px_10px_rgba(0,0,0,0.3)] active:translate-y-0.5 active:border-b-0 transition-all self-start sm:self-auto"
                             >
                                 <Plus size={14} />
                                 <span>Add New {activeTab === 'student' ? 'Student' : 'Alumni'}</span>
@@ -634,7 +634,7 @@ const StudentManagement = () => {
                                     <button
                                         type="submit"
                                         disabled={adding}
-                                        className="px-5 py-2 text-xs font-bold text-white bg-[#2c3543] hover:bg-[#1f2631] rounded-full border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_6px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all disabled:opacity-50 flex items-center"
+                                        className="px-5 py-2 text-xs font-bold text-white bg-[#2c3543] hover:bg-[#1f2631] rounded-full border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_6px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all disabled:opacity-50 flex items-center"
                                     >
                                         {adding ? (
                                             <><i className="fa-solid fa-spinner fa-spin mr-1.5"></i> Registering...</>

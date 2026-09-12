@@ -117,7 +117,7 @@ const TransactionDetails = () => {
                     <p className="text-xs text-slate-400 mt-1 font-mono">Transaction ID: {id}</p>
                     <button
                         onClick={() => navigate('/transactions')}
-                        className="bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold text-xs py-2 px-4 mt-6 rounded-full border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_6px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-2 cursor-pointer"
+                        className="bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold text-xs py-2 px-4 mt-6 rounded-full border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_6px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-2 cursor-pointer"
                     >
                         <ArrowLeft size={13} />
                         <span>Back to Transactions</span>
@@ -294,7 +294,7 @@ const TransactionDetails = () => {
                                         />
                                         <button
                                             onClick={() => setZoomedImage(true)}
-                                            className="bg-[#2c3543] hover:bg-[#1f2631] text-white px-6 py-2 rounded-full font-bold text-xs flex items-center gap-2 border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all cursor-pointer"
+                                            className="bg-[#2c3543] hover:bg-[#1f2631] text-white px-6 py-2 rounded-full font-bold text-xs flex items-center gap-2 border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all cursor-pointer"
                                         >
                                             <Eye size={14} /> 
                                             <span>View Full Size</span>

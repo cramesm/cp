@@ -320,7 +320,7 @@ const RequestDetails = () => {
                         )}
                         <button 
                             onClick={() => navigate(backToRequests)}
-                            className="bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold text-xs px-4 py-2 rounded-full border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-2 cursor-pointer w-fit"
+                            className="bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold text-xs px-4 py-2 rounded-full border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-2 cursor-pointer w-fit"
                         >
                             <ArrowLeft size={13} />
                             <span>Back to Document Requests</span>
@@ -595,7 +595,7 @@ const RequestDetails = () => {
                                                 <span>Back to Step 1</span>
                                             </button>
                                             <button
-                                                className={`flex-1 text-white py-2.5 px-6 rounded-full font-bold text-xs border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 ${!hasProcessingAccess ? 'bg-slate-400' : 'bg-[#2c3543] hover:bg-[#1f2631]'}`}
+                                                className={`flex-1 text-white py-2.5 px-6 rounded-full font-bold text-xs border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 ${!hasProcessingAccess ? 'bg-slate-400' : 'bg-[#2c3543] hover:bg-[#1f2631]'}`}
                                                 disabled={!uploadedFile || actionLoading || !hasProcessingAccess}
                                                 onClick={processUpload}
                                             >
@@ -667,7 +667,7 @@ const RequestDetails = () => {
                                                 <span>Back to Step 1</span>
                                             </button>
                                             <button
-                                                className={`flex-1 text-white py-2.5 px-6 rounded-full font-bold text-xs border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 ${!hasProcessingAccess ? 'bg-slate-400' : 'bg-emerald-600 hover:bg-emerald-700'}`}
+                                                className={`flex-1 text-white py-2.5 px-6 rounded-full font-bold text-xs border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 ${!hasProcessingAccess ? 'bg-slate-400' : 'bg-emerald-600 hover:bg-emerald-700'}`}
                                                 disabled={actionLoading || !hasProcessingAccess}
                                                 onClick={() => showConfirm({
                                                     title: 'Finalize & Release Request',
@@ -779,7 +779,7 @@ const RequestDetails = () => {
                                                 <span>Back to Step 2</span>
                                             </button>
                                             <button
-                                                className={`flex-1 text-white py-2.5 px-6 rounded-full font-bold text-xs border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 ${(!hasProcessingAccess) ? 'bg-slate-400' : 'bg-[#2c3543] hover:bg-[#1f2631]'}`}
+                                                className={`flex-1 text-white py-2.5 px-6 rounded-full font-bold text-xs border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 ${(!hasProcessingAccess) ? 'bg-slate-400' : 'bg-[#2c3543] hover:bg-[#1f2631]'}`}
                                                 disabled={actionLoading || !hasProcessingAccess || (isBlockchainEligible && !blockchainData.studentIDNumber)}
                                                 onClick={() => showConfirm({
                                                     title: isBlockchainEligible ? 'Secure to Blockchain' : 'Finalize Document',
@@ -849,7 +849,7 @@ const RequestDetails = () => {
                                                 </a>
                                             )}
                                             <button
-                                                className="bg-[#2c3543] hover:bg-[#1f2631] text-white px-6 py-2.5 rounded-full font-bold text-xs border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-1.5 cursor-pointer"
+                                                className="bg-[#2c3543] hover:bg-[#1f2631] text-white px-6 py-2.5 rounded-full font-bold text-xs border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-1.5 cursor-pointer"
                                                 onClick={() => navigate(backToRequests)}
                                             >
                                                 Return to Requests

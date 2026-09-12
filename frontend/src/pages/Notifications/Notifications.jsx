@@ -178,7 +178,7 @@ const Notifications = () => {
 
                 <button 
                   onClick={handleMarkAllRead} 
-                  className="bg-[#2c3543] hover:bg-[#1f2631] text-white py-1.5 px-3.5 rounded-full text-[11.5px] font-bold border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(0,0,0,0.25)] active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                  className="bg-[#2c3543] hover:bg-[#1f2631] text-white py-1.5 px-3.5 rounded-full text-[11.5px] font-bold border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(0,0,0,0.25)] active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
                 >
                   <CheckCheck size={13} />
                   <span>Mark all read</span>

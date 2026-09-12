@@ -11,7 +11,7 @@ import { useModals } from '../../hooks/useModals';
 import { 
   X, ZoomIn, CheckCircle, Image as ImageIcon, Send, AlertCircle, RefreshCw, 
   Receipt, Eye, XCircle, Undo2, SlidersHorizontal, ArrowDownAZ, ArrowUpZA, 
-  Trash2, Download, Copy, Check, FileSpreadsheet, TrendingUp, Clock, RotateCcw, 
+  Download, Copy, Check, FileSpreadsheet, TrendingUp, Clock, RotateCcw, 
   XOctagon 
 } from 'lucide-react';
 
@@ -23,11 +23,9 @@ const Transactions = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'payments'); // 'payments' | 'refunds'
 
-  // Super Admin Check & Selection States
+  // Super Admin Check
   const userRole = (localStorage.getItem('userRole') || '').toLowerCase();
   const isSuperAdmin = userRole === 'super admin';
-  const [selectedTxIds, setSelectedTxIds] = useState([]);
-  const [selectedRefundIds, setSelectedRefundIds] = useState([]);
   const { confirmConfig, feedbackConfig, showConfirm, showFeedback, closeConfirm, closeFeedback } = useModals();
 
   // Refund states
@@ -126,126 +124,6 @@ const Transactions = () => {
     const status = searchParams.get('status');
     if (status) setFilterStatus(status);
   }, [searchParams]);
-
-  // --- Deletion Handlers for Transactions ---
-  const handleDeleteSingleTx = (tx) => {
-    const id = tx.transactionId || tx._id;
-    showConfirm({
-      title: 'Delete Payment Transaction',
-      message: `Are you sure you want to permanently delete transaction "${tx.transactionId}" (${tx.payerName || tx.name || 'User'})? This action cannot be undone.`,
-      type: 'danger',
-      confirmText: 'Delete Payment',
-      onConfirm: async () => {
-        try {
-          await api.delete(`/transactions/${id}`);
-          setTransactions(prev => prev.filter(t => t.transactionId !== tx.transactionId && t._id !== tx._id));
-          setSelectedTxIds(prev => prev.filter(x => x !== tx.transactionId && x !== tx._id));
-          showFeedback({
-            title: 'Payment Deleted',
-            message: `Transaction ${tx.transactionId} has been permanently deleted.`,
-            type: 'success'
-          });
-        } catch (err) {
-          console.error('Error deleting transaction:', err);
-          showFeedback({
-            title: 'Deletion Failed',
-            message: err.response?.data?.message || 'Failed to delete transaction.',
-            type: 'error'
-          });
-        }
-      }
-    });
-  };
-
-  const handleBulkDeleteTx = () => {
-    if (selectedTxIds.length === 0) return;
-    const count = selectedTxIds.length;
-    showConfirm({
-      title: 'Bulk Delete Payments',
-      message: `Are you sure you want to permanently delete ${count} selected payment transaction(s)? This action cannot be undone.`,
-      type: 'danger',
-      confirmText: `Delete ${count} Payments`,
-      onConfirm: async () => {
-        try {
-          const res = await api.post('/transactions/bulk-delete', { transactionIds: selectedTxIds });
-          setTransactions(prev => prev.filter(t => !selectedTxIds.includes(t.transactionId) && !selectedTxIds.includes(t._id)));
-          setSelectedTxIds([]);
-          showFeedback({
-            title: 'Bulk Deletion Completed',
-            message: res.data?.message || `Successfully deleted ${count} transaction(s).`,
-            type: 'success'
-          });
-        } catch (err) {
-          console.error('Error bulk deleting transactions:', err);
-          showFeedback({
-            title: 'Bulk Deletion Failed',
-            message: err.response?.data?.message || 'Failed to delete selected transactions.',
-            type: 'error'
-          });
-        }
-      }
-    });
-  };
-
-  // --- Deletion Handlers for Refunds ---
-  const handleDeleteSingleRefund = (refund) => {
-    const id = refund.refundId || refund._id;
-    showConfirm({
-      title: 'Delete Refund Record',
-      message: `Are you sure you want to permanently delete refund record "${refund.refundId || refund._id}"? This action cannot be undone.`,
-      type: 'danger',
-      confirmText: 'Delete Refund',
-      onConfirm: async () => {
-        try {
-          await api.delete(`/refunds/${id}`);
-          setRefunds(prev => prev.filter(r => r.refundId !== refund.refundId && r._id !== refund._id));
-          setSelectedRefundIds(prev => prev.filter(x => x !== refund.refundId && x !== refund._id));
-          showFeedback({
-            title: 'Refund Record Deleted',
-            message: `Refund ${refund.refundId || refund._id} has been permanently deleted.`,
-            type: 'success'
-          });
-        } catch (err) {
-          console.error('Error deleting refund:', err);
-          showFeedback({
-            title: 'Deletion Failed',
-            message: err.response?.data?.message || 'Failed to delete refund record.',
-            type: 'error'
-          });
-        }
-      }
-    });
-  };
-
-  const handleBulkDeleteRefunds = () => {
-    if (selectedRefundIds.length === 0) return;
-    const count = selectedRefundIds.length;
-    showConfirm({
-      title: 'Bulk Delete Refunds',
-      message: `Are you sure you want to permanently delete ${count} selected refund record(s)? This action cannot be undone.`,
-      type: 'danger',
-      confirmText: `Delete ${count} Refunds`,
-      onConfirm: async () => {
-        try {
-          const res = await api.post('/refunds/bulk-delete', { refundIds: selectedRefundIds });
-          setRefunds(prev => prev.filter(r => !selectedRefundIds.includes(r.refundId) && !selectedRefundIds.includes(r._id)));
-          setSelectedRefundIds([]);
-          showFeedback({
-            title: 'Bulk Deletion Completed',
-            message: res.data?.message || `Successfully deleted ${count} refund record(s).`,
-            type: 'success'
-          });
-        } catch (err) {
-          console.error('Error bulk deleting refunds:', err);
-          showFeedback({
-            title: 'Bulk Deletion Failed',
-            message: err.response?.data?.message || 'Failed to delete selected refund records.',
-            type: 'error'
-          });
-        }
-      }
-    });
-  };
 
   const triggerToast = (message, type = 'info') => {
     setToast({ show: true, message, type });
@@ -522,9 +400,6 @@ const Transactions = () => {
     setCurrentPage(1);
   }, [searchTerm, filterPaymentMode, filterStatus, filterDocType, filterUserRole, filterProgram, filterUserStatus, startDate, endDate, entriesPerPage]);
 
-  const isCurrentTxPageAllSelected = paginatedTransactions.length > 0 && paginatedTransactions.every(t => selectedTxIds.includes(t.transactionId || t._id));
-  const isCurrentRefundPageAllSelected = refunds.length > 0 && refunds.every(r => selectedRefundIds.includes(r.refundId || r._id));
-
   return (
     <Layout>
       {confirmConfig && (
@@ -719,40 +594,6 @@ const Transactions = () => {
                 </div>
               </div>
 
-              {/* Super Admin Bulk Action Toolbar */}
-              {isSuperAdmin && selectedTxIds.length > 0 && (
-                <div className="flex items-center justify-between bg-blue-50/90 border border-blue-200 px-4 py-2.5 rounded-2xl animate-fade-in text-xs font-bold text-blue-900 shadow-xs">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="bg-blue-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black">
-                      {selectedTxIds.length}
-                    </span>
-                    <span>{selectedTxIds.length} payment{selectedTxIds.length > 1 ? 's' : ''} selected</span>
-                    <button 
-                      type="button" 
-                      onClick={() => setSelectedTxIds(filteredTransactions.map(t => t.transactionId || t._id))}
-                      className="text-blue-700 hover:text-blue-900 underline font-extrabold cursor-pointer ml-1"
-                    >
-                      Select all {filteredTransactions.length}
-                    </button>
-                    <button 
-                      type="button" 
-                      onClick={() => setSelectedTxIds([])}
-                      className="text-slate-500 hover:text-slate-700 underline font-medium cursor-pointer ml-1"
-                    >
-                      Deselect all
-                    </button>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleBulkDeleteTx}
-                    className="flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white px-3.5 py-1.5 rounded-full font-bold shadow-xs hover:-translate-y-0.5 active:translate-y-0.5 transition-all cursor-pointer"
-                  >
-                    <Trash2 size={13} />
-                    <span>Delete Selected ({selectedTxIds.length})</span>
-                  </button>
-                </div>
-              )}
-
               <ActiveFilterChips 
                   filters={[
                       { label: 'Role', value: filterUserRole, key: 'filterUserRole' },
@@ -937,24 +778,6 @@ const Transactions = () => {
               <table className="w-full text-left border-collapse table-auto">
                 <thead>
                   <tr className="bg-slate-50/70 text-[11.5px] font-extrabold uppercase tracking-wider text-slate-500 border-b border-slate-100">
-                    {isSuperAdmin && (
-                      <th className="py-3.5 px-4 w-10 text-center">
-                        <input 
-                          type="checkbox"
-                          aria-label="Select all payments on this page"
-                          className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer accent-blue-600"
-                          checked={isCurrentTxPageAllSelected}
-                          onChange={(e) => {
-                            const pageIds = paginatedTransactions.map(tx => tx.transactionId || tx._id);
-                            if (e.target.checked) {
-                              setSelectedTxIds(prev => [...new Set([...prev, ...pageIds])]);
-                            } else {
-                              setSelectedTxIds(prev => prev.filter(id => !pageIds.includes(id)));
-                            }
-                          }}
-                        />
-                      </th>
-                    )}
                     <th className="py-3.5 px-5">Payment ID</th>
                     <th className="py-3.5 px-5">Request ID</th>
                     <th className="py-3.5 px-5">Payer Name</th>
@@ -968,30 +791,16 @@ const Transactions = () => {
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-[12.5px]">
                   {loading ? (
-                    <TableSkeleton columns={isSuperAdmin ? 10 : 9} rows={entriesPerPage || 10} />
+                    <TableSkeleton columns={9} rows={entriesPerPage || 10} />
                   ) : paginatedTransactions.length > 0 ? (
                     paginatedTransactions.map((tx, idx) => {
                       const txId = tx.transactionId || tx._id;
-                      const isSelected = selectedTxIds.includes(txId);
                       const txDate = new Date(tx.date);
                       const formattedDate = txDate.toLocaleDateString('en-US', {
                         year: 'numeric', month: '2-digit', day: '2-digit'
                       });
                       return (
-                        <tr key={tx._id || idx} className={`hover:bg-slate-50/80 transition-colors ${isSelected ? 'bg-blue-50/40' : ''}`}>
-                          {isSuperAdmin && (
-                            <td className="py-3.5 px-4 text-center align-middle" onClick={(e) => e.stopPropagation()}>
-                              <input 
-                                type="checkbox"
-                                aria-label={`Select transaction ${tx.transactionId}`}
-                                className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer accent-blue-600"
-                                checked={isSelected}
-                                onChange={() => {
-                                  setSelectedTxIds(prev => prev.includes(txId) ? prev.filter(x => x !== txId) : [...prev, txId]);
-                                }}
-                              />
-                            </td>
-                          )}
+                        <tr key={tx._id || idx} className="hover:bg-slate-50/80 transition-colors">
                           <td className="py-3.5 px-5 align-middle">
                             <div className="flex items-center gap-1.5">
                               <span className="bg-slate-100 px-2 py-0.5 rounded-md text-slate-800 font-mono text-[11.5px] font-bold" title={tx.transactionId}>
@@ -1077,7 +886,7 @@ const Transactions = () => {
                               {tx.status === 'Pending Verification' ? (
                                 <button
                                   onClick={() => { setSelectedTx(tx); setAdminNote(''); setError(''); }}
-                                  className="bg-[#2c3543] hover:bg-[#1f2631] text-white py-1 px-3.5 rounded-full text-[11.5px] font-bold border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(0,0,0,0.25)] active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-1.5 cursor-pointer"
+                                  className="bg-[#2c3543] hover:bg-[#1f2631] text-white py-1 px-3.5 rounded-full text-[11.5px] font-bold border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(0,0,0,0.25)] active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-1.5 cursor-pointer"
                                 >
                                   <Receipt size={12} />
                                   <span>Verify Receipt</span>
@@ -1085,20 +894,10 @@ const Transactions = () => {
                               ) : (
                                 <button
                                   onClick={() => navigate(`/transactions/${tx.transactionId}`)}
-                                  className="bg-[#2c3543] hover:bg-[#1f2631] text-white py-1 px-3.5 rounded-full text-[11.5px] font-bold border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(0,0,0,0.25)] active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-1.5 cursor-pointer"
+                                  className="bg-[#2c3543] hover:bg-[#1f2631] text-white py-1 px-3.5 rounded-full text-[11.5px] font-bold border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(0,0,0,0.25)] active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-1.5 cursor-pointer"
                                 >
                                   <Eye size={12} />
                                   <span>View Details</span>
-                                </button>
-                              )}
-                              {isSuperAdmin && (
-                                <button
-                                  onClick={() => handleDeleteSingleTx(tx)}
-                                  className="w-7 h-7 rounded-full bg-red-50 hover:bg-red-600 hover:text-white text-red-600 flex items-center justify-center transition-all shadow-2xs border border-red-200/60 hover:-translate-y-0.5 active:translate-y-0.5 cursor-pointer"
-                                  title="Delete Payment"
-                                  aria-label={`Delete payment ${tx.transactionId}`}
-                                >
-                                  <Trash2 size={12} />
                                 </button>
                               )}
                             </div>
@@ -1108,7 +907,7 @@ const Transactions = () => {
                     })
                   ) : (
                     <tr>
-                      <td colSpan={isSuperAdmin ? 10 : 9} className="py-16 text-center text-slate-400 italic">
+                      <td colSpan={9} className="py-16 text-center text-slate-400 italic">
                         No payments found matching your filters.
                       </td>
                     </tr>
@@ -1164,64 +963,10 @@ const Transactions = () => {
         {/* ====== REFUND REQUESTS TAB ====== */}
         {activeTab === 'refunds' && (
           <div className="rounded-[22px] bg-white shadow-[0_8px_24px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.02)] border border-slate-100/90 overflow-hidden">
-            {/* Super Admin Bulk Action Toolbar for Refunds */}
-            {isSuperAdmin && selectedRefundIds.length > 0 && (
-              <div className="p-4 border-b border-slate-100 bg-slate-50/40">
-                <div className="flex items-center justify-between bg-blue-50/90 border border-blue-200 px-4 py-2.5 rounded-2xl animate-fade-in text-xs font-bold text-blue-900 shadow-xs">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="bg-blue-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black">
-                      {selectedRefundIds.length}
-                    </span>
-                    <span>{selectedRefundIds.length} refund{selectedRefundIds.length > 1 ? 's' : ''} selected</span>
-                    <button 
-                      type="button" 
-                      onClick={() => setSelectedRefundIds(refunds.map(r => r.refundId || r._id))}
-                      className="text-blue-700 hover:text-blue-900 underline font-extrabold cursor-pointer ml-1"
-                    >
-                      Select all {refunds.length}
-                    </button>
-                    <button 
-                      type="button" 
-                      onClick={() => setSelectedRefundIds([])}
-                      className="text-slate-500 hover:text-slate-700 underline font-medium cursor-pointer ml-1"
-                    >
-                      Deselect all
-                    </button>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleBulkDeleteRefunds}
-                    className="flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white px-3.5 py-1.5 rounded-full font-bold shadow-xs hover:-translate-y-0.5 active:translate-y-0.5 transition-all cursor-pointer"
-                  >
-                    <Trash2 size={13} />
-                    <span>Delete Selected ({selectedRefundIds.length})</span>
-                  </button>
-                </div>
-              </div>
-            )}
-
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse table-auto">
                 <thead>
                   <tr className="bg-slate-50/70 text-[11.5px] font-extrabold uppercase tracking-wider text-slate-500 border-b border-slate-100">
-                    {isSuperAdmin && (
-                      <th className="py-3.5 px-4 w-10 text-center">
-                        <input 
-                          type="checkbox"
-                          aria-label="Select all refunds on this page"
-                          className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer accent-blue-600"
-                          checked={isCurrentRefundPageAllSelected}
-                          onChange={(e) => {
-                            const refundIds = refunds.map(r => r.refundId || r._id);
-                            if (e.target.checked) {
-                              setSelectedRefundIds(prev => [...new Set([...prev, ...refundIds])]);
-                            } else {
-                              setSelectedRefundIds(prev => prev.filter(id => !refundIds.includes(id)));
-                            }
-                          }}
-                        />
-                      </th>
-                    )}
                     <th className="py-3.5 px-5">Refund ID</th>
                     <th className="py-3.5 px-5">Transaction ID</th>
                     <th className="py-3.5 px-5">Name</th>
@@ -1234,11 +979,10 @@ const Transactions = () => {
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-[12.5px]">
                   {refundsLoading ? (
-                    <TableSkeleton columns={isSuperAdmin ? 9 : 8} rows={10} />
+                    <TableSkeleton columns={8} rows={10} />
                   ) : refunds.length > 0 ? (
                     refunds.map((refund, idx) => {
                       const refundId = refund.refundId || refund._id;
-                      const isSelected = selectedRefundIds.includes(refundId);
                       const refundDate = new Date(refund.createdAt);
                       const formattedDate = refundDate.toLocaleDateString('en-US', {
                         year: 'numeric', month: '2-digit', day: '2-digit'
@@ -1248,20 +992,7 @@ const Transactions = () => {
                       const displayName = refund.accountName || refund.studentName || relatedTx?.payerName || relatedTx?.name || 'Unknown';
 
                       return (
-                        <tr key={refund._id || idx} className={`hover:bg-slate-50/80 transition-colors ${isSelected ? 'bg-blue-50/40' : ''}`}>
-                          {isSuperAdmin && (
-                            <td className="py-3.5 px-4 text-center align-middle" onClick={(e) => e.stopPropagation()}>
-                              <input 
-                                type="checkbox"
-                                aria-label={`Select refund ${refund.refundId || refund._id}`}
-                                className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer accent-blue-600"
-                                checked={isSelected}
-                                onChange={() => {
-                                  setSelectedRefundIds(prev => prev.includes(refundId) ? prev.filter(x => x !== refundId) : [...prev, refundId]);
-                                }}
-                              />
-                            </td>
-                          )}
+                        <tr key={refund._id || idx} className="hover:bg-slate-50/80 transition-colors">
                           <td className="py-3.5 px-5 align-middle">
                             <div className="flex items-center gap-1.5">
                               <span className="bg-slate-100 px-2 py-0.5 rounded-md text-slate-800 font-mono text-[11.5px] font-bold" title={refund.refundId || refund._id}>
@@ -1321,7 +1052,7 @@ const Transactions = () => {
                               {refund.status?.toLowerCase() === 'pending' ? (
                                 <button
                                   onClick={() => { setSelectedRefund(refund); setRefundRemarks(''); }}
-                                  className="bg-[#2c3543] hover:bg-[#1f2631] text-white py-1 px-3.5 rounded-full text-[11.5px] font-bold border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(0,0,0,0.25)] active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-1.5 cursor-pointer"
+                                  className="bg-[#2c3543] hover:bg-[#1f2631] text-white py-1 px-3.5 rounded-full text-[11.5px] font-bold border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(0,0,0,0.25)] active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-1.5 cursor-pointer"
                                 >
                                   <Eye size={12} />
                                   <span>Review</span>
@@ -1332,16 +1063,6 @@ const Transactions = () => {
                                   {refund.processedBy && ` by ${refund.processedBy.split('@')[0]}`}
                                 </span>
                               )}
-                              {isSuperAdmin && (
-                                <button
-                                  onClick={() => handleDeleteSingleRefund(refund)}
-                                  className="w-7 h-7 rounded-full bg-red-50 hover:bg-red-600 hover:text-white text-red-600 flex items-center justify-center transition-all shadow-2xs border border-red-200/60 hover:-translate-y-0.5 active:translate-y-0.5 cursor-pointer"
-                                  title="Delete Refund"
-                                  aria-label={`Delete refund ${refund.refundId || refund._id}`}
-                                >
-                                  <Trash2 size={12} />
-                                </button>
-                              )}
                             </div>
                           </td>
                         </tr>
@@ -1349,7 +1070,7 @@ const Transactions = () => {
                     })
                   ) : (
                     <tr>
-                      <td colSpan={isSuperAdmin ? 9 : 8} className="py-16 text-center text-slate-400 italic">
+                      <td colSpan={8} className="py-16 text-center text-slate-400 italic">
                         No refund requests found.
                       </td>
                     </tr>

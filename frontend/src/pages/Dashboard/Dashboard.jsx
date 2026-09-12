@@ -369,7 +369,7 @@ const Dashboard = () => {
 
                             <button 
                                 onClick={() => navigate('/requests')}
-                                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#2c3543] hover:bg-[#1f2631] text-white rounded-full text-[12px] font-bold border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_6px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 hover:shadow-[0_4px_10px_rgba(0,0,0,0.3)] active:translate-y-0.5 active:border-b-0 transition-all"
+                                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#2c3543] hover:bg-[#1f2631] text-white rounded-full text-[12px] font-bold border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_6px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 hover:shadow-[0_4px_10px_rgba(0,0,0,0.3)] active:translate-y-0.5 active:border-b-0 transition-all"
                             >
                                 <span>All Requests</span>
                                 <ArrowUpRight size={12} />
@@ -428,7 +428,7 @@ const Dashboard = () => {
                                             <td className="py-3 px-5 text-right align-middle">
                                                 <button 
                                                     onClick={() => navigate(`/requests/${req.requestId}`)} 
-                                                    className="bg-[#2c3543] hover:bg-[#1f2631] text-white py-1 px-3.5 rounded-full text-[11.5px] font-bold border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(0,0,0,0.25)] active:translate-y-0.5 active:border-b-0 transition-all"
+                                                    className="bg-[#2c3543] hover:bg-[#1f2631] text-white py-1 px-3.5 rounded-full text-[11.5px] font-bold border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(0,0,0,0.25)] active:translate-y-0.5 active:border-b-0 transition-all"
                                                 >
                                                     View Details
                                                 </button>
@@ -476,7 +476,7 @@ const Dashboard = () => {
                                             <td className="py-3 px-5 text-right align-middle">
                                                 <button 
                                                     onClick={() => navigate('/requests')}
-                                                    className="bg-[#2c3543] hover:bg-[#1f2631] text-white py-1 px-3.5 rounded-full text-[11.5px] font-bold border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(0,0,0,0.25)] active:translate-y-0.5 active:border-b-0 transition-all"
+                                                    className="bg-[#2c3543] hover:bg-[#1f2631] text-white py-1 px-3.5 rounded-full text-[11.5px] font-bold border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(0,0,0,0.25)] active:translate-y-0.5 active:border-b-0 transition-all"
                                                 >
                                                     View Details
                                                 </button>

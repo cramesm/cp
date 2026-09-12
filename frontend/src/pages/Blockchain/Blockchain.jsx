@@ -56,7 +56,7 @@ function Blockchain() {
                                         e.stopPropagation();
                                         navigate(feature.path);
                                     }}
-                                    className="w-full bg-[#2c3543] hover:bg-[#1f2631] text-white py-2 px-4 rounded-full text-xs font-bold border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_6px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 hover:shadow-[0_4px_10px_rgba(0,0,0,0.3)] active:translate-y-0.5 active:border-b-0 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                                    className="w-full bg-[#2c3543] hover:bg-[#1f2631] text-white py-2 px-4 rounded-full text-xs font-bold border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_6px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 hover:shadow-[0_4px_10px_rgba(0,0,0,0.3)] active:translate-y-0.5 active:border-b-0 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                                 >
                                     <span>{feature.actionText}</span>
                                     <ArrowUpRight size={13} />
