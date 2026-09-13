@@ -21,6 +21,20 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 }
 });
 
+// Middleware to accept either 'receiptImage' or 'receipt' as multipart field name
+const receiptUpload = (req, res, next) => {
+  upload.fields([
+    { name: 'receiptImage', maxCount: 1 },
+    { name: 'receipt', maxCount: 1 }
+  ])(req, res, (err) => {
+    if (err) return res.status(400).json({ success: false, message: err.message });
+    if (req.files) {
+      req.file = req.files.receiptImage?.[0] || req.files.receipt?.[0] || req.file;
+    }
+    next();
+  });
+};
+
 // Get all transactions
 router.get('/', TransactionController.getAllTransactions);
 
@@ -39,8 +53,11 @@ router.get('/by-request/:requestId', TransactionController.getByRequestId);
 // Get a single transaction by transactionId
 router.get('/:id', TransactionController.getTransactionById);
 
-// Upload receipt and create a new transaction
-router.post('/upload-receipt', upload.single('receiptImage'), TransactionController.uploadReceipt);
+// Upload receipt and create a new transaction (supports 'receiptImage' and 'receipt' field names)
+router.post('/upload-receipt', receiptUpload, TransactionController.uploadReceipt);
+
+// Mobile/Payment alias for receipt upload
+router.post('/receipt', receiptUpload, TransactionController.uploadReceipt);
 
 // Create a new transaction (Logged)
 router.post('/', auth, TransactionController.createTransaction);
@@ -49,7 +66,7 @@ router.post('/', auth, TransactionController.createTransaction);
 router.put('/:id/verify', auth, TransactionController.verifyTransaction);
 
 // Admin: Re-upload receipt
-router.put('/:id/reupload', upload.single('receiptImage'), TransactionController.reuploadReceipt);
+router.put('/:id/reupload', receiptUpload, TransactionController.reuploadReceipt);
 
 // Mobile/Student: Submit a refund request
 router.post('/refund-request', TransactionController.submitRefundRequest);

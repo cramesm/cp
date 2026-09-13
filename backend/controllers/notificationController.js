@@ -28,11 +28,15 @@ const NotificationController = {
   // @desc    Get user specific notifications (Student / Alumni)
   getMyNotifications: async (req, res) => {
     try {
+      const userClauses = [];
+      if (req.user.email) userClauses.push({ email: req.user.email });
+      if (req.user.id || req.user._id) userClauses.push({ userId: req.user.id || req.user._id });
+
       const notifications = await Notification.find({
         $or: [
-          { email: req.user.email },
-          { targetRole: 'student', email: req.user.email },
-          { targetRole: 'all' }
+          ...userClauses,
+          { targetRole: 'all' },
+          ...(req.user.email ? [{ targetRole: 'student', email: req.user.email }] : [{ targetRole: 'student' }])
         ]
       }).sort({ date: -1, createdAt: -1 });
       res.json({ success: true, notifications });
@@ -56,7 +60,14 @@ const NotificationController = {
   // @desc    Mark all notifications as read for current user
   markMyAllRead: async (req, res) => {
     try {
-      await Notification.updateMany({ email: req.user.email, isRead: false }, { isRead: true });
+      const userClauses = [];
+      if (req.user.email) userClauses.push({ email: req.user.email });
+      if (req.user.id || req.user._id) userClauses.push({ userId: req.user.id || req.user._id });
+
+      await Notification.updateMany({
+        $or: userClauses.length > 0 ? userClauses : [{ email: req.user.email }],
+        isRead: false
+      }, { isRead: true });
       res.json({ success: true, message: 'All notifications marked as read' });
     } catch (error) {
       console.error('Error updating user notifications:', error);
@@ -77,6 +88,18 @@ const NotificationController = {
     } catch (error) {
       console.error('Error updating notification:', error);
       res.status(500).json({ success: false, message: 'Error updating notification' });
+    }
+  },
+
+  // @desc    Delete single notification
+  deleteNotification: async (req, res) => {
+    try {
+      const notification = await Notification.findByIdAndDelete(req.params.id);
+      if (!notification) return res.status(404).json({ success: false, message: 'Notification not found' });
+      res.json({ success: true, message: 'Notification deleted' });
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+      res.status(500).json({ success: false, message: 'Error deleting notification' });
     }
   }
 };

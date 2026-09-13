@@ -1,5 +1,7 @@
+const mongoose = require('mongoose');
 const Refund = require('../models/Refund');
 const Transaction = require('../models/Transaction');
+const Request = require('../models/Request');
 const ActivityLog = require('../models/ActivityLog');
 const Notification = require('../models/Notification');
 
@@ -10,7 +12,12 @@ const RefundController = {
       let query = {};
       
       if (req.user.role === 'student' || req.user.role === 'alumni') {
-        query = { studentEmail: req.user.email };
+        query = {
+          $or: [
+            { studentEmail: req.user.email },
+            ...(req.user.id || req.user._id ? [{ userId: req.user.id || req.user._id }] : [])
+          ]
+        };
       }
 
       const refunds = await Refund.find(query).sort({ createdAt: -1 });
@@ -40,6 +47,7 @@ const RefundController = {
         refundId,
         transactionId,
         requestId: transaction.requestId,
+        userId: req.user.id || req.user._id || transaction.userId || null,
         studentName: req.user.name,
         studentEmail: req.user.email,
         amount: transaction.amount,
@@ -59,6 +67,7 @@ const RefundController = {
 
       try {
         await Notification.create({
+          title: 'New Refund Request',
           message: `New refund request (${refundId}) submitted by ${req.user.name || req.user.email} for ₱${transaction.amount} — Awaiting review`,
           isRead: false,
           targetRole: 'admin',
@@ -107,16 +116,32 @@ const RefundController = {
         );
       }
 
+      if (refund.requestId) {
+        await Request.findOneAndUpdate(
+          {
+            $or: [
+              { requestId: refund.requestId },
+              ...(mongoose.Types.ObjectId.isValid(refund.requestId) ? [{ _id: refund.requestId }] : [])
+            ]
+          },
+          { refundStatus: status.toLowerCase(), refundUpdatedAt: new Date() }
+        );
+      }
+
       try {
+        const statusTitle = status === 'Approved' ? 'Refund Approved' : 'Refund Rejected';
         const statusMessage = status === 'Approved'
           ? `Your refund request for ₱${refund.amount} has been approved!`
           : `Your refund request was rejected. ${adminRemarks ? 'Reason: ' + adminRemarks : ''}`;
         await Notification.create({
+          title: statusTitle,
           message: statusMessage,
           isRead: false,
           email: refund.studentEmail || '',
+          userId: refund.userId || undefined,
           targetRole: 'student',
-          type: 'refund'
+          type: 'refund',
+          link: '/payments?tab=refunds'
         });
       } catch (nErr) {
         console.error('Failed to notify student of refund update:', nErr);

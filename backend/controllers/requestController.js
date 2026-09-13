@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const mongoose = require('mongoose');
 const QRCode = require('qrcode');
 const { PDFDocument } = require('pdf-lib');
 const Request = require('../models/Request');
@@ -62,7 +63,12 @@ const RequestController = {
       let query = {};
       
       if (req.user && (req.user.role === 'student' || req.user.role === 'alumni')) {
-        query = { email: req.user.email };
+        query = {
+          $or: [
+            { email: req.user.email },
+            ...(req.user.id || req.user._id ? [{ userId: req.user.id || req.user._id }] : [])
+          ]
+        };
       }
 
       const requests = await Request.find(query).sort({ dateRequested: 1 }).lean();
@@ -78,7 +84,13 @@ const RequestController = {
   // @desc    Get single request by ID
   getRequestById: async (req, res) => {
     try {
-      const request = await Request.findOne({ requestId: req.params.id }).lean();
+      const query = {
+        $or: [
+          { requestId: req.params.id },
+          ...(mongoose.Types.ObjectId.isValid(req.params.id) ? [{ _id: req.params.id }] : [])
+        ]
+      };
+      const request = await Request.findOne(query).lean();
       if (!request) return res.status(404).json({ message: 'Request not found' });
       
       const enrichedRequest = await enrichRequestWithStudentData(request);
@@ -146,11 +158,13 @@ const RequestController = {
 
       const newDoc = await Request.create({
         requestId,
+        userId: req.user.id || req.user._id || null,
         name: userName,
         studentId,
         course,
         yearLevel,
         status: req.body.status || 'Pending',
+        mobileStatus: (req.body.status || 'Pending').toLowerCase().replace(/\s+/g, '_'),
         documentType: req.body.documentType,
         subDocumentType: req.body.subDocumentType || '',
         purpose: req.body.purpose || '',
@@ -193,13 +207,27 @@ const RequestController = {
       }
 
       const updateData = {};
-      if (status) updateData.status = status;
+      if (status) {
+        updateData.status = status;
+        const normalizedMobileStatus = status === 'In Process' ? 'in_process' :
+                                       status === 'Released' ? 'released' :
+                                       status === 'Rejected' ? 'rejected' :
+                                       status.toLowerCase().replace(/\s+/g, '_');
+        updateData.mobileStatus = normalizedMobileStatus;
+      }
       if (documentHash !== undefined) updateData.documentHash = documentHash;
       if (rejectionReason !== undefined) updateData.rejectionReason = rejectionReason;
       if (status === 'In Process') updateData.rejectionReason = '';
 
+      const query = {
+        $or: [
+          { requestId: req.params.id },
+          ...(mongoose.Types.ObjectId.isValid(req.params.id) ? [{ _id: req.params.id }] : [])
+        ]
+      };
+
       const request = await Request.findOneAndUpdate(
-        { requestId: req.params.id },
+        query,
         updateData,
         { new: true }
       );
@@ -221,9 +249,12 @@ const RequestController = {
       if (status) {
         try {
           let message = `Your request #${request.requestId} for ${request.documentType} is now ${status}!`;
+          let title = 'Request Status Update';
           if (status === 'Released') {
+            title = 'Document Ready for Pickup';
             message = `Your request #${request.requestId} for ${request.documentType} is ready for pickup!`;
           } else if (status === 'Rejected' && request.rejectionReason) {
+            title = 'Request Rejected';
             const readableReason = request.rejectionReason === 'incomplete' ? 'Incomplete Requirements' :
                                    request.rejectionReason === 'invalid' ? 'Invalid Information' :
                                    request.rejectionReason === 'unpaid' ? 'Payment Issue' :
@@ -232,11 +263,14 @@ const RequestController = {
           }
           
           await Notification.create({
+            title,
             message,
             isRead: false,
             email: request.email || '',
+            userId: request.userId || undefined,
             targetRole: 'student',
-            type: 'request'
+            type: 'request',
+            link: `/requests/${request.requestId}`
           });
         } catch (err) {
           console.error('Failed to create request status update notification:', err);
@@ -287,7 +321,12 @@ const RequestController = {
       }
 
       const requestId = req.params.id;
-      const request = await Request.findOne({ requestId: requestId });
+      const request = await Request.findOne({
+        $or: [
+          { requestId: requestId },
+          ...(mongoose.Types.ObjectId.isValid(requestId) ? [{ _id: requestId }] : [])
+        ]
+      });
 
       if (!request) {
         return res.status(404).json({ message: 'Request not found' });

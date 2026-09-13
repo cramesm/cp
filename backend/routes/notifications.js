@@ -18,4 +18,7 @@ router.put('/mine/mark-all-read', auth, NotificationController.markMyAllRead);
 // Mark as read
 router.put('/:id/read', auth, NotificationController.markAsRead);
 
+// Delete notification
+router.delete('/:id', auth, NotificationController.deleteNotification);
+
 module.exports = router;

@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Transaction = require('../models/Transaction');
 const Request = require('../models/Request');
 const ActivityLog = require('../models/ActivityLog');
@@ -20,7 +21,19 @@ const TransactionController = {
   // @desc    Get transactions for authenticated user
   getMyTransactions: async (req, res) => {
     try {
-      const transactions = await Transaction.find({ payerEmail: req.user.email }).sort({ date: -1 });
+      const userClauses = [];
+      if (req.user.email) {
+        userClauses.push({ payerEmail: req.user.email });
+        userClauses.push({ email: req.user.email });
+      }
+      if (req.user.id || req.user._id) {
+        userClauses.push({ userId: req.user.id || req.user._id });
+      }
+
+      const transactions = await Transaction.find({
+        $or: userClauses.length > 0 ? userClauses : [{ payerEmail: req.user.email }]
+      }).sort({ date: -1, createdAt: -1 });
+
       res.json({ success: true, transactions });
     } catch (error) {
       console.error('Error fetching my-transactions:', error);
@@ -31,15 +44,57 @@ const TransactionController = {
   // @desc    Get a receipt for a specific request
   getReceipt: async (req, res) => {
     try {
-      const { docName, purpose } = req.query;
-      if (!docName || !purpose) {
-        return res.status(400).json({ success: false, message: 'Missing parameters' });
+      const { docName, purpose, requestId } = req.query;
+
+      const queryConditions = [];
+      if (requestId) {
+        queryConditions.push({ requestId: requestId });
+      }
+      if (docName && purpose) {
+        queryConditions.push({ documentType: docName, requestId: purpose });
+        queryConditions.push({ documentType: docName, purpose: purpose });
+      }
+      if (docName) {
+        queryConditions.push({ documentType: docName });
       }
 
-      const transaction = await Transaction.findOne({
-        documentType: docName,
-        requestId: purpose
-      }).sort({ date: -1 });
+      let transaction = null;
+      if (queryConditions.length > 0) {
+        transaction = await Transaction.findOne({ $or: queryConditions }).sort({ date: -1, createdAt: -1 });
+      }
+
+      // Fallback: check receipts collection if mobile uploaded receipt there
+      if (!transaction && mongoose.connection.readyState === 1) {
+        const receiptConditions = [];
+        if (requestId) {
+          receiptConditions.push({ trueRequestId: requestId });
+          receiptConditions.push({ requestId: requestId });
+          if (mongoose.Types.ObjectId.isValid(requestId)) {
+            receiptConditions.push({ _id: new mongoose.Types.ObjectId(requestId) });
+          }
+        }
+        if (docName) {
+          receiptConditions.push({ docName: docName });
+        }
+        if (receiptConditions.length > 0) {
+          const rawReceipt = await mongoose.connection.db.collection('receipts')
+            .findOne({ $or: receiptConditions }, { sort: { createdAt: -1 } });
+          if (rawReceipt) {
+            transaction = {
+              _id: rawReceipt._id,
+              transactionId: rawReceipt.paymentSubmissionId || `TXN-${rawReceipt._id}`,
+              requestId: rawReceipt.trueRequestId || rawReceipt.requestId || requestId || 'N/A',
+              documentType: rawReceipt.docName || docName || 'General',
+              paymentMode: rawReceipt.paymentType || 'Receipt',
+              amount: rawReceipt.amount || '0.00',
+              receiptImage: rawReceipt.imageUrl || '',
+              status: rawReceipt.status === 'verified' ? 'Completed' : 'Pending Verification',
+              date: rawReceipt.createdAt || new Date(),
+              createdAt: rawReceipt.createdAt || new Date()
+            };
+          }
+        }
+      }
 
       if (!transaction) {
         return res.json({ success: true, receipt: null });
@@ -70,7 +125,65 @@ const TransactionController = {
   // @desc    Get transaction by requestId
   getByRequestId: async (req, res) => {
     try {
-      const transaction = await Transaction.findOne({ requestId: req.params.requestId }).sort({ date: -1 });
+      const targetRequestId = req.params.requestId;
+
+      // Look up Request to discover all possible alias IDs (public requestId, MongoDB _id, paymentReceiptId)
+      const linkedReq = await Request.findOne({
+        $or: [
+          { requestId: targetRequestId },
+          ...(mongoose.Types.ObjectId.isValid(targetRequestId) ? [{ _id: targetRequestId }] : [])
+        ]
+      }).lean();
+
+      const candidateIds = new Set([targetRequestId]);
+      if (linkedReq) {
+        if (linkedReq.requestId) candidateIds.add(linkedReq.requestId);
+        if (linkedReq._id) candidateIds.add(String(linkedReq._id));
+        if (linkedReq.paymentReceiptId) candidateIds.add(String(linkedReq.paymentReceiptId));
+      }
+
+      const idList = Array.from(candidateIds);
+      const txQueryOr = [];
+      idList.forEach(id => {
+        txQueryOr.push({ requestId: id });
+        if (mongoose.Types.ObjectId.isValid(id)) {
+          txQueryOr.push({ _id: id });
+        }
+      });
+
+      let transaction = await Transaction.findOne({ $or: txQueryOr }).sort({ date: -1, createdAt: -1 });
+
+      // Fallback check in receipts collection
+      if (!transaction && mongoose.connection.readyState === 1) {
+        const receiptQueryOr = [];
+        idList.forEach(id => {
+          receiptQueryOr.push({ trueRequestId: id });
+          receiptQueryOr.push({ requestId: id });
+          receiptQueryOr.push({ paymentSubmissionId: id });
+          if (mongoose.Types.ObjectId.isValid(id)) {
+            receiptQueryOr.push({ _id: new mongoose.Types.ObjectId(id) });
+          }
+        });
+
+        const rawReceipt = await mongoose.connection.db.collection('receipts')
+          .findOne({ $or: receiptQueryOr }, { sort: { createdAt: -1 } });
+
+        if (rawReceipt) {
+          transaction = {
+            _id: rawReceipt._id,
+            transactionId: rawReceipt.paymentSubmissionId || `TXN-${rawReceipt._id}`,
+            requestId: rawReceipt.trueRequestId || rawReceipt.requestId || targetRequestId,
+            documentType: rawReceipt.docName || 'General',
+            paymentMode: rawReceipt.paymentType || 'Receipt',
+            amount: rawReceipt.amount || '0.00',
+            receiptImage: rawReceipt.imageUrl || '',
+            status: rawReceipt.status === 'verified' ? 'Completed' : 'Pending Verification',
+            date: rawReceipt.createdAt || new Date(),
+            createdAt: rawReceipt.createdAt || new Date()
+          };
+        }
+      }
+
       if (!transaction) return res.json(null);
       res.json(transaction);
     } catch (error) {
@@ -94,23 +207,28 @@ const TransactionController = {
   // @desc    Upload receipt and create transaction
   uploadReceipt: async (req, res) => {
     try {
-      const { requestId, name, documentType, paymentMode, amount, payerName, payerEmail, payerType } = req.body;
+      const { requestId, name, documentType, docName, paymentMode, paymentType, amount, payerName, payerEmail, payerType, userId } = req.body;
 
       const count = await Transaction.countDocuments();
       const transactionId = `TXN-${Date.now().toString(36).toUpperCase()}-${(count + 1).toString().padStart(4, '0')}`;
 
+      const uploadedFile = req.file || (req.files && (req.files.receipt?.[0] || req.files.receiptImage?.[0]));
       let receiptImage = '';
-      if (req.file) {
-        const uploadResult = await uploadStream(req.file.buffer, 'receipts');
+      if (uploadedFile) {
+        const uploadResult = await uploadStream(uploadedFile.buffer, 'receipts');
         receiptImage = uploadResult.secure_url;
       }
+
+      const effectiveDocType = documentType || docName || 'General';
+      const effectivePaymentMode = paymentMode || paymentType || 'GCash';
 
       const newTx = await Transaction.create({
         transactionId,
         requestId: requestId || 'N/A',
+        userId: userId || req.user?.id || req.user?._id || null,
         name: name || payerName || 'Unknown',
-        documentType: documentType || 'General',
-        paymentMode: paymentMode || 'GCash',
+        documentType: effectiveDocType,
+        paymentMode: effectivePaymentMode,
         amount: amount || '0.00',
         receiptImage,
         payerName: payerName || name || 'Unknown',
@@ -119,10 +237,27 @@ const TransactionController = {
         status: 'Pending Verification'
       });
 
-      res.status(201).json(newTx);
+      // Synchronize associated Request if available
+      if (requestId && requestId !== 'N/A') {
+        await Request.findOneAndUpdate(
+          {
+            $or: [
+              { requestId },
+              ...(mongoose.Types.ObjectId.isValid(requestId) ? [{ _id: requestId }] : [])
+            ]
+          },
+          {
+            status: 'Pending',
+            mobileStatus: 'pending',
+            paymentType: effectivePaymentMode
+          }
+        );
+      }
+
+      res.status(201).json({ success: true, ...newTx.toObject() });
     } catch (error) {
       console.error('Receipt upload error:', error);
-      res.status(500).json({ message: 'Error uploading receipt', error: error.message });
+      res.status(500).json({ success: false, message: 'Error uploading receipt', error: error.message });
     }
   },
 
@@ -196,36 +331,81 @@ const TransactionController = {
 
       if (status === 'Completed') {
         const updatedReq = await Request.findOneAndUpdate(
-          { requestId: transaction.requestId },
-          { status: 'In Process' },
+          {
+            $or: [
+              { requestId: transaction.requestId },
+              ...(mongoose.Types.ObjectId.isValid(transaction.requestId) ? [{ _id: transaction.requestId }] : [])
+            ]
+          },
+          { status: 'In Process', mobileStatus: 'in_process' },
           { new: true }
         );
+
+        if (mongoose.connection.readyState === 1) {
+          try {
+            await mongoose.connection.db.collection('receipts').updateMany(
+              {
+                $or: [
+                  { trueRequestId: transaction.requestId },
+                  { requestId: transaction.requestId }
+                ]
+              },
+              { $set: { status: 'verified', updatedAt: new Date().toISOString() } }
+            );
+          } catch (_e) {}
+        }
         
         if (updatedReq) {
           await Notification.create({
+            title: 'Payment Verified',
             message: `Your request #${updatedReq.requestId} for ${updatedReq.documentType} is now In Process!`,
             isRead: false,
             email: updatedReq.email || '',
+            userId: updatedReq.userId || undefined,
             targetRole: 'student',
-            type: 'request'
+            type: 'request',
+            link: `/requests/${updatedReq.requestId}`
           });
         }
       }
 
       if (status === 'Rejected') {
         const updatedReq = await Request.findOneAndUpdate(
-          { requestId: transaction.requestId, status: 'Pending' },
-          { status: 'Rejected', rejectionReason: 'Payment Issue' },
+          {
+            $or: [
+              { requestId: transaction.requestId },
+              ...(mongoose.Types.ObjectId.isValid(transaction.requestId) ? [{ _id: transaction.requestId }] : [])
+            ],
+            status: 'Pending'
+          },
+          { status: 'Rejected', mobileStatus: 'rejected', rejectionReason: 'Payment Issue' },
           { new: true }
         );
 
+        if (mongoose.connection.readyState === 1) {
+          try {
+            await mongoose.connection.db.collection('receipts').updateMany(
+              {
+                $or: [
+                  { trueRequestId: transaction.requestId },
+                  { requestId: transaction.requestId }
+                ]
+              },
+              { $set: { status: 'rejected', updatedAt: new Date().toISOString() } }
+            );
+          } catch (_e) {}
+        }
+
         if (updatedReq) {
           await Notification.create({
+            title: 'Payment Rejected',
             message: `Your request #${updatedReq.requestId} for ${updatedReq.documentType} was rejected. Reason: Payment Issue`,
             isRead: false,
             email: updatedReq.email || '',
+            userId: updatedReq.userId || undefined,
             targetRole: 'student',
-            type: 'payment'
+            type: 'payment',
+            link: `/requests/${updatedReq.requestId}`
           });
         }
       }
@@ -295,6 +475,7 @@ const TransactionController = {
         refundId,
         transactionId,
         requestId: requestId || transaction.requestId || '',
+        userId: req.body.userId || req.user?.id || req.user?._id || transaction.userId || null,
         studentName: studentName || transaction.payerName || transaction.name || 'Unknown',
         studentEmail: studentEmail || transaction.payerEmail || '',
         amount: amount || transaction.amount || '0.00',
@@ -303,6 +484,7 @@ const TransactionController = {
       });
 
       await Notification.create({
+        title: 'New Refund Request',
         message: `New refund request (${refundId}) received from ${refund.studentName} for ₱${refund.amount} — Awaiting review`,
         isRead: false,
         targetRole: 'admin',
@@ -325,7 +507,6 @@ const TransactionController = {
         return res.status(400).json({ message: 'Invalid status. Must be Approved, Rejected, or Pending.' });
       }
 
-      const mongoose = require('mongoose');
       let query = { refundId: req.params.id };
       if (mongoose.Types.ObjectId.isValid(req.params.id)) {
         query = { $or: [{ refundId: req.params.id }, { _id: req.params.id }] };
@@ -356,16 +537,32 @@ const TransactionController = {
         );
       }
 
+      if (refund.requestId) {
+        await Request.findOneAndUpdate(
+          {
+            $or: [
+              { requestId: refund.requestId },
+              ...(mongoose.Types.ObjectId.isValid(refund.requestId) ? [{ _id: refund.requestId }] : [])
+            ]
+          },
+          { refundStatus: status.toLowerCase(), refundUpdatedAt: new Date() }
+        );
+      }
+
+      const statusTitle = status === 'Approved' ? 'Refund Approved' : 'Refund Rejected';
       const statusMessage = status === 'Approved'
         ? `Your refund request for ₱${refund.amount} has been approved!`
         : `Your refund request was rejected. ${adminRemarks ? 'Reason: ' + adminRemarks : ''}`;
 
       await Notification.create({
+        title: statusTitle,
         message: statusMessage,
         isRead: false,
         email: refund.email || refund.studentEmail || '',
+        userId: refund.userId || undefined,
         targetRole: 'student',
-        type: 'refund'
+        type: 'refund',
+        link: '/payments?tab=refunds'
       });
 
       await ActivityLog.create({

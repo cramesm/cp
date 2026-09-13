@@ -14,7 +14,23 @@ const requestSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  userId: {
+    type: mongoose.Schema.Types.Mixed,
+    default: null
+  },
   email: {
+    type: String,
+    default: ''
+  },
+  mobileStatus: {
+    type: String,
+    default: 'pending'
+  },
+  paymentReceiptId: {
+    type: mongoose.Schema.Types.Mixed,
+    default: null
+  },
+  paymentType: {
     type: String,
     default: ''
   },

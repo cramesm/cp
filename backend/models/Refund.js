@@ -14,6 +14,10 @@ const refundSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  userId: {
+    type: mongoose.Schema.Types.Mixed,
+    default: null
+  },
   studentName: {
     type: String,
     required: true

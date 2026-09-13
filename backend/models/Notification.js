@@ -5,6 +5,14 @@ const notificationSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  title: {
+    type: String,
+    default: ''
+  },
+  userId: {
+    type: mongoose.Schema.Types.Mixed,
+    default: null
+  },
   email: {
     type: String,
     default: ''

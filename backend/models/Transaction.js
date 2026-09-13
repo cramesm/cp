@@ -10,6 +10,10 @@ const transactionSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  userId: {
+    type: mongoose.Schema.Types.Mixed,
+    default: null
+  },
   name: {
     type: String,
     required: true

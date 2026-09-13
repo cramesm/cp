@@ -116,6 +116,7 @@ app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/requests', requestRoutes);
 app.use('/api/transactions', transactionRoutes);
+app.use('/api/payments', transactionRoutes);
 app.use('/api/blockchain/transactions', blockchainTransactionRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/admins', adminRoutes);
