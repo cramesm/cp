@@ -2,9 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../../api';
 
-// Import local assets
-import loginImage from '../../assets/verifitor-login.webp';
-import smallLogo from '../../assets/verifitor_logo.webp';
+
 
 const ForgotPassword = () => {
     const [email, setEmail] = useState('');
