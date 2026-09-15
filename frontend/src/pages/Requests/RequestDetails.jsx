@@ -484,11 +484,28 @@ const RequestDetails = () => {
                                             </div>
                                         )}
 
+                                        {/* Step 1 Footer Actions */}
                                         <div className="pt-6 border-t border-slate-100 flex flex-col gap-4">
-                                            {(!paymentTx || paymentTx.status !== 'Completed') && !showRejectForm && isSuperAdmin && (
+                                            {paymentTx?.status === 'Completed' && (
+                                                <div className="flex items-center justify-between gap-3 flex-wrap">
+                                                    <div className="flex items-center gap-2 text-emerald-700 text-xs font-bold bg-emerald-50 px-3.5 py-2 rounded-xl border border-emerald-200">
+                                                        <CheckCircle2 size={15} className="text-emerald-600" />
+                                                        <span>Payment Verified & Approved</span>
+                                                    </div>
+                                                    <button
+                                                        className="bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold text-xs px-6 py-2.5 rounded-full border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-2 cursor-pointer"
+                                                        onClick={() => setCurrentStep(2)}
+                                                    >
+                                                        <span>Proceed to {isBlockchainEligible ? 'Document Upload' : 'Finalize & Release'}</span>
+                                                        <ChevronRight size={14} />
+                                                    </button>
+                                                </div>
+                                            )}
+
+                                            {(!paymentTx || paymentTx.status !== 'Completed') && isSuperAdmin && (
                                                 <div className="flex justify-end">
                                                     <button
-                                                        className="bg-slate-100 text-slate-700 hover:bg-slate-200 px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 transition-colors disabled:opacity-50"
+                                                        className="bg-slate-100 text-slate-700 hover:bg-slate-200 px-6 py-2.5 rounded-full font-bold text-xs flex items-center gap-2 transition-colors disabled:opacity-50 cursor-pointer"
                                                         onClick={() => showConfirm({
                                                             title: 'Bypass Verification',
                                                             message: 'Are you sure you want to bypass the payment verification step and forcefully start processing this request?',
@@ -499,55 +516,8 @@ const RequestDetails = () => {
                                                             }
                                                         })}
                                                     >
-                                                        Super Admin Override: Force Proceed <ChevronRight size={16} />
-                                                    </button>
-                                                </div>
-                                            )}
-
-                                            {showRejectForm ? (
-                                                <div className="bg-red-50 p-4 rounded-xl border border-red-100 animate-in fade-in">
-                                                    <p className="font-bold text-red-700 text-sm mb-2">Provide reason for rejection:</p>
-                                                    <select
-                                                        className="w-full py-3 px-4 bg-white border border-red-200 rounded-lg outline-none focus:border-red-500 mb-4"
-                                                        value={rejectionReason}
-                                                        onChange={(e) => setRejectionReason(e.target.value)}
-                                                    >
-                                                        <option value="" disabled>Select Reason</option>
-                                                        <option value="incomplete">Incomplete Requirements</option>
-                                                        <option value="invalid">Invalid Information</option>
-                                                        <option value="unpaid">Payment Issue</option>
-                                                        <option value="others">Others (Please specify)</option>
-                                                    </select>
-                                                    <div className="mb-4">
-                                                        <label className="block text-xs font-bold text-red-800 mb-1.5">
-                                                            {rejectionReason === 'others' ? 'Specify Reason *' : 'Detailed Remarks / Reason (Optional):'}
-                                                        </label>
-                                                        <textarea
-                                                            className="w-full p-3.5 bg-white border border-red-200 rounded-lg outline-none focus:border-red-500 focus:ring-1 focus:ring-red-400 text-sm min-h-[100px] resize-y"
-                                                            placeholder={rejectionReason === 'others' ? 'Please type the specific reason for rejection...' : 'Provide specific details or instructions for the student (e.g., missing form, unpaid balance)...'}
-                                                            rows="3"
-                                                            value={manualRejectionReason}
-                                                            onChange={(e) => setManualRejectionReason(e.target.value)}
-                                                        ></textarea>
-                                                    </div>
-                                                    <div className="flex gap-2">
-                                                        <button className="flex-1 py-2 text-slate-500 font-bold hover:bg-red-100 rounded-lg" onClick={() => { setShowRejectForm(false); setRejectionReason(''); setManualRejectionReason(''); }}>Cancel</button>
-                                                        <button
-                                                            className="flex-1 bg-red-600 text-white py-2 rounded-lg font-bold hover:bg-red-700 disabled:opacity-50"
-                                                            disabled={!rejectionReason || (rejectionReason === 'others' && !manualRejectionReason.trim()) || actionLoading}
-                                                            onClick={() => handleStatusUpdate('Rejected')}
-                                                        >Confirm Reject</button>
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <div className="flex items-center justify-end gap-3 pt-2">
-                                                    <button
-                                                        className="text-slate-400 hover:text-red-500 font-bold text-xs flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                                                        onClick={() => setShowRejectForm(true)}
-                                                        disabled={!hasProcessingAccess || status === 'In Process'}
-                                                        title={status === 'In Process' ? 'Cannot reject a request that is already In Process. Use the stepper to continue processing.' : ''}
-                                                    >
-                                                        <Trash2 size={14} /> Reject Request
+                                                        <span>Super Admin Override: Force Proceed</span>
+                                                        <ChevronRight size={14} />
                                                     </button>
                                                 </div>
                                             )}
