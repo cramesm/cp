@@ -306,18 +306,6 @@ const RequestDetails = () => {
                         </div>
                     </div>
                     <div className="flex items-center gap-2.5 flex-wrap">
-                        {requestData.documentFile && (
-                            <a
-                                href={requestData.documentFile.startsWith('data:') ? requestData.documentFile : `${API_BASE}${requestData.documentFile}`}
-                                download={requestData.documentFile.startsWith('data:') ? `official-document-${requestData.requestId}.pdf` : undefined}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2 rounded-full border border-emerald-500 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 transition-all flex items-center gap-1.5 cursor-pointer"
-                            >
-                                <Download size={13} />
-                                <span>Download Official Soft Copy</span>
-                            </a>
-                        )}
                         <button 
                             onClick={() => navigate(backToRequests)}
                             className="bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold text-xs px-4 py-2 rounded-full border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-2 cursor-pointer w-fit"

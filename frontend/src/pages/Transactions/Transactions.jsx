@@ -1058,10 +1058,19 @@ const Transactions = () => {
                                   <span>Review</span>
                                 </button>
                               ) : (
-                                <span className="text-xs text-slate-400 italic">
-                                  {refund.status === 'Approved' ? 'Approved' : 'Rejected'}
-                                  {refund.processedBy && ` by ${refund.processedBy.split('@')[0]}`}
-                                </span>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs text-slate-400 italic">
+                                    {refund.status === 'Approved' ? 'Approved' : 'Rejected'}
+                                    {refund.processedBy && ` by ${refund.processedBy.split('@')[0]}`}
+                                  </span>
+                                  <button
+                                    onClick={() => { setSelectedRefund(refund); setRefundRemarks(refund.adminRemarks || ''); }}
+                                    className="text-slate-400 hover:text-slate-700 p-1 rounded hover:bg-slate-100 transition-colors cursor-pointer"
+                                    title="View Details"
+                                  >
+                                    <Eye size={13} />
+                                  </button>
+                                </div>
                               )}
                             </div>
                           </td>
@@ -1256,32 +1265,30 @@ const Transactions = () => {
                   />
 
                   <div className="flex gap-3">
-                    {selectedRefund.status === 'Pending' ? (
-                      <>
-                        <button
-                          onClick={() => handleProcessRefund(selectedRefund.refundId || selectedRefund._id, 'Rejected')}
-                          disabled={refundActionLoading}
-                          className="flex-1 py-3 rounded-xl border-2 border-red-500 text-red-500 font-bold text-sm uppercase hover:bg-red-50 transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
-                        >
-                          <XCircle size={16} /> Reject Refund
-                        </button>
-                        <button
-                          onClick={() => handleProcessRefund(selectedRefund.refundId || selectedRefund._id, 'Approved')}
-                          disabled={refundActionLoading}
-                          className="flex-1 py-3 rounded-xl bg-green-600 text-white font-bold text-sm uppercase hover:bg-green-700 shadow-md flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
-                        >
-                          <CheckCircle size={16} /> Approve Refund
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        onClick={() => handleProcessRefund(selectedRefund.refundId || selectedRefund._id, 'Pending')}
-                        disabled={refundActionLoading}
-                        className="flex-1 py-3 rounded-xl border-2 border-orange-500 text-orange-600 font-bold text-sm uppercase hover:bg-orange-50 transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
-                      >
-                        <Undo2 size={16} /> Revert to Pending
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleProcessRefund(selectedRefund.refundId || selectedRefund._id, 'Rejected')}
+                      disabled={refundActionLoading || selectedRefund.status?.toLowerCase() === 'rejected'}
+                      className={`flex-1 py-3 rounded-xl border-2 border-red-500 font-bold text-sm uppercase transition-all flex items-center justify-center gap-2 ${
+                        selectedRefund.status?.toLowerCase() === 'rejected'
+                          ? 'opacity-40 cursor-not-allowed bg-red-50/50 text-red-400'
+                          : 'text-red-500 hover:bg-red-50 cursor-pointer'
+                      }`}
+                    >
+                      <XCircle size={16} /> Reject
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleProcessRefund(selectedRefund.refundId || selectedRefund._id, 'Approved')}
+                      disabled={refundActionLoading || selectedRefund.status?.toLowerCase() === 'approved'}
+                      className={`flex-1 py-3 rounded-xl font-bold text-sm uppercase shadow-md flex items-center justify-center gap-2 ${
+                        selectedRefund.status?.toLowerCase() === 'approved'
+                          ? 'opacity-40 cursor-not-allowed bg-green-700 text-white/80'
+                          : 'bg-green-600 text-white hover:bg-green-700 cursor-pointer'
+                      }`}
+                    >
+                      <CheckCircle size={16} /> Approve
+                    </button>
                   </div>
                 </div>
               </div>
@@ -1298,7 +1305,7 @@ const Transactions = () => {
             <img 
               src={(selectedTx.imageUrl || selectedTx.receiptImage).startsWith('http') ? (selectedTx.imageUrl || selectedTx.receiptImage) : `${API_BASE}${selectedTx.receiptImage}`} 
               alt="Receipt Zoomed" 
-              className="max-w-[90vw] max-h-[90vh] object-contain rounded animate-scale-up shadow-2xl"
+              className="max-w-[90vw] max-h-[90vh] object-contain rounded animate-scale-up shadow-2xl" 
             />
           </div>
         )}
@@ -1307,11 +1314,11 @@ const Transactions = () => {
           isOpen={refundConfirmModal.isOpen}
           onClose={() => !refundActionLoading && setRefundConfirmModal({ isOpen: false, refundId: null, status: null })}
           onConfirm={executeProcessRefund}
-          title={`Confirm ${refundConfirmModal.status}`}
-          message={`Are you sure you want to ${refundConfirmModal.status === 'Pending' ? 'revert this refund to pending' : refundConfirmModal.status === 'Approved' ? 'approve this refund' : 'reject this refund'}?`}
-          confirmText={refundConfirmModal.status === 'Pending' ? 'Revert to Pending' : `Yes, ${refundConfirmModal.status}`}
+          title={refundConfirmModal.status === 'Approved' ? 'Confirm Approval' : 'Confirm Rejection'}
+          message={`Are you sure you want to ${refundConfirmModal.status === 'Approved' ? 'approve' : 'reject'} this refund request?`}
+          confirmText={refundConfirmModal.status === 'Approved' ? 'Approve' : 'Reject'}
           cancelText="Cancel"
-          type={refundConfirmModal.status === 'Rejected' ? 'danger' : refundConfirmModal.status === 'Approved' ? 'success' : 'warning'}
+          type={refundConfirmModal.status === 'Rejected' ? 'danger' : 'success'}
           isLoading={refundActionLoading}
         />
 
