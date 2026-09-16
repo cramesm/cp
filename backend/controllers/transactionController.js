@@ -310,6 +310,11 @@ const TransactionController = {
   // @desc    Admin: Verify / Approve / Request Update on a receipt
   verifyTransaction: async (req, res) => {
     try {
+      const userRole = (req.user?.role || '').toLowerCase();
+      if (userRole !== 'super admin') {
+        return res.status(403).json({ message: 'Only Super Admin can verify payment transactions.' });
+      }
+
       const { status, adminRemarks } = req.body;
       const allowedStatuses = ['Completed', 'Needs Update', 'Rejected', 'Pending Verification', 'Refunded'];
       if (!allowedStatuses.includes(status)) {

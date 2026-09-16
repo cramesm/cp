@@ -883,7 +883,7 @@ const Transactions = () => {
                           </td>
                           <td className="py-3.5 px-5 align-middle text-right">
                             <div className="flex items-center justify-end gap-1.5">
-                              {tx.status === 'Pending Verification' ? (
+                              {tx.status === 'Pending Verification' && isSuperAdmin ? (
                                 <button
                                   onClick={() => { setSelectedTx(tx); setAdminNote(''); setError(''); }}
                                   className="bg-[#2c3543] hover:bg-[#1f2631] text-white py-1 px-3.5 rounded-full text-[11.5px] font-bold border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(0,0,0,0.25)] active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-1.5 cursor-pointer"
@@ -1157,17 +1157,19 @@ const Transactions = () => {
                       </div>
                     </div>
 
-                    <div className="flex flex-col flex-1">
-                      <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">
-                        Admin Remarks / Note
-                      </label>
-                      <textarea
-                        className="w-full min-h-[120px] p-3.5 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44] resize-y"
-                        placeholder="Add remarks (optional for approval, required for rejection or update request)..."
-                        value={adminNote}
-                        onChange={(e) => setAdminNote(e.target.value)}
-                      />
-                    </div>
+                    {isSuperAdmin && (
+                      <div className="flex flex-col flex-1">
+                        <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">
+                          Admin Remarks / Note
+                        </label>
+                        <textarea
+                          className="w-full min-h-[120px] p-3.5 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44] resize-y"
+                          placeholder="Add remarks (optional for approval, required for rejection or update request)..."
+                          value={adminNote}
+                          onChange={(e) => setAdminNote(e.target.value)}
+                        />
+                      </div>
+                    )}
 
                     {error && (
                       <div className="p-3 bg-red-50 text-red-600 rounded-xl text-xs flex items-center gap-2">
@@ -1177,26 +1179,32 @@ const Transactions = () => {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex gap-2 pt-4 border-t border-gray-100">
-                    <button
-                      onClick={() => handleVerify('Rejected')}
-                      className="flex-1 py-2.5 rounded-xl border border-red-500 text-red-500 font-bold text-xs uppercase hover:bg-red-50 transition-all flex items-center justify-center gap-1"
-                    >
-                      <X size={14} /> Reject
-                    </button>
-                    <button
-                      onClick={() => handleVerify('Needs Update')}
-                      className="flex-1 py-2.5 rounded-xl border border-orange-500 text-orange-500 font-bold text-xs uppercase hover:bg-orange-50 transition-all flex items-center justify-center gap-1"
-                    >
-                      <RefreshCw size={14} /> Request Update
-                    </button>
-                    <button
-                      onClick={() => handleVerify('Completed')}
-                      className="flex-1 py-2.5 rounded-xl bg-green-600 text-white font-bold text-xs uppercase hover:bg-green-700 shadow-md flex items-center justify-center gap-1"
-                    >
-                      <CheckCircle size={14} /> Approve
-                    </button>
-                  </div>
+                  {isSuperAdmin ? (
+                    <div className="flex gap-2 pt-4 border-t border-gray-100">
+                      <button
+                        onClick={() => handleVerify('Rejected')}
+                        className="flex-1 py-2.5 rounded-xl border border-red-500 text-red-500 font-bold text-xs uppercase hover:bg-red-50 transition-all flex items-center justify-center gap-1 cursor-pointer"
+                      >
+                        <X size={14} /> Reject
+                      </button>
+                      <button
+                        onClick={() => handleVerify('Needs Update')}
+                        className="flex-1 py-2.5 rounded-xl border border-orange-500 text-orange-500 font-bold text-xs uppercase hover:bg-orange-50 transition-all flex items-center justify-center gap-1 cursor-pointer"
+                      >
+                        <RefreshCw size={14} /> Request Update
+                      </button>
+                      <button
+                        onClick={() => handleVerify('Completed')}
+                        className="flex-1 py-2.5 rounded-xl bg-green-600 text-white font-bold text-xs uppercase hover:bg-green-700 shadow-md flex items-center justify-center gap-1 cursor-pointer"
+                      >
+                        <CheckCircle size={14} /> Approve
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="p-3.5 bg-amber-50 text-amber-800 rounded-xl text-xs font-semibold text-center border border-amber-200 mt-4">
+                      Staff View: Only the Super Admin can verify, reject, or request updates for payments.
+                    </div>
+                  )}
                 </div>
 
               </div>
@@ -1254,42 +1262,50 @@ const Transactions = () => {
                 </div>
 
                 <div>
-                  <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">
-                    Admin Remarks
-                  </label>
-                  <textarea
-                    className="w-full min-h-[120px] p-3.5 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44] resize-y mb-4"
-                    placeholder="Add remarks (optional for approval, recommended for rejection)..."
-                    value={refundRemarks}
-                    onChange={(e) => setRefundRemarks(e.target.value)}
-                  />
+                  {isSuperAdmin ? (
+                    <>
+                      <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">
+                        Admin Remarks
+                      </label>
+                      <textarea
+                        className="w-full min-h-[120px] p-3.5 border border-gray-200 rounded-xl text-sm outline-none focus:border-[#1D2D44] focus:ring-1 focus:ring-[#1D2D44] resize-y mb-4"
+                        placeholder="Add remarks (optional for approval, recommended for rejection)..."
+                        value={refundRemarks}
+                        onChange={(e) => setRefundRemarks(e.target.value)}
+                      />
 
-                  <div className="flex gap-3">
-                    <button
-                      type="button"
-                      onClick={() => handleProcessRefund(selectedRefund.refundId || selectedRefund._id, 'Rejected')}
-                      disabled={refundActionLoading || selectedRefund.status?.toLowerCase() === 'rejected'}
-                      className={`flex-1 py-3 rounded-xl border-2 border-red-500 font-bold text-sm uppercase transition-all flex items-center justify-center gap-2 ${
-                        selectedRefund.status?.toLowerCase() === 'rejected'
-                          ? 'opacity-40 cursor-not-allowed bg-red-50/50 text-red-400'
-                          : 'text-red-500 hover:bg-red-50 cursor-pointer'
-                      }`}
-                    >
-                      <XCircle size={16} /> Reject
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleProcessRefund(selectedRefund.refundId || selectedRefund._id, 'Approved')}
-                      disabled={refundActionLoading || selectedRefund.status?.toLowerCase() === 'approved'}
-                      className={`flex-1 py-3 rounded-xl font-bold text-sm uppercase shadow-md flex items-center justify-center gap-2 ${
-                        selectedRefund.status?.toLowerCase() === 'approved'
-                          ? 'opacity-40 cursor-not-allowed bg-green-700 text-white/80'
-                          : 'bg-green-600 text-white hover:bg-green-700 cursor-pointer'
-                      }`}
-                    >
-                      <CheckCircle size={16} /> Approve
-                    </button>
-                  </div>
+                      <div className="flex gap-3">
+                        <button
+                          type="button"
+                          onClick={() => handleProcessRefund(selectedRefund.refundId || selectedRefund._id, 'Rejected')}
+                          disabled={refundActionLoading || selectedRefund.status?.toLowerCase() === 'rejected'}
+                          className={`flex-1 py-3 rounded-xl border-2 border-red-500 font-bold text-sm uppercase transition-all flex items-center justify-center gap-2 ${
+                            selectedRefund.status?.toLowerCase() === 'rejected'
+                              ? 'opacity-40 cursor-not-allowed bg-red-50/50 text-red-400'
+                              : 'text-red-500 hover:bg-red-50 cursor-pointer'
+                          }`}
+                        >
+                          <XCircle size={16} /> Reject
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleProcessRefund(selectedRefund.refundId || selectedRefund._id, 'Approved')}
+                          disabled={refundActionLoading || selectedRefund.status?.toLowerCase() === 'approved'}
+                          className={`flex-1 py-3 rounded-xl font-bold text-sm uppercase shadow-md flex items-center justify-center gap-2 ${
+                            selectedRefund.status?.toLowerCase() === 'approved'
+                              ? 'opacity-40 cursor-not-allowed bg-green-700 text-white/80'
+                              : 'bg-green-600 text-white hover:bg-green-700 cursor-pointer'
+                          }`}
+                        >
+                          <CheckCircle size={16} /> Approve
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="p-3.5 bg-amber-50 text-amber-800 rounded-xl text-xs font-semibold text-center border border-amber-200 mt-2">
+                      Staff View: Only the Super Admin can approve or reject refund requests.
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

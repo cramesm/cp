@@ -18,9 +18,9 @@ const RequestDetails = () => {
     const fromPage = new URLSearchParams(location.search).get('fromPage') || '1';
     const backToRequests = `/requests?page=${fromPage}`;
 
-    const userRole = localStorage.getItem('userRole') || 'registrar';
+    const userRole = (localStorage.getItem('userRole') || '').toLowerCase();
     const isSuperAdmin = userRole === 'super admin';
-    const hasProcessingAccess = userRole === 'super admin' || userRole === 'registrar';
+    const hasProcessingAccess = isSuperAdmin;
 
     // Core Data State
     const [requestData, setRequestData] = useState(null);
@@ -448,12 +448,17 @@ const RequestDetails = () => {
                         </div>
                     )}
 
-                    {!hasProcessingAccess && status !== 'Rejected' && status !== 'Released' && (
-                        <div className="bg-blue-50 p-4 rounded-xl border border-blue-200 mb-8 flex items-center gap-3 text-blue-700">
-                            <Shield className="shrink-0" size={20} />
+                    {!isSuperAdmin && status !== 'Rejected' && (
+                        <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-4 sm:p-5 rounded-2xl border border-amber-200 mb-8 flex items-start gap-3.5 text-amber-900 shadow-2xs">
+                            <ShieldAlert className="shrink-0 text-amber-600 mt-0.5" size={22} />
                             <div>
-                                <h4 className="font-bold text-sm">Read-Only View</h4>
-                                <p className="text-xs">Only authorized personnel have the permission to process document requests, upload files, and secure them on the blockchain.</p>
+                                <div className="flex items-center gap-2">
+                                    <h4 className="font-extrabold text-sm text-amber-950">Staff View-Only Access</h4>
+                                    <span className="px-2 py-0.5 bg-amber-200/70 text-amber-900 rounded-md text-[10px] font-extrabold uppercase tracking-wider">Read Only</span>
+                                </div>
+                                <p className="text-xs text-amber-800 mt-1 leading-relaxed">
+                                    Staff accounts have view-only access to this document request. Only the <strong className="text-amber-950 font-bold">Super Admin</strong> can change the process, verify payments, approve or reject requests, and upload or release documents.
+                                </p>
                             </div>
                         </div>
                     )}
@@ -464,7 +469,14 @@ const RequestDetails = () => {
                             {/* Stepper Sidebar */}
                             <div className="lg:col-span-1">
                                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 sticky top-8">
-                                    <h3 className="font-bold text-slate-800 mb-6 uppercase tracking-wider text-xs">Processing Steps</h3>
+                                    <div className="flex items-center justify-between mb-6">
+                                        <h3 className="font-bold text-slate-800 uppercase tracking-wider text-xs">Processing Steps</h3>
+                                        {isSuperAdmin ? (
+                                            <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">Interactive</span>
+                                        ) : (
+                                            <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">View Only</span>
+                                        )}
+                                    </div>
                                     <div className="space-y-6">
                                         {(isBlockchainEligible ? [
                                             { step: 1, title: 'Verify & Payment', desc: 'Review request details and verify payment receipt' },
@@ -482,9 +494,9 @@ const RequestDetails = () => {
                                                     if (isSuperAdmin) setCurrentStep(s.step);
                                                 }}
                                                 className={`flex gap-4 ${currentStep === s.step ? 'opacity-100' : 'opacity-40'} ${
-                                                    isSuperAdmin ? 'cursor-pointer hover:opacity-100 transition-opacity' : ''
+                                                    isSuperAdmin ? 'cursor-pointer hover:opacity-100 transition-opacity' : 'cursor-default select-none'
                                                 }`}
-                                                title={isSuperAdmin ? `Super Admin: Click to jump to Step ${s.step}` : ''}
+                                                title={isSuperAdmin ? `Super Admin: Click to jump to Step ${s.step}` : 'Staff view: Step navigation is restricted to Super Admin'}
                                             >
                                                 <div className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center font-bold text-sm ${currentStep >= s.step ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
                                                     {currentStep > s.step ? <CheckCircle2 size={16} /> : s.step}
@@ -616,32 +628,44 @@ const RequestDetails = () => {
                                                     )}
 
                                                     {paymentTx.status === 'Pending Verification' && (
-                                                        <div className="p-4 bg-slate-50 rounded-xl flex flex-col sm:flex-row gap-3 border border-slate-200">
-                                                            <select
-                                                                className="flex-1 py-2.5 px-4 border border-slate-200 rounded-xl outline-none focus:border-blue-500 text-xs font-bold text-slate-700 bg-white"
-                                                                value={paymentAction}
-                                                                onChange={(e) => setPaymentAction(e.target.value)}
-                                                                disabled={!hasProcessingAccess || actionLoading}
-                                                            >
-                                                                <option value="Completed">Approve Payment (Receipt Valid)</option>
-                                                                <option value="Needs Update">Needs Update (Blurry / Incomplete Receipt)</option>
-                                                                <option value="Rejected">Reject Completely (Invalid / Fraudulent Receipt)</option>
-                                                            </select>
-                                                            <button
-                                                                className={`text-white py-2.5 px-6 rounded-xl font-bold text-xs transition-all shadow-sm cursor-pointer ${
-                                                                    !hasProcessingAccess ? 'bg-slate-300 shadow-none' : paymentAction === 'Completed' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700'
-                                                                }`}
-                                                                onClick={() => showConfirm({
-                                                                    title: 'Confirm Payment Verification',
-                                                                    message: `Are you sure you want to mark this payment as "${paymentAction}"? ${paymentAction === 'Completed' ? 'This will verify payment and unlock Stage 2: Verify Document Request.' : 'The student will be notified.'}`,
-                                                                    type: paymentAction === 'Completed' ? 'info' : 'warning',
-                                                                    onConfirm: () => handleVerifyPayment(paymentAction)
-                                                                })}
-                                                                disabled={actionLoading || !hasProcessingAccess}
-                                                            >
-                                                                {actionLoading ? 'Processing...' : 'Confirm Payment Action'}
-                                                            </button>
-                                                        </div>
+                                                        isSuperAdmin ? (
+                                                            <div className="p-4 bg-slate-50 rounded-xl flex flex-col sm:flex-row gap-3 border border-slate-200">
+                                                                <select
+                                                                    className="flex-1 py-2.5 px-4 border border-slate-200 rounded-xl outline-none focus:border-blue-500 text-xs font-bold text-slate-700 bg-white"
+                                                                    value={paymentAction}
+                                                                    onChange={(e) => setPaymentAction(e.target.value)}
+                                                                    disabled={actionLoading}
+                                                                >
+                                                                    <option value="Completed">Approve Payment (Receipt Valid)</option>
+                                                                    <option value="Needs Update">Needs Update (Blurry / Incomplete Receipt)</option>
+                                                                    <option value="Rejected">Reject Completely (Invalid / Fraudulent Receipt)</option>
+                                                                </select>
+                                                                <button
+                                                                    className={`text-white py-2.5 px-6 rounded-xl font-bold text-xs transition-all shadow-sm cursor-pointer ${
+                                                                        paymentAction === 'Completed' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700'
+                                                                    }`}
+                                                                    onClick={() => showConfirm({
+                                                                        title: 'Confirm Payment Verification',
+                                                                        message: `Are you sure you want to mark this payment as "${paymentAction}"? ${paymentAction === 'Completed' ? 'This will verify payment and unlock Stage 2: Verify Document Request.' : 'The student will be notified.'}`,
+                                                                        type: paymentAction === 'Completed' ? 'info' : 'warning',
+                                                                        onConfirm: () => handleVerifyPayment(paymentAction)
+                                                                    })}
+                                                                    disabled={actionLoading}
+                                                                >
+                                                                    {actionLoading ? 'Processing...' : 'Confirm Payment Action'}
+                                                                </button>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="p-4 bg-amber-50/70 rounded-xl border border-amber-200 text-xs flex items-center justify-between gap-3 flex-wrap">
+                                                                <div className="flex items-center gap-2 text-amber-800 font-semibold">
+                                                                    <Clock size={16} className="text-amber-600 shrink-0" />
+                                                                    <span>Payment receipt is pending verification. Only the Super Admin can approve or reject payment receipts.</span>
+                                                                </div>
+                                                                <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 font-bold uppercase text-[10px] tracking-wider">
+                                                                    Awaiting Super Admin Verification
+                                                                </span>
+                                                            </div>
+                                                        )
                                                     )}
                                                 </div>
                                             ) : (
@@ -728,113 +752,125 @@ const RequestDetails = () => {
 
                                                         {/* Request Status Decision Area */}
                                                         {status === 'Pending' && (
-                                                            <div className="space-y-4 pt-2">
-                                                                {!showRejectForm ? (
-                                                                    <div>
-                                                                        <div className="bg-blue-50/70 p-3.5 rounded-xl border border-blue-100 text-xs text-blue-800 font-medium mb-4 flex items-center gap-2">
-                                                                            <ShieldCheck size={16} className="text-blue-600 shrink-0" />
-                                                                            <span>Payment is verified. Review the student's request details above and choose whether to approve or reject this document request.</span>
-                                                                        </div>
-                                                                        <div className="flex items-center gap-3 flex-wrap">
-                                                                            <button
-                                                                                className="bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold text-xs px-6 py-2.5 rounded-full border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
-                                                                                onClick={handleApproveDocumentRequest}
-                                                                                disabled={actionLoading || !hasProcessingAccess}
-                                                                            >
-                                                                                <CheckCircle2 size={14} />
-                                                                                <span>Approve Document Request</span>
-                                                                            </button>
-                                                                            <button
-                                                                                className="bg-white hover:bg-rose-50 text-rose-700 font-bold text-xs px-6 py-2.5 rounded-full border border-rose-200 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
-                                                                                onClick={() => {
-                                                                                    setShowRejectForm(true);
-                                                                                    setRejectionReason('incomplete');
-                                                                                }}
-                                                                                disabled={actionLoading || !hasProcessingAccess}
-                                                                            >
-                                                                                <XCircle size={14} />
-                                                                                <span>Reject Document Request</span>
-                                                                            </button>
-                                                                        </div>
-                                                                    </div>
-                                                                ) : (
-                                                                    /* Rejection Form Panel */
-                                                                    <div className="bg-rose-50/60 p-5 rounded-2xl border border-rose-200 space-y-4 animate-in fade-in duration-200">
-                                                                        <div className="flex items-center justify-between gap-3">
-                                                                            <div className="flex items-center gap-2 text-rose-800">
-                                                                                <AlertCircle size={16} />
-                                                                                <h4 className="font-bold text-sm">Reject Document Request</h4>
-                                                                            </div>
-                                                                            <button
-                                                                                type="button"
-                                                                                onClick={() => setShowRejectForm(false)}
-                                                                                className="text-xs font-bold text-slate-500 hover:text-slate-800 cursor-pointer"
-                                                                            >
-                                                                                Cancel
-                                                                            </button>
-                                                                        </div>
-                                                                        <p className="text-xs text-rose-700">
-                                                                            Select the reason for rejecting this document request. The student will receive a notification with this explanation.
-                                                                        </p>
-
-                                                                        <div className="space-y-2">
-                                                                            {[
-                                                                                { id: 'incomplete', label: 'Incomplete Requirements (Missing forms or credentials)' },
-                                                                                { id: 'invalid', label: 'Invalid Information (Student data or program mismatch)' },
-                                                                                { id: 'others', label: 'Other Reason (Specify detailed reason below)' }
-                                                                            ].map((opt) => (
-                                                                                <label
-                                                                                    key={opt.id}
-                                                                                    className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer text-xs font-semibold transition-all ${
-                                                                                        rejectionReason === opt.id
-                                                                                            ? 'bg-white border-rose-400 text-rose-900 shadow-xs'
-                                                                                            : 'bg-white/70 border-slate-200 text-slate-700 hover:bg-white'
-                                                                                    }`}
-                                                                                >
-                                                                                    <input
-                                                                                        type="radio"
-                                                                                        name="rejectionReason"
-                                                                                        value={opt.id}
-                                                                                        checked={rejectionReason === opt.id}
-                                                                                        onChange={(e) => setRejectionReason(e.target.value)}
-                                                                                        className="text-rose-600 focus:ring-rose-500"
-                                                                                    />
-                                                                                    <span>{opt.label}</span>
-                                                                                </label>
-                                                                            ))}
-                                                                        </div>
-
+                                                            isSuperAdmin ? (
+                                                                <div className="space-y-4 pt-2">
+                                                                    {!showRejectForm ? (
                                                                         <div>
-                                                                            <label className="block text-xs font-bold text-slate-600 mb-1">
-                                                                                Additional Remarks {rejectionReason === 'others' && <span className="text-rose-600">*</span>}
-                                                                            </label>
-                                                                            <textarea
-                                                                                className="w-full p-3 border border-slate-200 rounded-xl text-xs outline-none focus:border-rose-400 bg-white"
-                                                                                rows="2"
-                                                                                placeholder={rejectionReason === 'others' ? 'Please explain the specific reason for rejecting this request...' : 'Optional specific notes for the student...'}
-                                                                                value={manualRejectionReason}
-                                                                                onChange={(e) => setManualRejectionReason(e.target.value)}
-                                                                            ></textarea>
+                                                                            <div className="bg-blue-50/70 p-3.5 rounded-xl border border-blue-100 text-xs text-blue-800 font-medium mb-4 flex items-center gap-2">
+                                                                                <ShieldCheck size={16} className="text-blue-600 shrink-0" />
+                                                                                <span>Payment is verified. Review the student's request details above and choose whether to approve or reject this document request.</span>
+                                                                            </div>
+                                                                            <div className="flex items-center gap-3 flex-wrap">
+                                                                                <button
+                                                                                    className="bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold text-xs px-6 py-2.5 rounded-full border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                                                                                    onClick={handleApproveDocumentRequest}
+                                                                                    disabled={actionLoading}
+                                                                                >
+                                                                                    <CheckCircle2 size={14} />
+                                                                                    <span>Approve Document Request</span>
+                                                                                </button>
+                                                                                <button
+                                                                                    className="bg-white hover:bg-rose-50 text-rose-700 font-bold text-xs px-6 py-2.5 rounded-full border border-rose-200 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                                                                                    onClick={() => {
+                                                                                        setShowRejectForm(true);
+                                                                                        setRejectionReason('incomplete');
+                                                                                    }}
+                                                                                    disabled={actionLoading}
+                                                                                >
+                                                                                    <XCircle size={14} />
+                                                                                    <span>Reject Document Request</span>
+                                                                                </button>
+                                                                            </div>
                                                                         </div>
+                                                                    ) : (
+                                                                        /* Rejection Form Panel */
+                                                                        <div className="bg-rose-50/60 p-5 rounded-2xl border border-rose-200 space-y-4 animate-in fade-in duration-200">
+                                                                            <div className="flex items-center justify-between gap-3">
+                                                                                <div className="flex items-center gap-2 text-rose-800">
+                                                                                    <AlertCircle size={16} />
+                                                                                    <h4 className="font-bold text-sm">Reject Document Request</h4>
+                                                                                </div>
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() => setShowRejectForm(false)}
+                                                                                    className="text-xs font-bold text-slate-500 hover:text-slate-800 cursor-pointer"
+                                                                                >
+                                                                                    Cancel
+                                                                                </button>
+                                                                            </div>
+                                                                            <p className="text-xs text-rose-700">
+                                                                                Select the reason for rejecting this document request. The student will receive a notification with this explanation.
+                                                                            </p>
 
-                                                                        <div className="flex items-center gap-2 pt-1">
-                                                                            <button
-                                                                                className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs px-5 py-2.5 rounded-full shadow-sm cursor-pointer disabled:opacity-50"
-                                                                                onClick={handleRejectDocumentRequest}
-                                                                                disabled={actionLoading || !hasProcessingAccess}
-                                                                            >
-                                                                                {actionLoading ? 'Rejecting...' : 'Confirm Rejection'}
-                                                                            </button>
-                                                                            <button
-                                                                                className="bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs px-4 py-2.5 rounded-full border border-slate-200 cursor-pointer"
-                                                                                onClick={() => setShowRejectForm(false)}
-                                                                            >
-                                                                                Cancel
-                                                                            </button>
+                                                                            <div className="space-y-2">
+                                                                                {[
+                                                                                    { id: 'incomplete', label: 'Incomplete Requirements (Missing forms or credentials)' },
+                                                                                    { id: 'invalid', label: 'Invalid Information (Student data or program mismatch)' },
+                                                                                    { id: 'others', label: 'Other Reason (Specify detailed reason below)' }
+                                                                                ].map((opt) => (
+                                                                                    <label
+                                                                                        key={opt.id}
+                                                                                        className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer text-xs font-semibold transition-all ${
+                                                                                            rejectionReason === opt.id
+                                                                                                ? 'bg-white border-rose-400 text-rose-900 shadow-xs'
+                                                                                                : 'bg-white/70 border-slate-200 text-slate-700 hover:bg-white'
+                                                                                        }`}
+                                                                                    >
+                                                                                        <input
+                                                                                            type="radio"
+                                                                                            name="rejectionReason"
+                                                                                            value={opt.id}
+                                                                                            checked={rejectionReason === opt.id}
+                                                                                            onChange={(e) => setRejectionReason(e.target.value)}
+                                                                                            className="text-rose-600 focus:ring-rose-500"
+                                                                                        />
+                                                                                        <span>{opt.label}</span>
+                                                                                    </label>
+                                                                                ))}
+                                                                            </div>
+
+                                                                            <div>
+                                                                                <label className="block text-xs font-bold text-slate-600 mb-1">
+                                                                                    Additional Remarks {rejectionReason === 'others' && <span className="text-rose-600">*</span>}
+                                                                                </label>
+                                                                                <textarea
+                                                                                    className="w-full p-3 border border-slate-200 rounded-xl text-xs outline-none focus:border-rose-400 bg-white"
+                                                                                    rows="2"
+                                                                                    placeholder={rejectionReason === 'others' ? 'Please explain the specific reason for rejecting this request...' : 'Optional specific notes for the student...'}
+                                                                                    value={manualRejectionReason}
+                                                                                    onChange={(e) => setManualRejectionReason(e.target.value)}
+                                                                                ></textarea>
+                                                                            </div>
+
+                                                                            <div className="flex items-center gap-2 pt-1">
+                                                                                <button
+                                                                                    className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs px-5 py-2.5 rounded-full shadow-sm cursor-pointer disabled:opacity-50"
+                                                                                    onClick={handleRejectDocumentRequest}
+                                                                                    disabled={actionLoading}
+                                                                                >
+                                                                                    {actionLoading ? 'Rejecting...' : 'Confirm Rejection'}
+                                                                                </button>
+                                                                                <button
+                                                                                    className="bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs px-4 py-2.5 rounded-full border border-slate-200 cursor-pointer"
+                                                                                    onClick={() => setShowRejectForm(false)}
+                                                                                >
+                                                                                    Cancel
+                                                                                </button>
+                                                                            </div>
                                                                         </div>
+                                                                    )}
+                                                                </div>
+                                                            ) : (
+                                                                <div className="p-4 bg-blue-50/70 rounded-xl border border-blue-200 text-xs flex items-center justify-between gap-3 flex-wrap">
+                                                                    <div className="flex items-center gap-2 text-blue-800 font-semibold">
+                                                                        <ShieldCheck size={16} className="text-blue-600 shrink-0" />
+                                                                        <span>Payment is verified. Document request review is awaiting Super Admin decision.</span>
                                                                     </div>
-                                                                )}
-                                                            </div>
+                                                                    <span className="px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 font-bold uppercase text-[10px] tracking-wider">
+                                                                        Awaiting Super Admin Decision
+                                                                    </span>
+                                                                </div>
+                                                            )
                                                         )}
 
                                                         {status === 'In Process' && (
@@ -843,13 +879,15 @@ const RequestDetails = () => {
                                                                     <CheckCircle2 size={15} className="text-emerald-600" />
                                                                     <span>Document Request Approved & In Process</span>
                                                                 </div>
-                                                                <button
-                                                                    className="bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold text-xs px-6 py-2.5 rounded-full border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-2 cursor-pointer"
-                                                                    onClick={() => setCurrentStep(2)}
-                                                                >
-                                                                    <span>Proceed to {isBlockchainEligible ? 'Document Upload' : 'Finalize & Release'}</span>
-                                                                    <ChevronRight size={14} />
-                                                                </button>
+                                                                {isSuperAdmin && (
+                                                                    <button
+                                                                        className="bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold text-xs px-6 py-2.5 rounded-full border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-2 cursor-pointer"
+                                                                        onClick={() => setCurrentStep(2)}
+                                                                    >
+                                                                        <span>Proceed to {isBlockchainEligible ? 'Document Upload' : 'Finalize & Release'}</span>
+                                                                        <ChevronRight size={14} />
+                                                                    </button>
+                                                                )}
                                                             </div>
                                                         )}
                                                     </>
@@ -887,35 +925,64 @@ const RequestDetails = () => {
                                         <h2 className="text-2xl font-bold text-slate-800 mb-2">Upload External PDF</h2>
                                         <p className="text-slate-500 mb-8">Upload the requested document as a PDF. If it is a TOR or Diploma, a QR code will be automatically embedded.</p>
 
-                                        <input type="file" id="pdfUpload" className="hidden" accept=".pdf" onChange={handleFileUpload} disabled={!hasProcessingAccess} />
-                                        <div
-                                            className={`border-2 border-dashed border-slate-200 bg-slate-50 rounded-2xl py-16 px-8 text-center mb-8 transition-all group ${hasProcessingAccess ? 'cursor-pointer hover:border-blue-500 hover:bg-blue-50' : 'opacity-70 cursor-not-allowed'}`}
-                                            onClick={() => { if (hasProcessingAccess) document.getElementById('pdfUpload').click() }}
-                                        >
-                                            <Upload size={40} className={`mx-auto mb-4 transition-colors ${hasProcessingAccess ? 'text-slate-400 group-hover:text-blue-600' : 'text-slate-300'}`} />
-                                            {uploadedFile ? (
-                                                <p className="text-blue-600 font-bold">{uploadedFile.name}</p>
-                                            ) : (
-                                                <p className="text-slate-600 font-bold">Click to browse for PDF file</p>
-                                            )}
-                                        </div>
+                                        {isSuperAdmin ? (
+                                            <>
+                                                <input type="file" id="pdfUpload" className="hidden" accept=".pdf" onChange={handleFileUpload} />
+                                                <div
+                                                    className="border-2 border-dashed border-slate-200 bg-slate-50 rounded-2xl py-16 px-8 text-center mb-8 transition-all group cursor-pointer hover:border-blue-500 hover:bg-blue-50"
+                                                    onClick={() => document.getElementById('pdfUpload').click()}
+                                                >
+                                                    <Upload size={40} className="mx-auto mb-4 transition-colors text-slate-400 group-hover:text-blue-600" />
+                                                    {uploadedFile ? (
+                                                        <p className="text-blue-600 font-bold">{uploadedFile.name}</p>
+                                                    ) : (
+                                                        <p className="text-slate-600 font-bold">Click to browse for PDF file</p>
+                                                    )}
+                                                </div>
 
-                                        <div className="flex items-center gap-3 pt-6 border-t border-slate-100">
-                                            <button
-                                                className="bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs px-6 py-2.5 rounded-full border border-slate-200 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 transition-all flex items-center gap-1.5 cursor-pointer"
-                                                onClick={() => setCurrentStep(1)}
-                                            >
-                                                <ArrowLeft size={13} />
-                                                <span>Back to Step 1</span>
-                                            </button>
-                                            <button
-                                                className={`flex-1 text-white py-2.5 px-6 rounded-full font-bold text-xs border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 ${!hasProcessingAccess ? 'bg-slate-400' : 'bg-[#2c3543] hover:bg-[#1f2631]'}`}
-                                                disabled={!uploadedFile || actionLoading || !hasProcessingAccess}
-                                                onClick={processUpload}
-                                            >
-                                                {actionLoading ? 'Uploading & Processing...' : 'Process Document'}
-                                            </button>
-                                        </div>
+                                                <div className="flex items-center gap-3 pt-6 border-t border-slate-100">
+                                                    <button
+                                                        className="bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs px-6 py-2.5 rounded-full border border-slate-200 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 transition-all flex items-center gap-1.5 cursor-pointer"
+                                                        onClick={() => setCurrentStep(1)}
+                                                    >
+                                                        <ArrowLeft size={13} />
+                                                        <span>Back to Step 1</span>
+                                                    </button>
+                                                    <button
+                                                        className="flex-1 text-white py-2.5 px-6 rounded-full font-bold text-xs border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 bg-[#2c3543] hover:bg-[#1f2631]"
+                                                        disabled={!uploadedFile || actionLoading}
+                                                        onClick={processUpload}
+                                                    >
+                                                        {actionLoading ? 'Uploading & Processing...' : 'Process Document'}
+                                                    </button>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div className="space-y-6">
+                                                <div className="border-2 border-dashed border-slate-200 bg-slate-50/70 rounded-2xl py-14 px-8 text-center">
+                                                    <Upload size={36} className="mx-auto mb-3 text-slate-300" />
+                                                    <p className="text-slate-700 font-bold text-sm">
+                                                        {requestData.documentFile ? 'Official Document Attached' : 'No Official Document Uploaded Yet'}
+                                                    </p>
+                                                    <p className="text-slate-400 text-xs mt-1 max-w-md mx-auto">
+                                                        Staff Read-Only View: Only the Super Admin can upload and process the official PDF document for this request.
+                                                    </p>
+                                                </div>
+                                                {requestData.documentFile && (
+                                                    <div className="flex justify-center">
+                                                        <a
+                                                            href={requestData.documentFile.startsWith('data:') ? requestData.documentFile : `${API_BASE}${requestData.documentFile}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="bg-[#2c3543] hover:bg-[#1f2631] text-white px-6 py-2.5 rounded-full font-bold text-xs flex items-center gap-2 shadow-xs transition-all"
+                                                        >
+                                                            <Eye size={14} />
+                                                            <span>Preview Attached Document</span>
+                                                        </a>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 
@@ -972,26 +1039,38 @@ const RequestDetails = () => {
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center gap-3 pt-6 border-t border-slate-100">
-                                            <button
-                                                className="bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs px-6 py-2.5 rounded-full border border-slate-200 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 transition-all flex items-center gap-1.5 cursor-pointer"
-                                                onClick={() => setCurrentStep(1)}
-                                            >
-                                                <ArrowLeft size={13} />
-                                                <span>Back to Step 1</span>
-                                            </button>
-                                            <button
-                                                className={`flex-1 text-white py-2.5 px-6 rounded-full font-bold text-xs border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 ${!hasProcessingAccess ? 'bg-slate-400' : 'bg-emerald-600 hover:bg-emerald-700'}`}
-                                                disabled={actionLoading || !hasProcessingAccess}
-                                                onClick={() => showConfirm({
-                                                    title: 'Finalize & Release Request',
-                                                    message: `Are you sure you want to finalize and release the ${requestData.documentType || 'document'} for ${requestData.name}?`,
-                                                    onConfirm: handleSecureDocument
-                                                })}
-                                            >
-                                                {actionLoading ? 'Finalizing...' : 'Finalize & Release Request'}
-                                            </button>
-                                        </div>
+                                        {isSuperAdmin ? (
+                                            <div className="flex items-center gap-3 pt-6 border-t border-slate-100">
+                                                <button
+                                                    className="bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs px-6 py-2.5 rounded-full border border-slate-200 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 transition-all flex items-center gap-1.5 cursor-pointer"
+                                                    onClick={() => setCurrentStep(1)}
+                                                >
+                                                    <ArrowLeft size={13} />
+                                                    <span>Back to Step 1</span>
+                                                </button>
+                                                <button
+                                                    className="flex-1 text-white py-2.5 px-6 rounded-full font-bold text-xs border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 bg-emerald-600 hover:bg-emerald-700"
+                                                    disabled={actionLoading}
+                                                    onClick={() => showConfirm({
+                                                        title: 'Finalize & Release Request',
+                                                        message: `Are you sure you want to finalize and release the ${requestData.documentType || 'document'} for ${requestData.name}?`,
+                                                        onConfirm: handleSecureDocument
+                                                    })}
+                                                >
+                                                    {actionLoading ? 'Finalizing...' : 'Finalize & Release Request'}
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="p-4 bg-blue-50/70 rounded-xl border border-blue-200 text-xs text-blue-800 font-medium flex items-center justify-between gap-3 flex-wrap">
+                                                <div className="flex items-center gap-2">
+                                                    <Clock size={16} className="text-blue-600 shrink-0" />
+                                                    <span>Document request is ready for final release. Only the Super Admin can finalize and release this request.</span>
+                                                </div>
+                                                <span className="px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 font-bold uppercase text-[10px] tracking-wider">
+                                                    Awaiting Super Admin Release
+                                                </span>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 
@@ -1015,7 +1094,8 @@ const RequestDetails = () => {
                                                         <select
                                                             value={blockchainData.ownerType}
                                                             onChange={(e) => setBlockchainData({ ...blockchainData, ownerType: e.target.value })}
-                                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:border-blue-500 outline-none"
+                                                            disabled={!isSuperAdmin}
+                                                            className={`w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm outline-none ${!isSuperAdmin ? 'opacity-75 cursor-not-allowed' : 'focus:border-blue-500'}`}
                                                         >
                                                             <option value="Student">Student</option>
                                                             <option value="Alumni">Alumni</option>
@@ -1029,7 +1109,8 @@ const RequestDetails = () => {
                                                             placeholder="e.g. ID-2023-001"
                                                             value={blockchainData.studentIDNumber}
                                                             onChange={(e) => setBlockchainData({ ...blockchainData, studentIDNumber: e.target.value })}
-                                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:border-blue-500 outline-none"
+                                                            disabled={!isSuperAdmin}
+                                                            className={`w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm outline-none ${!isSuperAdmin ? 'opacity-75 cursor-not-allowed' : 'focus:border-blue-500'}`}
                                                         />
                                                     </div>
 
@@ -1041,7 +1122,8 @@ const RequestDetails = () => {
                                                                 required
                                                                 value={blockchainData.yearGraduated}
                                                                 onChange={(e) => setBlockchainData({ ...blockchainData, yearGraduated: e.target.value })}
-                                                                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:border-blue-500 outline-none"
+                                                                disabled={!isSuperAdmin}
+                                                                className={`w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm outline-none ${!isSuperAdmin ? 'opacity-75 cursor-not-allowed' : 'focus:border-blue-500'}`}
                                                             />
                                                         </div>
                                                     ) : (
@@ -1054,7 +1136,8 @@ const RequestDetails = () => {
                                                                     placeholder="e.g. BSCS"
                                                                     value={blockchainData.course}
                                                                     onChange={(e) => setBlockchainData({ ...blockchainData, course: e.target.value })}
-                                                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:border-blue-500 outline-none"
+                                                                    disabled={!isSuperAdmin}
+                                                                    className={`w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm outline-none ${!isSuperAdmin ? 'opacity-75 cursor-not-allowed' : 'focus:border-blue-500'}`}
                                                                 />
                                                             </div>
                                                             <div>
@@ -1065,7 +1148,8 @@ const RequestDetails = () => {
                                                                     placeholder="e.g. 3rd Year"
                                                                     value={blockchainData.yearLevel}
                                                                     onChange={(e) => setBlockchainData({ ...blockchainData, yearLevel: e.target.value })}
-                                                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:border-blue-500 outline-none"
+                                                                    disabled={!isSuperAdmin}
+                                                                    className={`w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm outline-none ${!isSuperAdmin ? 'opacity-75 cursor-not-allowed' : 'focus:border-blue-500'}`}
                                                                 />
                                                             </div>
                                                         </>
@@ -1078,32 +1162,45 @@ const RequestDetails = () => {
                                                             required
                                                             value={blockchainData.nameOfSchool}
                                                             onChange={(e) => setBlockchainData({ ...blockchainData, nameOfSchool: e.target.value })}
-                                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:border-blue-500 outline-none"
+                                                            disabled={!isSuperAdmin}
+                                                            className={`w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm outline-none ${!isSuperAdmin ? 'opacity-75 cursor-not-allowed' : 'focus:border-blue-500'}`}
                                                         />
                                                     </div>
                                                 </div>
                                             </div>
 
-                                        <div className="flex items-center gap-3 pt-6 border-t border-slate-100">
-                                            <button
-                                                className="bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs px-6 py-2.5 rounded-full border border-slate-200 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 transition-all flex items-center gap-1.5 cursor-pointer"
-                                                onClick={() => setCurrentStep(2)}
-                                            >
-                                                <ArrowLeft size={13} />
-                                                <span>Back to Step 2</span>
-                                            </button>
-                                            <button
-                                                className={`flex-1 text-white py-2.5 px-6 rounded-full font-bold text-xs border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 ${(!hasProcessingAccess) ? 'bg-slate-400' : 'bg-[#2c3543] hover:bg-[#1f2631]'}`}
-                                                disabled={actionLoading || !hasProcessingAccess || (isBlockchainEligible && !blockchainData.studentIDNumber)}
-                                                onClick={() => showConfirm({
-                                                    title: isBlockchainEligible ? 'Secure to Blockchain' : 'Finalize Document',
-                                                    message: 'Are you sure you want to finalize this request?',
-                                                    onConfirm: handleSecureDocument
-                                                })}
-                                            >
-                                                {actionLoading ? 'Processing...' : (isBlockchainEligible ? 'Secure on Blockchain' : 'Finalize Request')}
-                                            </button>
-                                        </div>
+                                        {isSuperAdmin ? (
+                                            <div className="flex items-center gap-3 pt-6 border-t border-slate-100">
+                                                <button
+                                                    className="bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs px-6 py-2.5 rounded-full border border-slate-200 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 transition-all flex items-center gap-1.5 cursor-pointer"
+                                                    onClick={() => setCurrentStep(2)}
+                                                >
+                                                    <ArrowLeft size={13} />
+                                                    <span>Back to Step 2</span>
+                                                </button>
+                                                <button
+                                                    className="flex-1 text-white py-2.5 px-6 rounded-full font-bold text-xs border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 bg-[#2c3543] hover:bg-[#1f2631]"
+                                                    disabled={actionLoading || (isBlockchainEligible && !blockchainData.studentIDNumber)}
+                                                    onClick={() => showConfirm({
+                                                        title: isBlockchainEligible ? 'Secure to Blockchain' : 'Finalize Document',
+                                                        message: 'Are you sure you want to finalize this request?',
+                                                        onConfirm: handleSecureDocument
+                                                    })}
+                                                >
+                                                    {actionLoading ? 'Processing...' : (isBlockchainEligible ? 'Secure on Blockchain' : 'Finalize Request')}
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="p-4 bg-blue-50/70 rounded-xl border border-blue-200 text-xs text-blue-800 font-medium flex items-center justify-between gap-3 flex-wrap">
+                                                <div className="flex items-center gap-2">
+                                                    <ShieldCheck size={16} className="text-blue-600 shrink-0" />
+                                                    <span>Document is ready for blockchain recording. Only the Super Admin can secure and finalize this document.</span>
+                                                </div>
+                                                <span className="px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 font-bold uppercase text-[10px] tracking-wider">
+                                                    Awaiting Super Admin Recording
+                                                </span>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 

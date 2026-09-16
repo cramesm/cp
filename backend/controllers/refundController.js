@@ -85,11 +85,12 @@ const RefundController = {
     }
   },
 
-  // @desc    Update refund status (Admin/Registrar only)
+  // @desc    Update refund status (Super Admin only)
   updateRefundStatus: async (req, res) => {
     try {
-      if (req.user.role === 'student' || req.user.role === 'alumni') {
-        return res.status(403).json({ success: false, message: 'Unauthorized' });
+      const userRole = (req.user?.role || '').toLowerCase();
+      if (userRole !== 'super admin') {
+        return res.status(403).json({ success: false, message: 'Only Super Admin can approve or reject refund requests.' });
       }
 
       const { status, adminRemarks } = req.body;

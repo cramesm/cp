@@ -201,9 +201,14 @@ const RequestController = {
   updateRequest: async (req, res) => {
     try {
       const { status, name, documentHash, forceOverride, rejectionReason } = req.body;
+      const userRole = (req.user?.role || '').toLowerCase();
 
-      if (forceOverride && req.user.role !== 'super admin') {
+      if (forceOverride && userRole !== 'super admin') {
         return res.status(403).json({ message: 'Only super admins can perform force overrides.' });
+      }
+
+      if (status && userRole !== 'super admin') {
+        return res.status(403).json({ message: 'Only Super Admin can update the processing status of a request.' });
       }
 
       const updateData = {};
@@ -340,6 +345,11 @@ const RequestController = {
   // @desc    Upload document attachment with optional QR embedding
   uploadDocumentFile: async (req, res) => {
     try {
+      const userRole = (req.user?.role || '').toLowerCase();
+      if (userRole !== 'super admin') {
+        return res.status(403).json({ message: 'Only Super Admin can upload and process document files.' });
+      }
+
       if (!req.file) {
         return res.status(400).json({ message: 'No file uploaded' });
       }

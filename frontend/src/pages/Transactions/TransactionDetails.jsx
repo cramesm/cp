@@ -15,7 +15,7 @@ const TransactionDetails = () => {
     const [loading, setLoading] = useState(true);
     const [zoomedImage, setZoomedImage] = useState(false);
     
-    const userRole = localStorage.getItem('userRole') || 'registrar';
+    const userRole = (localStorage.getItem('userRole') || '').toLowerCase();
     const isSuperAdmin = userRole === 'super admin';
     const [isEditingStatus, setIsEditingStatus] = useState(false);
     const [newStatus, setNewStatus] = useState('');
