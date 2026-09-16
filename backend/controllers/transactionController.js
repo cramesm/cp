@@ -341,12 +341,31 @@ const TransactionController = {
       let targetUserId = transaction.userId || undefined;
       let targetDocType = transaction.documentType || 'Document';
 
-      const linkedReq = await Request.findOne({
-        $or: [
-          { requestId: transaction.requestId },
-          ...(mongoose.Types.ObjectId.isValid(transaction.requestId) ? [{ _id: transaction.requestId }] : [])
-        ]
-      });
+      const requestConditions = [];
+      if (transaction.requestId && transaction.requestId !== 'N/A') {
+        requestConditions.push({ requestId: transaction.requestId });
+        if (mongoose.Types.ObjectId.isValid(transaction.requestId)) {
+          requestConditions.push({ _id: transaction.requestId });
+        }
+      }
+      if (transaction.transactionId) {
+        requestConditions.push({ paymentReceiptId: transaction.transactionId });
+      }
+      if (transaction._id) {
+        requestConditions.push({ paymentReceiptId: String(transaction._id) });
+      }
+
+      let linkedReq = null;
+      if (requestConditions.length > 0) {
+        linkedReq = await Request.findOne({ $or: requestConditions });
+      }
+
+      if (!linkedReq && transaction.payerEmail) {
+        linkedReq = await Request.findOne({
+          email: transaction.payerEmail,
+          status: { $in: ['Pending', 'In Process'] }
+        }).sort({ createdAt: -1 });
+      }
 
       if (linkedReq) {
         targetEmail = targetEmail || linkedReq.email || '';
@@ -392,9 +411,14 @@ const TransactionController = {
 
         // Update linked request's mobileStatus while preserving status for document verification
         if (linkedReq) {
-          await Request.findByIdAndUpdate(linkedReq._id, {
+          const reqUpdate = {
             mobileStatus: 'payment_verified'
-          });
+          };
+          // If request was previously rejected, reset to Pending so admin can verify document request
+          if (linkedReq.status === 'Rejected') {
+            reqUpdate.status = 'Pending';
+          }
+          await Request.findByIdAndUpdate(linkedReq._id, reqUpdate);
         }
         
         try {
@@ -436,11 +460,19 @@ const TransactionController = {
         }
       } else if (status === 'Rejected') {
         if (linkedReq) {
-          await Request.findByIdAndUpdate(linkedReq._id, {
-            status: 'Rejected',
-            mobileStatus: 'rejected',
-            rejectionReason: 'Payment Issue'
-          });
+          // IMPORTANT: If request was In Process, immediately revert from In Process
+          // so it is NEVER left as "Approved" when payment is rejected.
+          // Mobile status is marked as payment_rejected.
+          const reqUpdate = {
+            mobileStatus: 'payment_rejected'
+          };
+          if (linkedReq.status === 'In Process') {
+            reqUpdate.status = 'Pending';
+          }
+          if (adminRemarks) {
+            reqUpdate.rejectionReason = `Payment Issue: ${adminRemarks}`;
+          }
+          await Request.findByIdAndUpdate(linkedReq._id, reqUpdate);
         }
 
         if (mongoose.connection.readyState === 1) {

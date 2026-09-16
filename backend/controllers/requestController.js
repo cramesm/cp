@@ -241,16 +241,20 @@ const RequestController = {
 
       if (!request) return res.status(404).json({ message: 'Request not found' });
 
-      const actionLabel = forceOverride ? 'Force Override' : 'Update Request';
+      const actionLabel = forceOverride ? 'Force Override' : status === 'Rejected' ? 'Reject Request' : 'Update Request';
+      const logDetails = forceOverride
+        ? `[SUPER ADMIN] Bypassed verification for request ${req.params.id}, status set to ${status}`
+        : status === 'Rejected'
+        ? `Rejected document request ${req.params.id}. Reason: ${request.rejectionReason || 'Requirements not met'}`
+        : `Updated request ${req.params.id} status to ${status || 'unchanged'}`;
+
       await ActivityLog.create({
         userEmail: req.user.email,
         userName: req.user.name || 'User',
         action: actionLabel,
-        type: '------',
+        type: request.documentType || '------',
         status: 'Successful',
-        details: forceOverride
-          ? `[SUPER ADMIN] Bypassed verification for request ${req.params.id}, status set to ${status}`
-          : `Updated request ${req.params.id} status to ${status || 'unchanged'}`,
+        details: logDetails,
         ipAddress: getClientIp(req)
       });
 
@@ -287,10 +291,14 @@ const RequestController = {
             message = `Your document request #${request.requestId} for ${request.documentType} is ready for pickup/delivery!`;
           } else if (status === 'Rejected') {
             title = 'Document Request Rejected';
-            const readableReason = request.rejectionReason === 'incomplete' ? 'Incomplete Requirements' :
-                                   request.rejectionReason === 'invalid' ? 'Invalid Information' :
-                                   request.rejectionReason === 'unpaid' ? 'Payment Issue' :
-                                   (request.rejectionReason || 'Requirements not met');
+            let readableReason = request.rejectionReason || 'Requirements not met';
+            if (readableReason === 'incomplete') readableReason = 'Incomplete Requirements';
+            else if (readableReason === 'invalid') readableReason = 'Invalid Information';
+            else if (readableReason === 'unpaid') readableReason = 'Payment Issue';
+            else if (readableReason.startsWith('unpaid:')) readableReason = readableReason.replace(/^unpaid:\s*/, 'Payment Issue: ');
+            else if (readableReason.startsWith('incomplete:')) readableReason = readableReason.replace(/^incomplete:\s*/, 'Incomplete Requirements: ');
+            else if (readableReason.startsWith('invalid:')) readableReason = readableReason.replace(/^invalid:\s*/, 'Invalid Information: ');
+
             message = `Your document request #${request.requestId} for ${request.documentType} was rejected. Reason: ${readableReason}`;
           }
           
@@ -300,6 +308,7 @@ const RequestController = {
             isRead: false,
             email: targetEmail,
             userId: targetUserId,
+            studentId: request.studentId || undefined,
             targetRole: 'student',
             type: 'request',
             link: `/requests/${request.requestId}`

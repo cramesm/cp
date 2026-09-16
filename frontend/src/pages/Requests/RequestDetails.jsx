@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { ChevronRight, ArrowLeft, FileText, Upload, CheckCircle2, AlertCircle, ShieldCheck, Printer, FileSearch, Trash2, Shield, Search, Download, Copy, Check, Lock, Unlock, XCircle, Clock, CreditCard, X, Eye } from 'lucide-react';
+import { ChevronRight, ChevronDown, ArrowLeft, FileText, Upload, CheckCircle2, AlertCircle, AlertTriangle, ShieldCheck, Printer, FileSearch, Trash2, Shield, Search, Download, Copy, Check, Lock, Unlock, XCircle, Clock, CreditCard, X, Eye } from 'lucide-react';
 import Layout from '../../components/Layout';
 import ConfirmModal from '../../components/ConfirmModal';
 import FeedbackModal from '../../components/FeedbackModal';
@@ -37,6 +37,8 @@ const RequestDetails = () => {
     const [manualRejectionReason, setManualRejectionReason] = useState('');
     const [showRejectForm, setShowRejectForm] = useState(false);
     const [paymentAction, setPaymentAction] = useState('Completed');
+    const [paymentRemarks, setPaymentRemarks] = useState('');
+    const [isEditingPayment, setIsEditingPayment] = useState(false);
 
     // Super Admin Force Override State (Available Anywhere)
     const [showSuperAdminModal, setShowSuperAdminModal] = useState(false);
@@ -83,6 +85,15 @@ const RequestDetails = () => {
 
             const found = res.data;
             const foundTx = txRes.data;
+
+            // Auto-initialize rejection form if payment was rejected but document request is still pending
+            if (foundTx && foundTx.status === 'Rejected' && found && found.status === 'Pending') {
+                setShowRejectForm(true);
+                setRejectionReason('unpaid');
+                if (foundTx.adminRemarks) {
+                    setManualRejectionReason(foundTx.adminRemarks);
+                }
+            }
 
             // Determine Step
             const docType = (found?.documentType || found?.document_type || '').toLowerCase();
@@ -141,16 +152,44 @@ const RequestDetails = () => {
         }
     };
 
-    const handleVerifyPayment = async (status) => {
+    const handleVerifyPayment = async (actionStatus) => {
         setActionLoading(true);
         try {
-            await api.put(`/transactions/${paymentTx.transactionId}/verify`, { status });
-            await fetchData();
-            showFeedback({
-                title: 'Payment Status Updated',
-                message: `Payment status has been set to "${status}". ${status === 'Completed' ? 'Stage 2 (Verify Document Request) is now unlocked.' : ''}`,
-                type: 'info'
+            await api.put(`/transactions/${paymentTx.transactionId}/verify`, {
+                status: actionStatus,
+                adminRemarks: paymentRemarks
             });
+            await fetchData();
+            setIsEditingPayment(false);
+
+            if (actionStatus === 'Rejected') {
+                setShowRejectForm(true);
+                setRejectionReason('unpaid');
+                if (paymentRemarks.trim()) {
+                    setManualRejectionReason(paymentRemarks.trim());
+                }
+                setTimeout(() => {
+                    const stage2 = document.getElementById('stage-2-verify');
+                    if (stage2) stage2.scrollIntoView({ behavior: 'smooth' });
+                }, 150);
+                showFeedback({
+                    title: 'Payment Marked as Rejected',
+                    message: 'Payment has been marked as Rejected. Stage 2 is unlocked below — please review request details, verify your remarks, and confirm rejection of the document request to notify the student.',
+                    type: 'warning'
+                });
+            } else if (actionStatus === 'Completed') {
+                showFeedback({
+                    title: 'Payment Status Updated',
+                    message: 'Payment status has been set to "Completed". Stage 2 (Verify Document Request) is now unlocked below.',
+                    type: 'info'
+                });
+            } else {
+                showFeedback({
+                    title: 'Payment Status Updated',
+                    message: `Payment status has been set to "${actionStatus}". The student has been notified.`,
+                    type: 'info'
+                });
+            }
         } catch (err) {
             console.error(err);
             showFeedback({
@@ -523,28 +562,48 @@ const RequestDetails = () => {
                                                     <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
                                                         paymentTx?.status === 'Completed'
                                                             ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                                            : paymentTx?.status === 'Rejected'
+                                                            ? 'bg-red-50 text-red-700 border border-red-200'
                                                             : 'bg-amber-50 text-amber-700 border border-amber-200'
                                                     }`}>
-                                                        {paymentTx?.status === 'Completed' ? <CheckCircle2 size={13} className="text-emerald-600" /> : <Clock size={13} className="text-amber-600" />}
+                                                        {paymentTx?.status === 'Completed' ? (
+                                                            <CheckCircle2 size={13} className="text-emerald-600" />
+                                                        ) : paymentTx?.status === 'Rejected' ? (
+                                                            <XCircle size={13} className="text-red-600" />
+                                                        ) : (
+                                                            <Clock size={13} className="text-amber-600" />
+                                                        )}
                                                         <span>Payment: {paymentTx?.status || 'Pending'}</span>
                                                     </span>
                                                     <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
-                                                        status === 'In Process' || status === 'Released'
-                                                            ? 'bg-purple-50 text-purple-700 border border-purple-200'
-                                                            : status === 'Rejected'
+                                                        status === 'Rejected'
                                                             ? 'bg-red-50 text-red-700 border border-red-200'
+                                                            : paymentTx?.status === 'Rejected'
+                                                            ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                                                            : status === 'In Process' || status === 'Released'
+                                                            ? 'bg-purple-50 text-purple-700 border border-purple-200'
                                                             : paymentTx?.status === 'Completed'
                                                             ? 'bg-blue-50 text-blue-700 border border-blue-200'
                                                             : 'bg-slate-100 text-slate-500 border border-slate-200'
                                                     }`}>
-                                                        {status === 'In Process' || status === 'Released' ? (
+                                                        {status === 'Rejected' ? (
+                                                            <XCircle size={13} className="text-red-600" />
+                                                        ) : paymentTx?.status === 'Rejected' ? (
+                                                            <AlertCircle size={13} className="text-amber-600" />
+                                                        ) : status === 'In Process' || status === 'Released' ? (
                                                             <CheckCircle2 size={13} className="text-purple-600" />
                                                         ) : paymentTx?.status === 'Completed' ? (
                                                             <Unlock size={13} className="text-blue-600" />
                                                         ) : (
                                                             <Lock size={13} className="text-slate-400" />
                                                         )}
-                                                        <span>Request: {status === 'In Process' ? 'Approved' : status}</span>
+                                                        <span>
+                                                            Request: {
+                                                                status === 'Rejected' ? 'Rejected' :
+                                                                paymentTx?.status === 'Rejected' ? 'Decision Required' :
+                                                                status === 'In Process' ? 'Approved' : status
+                                                            }
+                                                        </span>
                                                     </span>
                                                 </div>
                                             </div>
@@ -612,47 +671,136 @@ const RequestDetails = () => {
                                                         </div>
                                                     </div>
 
-                                                    {paymentTx.status === 'Completed' && (
-                                                        <div className="bg-emerald-50 p-3.5 rounded-xl border border-emerald-200 flex items-center gap-2.5 text-emerald-800 text-xs font-semibold">
-                                                            <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
-                                                            <span>Payment receipt is verified and approved. Stage 2 (Document Request Verification) is now unlocked below.</span>
-                                                        </div>
-                                                    )}
-
-                                                    {paymentTx.status === 'Needs Update' && (
-                                                        <div className="bg-amber-50 p-3.5 rounded-xl border border-amber-200 flex items-center gap-2.5 text-amber-800 text-xs font-semibold">
-                                                            <AlertCircle size={16} className="text-amber-600 shrink-0" />
-                                                            <span>Receipt needs update: The student has been notified to re-upload a clear copy.</span>
-                                                        </div>
-                                                    )}
-
-                                                    {paymentTx.status === 'Pending Verification' && (
-                                                        isSuperAdmin ? (
-                                                            <div className="p-4 bg-slate-50 rounded-xl flex flex-col sm:flex-row gap-3 border border-slate-200">
-                                                                <select
-                                                                    className="flex-1 py-2.5 px-4 border border-slate-200 rounded-xl outline-none focus:border-blue-500 text-xs font-bold text-slate-700 bg-white"
-                                                                    value={paymentAction}
-                                                                    onChange={(e) => setPaymentAction(e.target.value)}
-                                                                    disabled={actionLoading}
-                                                                >
-                                                                    <option value="Completed">Approve Payment (Receipt Valid)</option>
-                                                                    <option value="Needs Update">Needs Update (Blurry / Incomplete Receipt)</option>
-                                                                    <option value="Rejected">Reject Completely (Invalid / Fraudulent Receipt)</option>
-                                                                </select>
+                                                    {paymentTx.status === 'Completed' && !isEditingPayment && (
+                                                        <div className="bg-emerald-50 p-3.5 rounded-xl border border-emerald-200 flex items-center justify-between gap-3 text-emerald-800 text-xs font-semibold flex-wrap">
+                                                            <div className="flex items-center gap-2.5">
+                                                                <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+                                                                <span>Payment receipt is verified and approved. Stage 2 (Document Request Verification) is now unlocked below.</span>
+                                                            </div>
+                                                            {isSuperAdmin && (
                                                                 <button
-                                                                    className={`text-white py-2.5 px-6 rounded-xl font-bold text-xs transition-all shadow-sm cursor-pointer ${
-                                                                        paymentAction === 'Completed' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700'
-                                                                    }`}
-                                                                    onClick={() => showConfirm({
-                                                                        title: 'Confirm Payment Verification',
-                                                                        message: `Are you sure you want to mark this payment as "${paymentAction}"? ${paymentAction === 'Completed' ? 'This will verify payment and unlock Stage 2: Verify Document Request.' : 'The student will be notified.'}`,
-                                                                        type: paymentAction === 'Completed' ? 'info' : 'warning',
-                                                                        onConfirm: () => handleVerifyPayment(paymentAction)
-                                                                    })}
-                                                                    disabled={actionLoading}
+                                                                    type="button"
+                                                                    onClick={() => setIsEditingPayment(true)}
+                                                                    className="text-xs font-bold text-emerald-800 hover:text-emerald-950 underline cursor-pointer"
                                                                 >
-                                                                    {actionLoading ? 'Processing...' : 'Confirm Payment Action'}
+                                                                    Change Decision
                                                                 </button>
+                                                            )}
+                                                        </div>
+                                                    )}
+
+                                                    {paymentTx.status === 'Needs Update' && !isEditingPayment && (
+                                                        <div className="bg-amber-50 p-3.5 rounded-xl border border-amber-200 flex items-center justify-between gap-3 text-amber-800 text-xs font-semibold flex-wrap">
+                                                            <div className="flex items-center gap-2.5">
+                                                                <AlertCircle size={16} className="text-amber-600 shrink-0" />
+                                                                <span>Receipt needs update: The student has been notified to re-upload a clear copy.</span>
+                                                            </div>
+                                                            {isSuperAdmin && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setIsEditingPayment(true)}
+                                                                    className="text-xs font-bold text-amber-800 hover:text-amber-950 underline cursor-pointer"
+                                                                >
+                                                                    Change Decision
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    )}
+
+                                                    {paymentTx.status === 'Rejected' && !isEditingPayment && (
+                                                        <div className="bg-red-50 p-4 rounded-xl border border-red-200 flex items-center justify-between gap-3 text-red-800 text-xs font-semibold flex-wrap">
+                                                            <div className="flex items-center gap-2.5">
+                                                                <XCircle size={18} className="text-red-600 shrink-0" />
+                                                                <div>
+                                                                    <p className="font-bold">Payment receipt has been rejected.</p>
+                                                                    <p className="text-[11px] text-red-700 mt-0.5">Stage 2 is unlocked below — please review the request, provide remarks, and confirm document rejection.</p>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-2">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        const stage2 = document.getElementById('stage-2-verify');
+                                                                        if (stage2) stage2.scrollIntoView({ behavior: 'smooth' });
+                                                                        setShowRejectForm(true);
+                                                                        setRejectionReason('unpaid');
+                                                                    }}
+                                                                    className="px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
+                                                                >
+                                                                    <span>Proceed to Stage 2 Rejection</span>
+                                                                    <ChevronDown size={13} />
+                                                                </button>
+                                                                {isSuperAdmin && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => setIsEditingPayment(true)}
+                                                                        className="text-xs font-bold text-red-800 hover:text-red-950 underline cursor-pointer"
+                                                                    >
+                                                                        Change
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {(paymentTx.status === 'Pending Verification' || isEditingPayment) && (
+                                                        isSuperAdmin ? (
+                                                            <div className="p-4 bg-slate-50 rounded-xl space-y-3 border border-slate-200">
+                                                                <div className="flex items-center justify-between">
+                                                                    <span className="text-xs font-bold text-slate-700">
+                                                                        {isEditingPayment ? 'Update Payment Verification Decision' : 'Verify Payment Receipt'}
+                                                                    </span>
+                                                                    {isEditingPayment && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => setIsEditingPayment(false)}
+                                                                            className="text-xs text-slate-500 hover:text-slate-700 font-semibold cursor-pointer"
+                                                                        >
+                                                                            Cancel
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                                <div className="flex flex-col sm:flex-row gap-3">
+                                                                    <select
+                                                                        className="flex-1 py-2.5 px-4 border border-slate-200 rounded-xl outline-none focus:border-blue-500 text-xs font-bold text-slate-700 bg-white"
+                                                                        value={paymentAction}
+                                                                        onChange={(e) => setPaymentAction(e.target.value)}
+                                                                        disabled={actionLoading}
+                                                                    >
+                                                                        <option value="Completed">Approve Payment (Receipt Valid)</option>
+                                                                        <option value="Needs Update">Needs Update (Blurry / Incomplete Receipt)</option>
+                                                                        <option value="Rejected">Reject Completely (Invalid / Fraudulent Receipt)</option>
+                                                                    </select>
+                                                                    <button
+                                                                        className={`text-white py-2.5 px-6 rounded-xl font-bold text-xs transition-all shadow-sm cursor-pointer shrink-0 ${
+                                                                            paymentAction === 'Completed' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700'
+                                                                        }`}
+                                                                        onClick={() => showConfirm({
+                                                                            title: 'Confirm Payment Verification',
+                                                                            message: `Are you sure you want to mark this payment as "${paymentAction}"? ${paymentAction === 'Completed' ? 'This will verify payment and unlock Stage 2: Verify Document Request.' : paymentAction === 'Rejected' ? 'This will mark payment as rejected and proceed to Stage 2: Verify Document Request so you can specify remarks.' : 'The student will be notified.'}`,
+                                                                            type: paymentAction === 'Completed' ? 'info' : 'warning',
+                                                                            onConfirm: () => handleVerifyPayment(paymentAction)
+                                                                        })}
+                                                                        disabled={actionLoading}
+                                                                    >
+                                                                        {actionLoading ? 'Processing...' : paymentAction === 'Rejected' ? 'Reject Payment & Proceed to Stage 2' : 'Confirm Payment Action'}
+                                                                    </button>
+                                                                </div>
+                                                                {paymentAction !== 'Completed' && (
+                                                                    <div>
+                                                                        <label className="block text-[11px] font-bold text-slate-500 mb-1">
+                                                                            Payment Remarks (Optional - automatically carried to document rejection remarks):
+                                                                        </label>
+                                                                        <input
+                                                                            type="text"
+                                                                            placeholder={paymentAction === 'Needs Update' ? 'e.g. Receipt is blurry or missing reference number' : 'e.g. Invalid reference number, transaction not found in records'}
+                                                                            value={paymentRemarks}
+                                                                            onChange={(e) => setPaymentRemarks(e.target.value)}
+                                                                            className="w-full py-2 px-3 border border-slate-200 rounded-xl text-xs outline-none focus:border-red-400 bg-white"
+                                                                            disabled={actionLoading}
+                                                                        />
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         ) : (
                                                             <div className="p-4 bg-amber-50/70 rounded-xl border border-amber-200 text-xs flex items-center justify-between gap-3 flex-wrap">
@@ -677,222 +825,277 @@ const RequestDetails = () => {
                                         {/* ========================================================= */}
                                         {/* STAGE 2: VERIFY DOCUMENT REQUEST */}
                                         {/* ========================================================= */}
-                                        <div className={`border rounded-2xl overflow-hidden transition-all ${
-                                            paymentTx?.status === 'Completed'
-                                                ? 'border-blue-200 bg-white shadow-2xs'
-                                                : 'border-slate-200 bg-slate-50/70 opacity-90'
-                                        }`}>
-                                            <div className={`px-5 py-4 border-b flex items-center justify-between gap-3 flex-wrap ${
-                                                paymentTx?.status === 'Completed'
-                                                    ? 'bg-blue-50/60 border-blue-100'
-                                                    : 'bg-slate-100/60 border-slate-200'
-                                            }`}>
-                                                <div className="flex items-center gap-2.5">
-                                                    <span className={`w-6 h-6 rounded-full text-xs font-extrabold flex items-center justify-center ${
-                                                        paymentTx?.status === 'Completed' ? 'bg-blue-600 text-white' : 'bg-slate-300 text-slate-600'
-                                                    }`}>2</span>
-                                                    <h3 className="font-bold text-slate-800 text-base">Stage 2: Verify Document Request</h3>
-                                                </div>
-                                                {paymentTx?.status === 'Completed' ? (
-                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                                                        <Unlock size={12} className="text-emerald-700" />
-                                                        <span>Ready for Verification</span>
-                                                    </span>
-                                                ) : (
-                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-slate-200 text-slate-600">
-                                                        <Lock size={12} className="text-slate-500" />
-                                                        <span>Locked (Awaiting Payment Verification)</span>
-                                                    </span>
-                                                )}
-                                            </div>
+                                        {(() => {
+                                            const isStage2Unlocked = ['Completed', 'Rejected', 'Needs Update'].includes(paymentTx?.status) || !paymentTx;
+                                            const isPaymentRejected = paymentTx?.status === 'Rejected';
 
-                                            <div className="p-5 space-y-6">
-                                                {/* When Payment is NOT Completed -> Locked Message */}
-                                                {paymentTx?.status !== 'Completed' && (
-                                                    <div className="p-6 text-center rounded-xl bg-white border border-slate-200/80 space-y-2">
-                                                        <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-2">
-                                                            <Lock size={20} />
+                                            return (
+                                                <div id="stage-2-verify" className={`border rounded-2xl overflow-hidden transition-all ${
+                                                    isPaymentRejected
+                                                        ? 'border-red-200 bg-white shadow-2xs'
+                                                        : paymentTx?.status === 'Completed'
+                                                        ? 'border-blue-200 bg-white shadow-2xs'
+                                                        : paymentTx?.status === 'Needs Update'
+                                                        ? 'border-amber-200 bg-white shadow-2xs'
+                                                        : 'border-slate-200 bg-slate-50/70 opacity-90'
+                                                }`}>
+                                                    <div className={`px-5 py-4 border-b flex items-center justify-between gap-3 flex-wrap ${
+                                                        isPaymentRejected
+                                                            ? 'bg-red-50/60 border-red-100'
+                                                            : paymentTx?.status === 'Completed'
+                                                            ? 'bg-blue-50/60 border-blue-100'
+                                                            : paymentTx?.status === 'Needs Update'
+                                                            ? 'bg-amber-50/60 border-amber-100'
+                                                            : 'bg-slate-100/60 border-slate-200'
+                                                    }`}>
+                                                        <div className="flex items-center gap-2.5">
+                                                            <span className={`w-6 h-6 rounded-full text-xs font-extrabold flex items-center justify-center ${
+                                                                isPaymentRejected
+                                                                    ? 'bg-red-600 text-white'
+                                                                    : paymentTx?.status === 'Completed'
+                                                                    ? 'bg-blue-600 text-white'
+                                                                    : 'bg-slate-300 text-slate-600'
+                                                            }`}>2</span>
+                                                            <h3 className="font-bold text-slate-800 text-base">Stage 2: Verify Document Request</h3>
                                                         </div>
-                                                        <h4 className="font-bold text-slate-700 text-sm">Document Request Decision Locked</h4>
-                                                        <p className="text-xs text-slate-500 max-w-md mx-auto">
-                                                            Before approving or rejecting this request, the student's payment receipt must be verified and approved in Stage 1 above.
-                                                        </p>
+                                                        {paymentTx?.status === 'Completed' ? (
+                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                                                <Unlock size={12} className="text-emerald-700" />
+                                                                <span>Ready for Verification</span>
+                                                            </span>
+                                                        ) : isPaymentRejected ? (
+                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800 border border-red-200">
+                                                                <AlertCircle size={12} className="text-red-700" />
+                                                                <span>Payment Rejected — Decision Required</span>
+                                                            </span>
+                                                        ) : paymentTx?.status === 'Needs Update' ? (
+                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                                                                <Clock size={12} className="text-amber-700" />
+                                                                <span>Awaiting Updated Receipt</span>
+                                                            </span>
+                                                        ) : (
+                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-slate-200 text-slate-600">
+                                                                <Lock size={12} className="text-slate-500" />
+                                                                <span>Locked (Awaiting Payment Verification)</span>
+                                                            </span>
+                                                        )}
                                                     </div>
-                                                )}
 
-                                                {/* When Payment IS Completed -> Unlocked Review & Decision */}
-                                                {paymentTx?.status === 'Completed' && (
-                                                    <>
-                                                        {/* Request Details Review Grid */}
-                                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                                                            <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100">
-                                                                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Student Name</p>
-                                                                <p className="font-bold text-slate-800 text-sm">{requestData.name}</p>
+                                                    <div className="p-5 space-y-6">
+                                                        {/* When Payment is Locked */}
+                                                        {!isStage2Unlocked && (
+                                                            <div className="p-6 text-center rounded-xl bg-white border border-slate-200/80 space-y-2">
+                                                                <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-2">
+                                                                    <Lock size={20} />
+                                                                </div>
+                                                                <h4 className="font-bold text-slate-700 text-sm">Document Request Decision Locked</h4>
+                                                                <p className="text-xs text-slate-500 max-w-md mx-auto">
+                                                                    Before approving or rejecting this request, the student's payment receipt must be verified in Stage 1 above.
+                                                                </p>
                                                             </div>
-                                                            <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100">
-                                                                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Student ID</p>
-                                                                <p className="font-mono font-bold text-slate-800 text-sm">{requestData.studentId || 'N/A'}</p>
-                                                            </div>
-                                                            <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100">
-                                                                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Requested Document</p>
-                                                                <p className="font-bold text-slate-800 text-sm">{requestData.documentType || requestData.document_type}</p>
-                                                            </div>
-                                                            <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100">
-                                                                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Course / Year</p>
-                                                                <p className="font-bold text-slate-800 text-sm">{requestData.course || 'N/A'} - {requestData.yearLevel || 'N/A'}</p>
-                                                            </div>
-                                                        </div>
+                                                        )}
 
-                                                        {/* Purpose and Additional Info */}
-                                                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-xs space-y-1">
-                                                            <span className="font-bold text-slate-400 uppercase tracking-wider block">Purpose / Request Details</span>
-                                                            <p className="text-slate-700 font-semibold">{requestData.purpose || requestData.otherPurpose || 'Standard issuance'}</p>
-                                                        </div>
+                                                        {/* When Stage 2 is Unlocked */}
+                                                        {isStage2Unlocked && (
+                                                            <>
+                                                                {/* Prominent Banner when Payment is Rejected */}
+                                                                {isPaymentRejected && (
+                                                                    <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 flex items-start gap-3 text-rose-900 animate-in fade-in duration-200">
+                                                                        <AlertTriangle className="text-rose-600 shrink-0 mt-0.5" size={18} />
+                                                                        <div className="space-y-1">
+                                                                            <h4 className="font-bold text-sm text-rose-800">Payment Receipt Rejected — Action Required</h4>
+                                                                            <p className="text-xs text-rose-700 leading-relaxed">
+                                                                                The payment receipt has been rejected. This request cannot be approved. Please review the request details below, verify or enter your remarks, and confirm rejection of the document request to notify the student on mobile with the explanation.
+                                                                            </p>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
 
-                                                        {/* Request Status Decision Area */}
-                                                        {status === 'Pending' && (
-                                                            isSuperAdmin ? (
-                                                                <div className="space-y-4 pt-2">
-                                                                    {!showRejectForm ? (
-                                                                        <div>
-                                                                            <div className="bg-blue-50/70 p-3.5 rounded-xl border border-blue-100 text-xs text-blue-800 font-medium mb-4 flex items-center gap-2">
-                                                                                <ShieldCheck size={16} className="text-blue-600 shrink-0" />
-                                                                                <span>Payment is verified. Review the student's request details above and choose whether to approve or reject this document request.</span>
-                                                                            </div>
-                                                                            <div className="flex items-center gap-3 flex-wrap">
-                                                                                <button
-                                                                                    className="bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold text-xs px-6 py-2.5 rounded-full border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
-                                                                                    onClick={handleApproveDocumentRequest}
-                                                                                    disabled={actionLoading}
-                                                                                >
-                                                                                    <CheckCircle2 size={14} />
-                                                                                    <span>Approve Document Request</span>
-                                                                                </button>
-                                                                                <button
-                                                                                    className="bg-white hover:bg-rose-50 text-rose-700 font-bold text-xs px-6 py-2.5 rounded-full border border-rose-200 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
-                                                                                    onClick={() => {
-                                                                                        setShowRejectForm(true);
-                                                                                        setRejectionReason('incomplete');
-                                                                                    }}
-                                                                                    disabled={actionLoading}
-                                                                                >
-                                                                                    <XCircle size={14} />
-                                                                                    <span>Reject Document Request</span>
-                                                                                </button>
-                                                                            </div>
+                                                                {/* Request Details Review Grid */}
+                                                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                                                    <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100">
+                                                                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Student Name</p>
+                                                                        <p className="font-bold text-slate-800 text-sm">{requestData.name}</p>
+                                                                    </div>
+                                                                    <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100">
+                                                                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Student ID</p>
+                                                                        <p className="font-mono font-bold text-slate-800 text-sm">{requestData.studentId || 'N/A'}</p>
+                                                                    </div>
+                                                                    <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100">
+                                                                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Requested Document</p>
+                                                                        <p className="font-bold text-slate-800 text-sm">{requestData.documentType || requestData.document_type}</p>
+                                                                    </div>
+                                                                    <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100">
+                                                                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Course / Year</p>
+                                                                        <p className="font-bold text-slate-800 text-sm">{requestData.course || 'N/A'} - {requestData.yearLevel || 'N/A'}</p>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Purpose and Additional Info */}
+                                                                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-xs space-y-1">
+                                                                    <span className="font-bold text-slate-400 uppercase tracking-wider block">Purpose / Request Details</span>
+                                                                    <p className="text-slate-700 font-semibold">{requestData.purpose || requestData.otherPurpose || 'Standard issuance'}</p>
+                                                                </div>
+
+                                                                {/* Request Status Decision Area */}
+                                                                {status === 'Pending' && (
+                                                                    isSuperAdmin ? (
+                                                                        <div className="space-y-4 pt-2">
+                                                                            {!showRejectForm && !isPaymentRejected ? (
+                                                                                <div>
+                                                                                    <div className="bg-blue-50/70 p-3.5 rounded-xl border border-blue-100 text-xs text-blue-800 font-medium mb-4 flex items-center gap-2">
+                                                                                        <ShieldCheck size={16} className="text-blue-600 shrink-0" />
+                                                                                        <span>Payment is verified. Review the student's request details above and choose whether to approve or reject this document request.</span>
+                                                                                    </div>
+                                                                                    <div className="flex items-center gap-3 flex-wrap">
+                                                                                        <button
+                                                                                            className="bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold text-xs px-6 py-2.5 rounded-full border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                                                                                            onClick={handleApproveDocumentRequest}
+                                                                                            disabled={actionLoading}
+                                                                                        >
+                                                                                            <CheckCircle2 size={14} />
+                                                                                            <span>Approve Document Request</span>
+                                                                                        </button>
+                                                                                        <button
+                                                                                            className="bg-white hover:bg-rose-50 text-rose-700 font-bold text-xs px-6 py-2.5 rounded-full border border-rose-200 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                                                                                            onClick={() => {
+                                                                                                setShowRejectForm(true);
+                                                                                                setRejectionReason('incomplete');
+                                                                                            }}
+                                                                                            disabled={actionLoading}
+                                                                                        >
+                                                                                            <XCircle size={14} />
+                                                                                            <span>Reject Document Request</span>
+                                                                                        </button>
+                                                                                    </div>
+                                                                                </div>
+                                                                            ) : (
+                                                                                /* Rejection Form Panel */
+                                                                                <div className="bg-rose-50/60 p-5 rounded-2xl border border-rose-200 space-y-4 animate-in fade-in duration-200">
+                                                                                    <div className="flex items-center justify-between gap-3">
+                                                                                        <div className="flex items-center gap-2 text-rose-800">
+                                                                                            <AlertCircle size={16} />
+                                                                                            <h4 className="font-bold text-sm">
+                                                                                                {isPaymentRejected ? 'Reject Document Request (Payment Rejected)' : 'Reject Document Request'}
+                                                                                            </h4>
+                                                                                        </div>
+                                                                                        {!isPaymentRejected && (
+                                                                                            <button
+                                                                                                type="button"
+                                                                                                onClick={() => setShowRejectForm(false)}
+                                                                                                className="text-xs font-bold text-slate-500 hover:text-slate-800 cursor-pointer"
+                                                                                            >
+                                                                                                Cancel
+                                                                                            </button>
+                                                                                        )}
+                                                                                    </div>
+                                                                                    <p className="text-xs text-rose-700">
+                                                                                        Select the reason and provide remarks for rejecting this document request. The student will receive a mobile notification with this exact explanation.
+                                                                                    </p>
+
+                                                                                    <div className="space-y-2">
+                                                                                        {[
+                                                                                            { id: 'unpaid', label: 'Payment Issue (Invalid, fraudulent, or unverified payment receipt)' },
+                                                                                            { id: 'incomplete', label: 'Incomplete Requirements (Missing forms or credentials)' },
+                                                                                            { id: 'invalid', label: 'Invalid Information (Student data or program mismatch)' },
+                                                                                            { id: 'others', label: 'Other Reason (Specify detailed reason below)' }
+                                                                                        ].map((opt) => (
+                                                                                            <label
+                                                                                                key={opt.id}
+                                                                                                className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer text-xs font-semibold transition-all ${
+                                                                                                    rejectionReason === opt.id
+                                                                                                        ? 'bg-white border-rose-400 text-rose-900 shadow-xs'
+                                                                                                        : 'bg-white/70 border-slate-200 text-slate-700 hover:bg-white'
+                                                                                                }`}
+                                                                                            >
+                                                                                                <input
+                                                                                                    type="radio"
+                                                                                                    name="rejectionReason"
+                                                                                                    value={opt.id}
+                                                                                                    checked={rejectionReason === opt.id}
+                                                                                                    onChange={(e) => setRejectionReason(e.target.value)}
+                                                                                                    className="text-rose-600 focus:ring-rose-500"
+                                                                                                />
+                                                                                                <span>{opt.label}</span>
+                                                                                            </label>
+                                                                                        ))}
+                                                                                    </div>
+
+                                                                                    <div>
+                                                                                        <label className="block text-xs font-bold text-slate-600 mb-1">
+                                                                                            Remarks / Explanation for Student {rejectionReason === 'others' && <span className="text-rose-600">*</span>}
+                                                                                        </label>
+                                                                                        <textarea
+                                                                                            className="w-full p-3 border border-slate-200 rounded-xl text-xs outline-none focus:border-rose-400 bg-white"
+                                                                                            rows="2"
+                                                                                            placeholder={
+                                                                                                rejectionReason === 'unpaid'
+                                                                                                    ? 'Explain details about the payment issue (e.g. Reference number not found in GCash, receipt unreadable)...'
+                                                                                                    : rejectionReason === 'others'
+                                                                                                    ? 'Please explain the specific reason for rejecting this request...'
+                                                                                                    : 'Optional specific notes for the student...'
+                                                                                            }
+                                                                                            value={manualRejectionReason}
+                                                                                            onChange={(e) => setManualRejectionReason(e.target.value)}
+                                                                                        ></textarea>
+                                                                                    </div>
+
+                                                                                    <div className="flex items-center gap-2 pt-1">
+                                                                                        <button
+                                                                                            className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs px-5 py-2.5 rounded-full shadow-sm cursor-pointer disabled:opacity-50"
+                                                                                            onClick={handleRejectDocumentRequest}
+                                                                                            disabled={actionLoading}
+                                                                                        >
+                                                                                            {actionLoading ? 'Rejecting...' : 'Confirm Document Rejection'}
+                                                                                        </button>
+                                                                                        {!isPaymentRejected && (
+                                                                                            <button
+                                                                                                className="bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs px-4 py-2.5 rounded-full border border-slate-200 cursor-pointer"
+                                                                                                onClick={() => setShowRejectForm(false)}
+                                                                                            >
+                                                                                                Cancel
+                                                                                            </button>
+                                                                                        )}
+                                                                                    </div>
+                                                                                </div>
+                                                                            )}
                                                                         </div>
                                                                     ) : (
-                                                                        /* Rejection Form Panel */
-                                                                        <div className="bg-rose-50/60 p-5 rounded-2xl border border-rose-200 space-y-4 animate-in fade-in duration-200">
-                                                                            <div className="flex items-center justify-between gap-3">
-                                                                                <div className="flex items-center gap-2 text-rose-800">
-                                                                                    <AlertCircle size={16} />
-                                                                                    <h4 className="font-bold text-sm">Reject Document Request</h4>
-                                                                                </div>
-                                                                                <button
-                                                                                    type="button"
-                                                                                    onClick={() => setShowRejectForm(false)}
-                                                                                    className="text-xs font-bold text-slate-500 hover:text-slate-800 cursor-pointer"
-                                                                                >
-                                                                                    Cancel
-                                                                                </button>
+                                                                        <div className="p-4 bg-blue-50/70 rounded-xl border border-blue-200 text-xs flex items-center justify-between gap-3 flex-wrap">
+                                                                            <div className="flex items-center gap-2 text-blue-800 font-semibold">
+                                                                                <ShieldCheck size={16} className="text-blue-600 shrink-0" />
+                                                                                <span>Document request review is awaiting Super Admin decision.</span>
                                                                             </div>
-                                                                            <p className="text-xs text-rose-700">
-                                                                                Select the reason for rejecting this document request. The student will receive a notification with this explanation.
-                                                                            </p>
-
-                                                                            <div className="space-y-2">
-                                                                                {[
-                                                                                    { id: 'incomplete', label: 'Incomplete Requirements (Missing forms or credentials)' },
-                                                                                    { id: 'invalid', label: 'Invalid Information (Student data or program mismatch)' },
-                                                                                    { id: 'others', label: 'Other Reason (Specify detailed reason below)' }
-                                                                                ].map((opt) => (
-                                                                                    <label
-                                                                                        key={opt.id}
-                                                                                        className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer text-xs font-semibold transition-all ${
-                                                                                            rejectionReason === opt.id
-                                                                                                ? 'bg-white border-rose-400 text-rose-900 shadow-xs'
-                                                                                                : 'bg-white/70 border-slate-200 text-slate-700 hover:bg-white'
-                                                                                        }`}
-                                                                                    >
-                                                                                        <input
-                                                                                            type="radio"
-                                                                                            name="rejectionReason"
-                                                                                            value={opt.id}
-                                                                                            checked={rejectionReason === opt.id}
-                                                                                            onChange={(e) => setRejectionReason(e.target.value)}
-                                                                                            className="text-rose-600 focus:ring-rose-500"
-                                                                                        />
-                                                                                        <span>{opt.label}</span>
-                                                                                    </label>
-                                                                                ))}
-                                                                            </div>
-
-                                                                            <div>
-                                                                                <label className="block text-xs font-bold text-slate-600 mb-1">
-                                                                                    Additional Remarks {rejectionReason === 'others' && <span className="text-rose-600">*</span>}
-                                                                                </label>
-                                                                                <textarea
-                                                                                    className="w-full p-3 border border-slate-200 rounded-xl text-xs outline-none focus:border-rose-400 bg-white"
-                                                                                    rows="2"
-                                                                                    placeholder={rejectionReason === 'others' ? 'Please explain the specific reason for rejecting this request...' : 'Optional specific notes for the student...'}
-                                                                                    value={manualRejectionReason}
-                                                                                    onChange={(e) => setManualRejectionReason(e.target.value)}
-                                                                                ></textarea>
-                                                                            </div>
-
-                                                                            <div className="flex items-center gap-2 pt-1">
-                                                                                <button
-                                                                                    className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs px-5 py-2.5 rounded-full shadow-sm cursor-pointer disabled:opacity-50"
-                                                                                    onClick={handleRejectDocumentRequest}
-                                                                                    disabled={actionLoading}
-                                                                                >
-                                                                                    {actionLoading ? 'Rejecting...' : 'Confirm Rejection'}
-                                                                                </button>
-                                                                                <button
-                                                                                    className="bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs px-4 py-2.5 rounded-full border border-slate-200 cursor-pointer"
-                                                                                    onClick={() => setShowRejectForm(false)}
-                                                                                >
-                                                                                    Cancel
-                                                                                </button>
-                                                                            </div>
+                                                                            <span className="px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 font-bold uppercase text-[10px] tracking-wider">
+                                                                                Awaiting Super Admin Decision
+                                                                            </span>
                                                                         </div>
-                                                                    )}
-                                                                </div>
-                                                            ) : (
-                                                                <div className="p-4 bg-blue-50/70 rounded-xl border border-blue-200 text-xs flex items-center justify-between gap-3 flex-wrap">
-                                                                    <div className="flex items-center gap-2 text-blue-800 font-semibold">
-                                                                        <ShieldCheck size={16} className="text-blue-600 shrink-0" />
-                                                                        <span>Payment is verified. Document request review is awaiting Super Admin decision.</span>
-                                                                    </div>
-                                                                    <span className="px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 font-bold uppercase text-[10px] tracking-wider">
-                                                                        Awaiting Super Admin Decision
-                                                                    </span>
-                                                                </div>
-                                                            )
-                                                        )}
-
-                                                        {status === 'In Process' && (
-                                                            <div className="flex items-center justify-between gap-3 flex-wrap pt-2 border-t border-slate-100">
-                                                                <div className="flex items-center gap-2 text-emerald-700 text-xs font-bold bg-emerald-50 px-3.5 py-2 rounded-xl border border-emerald-200">
-                                                                    <CheckCircle2 size={15} className="text-emerald-600" />
-                                                                    <span>Document Request Approved & In Process</span>
-                                                                </div>
-                                                                {isSuperAdmin && (
-                                                                    <button
-                                                                        className="bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold text-xs px-6 py-2.5 rounded-full border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-2 cursor-pointer"
-                                                                        onClick={() => setCurrentStep(2)}
-                                                                    >
-                                                                        <span>Proceed to {isBlockchainEligible ? 'Document Upload' : 'Finalize & Release'}</span>
-                                                                        <ChevronRight size={14} />
-                                                                    </button>
+                                                                    )
                                                                 )}
-                                                            </div>
+
+                                                                {status === 'In Process' && (
+                                                                    <div className="flex items-center justify-between gap-3 flex-wrap pt-2 border-t border-slate-100">
+                                                                        <div className="flex items-center gap-2 text-emerald-700 text-xs font-bold bg-emerald-50 px-3.5 py-2 rounded-xl border border-emerald-200">
+                                                                            <CheckCircle2 size={15} className="text-emerald-600" />
+                                                                            <span>Document Request Approved & In Process</span>
+                                                                        </div>
+                                                                        {isSuperAdmin && (
+                                                                            <button
+                                                                                className="bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold text-xs px-6 py-2.5 rounded-full border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-2 cursor-pointer"
+                                                                                onClick={() => setCurrentStep(2)}
+                                                                            >
+                                                                                <span>Proceed to {isBlockchainEligible ? 'Document Upload' : 'Finalize & Release'}</span>
+                                                                                <ChevronRight size={14} />
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
+                                                                )}
+                                                            </>
                                                         )}
-                                                    </>
-                                                )}
-                                            </div>
-                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
 
                                         {/* Super Admin Bypass Override (if needed) */}
                                         {isSuperAdmin && status === 'Pending' && (
