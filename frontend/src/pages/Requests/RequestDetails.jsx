@@ -87,8 +87,8 @@ const RequestDetails = () => {
             const found = res.data;
             const foundTx = txRes.data;
 
-            // Auto-initialize rejection form if payment was rejected but document request is still pending
-            if (foundTx && foundTx.status === 'Rejected' && found && found.status === 'Pending') {
+            // Auto-initialize rejection form if payment was rejected but document request is not yet rejected
+            if (foundTx && foundTx.status === 'Rejected' && found && found.status !== 'Rejected') {
                 setShowRejectForm(true);
                 setRejectionReason('unpaid');
                 if (foundTx.adminRemarks) {
@@ -102,6 +102,10 @@ const RequestDetails = () => {
 
             if (found && found.status === 'Released') {
                 setCurrentStep(isBlockchain ? 4 : 3);
+            } else if (foundTx && foundTx.status === 'Rejected' && found && found.status !== 'Rejected') {
+                // Payment was rejected but document request has not been confirmed rejected yet:
+                // keep on Step 1 (Stage 2: Verify Document Request) so admin can review remarks and confirm rejection
+                setCurrentStep(1);
             } else if (found && found.status === 'In Process') {
                 if (isBlockchain) {
                     // Do not auto-skip Step 2! Land on Step 2 so user can inspect the existing document,
@@ -940,7 +944,7 @@ const RequestDetails = () => {
                                                                 </div>
 
                                                                 {/* Request Status Decision Area */}
-                                                                {status === 'Pending' && (
+                                                                {(status === 'Pending' || isPaymentRejected) && (
                                                                     hasProcessingAccess ? (
                                                                         <div className="space-y-4 pt-2">
                                                                             {!showRejectForm && !isPaymentRejected ? (
@@ -1075,7 +1079,7 @@ const RequestDetails = () => {
                                                                     )
                                                                 )}
 
-                                                                {status === 'In Process' && (
+                                                                {status === 'In Process' && !isPaymentRejected && (
                                                                     <div className="flex items-center justify-between gap-3 flex-wrap pt-2 border-t border-slate-100">
                                                                         <div className="flex items-center gap-2 text-emerald-700 text-xs font-bold bg-emerald-50 px-3.5 py-2 rounded-xl border border-emerald-200">
                                                                             <CheckCircle2 size={15} className="text-emerald-600" />
@@ -1100,7 +1104,7 @@ const RequestDetails = () => {
                                         })()}
 
                                         {/* Super Admin Bypass Override (if needed) */}
-                                        {isSuperAdmin && status === 'Pending' && (
+                                        {isSuperAdmin && status === 'Pending' && !isPaymentRejected && (
                                             <div className="pt-2 flex justify-end">
                                                 <button
                                                     className="bg-slate-100 text-slate-700 hover:bg-slate-200 px-5 py-2 rounded-full font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"

@@ -142,7 +142,7 @@ const Transactions = () => {
         adminRemarks: adminNote
       });
 
-      if (response.data.success) {
+      if (response.data && (response.data.success || response.data.transactionId || response.data.status)) {
         setTransactions(prev => prev.map(tx =>
           tx.transactionId === selectedTx.transactionId
             ? { ...tx, status, adminRemarks: adminNote }

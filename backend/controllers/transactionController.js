@@ -517,7 +517,7 @@ const TransactionController = {
         ipAddress: getClientIp(req)
       });
 
-      res.json(transaction);
+      res.json({ success: true, ...(transaction.toObject ? transaction.toObject() : transaction) });
     } catch (error) {
       console.error('Verify error:', error);
       res.status(500).json({ message: 'Error verifying transaction' });
