@@ -248,26 +248,50 @@ const RequestController = {
 
       if (status) {
         try {
-          let message = `Your request #${request.requestId} for ${request.documentType} is now ${status}!`;
+          let targetEmail = request.email || '';
+          let targetUserId = request.userId || undefined;
+
+          if (!targetEmail && request.studentId) {
+            const studentUser = await Student.findOne({ studentId: request.studentId }).lean() ||
+                                await Alumni.findOne({ studentId: request.studentId }).lean();
+            if (studentUser) {
+              targetEmail = studentUser.email || '';
+              targetUserId = targetUserId || studentUser._id;
+            }
+          }
+
+          if (targetEmail && !targetUserId) {
+            const studentUser = await Student.findOne({ email: targetEmail }).lean() ||
+                                await Alumni.findOne({ email: targetEmail }).lean();
+            if (studentUser) {
+              targetUserId = studentUser._id;
+            }
+          }
+
           let title = 'Request Status Update';
-          if (status === 'Released') {
+          let message = `Your request #${request.requestId} for ${request.documentType} is now ${status}!`;
+
+          if (status === 'In Process') {
+            title = 'Document Request Approved';
+            message = `Your document request #${request.requestId} for ${request.documentType} has been approved and is now being processed!`;
+          } else if (status === 'Released') {
             title = 'Document Ready for Pickup';
-            message = `Your request #${request.requestId} for ${request.documentType} is ready for pickup!`;
-          } else if (status === 'Rejected' && request.rejectionReason) {
-            title = 'Request Rejected';
+            message = `Your document request #${request.requestId} for ${request.documentType} is ready for pickup/delivery!`;
+          } else if (status === 'Rejected') {
+            title = 'Document Request Rejected';
             const readableReason = request.rejectionReason === 'incomplete' ? 'Incomplete Requirements' :
                                    request.rejectionReason === 'invalid' ? 'Invalid Information' :
                                    request.rejectionReason === 'unpaid' ? 'Payment Issue' :
-                                   request.rejectionReason;
-            message = `Your request #${request.requestId} for ${request.documentType} was rejected. Reason: ${readableReason}`;
+                                   (request.rejectionReason || 'Requirements not met');
+            message = `Your document request #${request.requestId} for ${request.documentType} was rejected. Reason: ${readableReason}`;
           }
           
           await Notification.create({
             title,
             message,
             isRead: false,
-            email: request.email || '',
-            userId: request.userId || undefined,
+            email: targetEmail,
+            userId: targetUserId,
             targetRole: 'student',
             type: 'request',
             link: `/requests/${request.requestId}`

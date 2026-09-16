@@ -329,18 +329,46 @@ const TransactionController = {
 
       if (!transaction) return res.status(404).json({ message: 'Transaction not found' });
 
-      if (status === 'Completed') {
-        const updatedReq = await Request.findOneAndUpdate(
-          {
-            $or: [
-              { requestId: transaction.requestId },
-              ...(mongoose.Types.ObjectId.isValid(transaction.requestId) ? [{ _id: transaction.requestId }] : [])
-            ]
-          },
-          { status: 'In Process', mobileStatus: 'in_process' },
-          { new: true }
-        );
+      // Resolve linked request and target student email/userId for notifications
+      let targetEmail = transaction.payerEmail || '';
+      let targetUserId = transaction.userId || undefined;
+      let targetDocType = transaction.documentType || 'Document';
 
+      const linkedReq = await Request.findOne({
+        $or: [
+          { requestId: transaction.requestId },
+          ...(mongoose.Types.ObjectId.isValid(transaction.requestId) ? [{ _id: transaction.requestId }] : [])
+        ]
+      });
+
+      if (linkedReq) {
+        targetEmail = targetEmail || linkedReq.email || '';
+        targetUserId = targetUserId || linkedReq.userId || undefined;
+        targetDocType = linkedReq.documentType || targetDocType;
+        if (!targetEmail && linkedReq.studentId) {
+          try {
+            const Student = require('../models/Users/Student');
+            const Alumni = require('../models/Users/Alumni');
+            const st = await Student.findOne({ studentId: linkedReq.studentId }).lean() || await Alumni.findOne({ studentId: linkedReq.studentId }).lean();
+            if (st) {
+              targetEmail = st.email || '';
+              targetUserId = targetUserId || st._id;
+            }
+          } catch (_e) {}
+        }
+      }
+
+      if (!targetUserId && targetEmail) {
+        try {
+          const Student = require('../models/Users/Student');
+          const Alumni = require('../models/Users/Alumni');
+          const st = await Student.findOne({ email: targetEmail }).lean() || await Alumni.findOne({ email: targetEmail }).lean();
+          if (st) targetUserId = st._id;
+        } catch (_e) {}
+      }
+
+      if (status === 'Completed') {
+        // Mark payment receipts as verified
         if (mongoose.connection.readyState === 1) {
           try {
             await mongoose.connection.db.collection('receipts').updateMany(
@@ -354,33 +382,57 @@ const TransactionController = {
             );
           } catch (_e) {}
         }
-        
-        if (updatedReq) {
-          await Notification.create({
-            title: 'Payment Verified',
-            message: `Your request #${updatedReq.requestId} for ${updatedReq.documentType} is now In Process!`,
-            isRead: false,
-            email: updatedReq.email || '',
-            userId: updatedReq.userId || undefined,
-            targetRole: 'student',
-            type: 'request',
-            link: `/requests/${updatedReq.requestId}`
+
+        // Update linked request's mobileStatus while preserving status for document verification
+        if (linkedReq) {
+          await Request.findByIdAndUpdate(linkedReq._id, {
+            mobileStatus: 'payment_verified'
           });
         }
-      }
+        
+        try {
+          await Notification.create({
+            title: 'Payment Approved',
+            message: `Your payment of ₱${transaction.amount} for Request #${transaction.requestId} (${targetDocType}) has been verified and approved.`,
+            isRead: false,
+            email: targetEmail,
+            userId: targetUserId,
+            targetRole: 'student',
+            type: 'payment',
+            link: `/requests/${transaction.requestId}`
+          });
+        } catch (notifErr) {
+          console.error('Failed to notify student of payment approval:', notifErr);
+        }
+      } else if (status === 'Needs Update') {
+        if (linkedReq) {
+          await Request.findByIdAndUpdate(linkedReq._id, {
+            mobileStatus: 'needs_update'
+          });
+        }
 
-      if (status === 'Rejected') {
-        const updatedReq = await Request.findOneAndUpdate(
-          {
-            $or: [
-              { requestId: transaction.requestId },
-              ...(mongoose.Types.ObjectId.isValid(transaction.requestId) ? [{ _id: transaction.requestId }] : [])
-            ],
-            status: 'Pending'
-          },
-          { status: 'Rejected', mobileStatus: 'rejected', rejectionReason: 'Payment Issue' },
-          { new: true }
-        );
+        try {
+          await Notification.create({
+            title: 'Payment Receipt Needs Update',
+            message: `Your payment receipt for Request #${transaction.requestId} needs update: ${adminRemarks || 'Please re-upload a clear copy of your payment receipt.'}`,
+            isRead: false,
+            email: targetEmail,
+            userId: targetUserId,
+            targetRole: 'student',
+            type: 'payment',
+            link: `/requests/${transaction.requestId}`
+          });
+        } catch (notifErr) {
+          console.error('Failed to notify student of payment update needed:', notifErr);
+        }
+      } else if (status === 'Rejected') {
+        if (linkedReq) {
+          await Request.findByIdAndUpdate(linkedReq._id, {
+            status: 'Rejected',
+            mobileStatus: 'rejected',
+            rejectionReason: 'Payment Issue'
+          });
+        }
 
         if (mongoose.connection.readyState === 1) {
           try {
@@ -396,17 +448,19 @@ const TransactionController = {
           } catch (_e) {}
         }
 
-        if (updatedReq) {
+        try {
           await Notification.create({
             title: 'Payment Rejected',
-            message: `Your request #${updatedReq.requestId} for ${updatedReq.documentType} was rejected. Reason: Payment Issue`,
+            message: `Your payment for Request #${transaction.requestId} was rejected. ${adminRemarks ? 'Reason: ' + adminRemarks : 'Invalid or unverified receipt.'}`,
             isRead: false,
-            email: updatedReq.email || '',
-            userId: updatedReq.userId || undefined,
+            email: targetEmail,
+            userId: targetUserId,
             targetRole: 'student',
             type: 'payment',
-            link: `/requests/${updatedReq.requestId}`
+            link: `/requests/${transaction.requestId}`
           });
+        } catch (notifErr) {
+          console.error('Failed to notify student of payment rejection:', notifErr);
         }
       }
 
@@ -554,12 +608,23 @@ const TransactionController = {
         ? `Your refund request for ₱${refund.amount} has been approved!`
         : `Your refund request was rejected. ${adminRemarks ? 'Reason: ' + adminRemarks : ''}`;
 
+      let targetEmail = refund.email || refund.studentEmail || '';
+      let targetUserId = refund.userId || undefined;
+      if (!targetUserId && targetEmail) {
+        try {
+          const Student = require('../models/Users/Student');
+          const Alumni = require('../models/Users/Alumni');
+          const st = await Student.findOne({ email: targetEmail }).lean() || await Alumni.findOne({ email: targetEmail }).lean();
+          if (st) targetUserId = st._id;
+        } catch (_e) {}
+      }
+
       await Notification.create({
         title: statusTitle,
         message: statusMessage,
         isRead: false,
-        email: refund.email || refund.studentEmail || '',
-        userId: refund.userId || undefined,
+        email: targetEmail,
+        userId: targetUserId,
         targetRole: 'student',
         type: 'refund',
         link: '/payments?tab=refunds'

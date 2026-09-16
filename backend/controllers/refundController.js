@@ -133,12 +133,23 @@ const RefundController = {
         const statusMessage = status === 'Approved'
           ? `Your refund request for ₱${refund.amount} has been approved!`
           : `Your refund request was rejected. ${adminRemarks ? 'Reason: ' + adminRemarks : ''}`;
+        let targetEmail = refund.studentEmail || '';
+        let targetUserId = refund.userId || undefined;
+        if (!targetUserId && targetEmail) {
+          try {
+            const Student = require('../models/Users/Student');
+            const Alumni = require('../models/Users/Alumni');
+            const st = await Student.findOne({ email: targetEmail }).lean() || await Alumni.findOne({ email: targetEmail }).lean();
+            if (st) targetUserId = st._id;
+          } catch (_e) {}
+        }
+
         await Notification.create({
           title: statusTitle,
           message: statusMessage,
           isRead: false,
-          email: refund.studentEmail || '',
-          userId: refund.userId || undefined,
+          email: targetEmail,
+          userId: targetUserId,
           targetRole: 'student',
           type: 'refund',
           link: '/payments?tab=refunds'
