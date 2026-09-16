@@ -151,6 +151,7 @@ const RefundController = {
           isRead: false,
           email: targetEmail,
           userId: targetUserId,
+          studentId: refund.studentId || undefined,
           targetRole: 'student',
           type: 'refund',
           link: '/payments?tab=refunds'

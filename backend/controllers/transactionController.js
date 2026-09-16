@@ -402,6 +402,7 @@ const TransactionController = {
             isRead: false,
             email: targetEmail,
             userId: targetUserId,
+            studentId: linkedReq?.studentId || undefined,
             targetRole: 'student',
             type: 'payment',
             link: `/requests/${transaction.requestId}`
@@ -423,6 +424,7 @@ const TransactionController = {
             isRead: false,
             email: targetEmail,
             userId: targetUserId,
+            studentId: linkedReq?.studentId || undefined,
             targetRole: 'student',
             type: 'payment',
             link: `/requests/${transaction.requestId}`
@@ -460,6 +462,7 @@ const TransactionController = {
             isRead: false,
             email: targetEmail,
             userId: targetUserId,
+            studentId: linkedReq?.studentId || undefined,
             targetRole: 'student',
             type: 'payment',
             link: `/requests/${transaction.requestId}`
@@ -630,6 +633,7 @@ const TransactionController = {
         isRead: false,
         email: targetEmail,
         userId: targetUserId,
+        studentId: refund.studentId || undefined,
         targetRole: 'student',
         type: 'refund',
         link: '/payments?tab=refunds'
