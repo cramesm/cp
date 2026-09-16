@@ -976,16 +976,6 @@ const RequestDetails = () => {
                                                             <Eye size={14} className="text-slate-500" />
                                                             <span>Preview Attached PDF</span>
                                                         </a>
-                                                        {isSuperAdmin && !uploadedFile && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setCurrentStep(3)}
-                                                                className="bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold text-xs px-5 py-2.5 rounded-full border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 transition-all flex items-center gap-2 cursor-pointer"
-                                                            >
-                                                                <span>Keep As Is & Proceed to Step 3</span>
-                                                                <ChevronRight size={14} />
-                                                            </button>
-                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
