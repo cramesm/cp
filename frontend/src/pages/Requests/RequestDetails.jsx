@@ -788,7 +788,7 @@ const RequestDetails = () => {
                                         </div>
 
                                         {/* Super Admin Bypass Override (if needed) */}
-                                        {(!paymentTx || paymentTx.status !== 'Completed') && isSuperAdmin && (
+                                        {isSuperAdmin && status === 'Pending' && (
                                             <div className="pt-2 flex justify-end">
                                                 <button
                                                     className="bg-slate-100 text-slate-700 hover:bg-slate-200 px-5 py-2 rounded-full font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
