@@ -209,8 +209,9 @@ const RequestController = {
         return res.status(403).json({ message: 'Only super admins can perform force overrides.' });
       }
 
-      if (status && userRole !== 'super admin') {
-        return res.status(403).json({ message: 'Only Super Admin can update the processing status of a request.' });
+      const isStaffOrAdmin = ['super admin', 'registrar', 'registrar staff', 'admin', 'staff'].includes(userRole);
+      if (status && !isStaffOrAdmin) {
+        return res.status(403).json({ message: 'Only authorized staff and administrators can update the processing status of a request.' });
       }
 
       const updateData = {};
@@ -359,8 +360,9 @@ const RequestController = {
   uploadDocumentFile: async (req, res) => {
     try {
       const userRole = (req.user?.role || '').toLowerCase();
-      if (userRole !== 'super admin') {
-        return res.status(403).json({ message: 'Only Super Admin can upload and process document files.' });
+      const isStaffOrAdmin = ['super admin', 'registrar', 'registrar staff', 'admin', 'staff'].includes(userRole);
+      if (!isStaffOrAdmin) {
+        return res.status(403).json({ message: 'Only authorized staff and administrators can upload and process document files.' });
       }
 
       if (!req.file) {

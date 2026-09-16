@@ -313,8 +313,9 @@ const TransactionController = {
   verifyTransaction: async (req, res) => {
     try {
       const userRole = (req.user?.role || '').toLowerCase();
-      if (userRole !== 'super admin') {
-        return res.status(403).json({ message: 'Only Super Admin can verify payment transactions.' });
+      const isStaffOrAdmin = ['super admin', 'registrar', 'registrar staff', 'admin', 'staff'].includes(userRole);
+      if (!isStaffOrAdmin) {
+        return res.status(403).json({ message: 'Only authorized staff and administrators can verify payment transactions.' });
       }
 
       const { status, adminRemarks } = req.body;

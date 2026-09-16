@@ -23,9 +23,11 @@ const Transactions = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'payments'); // 'payments' | 'refunds'
 
-  // Super Admin Check
+  // Role Checks
   const userRole = (localStorage.getItem('userRole') || '').toLowerCase();
   const isSuperAdmin = userRole === 'super admin';
+  const isStaffOrAdmin = ['super admin', 'registrar', 'registrar staff', 'admin', 'staff'].includes(userRole);
+  const canVerify = isStaffOrAdmin;
   const { confirmConfig, feedbackConfig, showConfirm, showFeedback, closeConfirm, closeFeedback } = useModals();
 
   // Refund states
@@ -883,7 +885,7 @@ const Transactions = () => {
                           </td>
                           <td className="py-3.5 px-5 align-middle text-right">
                             <div className="flex items-center justify-end gap-1.5">
-                              {tx.status === 'Pending Verification' && isSuperAdmin ? (
+                              {tx.status === 'Pending Verification' && canVerify ? (
                                 <button
                                   onClick={() => { setSelectedTx(tx); setAdminNote(''); setError(''); }}
                                   className="bg-[#2c3543] hover:bg-[#1f2631] text-white py-1 px-3.5 rounded-full text-[11.5px] font-bold border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 hover:shadow-[0_4px_8px_rgba(0,0,0,0.25)] active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-1.5 cursor-pointer"
@@ -1157,7 +1159,7 @@ const Transactions = () => {
                       </div>
                     </div>
 
-                    {isSuperAdmin && (
+                    {canVerify && (
                       <div className="flex flex-col flex-1">
                         <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">
                           Admin Remarks / Note
@@ -1179,7 +1181,7 @@ const Transactions = () => {
                   </div>
 
                   {/* Actions */}
-                  {isSuperAdmin ? (
+                  {canVerify ? (
                     <div className="flex gap-2 pt-4 border-t border-gray-100">
                       <button
                         onClick={() => handleVerify('Rejected')}
@@ -1202,7 +1204,7 @@ const Transactions = () => {
                     </div>
                   ) : (
                     <div className="p-3.5 bg-amber-50 text-amber-800 rounded-xl text-xs font-semibold text-center border border-amber-200 mt-4">
-                      Staff View: Only the Super Admin can verify, reject, or request updates for payments.
+                      View Only: Only authorized staff or administrators can verify, reject, or request updates for payments.
                     </div>
                   )}
                 </div>
@@ -1262,7 +1264,7 @@ const Transactions = () => {
                 </div>
 
                 <div>
-                  {isSuperAdmin ? (
+                  {canVerify ? (
                     <>
                       <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">
                         Admin Remarks
@@ -1303,7 +1305,7 @@ const Transactions = () => {
                     </>
                   ) : (
                     <div className="p-3.5 bg-amber-50 text-amber-800 rounded-xl text-xs font-semibold text-center border border-amber-200 mt-2">
-                      Staff View: Only the Super Admin can approve or reject refund requests.
+                      View Only: Only authorized staff or administrators can approve or reject refund requests.
                     </div>
                   )}
                 </div>

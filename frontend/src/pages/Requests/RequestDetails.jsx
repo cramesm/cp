@@ -20,7 +20,8 @@ const RequestDetails = () => {
 
     const userRole = (localStorage.getItem('userRole') || '').toLowerCase();
     const isSuperAdmin = userRole === 'super admin';
-    const hasProcessingAccess = isSuperAdmin;
+    const isStaffOrAdmin = ['super admin', 'registrar', 'registrar staff', 'admin', 'staff'].includes(userRole);
+    const hasProcessingAccess = isStaffOrAdmin;
 
     // Core Data State
     const [requestData, setRequestData] = useState(null);
@@ -486,16 +487,17 @@ const RequestDetails = () => {
                         </div>
                     )}
 
-                    {!isSuperAdmin && status !== 'Rejected' && (
+                    {/* View-Only Notice for Non-Processing Users */}
+                    {!hasProcessingAccess && status !== 'Rejected' && (
                         <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-4 sm:p-5 rounded-2xl border border-amber-200 mb-8 flex items-start gap-3.5 text-amber-900 shadow-2xs">
                             <ShieldAlert className="shrink-0 text-amber-600 mt-0.5" size={22} />
                             <div>
                                 <div className="flex items-center gap-2">
-                                    <h4 className="font-extrabold text-sm text-amber-950">Staff View-Only Access</h4>
+                                    <h4 className="font-extrabold text-sm text-amber-950">View-Only Access</h4>
                                     <span className="px-2 py-0.5 bg-amber-200/70 text-amber-900 rounded-md text-[10px] font-extrabold uppercase tracking-wider">Read Only</span>
                                 </div>
                                 <p className="text-xs text-amber-800 mt-1 leading-relaxed">
-                                    Staff accounts have view-only access to this document request. Only the <strong className="text-amber-950 font-bold">Super Admin</strong> can change the process, verify payments, approve or reject requests, and upload or release documents.
+                                    You have view-only access to this document request. Authorized staff and administrators can verify payments, approve or reject requests, and upload or release documents.
                                 </p>
                             </div>
                         </div>
@@ -509,7 +511,7 @@ const RequestDetails = () => {
                                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 sticky top-8">
                                     <div className="flex items-center justify-between mb-6">
                                         <h3 className="font-bold text-slate-800 uppercase tracking-wider text-xs">Processing Steps</h3>
-                                        {isSuperAdmin ? (
+                                        {hasProcessingAccess ? (
                                             <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">Interactive</span>
                                         ) : (
                                             <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">View Only</span>
@@ -529,12 +531,12 @@ const RequestDetails = () => {
                                             <div
                                                 key={s.step}
                                                 onClick={() => {
-                                                    if (isSuperAdmin) setCurrentStep(s.step);
+                                                    if (hasProcessingAccess) setCurrentStep(s.step);
                                                 }}
                                                 className={`flex gap-4 ${currentStep === s.step ? 'opacity-100' : 'opacity-40'} ${
-                                                    isSuperAdmin ? 'cursor-pointer hover:opacity-100 transition-opacity' : 'cursor-default select-none'
+                                                    hasProcessingAccess ? 'cursor-pointer hover:opacity-100 transition-opacity' : 'cursor-default select-none'
                                                 }`}
-                                                title={isSuperAdmin ? `Super Admin: Click to jump to Step ${s.step}` : 'Staff view: Step navigation is restricted to Super Admin'}
+                                                title={hasProcessingAccess ? `Click to jump to Step ${s.step}` : 'Step navigation is restricted to authorized staff'}
                                             >
                                                 <div className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center font-bold text-sm ${currentStep >= s.step ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
                                                     {currentStep > s.step ? <CheckCircle2 size={16} /> : s.step}
@@ -744,7 +746,7 @@ const RequestDetails = () => {
                                                     )}
 
                                                     {(paymentTx.status === 'Pending Verification' || isEditingPayment) && (
-                                                        isSuperAdmin ? (
+                                                        hasProcessingAccess ? (
                                                             <div className="p-4 bg-slate-50 rounded-xl space-y-3 border border-slate-200">
                                                                 <div className="flex items-center justify-between">
                                                                     <span className="text-xs font-bold text-slate-700">
@@ -806,10 +808,10 @@ const RequestDetails = () => {
                                                             <div className="p-4 bg-amber-50/70 rounded-xl border border-amber-200 text-xs flex items-center justify-between gap-3 flex-wrap">
                                                                 <div className="flex items-center gap-2 text-amber-800 font-semibold">
                                                                     <Clock size={16} className="text-amber-600 shrink-0" />
-                                                                    <span>Payment receipt is pending verification. Only the Super Admin can approve or reject payment receipts.</span>
+                                                                    <span>Payment receipt is pending verification. Awaiting staff or administrator verification.</span>
                                                                 </div>
                                                                 <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 font-bold uppercase text-[10px] tracking-wider">
-                                                                    Awaiting Super Admin Verification
+                                                                    Awaiting Verification
                                                                 </span>
                                                             </div>
                                                         )
@@ -939,7 +941,7 @@ const RequestDetails = () => {
 
                                                                 {/* Request Status Decision Area */}
                                                                 {status === 'Pending' && (
-                                                                    isSuperAdmin ? (
+                                                                    hasProcessingAccess ? (
                                                                         <div className="space-y-4 pt-2">
                                                                             {!showRejectForm && !isPaymentRejected ? (
                                                                                 <div>
@@ -1064,10 +1066,10 @@ const RequestDetails = () => {
                                                                         <div className="p-4 bg-blue-50/70 rounded-xl border border-blue-200 text-xs flex items-center justify-between gap-3 flex-wrap">
                                                                             <div className="flex items-center gap-2 text-blue-800 font-semibold">
                                                                                 <ShieldCheck size={16} className="text-blue-600 shrink-0" />
-                                                                                <span>Document request review is awaiting Super Admin decision.</span>
+                                                                                <span>Document request review is awaiting staff decision.</span>
                                                                             </div>
                                                                             <span className="px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 font-bold uppercase text-[10px] tracking-wider">
-                                                                                Awaiting Super Admin Decision
+                                                                                Awaiting Decision
                                                                             </span>
                                                                         </div>
                                                                     )
@@ -1079,7 +1081,7 @@ const RequestDetails = () => {
                                                                             <CheckCircle2 size={15} className="text-emerald-600" />
                                                                             <span>Document Request Approved & In Process</span>
                                                                         </div>
-                                                                        {isSuperAdmin && (
+                                                                        {hasProcessingAccess && (
                                                                             <button
                                                                                 className="bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold text-xs px-6 py-2.5 rounded-full border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-2 cursor-pointer"
                                                                                 onClick={() => setCurrentStep(2)}
@@ -1184,7 +1186,7 @@ const RequestDetails = () => {
                                             </div>
                                         )}
 
-                                        {isSuperAdmin ? (
+                                        {hasProcessingAccess ? (
                                             <div>
                                                 {requestData.documentFile && (
                                                     <div className="mb-4 flex items-center justify-between gap-3 flex-wrap">
@@ -1272,7 +1274,7 @@ const RequestDetails = () => {
                                                         {requestData.documentFile ? 'Official Document Attached' : 'No Official Document Uploaded Yet'}
                                                     </p>
                                                     <p className="text-slate-400 text-xs mt-1 max-w-md mx-auto">
-                                                        Staff Read-Only View: Only the Super Admin can upload and process the official PDF document for this request.
+                                                        View-Only View: Only authorized staff or administrators can upload and process the official PDF document for this request.
                                                     </p>
                                                 </div>
                                                 {requestData.documentFile && (
@@ -1346,7 +1348,7 @@ const RequestDetails = () => {
                                             </div>
                                         </div>
 
-                                        {isSuperAdmin ? (
+                                        {hasProcessingAccess ? (
                                             <div className="flex items-center gap-3 pt-6 border-t border-slate-100">
                                                 <button
                                                     className="bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs px-6 py-2.5 rounded-full border border-slate-200 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 transition-all flex items-center gap-1.5 cursor-pointer"
@@ -1371,10 +1373,10 @@ const RequestDetails = () => {
                                             <div className="p-4 bg-blue-50/70 rounded-xl border border-blue-200 text-xs text-blue-800 font-medium flex items-center justify-between gap-3 flex-wrap">
                                                 <div className="flex items-center gap-2">
                                                     <Clock size={16} className="text-blue-600 shrink-0" />
-                                                    <span>Document request is ready for final release. Only the Super Admin can finalize and release this request.</span>
+                                                    <span>Document request is ready for final release. Awaiting staff release.</span>
                                                 </div>
                                                 <span className="px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 font-bold uppercase text-[10px] tracking-wider">
-                                                    Awaiting Super Admin Release
+                                                    Awaiting Release
                                                 </span>
                                             </div>
                                         )}
@@ -1476,7 +1478,7 @@ const RequestDetails = () => {
                                                 </div>
                                             </div>
 
-                                        {isSuperAdmin ? (
+                                        {hasProcessingAccess ? (
                                             <div className="flex items-center gap-3 pt-6 border-t border-slate-100">
                                                 <button
                                                     className="bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs px-6 py-2.5 rounded-full border border-slate-200 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 transition-all flex items-center gap-1.5 cursor-pointer"
@@ -1486,7 +1488,9 @@ const RequestDetails = () => {
                                                     <span>Back to Step 2</span>
                                                 </button>
                                                 <button
-                                                    className="flex-1 text-white py-2.5 px-6 rounded-full font-bold text-xs border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 bg-[#2c3543] hover:bg-[#1f2631]"
+                                                    className={`flex-1 text-white py-2.5 px-6 rounded-full font-bold text-xs border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                                                        isBlockchainEligible ? 'bg-[#2c3543] hover:bg-[#1f2631]' : 'bg-emerald-600 hover:bg-emerald-700'
+                                                    }`}
                                                     disabled={actionLoading || (isBlockchainEligible && !blockchainData.studentIDNumber)}
                                                     onClick={() => showConfirm({
                                                         title: isBlockchainEligible ? 'Secure to Blockchain' : 'Finalize Document',
@@ -1501,10 +1505,10 @@ const RequestDetails = () => {
                                             <div className="p-4 bg-blue-50/70 rounded-xl border border-blue-200 text-xs text-blue-800 font-medium flex items-center justify-between gap-3 flex-wrap">
                                                 <div className="flex items-center gap-2">
                                                     <ShieldCheck size={16} className="text-blue-600 shrink-0" />
-                                                    <span>Document is ready for blockchain recording. Only the Super Admin can secure and finalize this document.</span>
+                                                    <span>Document is ready for blockchain recording. Awaiting staff recording.</span>
                                                 </div>
                                                 <span className="px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 font-bold uppercase text-[10px] tracking-wider">
-                                                    Awaiting Super Admin Recording
+                                                    Awaiting Recording
                                                 </span>
                                             </div>
                                         )}

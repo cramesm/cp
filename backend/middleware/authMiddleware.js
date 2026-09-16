@@ -67,7 +67,8 @@ const superAdminOnly = (req, res, next) => {
 };
 
 const registrarOrSuperAdmin = (req, res, next) => {
-  if (req.user && (req.user.role === 'registrar' || req.user.role === 'super admin')) {
+  const role = (req.user?.role || '').toLowerCase();
+  if (req.user && ['registrar', 'registrar staff', 'admin', 'staff', 'super admin'].includes(role)) {
     next();
   } else {
     res.status(403).json({ message: 'Not authorized, role insufficient' });
