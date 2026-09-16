@@ -133,9 +133,9 @@ const RefundController = {
       }
 
       try {
-        const statusTitle = status === 'Approved' ? 'Refund Approved' : 'Refund Rejected';
+        const statusTitle = status === 'Approved' ? 'Refund Request Approved' : 'Refund Request Rejected';
         const statusMessage = status === 'Approved'
-          ? `Your refund request for ₱${refund.amount} has been approved!`
+          ? `Your refund request for ₱${refund.amount} has been approved. Please proceed to the Treasury Office or contact Treasury to claim your refund.${adminRemarks ? ' Note: ' + adminRemarks : ''}`
           : `Your refund request was rejected. ${adminRemarks ? 'Reason: ' + adminRemarks : ''}`;
         let targetEmail = refund.studentEmail || '';
         let targetUserId = refund.userId || undefined;
@@ -157,7 +157,7 @@ const RefundController = {
           studentId: refund.studentId || undefined,
           targetRole: 'student',
           type: 'refund',
-          link: '/payments?tab=refunds'
+          link: '/transactions?tab=refunds'
         });
       } catch (nErr) {
         console.error('Failed to notify student of refund update:', nErr);
