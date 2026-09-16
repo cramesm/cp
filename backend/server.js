@@ -36,6 +36,14 @@ app.use(helmet({
   xContentTypeOptions: true
 }));
 
+// Extract and attach clean client IP to all requests (supports Vercel, proxies, Cloudflare)
+app.use((req, res, next) => {
+  const forwarded = req.headers && req.headers['x-forwarded-for'];
+  const ip = forwarded ? forwarded.split(',')[0].trim() : (req.socket?.remoteAddress || req.ip || '');
+  req.clientIp = (ip || '').replace(/^::ffff:/, '');
+  next();
+});
+
 // Apply Global Rate Limiter
 app.use('/api', globalLimiter);
 

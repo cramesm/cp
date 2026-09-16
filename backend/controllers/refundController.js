@@ -4,6 +4,7 @@ const Transaction = require('../models/Transaction');
 const Request = require('../models/Request');
 const ActivityLog = require('../models/ActivityLog');
 const Notification = require('../models/Notification');
+const getClientIp = require('../utils/getClientIp');
 
 const RefundController = {
   // @desc    Get refunds (all for admin, own for students/alumni)
@@ -62,7 +63,8 @@ const RefundController = {
         action: 'Refund Request',
         type: 'Request',
         status: 'Successful',
-        details: `Requested refund for transaction ${transactionId}`
+        details: `Requested refund for transaction ${transactionId}`,
+        ipAddress: getClientIp(req)
       });
 
       try {
@@ -158,6 +160,20 @@ const RefundController = {
         });
       } catch (nErr) {
         console.error('Failed to notify student of refund update:', nErr);
+      }
+
+      try {
+        await ActivityLog.create({
+          userEmail: req.user.email,
+          userName: req.user.name || 'Admin',
+          action: `Refund ${status}`,
+          type: 'Refund',
+          status: 'Successful',
+          details: `${status} refund ${refund.refundId || refund._id} for transaction ${refund.transactionId}. Amount: ₱${refund.amount}. Remarks: ${adminRemarks || 'None'}`,
+          ipAddress: getClientIp(req)
+        });
+      } catch (logErr) {
+        console.error('Failed to log refund update activity:', logErr);
       }
 
       res.json({ success: true, message: 'Refund updated', refund });

@@ -7,6 +7,7 @@ const ActivityLog = require('../models/ActivityLog');
 const Notification = require('../models/Notification');
 const Student = require('../models/Users/Student');
 const Alumni = require('../models/Users/Alumni');
+const getClientIp = require('../utils/getClientIp');
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 
@@ -179,7 +180,8 @@ const RequestController = {
         action: 'Create Request',
         type: req.body.documentType || '------',
         status: 'Successful',
-        details: `Created new document request for: ${userName}`
+        details: `Created new document request for: ${userName}`,
+        ipAddress: getClientIp(req)
       });
 
       await Notification.create({
@@ -248,7 +250,8 @@ const RequestController = {
         status: 'Successful',
         details: forceOverride
           ? `[SUPER ADMIN] Bypassed verification for request ${req.params.id}, status set to ${status}`
-          : `Updated request ${req.params.id} status to ${status || 'unchanged'}`
+          : `Updated request ${req.params.id} status to ${status || 'unchanged'}`,
+        ipAddress: getClientIp(req)
       });
 
       if (status) {
@@ -332,7 +335,8 @@ const RequestController = {
         action: 'Hash Generation',
         type: request.documentType || '------',
         status: 'Successful',
-        details: `Generated secure SHA-256 hash for request ${req.params.id}`
+        details: `Generated secure SHA-256 hash for request ${req.params.id}`,
+        ipAddress: getClientIp(req)
       });
 
       res.json({ message: 'Hash generated successfully', hash });

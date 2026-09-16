@@ -5,6 +5,7 @@ const ActivityLog = require('../models/ActivityLog');
 const Notification = require('../models/Notification');
 const Refund = require('../models/Refund');
 const { uploadStream } = require('../utils/cloudinary');
+const getClientIp = require('../utils/getClientIp');
 
 const TransactionController = {
   // @desc    Get all transactions
@@ -285,7 +286,8 @@ const TransactionController = {
         action: 'Blockchain Transaction',
         type: req.body.documentType || '------',
         status: 'Successful',
-        details: `Submitted transaction to blockchain for Request: ${req.body.requestId || 'Unknown'}`
+        details: `Submitted transaction to blockchain for Request: ${req.body.requestId || 'Unknown'}`,
+        ipAddress: getClientIp(req)
       });
 
       try {
@@ -478,7 +480,8 @@ const TransactionController = {
         action: `Payment ${status}`,
         type: transaction.documentType || '------',
         status: 'Successful',
-        details: `${status} receipt for Transaction: ${transaction.transactionId}. Remarks: ${adminRemarks || 'None'}`
+        details: `${status} receipt for Transaction: ${transaction.transactionId}. Remarks: ${adminRemarks || 'None'}`,
+        ipAddress: getClientIp(req)
       });
 
       res.json(transaction);
@@ -645,7 +648,8 @@ const TransactionController = {
         action: `Refund ${status}`,
         type: 'Refund',
         status: 'Successful',
-        details: `${status} refund ${refund.refundId} for transaction ${refund.transactionId}. Amount: ₱${refund.amount}. Remarks: ${adminRemarks || 'None'}`
+        details: `${status} refund ${refund.refundId} for transaction ${refund.transactionId}. Amount: ₱${refund.amount}. Remarks: ${adminRemarks || 'None'}`,
+        ipAddress: getClientIp(req)
       });
 
       res.json({ success: true, refund });
