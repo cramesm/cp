@@ -1,5 +1,32 @@
 const Notification = require('../models/Notification');
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
+
+// Helper to build robust user matching clauses (for Mobile & Student/Alumni web)
+const buildUserClauses = (user) => {
+  const clauses = [];
+  const email = (user.email || '').trim();
+  if (email) {
+    const escaped = email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    clauses.push({ email: { $regex: new RegExp(`^${escaped}$`, 'i') } });
+    clauses.push({ targetRole: 'student', email: { $regex: new RegExp(`^${escaped}$`, 'i') } });
+  }
+  const uid = user.id || user._id || user.userId;
+  if (uid) {
+    clauses.push({ userId: uid });
+    clauses.push({ userId: String(uid) });
+    if (mongoose.Types.ObjectId.isValid(uid)) {
+      clauses.push({ userId: new mongoose.Types.ObjectId(uid) });
+    }
+  }
+  const studentId = (user.studentId || '').trim();
+  if (studentId) {
+    const escapedSid = studentId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    clauses.push({ studentId: { $regex: new RegExp(`^${escapedSid}$`, 'i') } });
+  }
+  clauses.push({ targetRole: 'all' });
+  return clauses;
+};
 
 // Helper filter for admin-actionable notifications
 const getAdminNotificationFilter = () => ({
@@ -17,37 +44,21 @@ const NotificationController = {
   // @desc    Get actionable notifications for Admin/Registrar or delegating student
   getAdminNotifications: async (req, res) => {
     try {
-      // Check query params if caller requested student notifications explicitly
+      // Check query params if caller requested student notifications explicitly (e.g. Mobile query params)
       if (req.query.email || req.query.userId || req.query.studentId) {
-        const clauses = [];
-        if (req.query.email) clauses.push({ email: req.query.email });
-        if (req.query.userId) clauses.push({ userId: req.query.userId });
-        if (req.query.studentId) clauses.push({ studentId: req.query.studentId });
-        clauses.push({ targetRole: 'all' });
-        if (req.query.email) clauses.push({ targetRole: 'student', email: req.query.email });
-
+        const clauses = buildUserClauses(req.query);
         const notifications = await Notification.find({ $or: clauses }).sort({ date: -1, createdAt: -1 });
         return res.json(notifications);
       }
 
-      // Check if caller provides Bearer token for a student or alumni
+      // Check if caller provides Bearer token for a student or alumni (e.g. Mobile app token)
       if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
         try {
           const token = req.headers.authorization.split(' ')[1];
-          const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-default-secret-key-change-it');
+          const decoded = jwt.verify(token, process.env.JWT_SECRET || 'supersecretverifitor123');
           if (decoded && (decoded.role === 'student' || decoded.role === 'alumni')) {
-            const userClauses = [];
-            if (decoded.email) userClauses.push({ email: decoded.email });
-            if (decoded.id || decoded._id) userClauses.push({ userId: decoded.id || decoded._id });
-            if (decoded.studentId) userClauses.push({ studentId: decoded.studentId });
-
-            const notifications = await Notification.find({
-              $or: [
-                ...userClauses,
-                { targetRole: 'all' },
-                ...(decoded.email ? [{ targetRole: 'student', email: decoded.email }] : [{ targetRole: 'student' }])
-              ]
-            }).sort({ date: -1, createdAt: -1 });
+            const clauses = buildUserClauses(decoded);
+            const notifications = await Notification.find({ $or: clauses }).sort({ date: -1, createdAt: -1 });
             return res.json(notifications);
           }
         } catch (_tokenErr) {
@@ -67,18 +78,8 @@ const NotificationController = {
   // @desc    Get user specific notifications (Student / Alumni)
   getMyNotifications: async (req, res) => {
     try {
-      const userClauses = [];
-      if (req.user.email) userClauses.push({ email: req.user.email });
-      if (req.user.id || req.user._id) userClauses.push({ userId: req.user.id || req.user._id });
-      if (req.user.studentId) userClauses.push({ studentId: req.user.studentId });
-
-      const notifications = await Notification.find({
-        $or: [
-          ...userClauses,
-          { targetRole: 'all' },
-          ...(req.user.email ? [{ targetRole: 'student', email: req.user.email }] : [{ targetRole: 'student' }])
-        ]
-      }).sort({ date: -1, createdAt: -1 });
+      const clauses = buildUserClauses(req.user);
+      const notifications = await Notification.find({ $or: clauses }).sort({ date: -1, createdAt: -1 });
       res.json({ success: true, notifications, data: notifications });
     } catch (error) {
       console.error('Error fetching user notifications:', error);
