@@ -463,30 +463,19 @@ const TransactionController = {
         const rejectionExplanation = adminRemarks ? `Payment Issue: ${adminRemarks}` : 'Payment Issue: Invalid or unverified payment receipt';
 
         if (linkedReq) {
-          // Immediately set request status & mobileStatus so mobile is never left in process or approved
+          // Keep request status in 'Pending' so Stage 2 (Verify Document Request) unlocks below,
+          // allowing the staff/admin to review request details, enter/verify remarks,
+          // and confirm document rejection.
           const reqUpdate = {
-            status: 'Rejected',
-            mobileStatus: 'rejected',
-            rejectionReason: rejectionExplanation
+            mobileStatus: 'payment_rejected'
           };
-          await Request.findByIdAndUpdate(linkedReq._id, reqUpdate);
-
-          // Dispatch notification for the document request rejection
-          try {
-            await Notification.create({
-              title: 'Document Request Rejected',
-              message: `Your document request #${linkedReq.requestId} for ${targetDocType} was rejected. Reason: ${rejectionExplanation}`,
-              isRead: false,
-              email: targetEmail,
-              userId: targetUserId,
-              studentId: linkedReq?.studentId || undefined,
-              targetRole: 'student',
-              type: 'request',
-              link: `/requests/${linkedReq.requestId}`
-            });
-          } catch (reqNotifErr) {
-            console.error('Failed to notify student of document request rejection:', reqNotifErr);
+          if (linkedReq.status === 'In Process' || linkedReq.status === 'Rejected') {
+            reqUpdate.status = 'Pending';
           }
+          if (adminRemarks) {
+            reqUpdate.rejectionReason = rejectionExplanation;
+          }
+          await Request.findByIdAndUpdate(linkedReq._id, reqUpdate);
         }
 
         if (mongoose.connection.readyState === 1) {
