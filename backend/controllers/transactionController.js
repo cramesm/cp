@@ -460,20 +460,33 @@ const TransactionController = {
           console.error('Failed to notify student of payment update needed:', notifErr);
         }
       } else if (status === 'Rejected') {
+        const rejectionExplanation = adminRemarks ? `Payment Issue: ${adminRemarks}` : 'Payment Issue: Invalid or unverified payment receipt';
+
         if (linkedReq) {
-          // IMPORTANT: If request was In Process, immediately revert from In Process
-          // so it is NEVER left as "Approved" when payment is rejected.
-          // Mobile status is marked as payment_rejected.
+          // Immediately set request status & mobileStatus so mobile is never left in process or approved
           const reqUpdate = {
-            mobileStatus: 'payment_rejected'
+            status: 'Rejected',
+            mobileStatus: 'rejected',
+            rejectionReason: rejectionExplanation
           };
-          if (linkedReq.status === 'In Process') {
-            reqUpdate.status = 'Pending';
-          }
-          if (adminRemarks) {
-            reqUpdate.rejectionReason = `Payment Issue: ${adminRemarks}`;
-          }
           await Request.findByIdAndUpdate(linkedReq._id, reqUpdate);
+
+          // Dispatch notification for the document request rejection
+          try {
+            await Notification.create({
+              title: 'Document Request Rejected',
+              message: `Your document request #${linkedReq.requestId} for ${targetDocType} was rejected. Reason: ${rejectionExplanation}`,
+              isRead: false,
+              email: targetEmail,
+              userId: targetUserId,
+              studentId: linkedReq?.studentId || undefined,
+              targetRole: 'student',
+              type: 'request',
+              link: `/requests/${linkedReq.requestId}`
+            });
+          } catch (reqNotifErr) {
+            console.error('Failed to notify student of document request rejection:', reqNotifErr);
+          }
         }
 
         if (mongoose.connection.readyState === 1) {
