@@ -383,6 +383,7 @@ const RequestDetails = () => {
 
     const status = requestData.status || 'Pending';
     const isPaymentCleared = paymentTx?.status === 'Completed';
+    const isPaymentRejected = paymentTx?.status === 'Rejected';
     const isBlockchainEligible = documentData?.isBlockchainEligible || (requestData.documentType || requestData.document_type || '').toLowerCase().includes('tor') || (requestData.documentType || requestData.document_type || '').toLowerCase().includes('diploma');
 
     return (
@@ -833,7 +834,6 @@ const RequestDetails = () => {
                                         {/* ========================================================= */}
                                         {(() => {
                                             const isStage2Unlocked = ['Completed', 'Rejected', 'Needs Update'].includes(paymentTx?.status) || !paymentTx;
-                                            const isPaymentRejected = paymentTx?.status === 'Rejected';
 
                                             return (
                                                 <div id="stage-2-verify" className={`border rounded-2xl overflow-hidden transition-all ${
