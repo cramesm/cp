@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '../../components/Layout';
 import api from '../../api';
-import { ArrowLeft, CheckCircle, XCircle, Clock, Image as ImageIcon, Eye, CreditCard, AlertCircle, User, FileText, RefreshCw, Edit3 } from 'lucide-react';
+import { ArrowLeft, CheckCircle, XCircle, Clock, Image as ImageIcon, Eye, CreditCard, AlertCircle, User, FileText, RefreshCw, Edit3, Shield } from 'lucide-react';
 import ConfirmModal from '../../components/ConfirmModal';
 import FeedbackModal from '../../components/FeedbackModal';
 
@@ -205,6 +205,22 @@ const TransactionDetails = () => {
                                 <span className={`w-1.5 h-1.5 rounded-full ${statusBadge.dotColor}`}></span>
                                 <span>{txData.status}</span>
                             </span>
+
+                            {/* Super Admin Override Trigger in Header - ALWAYS AVAILABLE ANYWHERE */}
+                            {isSuperAdmin && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setNewStatus(txData.status);
+                                        setIsEditingStatus(true);
+                                    }}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition-all cursor-pointer shadow-2xs hover:-translate-y-0.5"
+                                    title="Super Admin Force Override Status"
+                                >
+                                    <Shield size={12} className="text-indigo-600" />
+                                    <span>Super Admin Override</span>
+                                </button>
+                            )}
                         </div>
                         <p className="text-xs text-slate-400 font-medium m-0 mt-1">
                             Submitted on {formattedDate} at {formattedTime}

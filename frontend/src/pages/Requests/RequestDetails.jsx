@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { ChevronRight, ArrowLeft, FileText, Upload, CheckCircle2, AlertCircle, ShieldCheck, Printer, FileSearch, Trash2, Shield, Search, Download, Copy, Check, Lock, Unlock, XCircle, Clock, CreditCard } from 'lucide-react';
+import { ChevronRight, ArrowLeft, FileText, Upload, CheckCircle2, AlertCircle, ShieldCheck, Printer, FileSearch, Trash2, Shield, Search, Download, Copy, Check, Lock, Unlock, XCircle, Clock, CreditCard, X } from 'lucide-react';
 import Layout from '../../components/Layout';
 import ConfirmModal from '../../components/ConfirmModal';
 import FeedbackModal from '../../components/FeedbackModal';
@@ -37,6 +37,12 @@ const RequestDetails = () => {
     const [manualRejectionReason, setManualRejectionReason] = useState('');
     const [showRejectForm, setShowRejectForm] = useState(false);
     const [paymentAction, setPaymentAction] = useState('Completed');
+
+    // Super Admin Force Override State (Available Anywhere)
+    const [showSuperAdminModal, setShowSuperAdminModal] = useState(false);
+    const [overrideStatus, setOverrideStatus] = useState('In Process');
+    const [overrideStep, setOverrideStep] = useState(1);
+    const [overrideRemarks, setOverrideRemarks] = useState('');
 
     // Modals
     const { confirmConfig, feedbackConfig, showConfirm, showFeedback, closeConfirm, closeFeedback } = useModals();
@@ -199,6 +205,48 @@ const RequestDetails = () => {
         });
     };
 
+    const handleOpenSuperAdminModal = () => {
+        setOverrideStatus(requestData?.status || 'In Process');
+        setOverrideStep(currentStep);
+        setOverrideRemarks('');
+        setShowSuperAdminModal(true);
+    };
+
+    const handleApplySuperAdminOverride = async () => {
+        setActionLoading(true);
+        try {
+            const payload = {
+                status: overrideStatus,
+                forceOverride: true
+            };
+            if (overrideRemarks.trim()) {
+                payload.adminRemarks = overrideRemarks.trim();
+            }
+            if (overrideStatus === 'Rejected') {
+                payload.rejectionReason = overrideRemarks.trim() || 'Super Admin Override';
+            }
+
+            await api.put(`/requests/${id}`, payload);
+            await fetchData();
+            setCurrentStep(overrideStep);
+            setShowSuperAdminModal(false);
+            showFeedback({
+                title: 'Force Override Applied',
+                message: `Request status has been forcefully set to "${overrideStatus}" and step set to Step ${overrideStep}.`,
+                type: 'info'
+            });
+        } catch (err) {
+            console.error(err);
+            showFeedback({
+                title: 'Override Failed',
+                message: err.response?.data?.message || 'Failed to apply super admin override. Please try again.',
+                type: 'error'
+            });
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
     const handleFileUpload = async (e) => {
         if (!e.target.files || e.target.files.length === 0) return;
         const file = e.target.files[0];
@@ -317,6 +365,19 @@ const RequestDetails = () => {
                                 }`}></span>
                                 <span>{status}</span>
                             </span>
+
+                            {/* Super Admin Override Trigger in Header - ALWAYS AVAILABLE ANYWHERE */}
+                            {isSuperAdmin && (
+                                <button
+                                    type="button"
+                                    onClick={handleOpenSuperAdminModal}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition-all cursor-pointer shadow-2xs hover:-translate-y-0.5"
+                                    title="Super Admin Force Override (Status & Steps)"
+                                >
+                                    <Shield size={12} className="text-indigo-600" />
+                                    <span>Super Admin Override</span>
+                                </button>
+                            )}
                         </div>
                         <div className="flex items-center gap-2 mt-1">
                             <span className="text-xs text-slate-400 font-medium">Request ID:</span>
@@ -415,7 +476,16 @@ const RequestDetails = () => {
                                             { step: 2, title: 'Finalize & Release', desc: 'Confirm and release request for issuance/pickup' },
                                             { step: 3, title: 'Release', desc: 'Document ready for pickup/delivery' }
                                         ]).map(s => (
-                                            <div key={s.step} className={`flex gap-4 ${currentStep === s.step ? 'opacity-100' : 'opacity-40'}`}>
+                                            <div
+                                                key={s.step}
+                                                onClick={() => {
+                                                    if (isSuperAdmin) setCurrentStep(s.step);
+                                                }}
+                                                className={`flex gap-4 ${currentStep === s.step ? 'opacity-100' : 'opacity-40'} ${
+                                                    isSuperAdmin ? 'cursor-pointer hover:opacity-100 transition-opacity' : ''
+                                                }`}
+                                                title={isSuperAdmin ? `Super Admin: Click to jump to Step ${s.step}` : ''}
+                                            >
                                                 <div className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center font-bold text-sm ${currentStep >= s.step ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
                                                     {currentStep > s.step ? <CheckCircle2 size={16} /> : s.step}
                                                 </div>
@@ -1123,6 +1193,139 @@ const RequestDetails = () => {
                         </div>
                     )}
                 </div>
+
+            {/* ====== SUPER ADMIN FORCE OVERRIDE MODAL ====== */}
+            {showSuperAdminModal && (
+                <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-200">
+                        {/* Modal Header */}
+                        <div className="bg-[#1D2D44] p-5 text-white flex justify-between items-center">
+                            <div className="flex items-center gap-2.5">
+                                <Shield className="text-amber-400" size={20} />
+                                <div>
+                                    <h3 className="text-base font-bold">Super Admin Force Override</h3>
+                                    <p className="text-[11px] text-slate-300 font-medium">Override request status, steps, and process restrictions</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setShowSuperAdminModal(false)}
+                                className="text-white/60 hover:text-white transition-colors cursor-pointer p-1"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-6 space-y-5 text-xs">
+                            {/* Current Status Preview */}
+                            <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-slate-100">
+                                <div>
+                                    <span className="text-slate-400 font-bold block mb-0.5 text-[10.5px] uppercase tracking-wider">Current Request State</span>
+                                    <span className="font-bold text-slate-800 text-sm">{requestData?.name} — {requestData?.documentType}</span>
+                                </div>
+                                <span className="px-2.5 py-1 rounded-full text-xs font-extrabold uppercase bg-slate-200 text-slate-700">
+                                    {status}
+                                </span>
+                            </div>
+
+                            {/* Target Status Selection */}
+                            <div>
+                                <label className="block text-slate-700 font-bold text-xs mb-2 uppercase tracking-wider">
+                                    Set Target Status
+                                </label>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                    {[
+                                        { value: 'Pending', label: 'Pending', color: 'border-amber-400 text-amber-800 bg-amber-50/50' },
+                                        { value: 'In Process', label: 'In Process', color: 'border-purple-400 text-purple-800 bg-purple-50/50' },
+                                        { value: 'Released', label: 'Released', color: 'border-emerald-400 text-emerald-800 bg-emerald-50/50' },
+                                        { value: 'Rejected', label: 'Rejected', color: 'border-red-400 text-red-800 bg-red-50/50' }
+                                    ].map(st => (
+                                        <button
+                                            key={st.value}
+                                            type="button"
+                                            onClick={() => setOverrideStatus(st.value)}
+                                            className={`py-2 px-3 rounded-xl border font-bold text-xs transition-all cursor-pointer text-center ${
+                                                overrideStatus === st.value
+                                                    ? `${st.color} border-2 shadow-xs`
+                                                    : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                                            }`}
+                                        >
+                                            {st.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Target Step Selection */}
+                            <div>
+                                <label className="block text-slate-700 font-bold text-xs mb-2 uppercase tracking-wider">
+                                    Jump to Processing Step
+                                </label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {(isBlockchainEligible ? [
+                                        { step: 1, label: 'Step 1: Verify & Payment' },
+                                        { step: 2, label: 'Step 2: Upload Document' },
+                                        { step: 3, label: 'Step 3: Secure Blockchain' },
+                                        { step: 4, label: 'Step 4: Release & Pickup' }
+                                    ] : [
+                                        { step: 1, label: 'Step 1: Verify & Payment' },
+                                        { step: 2, label: 'Step 2: Finalize & Release' },
+                                        { step: 3, label: 'Step 3: Release & Pickup' }
+                                    ]).map(s => (
+                                        <button
+                                            key={s.step}
+                                            type="button"
+                                            onClick={() => setOverrideStep(s.step)}
+                                            className={`py-2 px-3 rounded-xl border text-left font-bold text-xs transition-all cursor-pointer ${
+                                                overrideStep === s.step
+                                                    ? 'border-blue-600 bg-blue-50 text-blue-800 border-2 shadow-xs'
+                                                    : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                                            }`}
+                                        >
+                                            {s.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Audit Remarks */}
+                            <div>
+                                <label className="block text-slate-700 font-bold text-xs mb-1 uppercase tracking-wider">
+                                    Override Remarks / Audit Note
+                                </label>
+                                <textarea
+                                    className="w-full p-3 border border-slate-200 rounded-xl text-xs outline-none focus:border-blue-500 bg-white"
+                                    rows="2"
+                                    placeholder="Reason for override (recorded in audit logs)..."
+                                    value={overrideRemarks}
+                                    onChange={(e) => setOverrideRemarks(e.target.value)}
+                                ></textarea>
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowSuperAdminModal(false)}
+                                    className="bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs px-4 py-2 rounded-full border border-slate-200 cursor-pointer"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleApplySuperAdminOverride}
+                                    disabled={actionLoading}
+                                    className="bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold text-xs px-5 py-2 rounded-full shadow-sm cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                                >
+                                    <Shield size={13} className="text-amber-400" />
+                                    <span>{actionLoading ? 'Applying...' : 'Apply Force Override'}</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {confirmConfig && (
                 <ConfirmModal
                     isOpen={!!confirmConfig}
