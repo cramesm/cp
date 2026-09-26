@@ -121,7 +121,10 @@ const AdminLogin = () => {
 
         setIsLoading(true);
         try {
-            const response = await api.post('/auth/login', { email, password });
+            const response = await api.post('/auth/login', { 
+                email: email.trim().toLowerCase(), 
+                password: password.trim() 
+            });
             if (response.data.success || response.data.token) {
                 localStorage.setItem('token', response.data.token);
                 localStorage.setItem('adminUser', JSON.stringify(response.data.user));
@@ -463,7 +466,7 @@ const AdminLogin = () => {
                                     </div>
                                     <h3 className="text-xl font-bold text-gray-900 mb-2">Account Created!</h3>
                                     <p className="text-gray-600 text-xs leading-relaxed max-w-sm mx-auto mb-6">
-                                        A <strong>Temporary Password</strong> and your <strong>Verification OTP</strong> have been dispatched to <strong>{regSuccessData.email}</strong>.
+                                        Your account has been created. A <strong>Temporary Password</strong> has been dispatched to <strong>{regSuccessData.email}</strong>.
                                     </p>
                                     <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-left mb-6">
                                         <p className="text-[12px] text-amber-800 leading-relaxed m-0">

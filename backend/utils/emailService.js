@@ -19,9 +19,9 @@ const getFrontendUrl = () => {
 };
 
 /**
- * Send welcome email with login credentials and OTP for newly created staff accounts
+ * Send welcome email with login credentials for newly created staff accounts
  */
-async function sendStaffWelcomeEmail({ to, name, email, tempPassword, department, role, otp }) {
+async function sendStaffWelcomeEmail({ to, name, email, tempPassword, department, role }) {
   const fromEmail = process.env.SMTP_EMAIL || 'verifitorr@gmail.com';
   const loginUrl = getFrontendUrl();
 
@@ -45,15 +45,10 @@ async function sendStaffWelcomeEmail({ to, name, email, tempPassword, department
             <span style="display: inline-block; width: 130px; font-size: 13px; color: #6b7280;">Login Email:</span>
             <strong style="color: #111827; font-size: 14px;">${email || to}</strong>
           </div>
-          <div style="margin-bottom: 10px;">
+          <div>
             <span style="display: inline-block; width: 130px; font-size: 13px; color: #6b7280;">Temporary Password:</span>
             <span style="background: #e5e7eb; padding: 4px 10px; border-radius: 6px; font-family: monospace; font-size: 15px; font-weight: bold; color: #1f2937;">${tempPassword}</span>
           </div>
-          ${otp ? `
-          <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed #d1d5db;">
-            <span style="display: inline-block; width: 130px; font-size: 13px; color: #6b7280;">Verification OTP:</span>
-            <span style="background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 4px 10px; border-radius: 6px; font-family: monospace; font-size: 16px; font-weight: bold; letter-spacing: 2px;">${otp}</span>
-          </div>` : ''}
         </div>
 
         <div style="text-align: center; margin: 28px 0;">

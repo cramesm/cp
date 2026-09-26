@@ -24,10 +24,12 @@ const findUserById = async (id) => {
   return { user: null, model: null, modelName: '' };
 };
 
-// Universal helper to find user across any collection by email
+// Universal helper to find user across any collection by email (case-insensitive & regex-safe)
+const escapeRegex = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const findUserByEmail = async (email) => {
   const cleanEmail = (email || '').trim().toLowerCase();
-  const query = { email: new RegExp(`^${cleanEmail}$`, 'i') };
+  if (!cleanEmail) return { user: null, model: null, modelName: '' };
+  const query = { email: new RegExp(`^${escapeRegex(cleanEmail)}$`, 'i') };
   let user = await Registrar.findOne(query);
   if (user) return { user, model: Registrar, modelName: 'Registrar' };
   user = await SuperAdmin.findOne(query);
@@ -104,15 +106,24 @@ const AuthController = {
         return res.status(400).json({ success: false, message: 'An account with this email already exists.' });
       }
 
-      // Generate a secure 10-char temporary password
-      const charset = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%";
-      let tempPassword = "";
-      for (let i = 0; i < 10; i++) {
-        tempPassword += charset.charAt(Math.floor(Math.random() * charset.length));
-      }
+      // Generate a secure, clean 9-character temporary password without ambiguous characters
+      const uppers = "ABCDEFGHJKLMNPQRSTUVWXYZ"; // omitted I, O
+      const lowers = "abcdefghijkmnopqrstuvwxyz"; // omitted l
+      const digits = "23456789"; // omitted 0, 1
+      const specials = "!@#$*";
 
-      // Generate 6-digit OTP
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      let tempPassword = "";
+      tempPassword += uppers.charAt(Math.floor(Math.random() * uppers.length));
+      tempPassword += lowers.charAt(Math.floor(Math.random() * lowers.length));
+      tempPassword += lowers.charAt(Math.floor(Math.random() * lowers.length));
+      tempPassword += digits.charAt(Math.floor(Math.random() * digits.length));
+      tempPassword += digits.charAt(Math.floor(Math.random() * digits.length));
+      tempPassword += specials.charAt(Math.floor(Math.random() * specials.length));
+      const pool = uppers + lowers + digits;
+      for (let i = 0; i < 3; i++) {
+        tempPassword += pool.charAt(Math.floor(Math.random() * pool.length));
+      }
+      tempPassword = tempPassword.split('').sort(() => 0.5 - Math.random()).join('');
 
       // Determine default role based on department
       let role = 'Registrar Staff';
@@ -139,7 +150,7 @@ const AuthController = {
         mustChangePassword: true
       });
 
-      // Send email with credentials and OTP
+      // Send email with credentials (no OTP needed)
       try {
         await sendStaffWelcomeEmail({
           to: cleanEmail,
@@ -147,8 +158,7 @@ const AuthController = {
           email: cleanEmail,
           tempPassword,
           department,
-          role,
-          otp
+          role
         });
       } catch (mailErr) {
         console.error('Failed to dispatch welcome email:', mailErr);
@@ -165,7 +175,7 @@ const AuthController = {
 
       res.status(201).json({
         success: true,
-        message: 'Account created successfully! Your temporary password and OTP have been emailed to you.',
+        message: 'Account created successfully! Your temporary password has been emailed to you.',
         user: {
           id: newStaff._id,
           name: newStaff.name,
@@ -351,38 +361,17 @@ const AuthController = {
   // @desc    Authenticate user and get token
   login: async (req, res) => {
     try {
-      const { email, password } = req.body;
+      const rawEmail = (req.body.email || '').trim();
+      const rawPassword = req.body.password || '';
+      const cleanEmail = rawEmail.toLowerCase();
+      const cleanPassword = rawPassword.trim();
 
-      let user = null;
-      let modelName = '';
-
-      // 1. Check Student
-      user = await Student.findOne({ email });
-      if (user) modelName = 'Student';
-
-      // 1.5 Check Alumni
-      if (!user) {
-        user = await Alumni.findOne({ email });
-        if (user) modelName = 'Alumni';
+      if (!cleanEmail || !rawPassword) {
+        return res.status(400).json({ success: false, message: 'Email and password are required' });
       }
 
-      // 2. Check SuperAdmin
-      if (!user) {
-        user = await SuperAdmin.findOne({ email });
-        if (user) modelName = 'SuperAdmin';
-      }
-
-      // 3. Check Registrar
-      if (!user) {
-        user = await Registrar.findOne({ email });
-        if (user) modelName = 'Registrar';
-      }
-
-      // 4. Check Admin
-      if (!user) {
-        user = await Admin.findOne({ email });
-        if (user) modelName = 'Admin';
-      }
+      // Universal search across Registrar, SuperAdmin, Admin, Student, Alumni
+      const { user, modelName } = await findUserByEmail(cleanEmail);
 
       if (!user) {
         return res.status(401).json({ success: false, message: 'Invalid credentials' });
@@ -397,8 +386,11 @@ const AuthController = {
         return res.status(403).json({ success: false, message: 'Account is currently inactive. Please contact an administrator.' });
       }
 
-      // Check password
-      const isMatch = await user.comparePassword(password);
+      // Check password: test trimmed first, and raw if trimmed fails (protects against accidental whitespace)
+      let isMatch = await user.comparePassword(cleanPassword);
+      if (!isMatch && rawPassword !== cleanPassword) {
+        isMatch = await user.comparePassword(rawPassword);
+      }
       if (!isMatch) {
         return res.status(401).json({ success: false, message: 'Invalid credentials' });
       }
