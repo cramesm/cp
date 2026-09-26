@@ -37,13 +37,13 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
-const SuperAdminRoute = ({ children }) => {
+const RoleRoute = ({ children, allowedRoles }) => {
   const token = localStorage.getItem('token');
-  const userRole = localStorage.getItem('userRole');
+  const userRole = (localStorage.getItem('userRole') || '').toLowerCase();
   if (!token) {
     return <Navigate to="/" replace />;
   }
-  if (userRole !== 'super admin') {
+  if (allowedRoles && !allowedRoles.map(r => r.toLowerCase()).includes(userRole)) {
     return <Navigate to="/dashboard" replace />;
   }
   return children;
@@ -84,13 +84,48 @@ function App() {
         <Route path="/profile/info" element={<ProtectedRoute><ProfileInfo /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
-        {/* Super Admin / Registrar Management - Protected */}
-        <Route path="/manage-registrar" element={<SuperAdminRoute><ManageRegistrar /></SuperAdminRoute>} />
-        <Route path="/manage-registrar/add" element={<SuperAdminRoute><AddRegistrar /></SuperAdminRoute>} />
-        <Route path="/manage-registrar/details/:id" element={<SuperAdminRoute><RegistrarInformation /></SuperAdminRoute>} />
-        <Route path="/manage-users" element={<SuperAdminRoute><StudentManagement /></SuperAdminRoute>} />
+        {/* Staff Management - Protected */}
+        <Route 
+          path="/manage-registrar" 
+          element={
+            <RoleRoute allowedRoles={['super admin', 'it administrator', 'it admin', 'registrar admin', 'accounting admin']}>
+              <ManageRegistrar />
+            </RoleRoute>
+          } 
+        />
+        <Route 
+          path="/manage-registrar/add" 
+          element={
+            <RoleRoute allowedRoles={['super admin', 'it administrator', 'it admin', 'registrar admin', 'accounting admin']}>
+              <AddRegistrar />
+            </RoleRoute>
+          } 
+        />
+        <Route 
+          path="/manage-registrar/details/:id" 
+          element={
+            <RoleRoute allowedRoles={['super admin', 'it administrator', 'it admin', 'registrar admin', 'accounting admin']}>
+              <RegistrarInformation />
+            </RoleRoute>
+          } 
+        />
+        <Route 
+          path="/manage-users" 
+          element={
+            <RoleRoute allowedRoles={['super admin', 'it administrator', 'it admin']}>
+              <StudentManagement />
+            </RoleRoute>
+          } 
+        />
         
-        <Route path="/activity-logs" element={<SuperAdminRoute><ActivityLogs /></SuperAdminRoute>} />
+        <Route 
+          path="/activity-logs" 
+          element={
+            <RoleRoute allowedRoles={['super admin', 'it administrator', 'it admin', 'registrar admin', 'accounting admin']}>
+              <ActivityLogs />
+            </RoleRoute>
+          } 
+        />
 
         {/* Public Validation Page (QR Scans go straight to /verify/results) */}
         <Route path="/verify" element={<Navigate to="/" replace />} />

@@ -9,34 +9,65 @@ const Student = require('../models/Users/Student');
 const Alumni = require('../models/Users/Alumni');
 const getClientIp = require('../utils/getClientIp');
 
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+const getFrontendUrl = () => {
+  if (process.env.FRONTEND_URL && !process.env.FRONTEND_URL.includes('localhost')) {
+    return process.env.FRONTEND_URL;
+  }
+  if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
+    return 'https://verifitor-frontend.vercel.app';
+  }
+  return process.env.FRONTEND_URL || 'http://localhost:5173';
+};
+const FRONTEND_URL = getFrontendUrl();
 
 // Batch helper to enrich requests with student/alumni profile data in 2 queries instead of 2*N queries
 const batchEnrichRequests = async (requestsList) => {
   try {
     const studentIds = [...new Set(requestsList.map(r => r.studentId).filter(Boolean))];
-    
-    if (studentIds.length === 0) return requestsList;
+    const userEmails = [...new Set(requestsList.map(r => r.email).filter(Boolean))];
+
+    if (studentIds.length === 0 && userEmails.length === 0) return requestsList;
 
     const [students, alumni] = await Promise.all([
-      Student.find({ studentId: { $in: studentIds } }).lean(),
-      Alumni.find({ studentId: { $in: studentIds } }).lean()
+      Student.find({
+        $or: [
+          ...(studentIds.length ? [{ studentId: { $in: studentIds } }] : []),
+          ...(userEmails.length ? [{ email: { $in: userEmails } }] : [])
+        ]
+      }).lean(),
+      Alumni.find({
+        $or: [
+          ...(studentIds.length ? [{ studentId: { $in: studentIds } }] : []),
+          ...(userEmails.length ? [{ email: { $in: userEmails } }] : [])
+        ]
+      }).lean()
     ]);
 
     const studentMap = {};
-    students.forEach(s => { studentMap[s.studentId] = s; });
-    alumni.forEach(a => { studentMap[a.studentId] = a; });
+    students.forEach(s => {
+      if (s.studentId) studentMap[s.studentId] = { ...s, detectedOwnerType: 'Student' };
+      if (s.email) studentMap[s.email] = { ...s, detectedOwnerType: 'Student' };
+    });
+    alumni.forEach(a => {
+      if (a.studentId) studentMap[a.studentId] = { ...a, detectedOwnerType: 'Alumni' };
+      if (a.email) studentMap[a.email] = { ...a, detectedOwnerType: 'Alumni' };
+    });
 
     return requestsList.map(reqObj => {
-      const student = reqObj.studentId ? studentMap[reqObj.studentId] : null;
+      const student = (reqObj.studentId && studentMap[reqObj.studentId]) ||
+                      (reqObj.email && studentMap[reqObj.email]) || null;
       if (student) {
-        reqObj.studentId = student.studentId || reqObj.studentId || '';
-        reqObj.course = student.course || reqObj.course || '';
-        reqObj.yearLevel = student.yearLevel || reqObj.yearLevel || '';
+        reqObj.studentId = reqObj.studentId || student.studentId || '';
+        reqObj.course = reqObj.course || student.course || '';
+        reqObj.yearLevel = reqObj.yearLevel || student.yearLevel || '';
+        reqObj.ownerType = student.detectedOwnerType || (student.role === 'alumni' ? 'Alumni' : 'Student');
         
         if (reqObj.name && reqObj.name.toLowerCase() === 'user' && (student.firstName || student.lastName)) {
           reqObj.name = `${student.firstName || ''} ${student.lastName || ''}`.trim();
         }
+      } else {
+        const isDiploma = (reqObj.documentType || reqObj.document_type || '').toLowerCase().includes('diploma');
+        reqObj.ownerType = isDiploma ? 'Alumni' : 'Student';
       }
       return reqObj;
     });

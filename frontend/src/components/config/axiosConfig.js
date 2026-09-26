@@ -1,10 +1,14 @@
 import axios from "axios";
 
 const getBaseURL = () => {
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (import.meta.env.PROD && envUrl && (envUrl.includes('localhost') || envUrl.includes('127.0.0.1'))) {
+    return '/api';
   }
-  // Only use localhost in dev mode — Vite tree-shakes this from production builds
+  if (envUrl) {
+    return envUrl;
+  }
+  // Only use localhost in dev mode
   if (import.meta.env.DEV) {
     return `http://localhost:5000/api`;
   }

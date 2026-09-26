@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const RegistrarController = require('../controllers/registrarController');
-const { auth, superAdminOnly } = require('../middleware/authMiddleware');
+const { auth, canManageStaff, itOrSuperAdmin, superAdminOnly } = require('../middleware/authMiddleware');
 
 router.use(auth);
-router.use(superAdminOnly);
+router.use(canManageStaff);
 
 // @route   GET /api/registrars
 router.get('/', RegistrarController.getAllRegistrars);
@@ -15,10 +15,13 @@ router.get('/:id', RegistrarController.getRegistrarById);
 // @route   POST /api/registrars
 router.post('/', RegistrarController.createRegistrar);
 
+// @route   PUT /api/registrars/:id/role (Super Admin Only: Promote / Demote staff)
+router.put('/:id/role', superAdminOnly, RegistrarController.updateRole);
+
 // @route   PUT /api/registrars/:id
 router.put('/:id', RegistrarController.updateRegistrar);
 
-// @route   DELETE /api/registrars/:id
-router.delete('/:id', RegistrarController.deleteRegistrar);
+// @route   DELETE /api/registrars/:id (IT Admin and Super Admin only)
+router.delete('/:id', itOrSuperAdmin, RegistrarController.deleteRegistrar);
 
 module.exports = router;

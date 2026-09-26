@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const RefundController = require('../controllers/refundController');
-const { auth, superAdminOnly } = require('../middleware/authMiddleware');
+const { auth, superAdminOnly, accountingOnly } = require('../middleware/authMiddleware');
 
 // @route   GET /api/refunds
 router.get('/', auth, RefundController.getRefunds);
@@ -10,7 +10,7 @@ router.get('/', auth, RefundController.getRefunds);
 router.post('/', auth, RefundController.createRefund);
 
 // @route   PATCH /api/refunds/:id/status
-router.patch('/:id/status', auth, RefundController.updateRefundStatus);
+router.patch('/:id/status', auth, accountingOnly, RefundController.updateRefundStatus);
 
 // @route   POST /api/refunds/bulk-delete
 router.post('/bulk-delete', auth, superAdminOnly, RefundController.bulkDeleteRefunds);

@@ -35,13 +35,45 @@ export default function AddRegistrar() {
 
   const closeConfirm = () => setConfirmConfig(null);
 
-  // Form state
+  // Form state & role permissions
+  const userRole = (localStorage.getItem('userRole') || '').toLowerCase();
+  const isSuperAdmin = userRole === 'super admin';
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
+    department: 'Registrar',
     role: 'Registrar Staff'
   });
+
+  const [emailStatus, setEmailStatus] = useState({ checking: false, available: null, message: '' });
+
+  // Debounced real-time email check
+  useEffect(() => {
+    const clean = formData.email.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!clean || !emailRegex.test(clean)) {
+      setEmailStatus({ checking: false, available: null, message: '' });
+      return;
+    }
+
+    setEmailStatus({ checking: true, available: null, message: 'Checking email...' });
+    const timer = setTimeout(async () => {
+      try {
+        const res = await api.get(`/auth/check-email?email=${encodeURIComponent(clean)}`);
+        setEmailStatus({
+          checking: false,
+          available: res.data.available,
+          message: res.data.message
+        });
+      } catch (err) {
+        setEmailStatus({ checking: false, available: null, message: '' });
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [formData.email]);
 
   // Validation errors
   const [errors, setErrors] = useState({
@@ -131,7 +163,8 @@ export default function AddRegistrar() {
             name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
             email: formData.email.trim().toLowerCase(),
             password: generatedPassword,
-            role: 'registrar',
+            department: formData.department,
+            role: formData.role,
             status: 'Active'
           };
 
@@ -228,7 +261,9 @@ export default function AddRegistrar() {
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    error={errors.email}
+                    error={errors.email || (emailStatus.available === false ? 'This email is already registered.' : '')}
+                    success={emailStatus.available === true ? 'Email is available' : null}
+                    loading={emailStatus.checking}
                   />
                 </div>
               </section>
@@ -271,11 +306,88 @@ export default function AddRegistrar() {
                   <h3 className="text-[14px] font-black uppercase tracking-wider m-0">Access & Roles</h3>
                 </div>
                 <div className="space-y-4 flex-1 flex flex-col">
+                  <div>
+                    <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Department</label>
+                    <select
+                      value={formData.department}
+                      onChange={(e) => {
+                        const dept = e.target.value;
+                        let defaultRole = 'Registrar Staff';
+                        if (dept === 'Accounting') defaultRole = 'Accounting Staff';
+                        else if (dept === 'IT Administration') defaultRole = 'IT Administrator';
+                        setFormData(prev => ({ ...prev, department: dept, role: defaultRole }));
+                      }}
+                      className="w-full bg-white border border-slate-200 rounded-xl p-3 text-xs outline-none focus:border-blue-500 transition-all font-semibold text-slate-700"
+                    >
+                      <option value="Registrar">Registrar Department</option>
+                      <option value="Accounting">Accounting Department</option>
+                      <option value="IT Administration">IT Administration</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center mb-1.5">
+                      <label className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Assigned Role</label>
+                      <span className={`text-[9.5px] font-extrabold uppercase px-2 py-0.5 rounded-full ${
+                        isSuperAdmin 
+                          ? 'bg-purple-100 text-purple-800 border border-purple-200' 
+                          : 'bg-slate-100 text-slate-600 border border-slate-200'
+                      }`}>
+                        {isSuperAdmin ? 'Super Admin Appointing Authority' : 'Staff Level Provisioning'}
+                      </span>
+                    </div>
+                    <select
+                      value={formData.role}
+                      onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value }))}
+                      className="w-full bg-white border border-slate-200 rounded-xl p-3 text-xs outline-none focus:border-blue-500 transition-all font-semibold text-slate-700"
+                    >
+                      {formData.department === 'Registrar' && (
+                        <>
+                          <option value="Registrar Staff">Registrar Staff (Process Documents & Verify Academic Records)</option>
+                          {isSuperAdmin ? (
+                            <option value="Registrar Admin">Registrar Admin (Registrar Head / Manage Staff & Requests)</option>
+                          ) : (
+                            <option value="Registrar Admin" disabled>Registrar Admin (Requires Super Admin Appointment)</option>
+                          )}
+                        </>
+                      )}
+                      {formData.department === 'Accounting' && (
+                        <>
+                          <option value="Accounting Staff">Accounting Staff (Verify Payments & Update Payment Status)</option>
+                          {isSuperAdmin ? (
+                            <option value="Accounting Admin">Accounting Admin (Accounting Head / Manage Staff & Refunds)</option>
+                          ) : (
+                            <option value="Accounting Admin" disabled>Accounting Admin (Requires Super Admin Appointment)</option>
+                          )}
+                        </>
+                      )}
+                      {formData.department === 'IT Administration' && (
+                        <>
+                          <option value="IT Administrator">IT Administrator (Manage Users, Permissions, & System Logs)</option>
+                          {isSuperAdmin && (
+                            <option value="Super Admin">Super Admin (Authorized System Administrator)</option>
+                          )}
+                        </>
+                      )}
+                    </select>
+                    {!isSuperAdmin ? (
+                      <p className="text-[10.5px] text-amber-700 bg-amber-50 border border-amber-200 rounded-xl p-2.5 mt-2 leading-relaxed font-medium">
+                        <i className="fa-solid fa-circle-info mr-1 text-amber-600"></i>
+                        <strong>Notice:</strong> Accounts created here are provisioned at <strong>Staff level</strong>. Only the <strong>Super Administrator</strong> can appoint or promote staff to <strong>Registrar Admin</strong> and <strong>Accounting Admin</strong>.
+                      </p>
+                    ) : (
+                      <p className="text-[10.5px] text-slate-500 mt-1.5 flex items-center gap-1">
+                        <i className="fa-solid fa-shield-halved text-purple-600"></i>
+                        Super Admin privilege enabled: You can appoint Department Administrators directly or promote them later.
+                      </p>
+                    )}
+                  </div>
+
                   <div className="flex flex-col gap-1.5 flex-1">
                     <label htmlFor="responsibility" className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Specific Responsibility (Optional)</label>
                     <textarea
                       id="responsibility"
-                      placeholder="e.g. Handles Transcript of Records..."
+                      placeholder="e.g. Handles Transcript of Records, Payment verification..."
                       className="w-full bg-white border border-slate-200 rounded-xl p-3 text-xs flex-1 outline-none focus:border-blue-500 resize-none transition-all"
                     />
                   </div>
@@ -326,10 +438,14 @@ export default function AddRegistrar() {
   );
 }
 
-function FormInput({ label, placeholder = "", name, value, onChange, error }) {
+function FormInput({ label, placeholder = "", name, value, onChange, error, success, loading }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={name} className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">{label}</label>
+      <div className="flex justify-between items-center">
+        <label htmlFor={name} className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">{label}</label>
+        {loading && <span className="text-[10px] text-slate-400">Checking...</span>}
+        {!loading && success && !error && <span className="text-[10px] font-bold text-emerald-600">✓ {success}</span>}
+      </div>
       <input
         type="text"
         id={name}
@@ -340,6 +456,8 @@ function FormInput({ label, placeholder = "", name, value, onChange, error }) {
         className={`w-full bg-white border rounded-xl px-3.5 py-2 text-[13px] outline-none transition-all ${
           error
             ? 'border-red-500 focus:border-red-500'
+            : success
+            ? 'border-emerald-500 focus:border-emerald-500'
             : 'border-slate-200 focus:border-blue-500'
         }`}
       />

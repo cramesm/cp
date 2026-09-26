@@ -57,7 +57,7 @@ const auth = async (req, res, next) => {
 
 const superAdminOnly = (req, res, next) => {
   console.log('Checking super admin access. User role:', req.user?.role);
-  if (req.user && req.user.role === 'super admin') {
+  if (req.user && (req.user.role === 'super admin' || (req.user.role || '').toLowerCase() === 'super admin')) {
     console.log('Super admin access granted');
     next();
   } else {
@@ -68,11 +68,105 @@ const superAdminOnly = (req, res, next) => {
 
 const registrarOrSuperAdmin = (req, res, next) => {
   const role = (req.user?.role || '').toLowerCase();
-  if (req.user && ['registrar', 'registrar staff', 'admin', 'staff', 'super admin'].includes(role)) {
+  if (req.user && ['registrar', 'registrar staff', 'registrar admin', 'admin', 'staff', 'super admin'].includes(role)) {
     next();
   } else {
     res.status(403).json({ message: 'Not authorized, role insufficient' });
   }
 };
 
-module.exports = { auth, protect: auth, superAdminOnly, registrarOrSuperAdmin };
+// Restricted to Accounting Staff, Accounting Admin, and Super Admin
+const accountingOnly = (req, res, next) => {
+  const role = (req.user?.role || '').toLowerCase();
+  const department = (req.user?.department || '').toLowerCase();
+  if (req.user && (
+    ['accounting admin', 'accounting staff', 'super admin'].includes(role) ||
+    (department === 'accounting' && ['admin', 'staff'].some(r => role.includes(r)))
+  )) {
+    next();
+  } else {
+    res.status(403).json({ message: 'Not authorized. Payment and refund verification is restricted to Accounting personnel.' });
+  }
+};
+
+// Restricted to Registrar Staff, Registrar Admin, and Super Admin
+const registrarOnly = (req, res, next) => {
+  const role = (req.user?.role || '').toLowerCase();
+  const department = (req.user?.department || '').toLowerCase();
+  if (req.user && (
+    ['registrar admin', 'registrar staff', 'registrar', 'super admin'].includes(role) ||
+    department === 'registrar'
+  )) {
+    next();
+  } else {
+    res.status(403).json({ message: 'Not authorized. Restricted to Registrar personnel.' });
+  }
+};
+
+// Restricted to IT Administrator and Super Admin
+const itOrSuperAdmin = (req, res, next) => {
+  const role = (req.user?.role || '').toLowerCase();
+  if (req.user && ['it administrator', 'it admin', 'super admin'].includes(role)) {
+    next();
+  } else {
+    res.status(403).json({ message: 'Not authorized. Restricted to IT Administrators.' });
+  }
+};
+
+// Staff management (Super Admin, IT Admin, Registrar Admin, Accounting Admin)
+const canManageStaff = (req, res, next) => {
+  const role = (req.user?.role || '').toLowerCase();
+  const department = (req.user?.department || '').toLowerCase();
+  if (
+    role === 'super admin' ||
+    ['it administrator', 'it admin'].includes(role) ||
+    role === 'registrar admin' ||
+    role === 'accounting admin' ||
+    (department === 'it administration' && role.includes('admin'))
+  ) {
+    next();
+  } else {
+    res.status(403).json({ message: 'Not authorized to manage staff accounts.' });
+  }
+};
+
+// User management (Students, Alumni) - Super Admin and IT Administrator
+const canManageUsers = (req, res, next) => {
+  const role = (req.user?.role || '').toLowerCase();
+  if (
+    role === 'super admin' ||
+    ['it administrator', 'it admin'].includes(role)
+  ) {
+    next();
+  } else {
+    res.status(403).json({ message: 'Not authorized to manage user accounts.' });
+  }
+};
+
+// View system / activity logs
+const canViewLogs = (req, res, next) => {
+  const role = (req.user?.role || '').toLowerCase();
+  if (
+    role === 'super admin' ||
+    ['it administrator', 'it admin'].includes(role) ||
+    role === 'registrar admin' ||
+    role === 'accounting admin'
+  ) {
+    next();
+  } else {
+    res.status(403).json({ message: 'Not authorized to view system logs.' });
+  }
+};
+
+module.exports = {
+  auth,
+  protect: auth,
+  superAdminOnly,
+  registrarOrSuperAdmin,
+  accountingOnly,
+  registrarOnly,
+  itOrSuperAdmin,
+  canManageStaff,
+  canManageUsers,
+  canViewLogs
+};

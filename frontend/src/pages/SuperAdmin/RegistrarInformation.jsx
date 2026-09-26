@@ -29,6 +29,58 @@ export default function RegistrarInformation() {
   const [passwordData, setPasswordData] = useState({ newPassword: '', confirmPassword: '' });
   const [confirmConfig, setConfirmConfig] = useState(null);
 
+  const userRole = (localStorage.getItem('userRole') || '').toLowerCase();
+  const isSuperAdmin = userRole === 'super admin';
+
+  const getPromotionTarget = (role) => {
+    const r = (role || '').toLowerCase();
+    if (r === 'registrar staff' || r === 'registrar') {
+      return { target: 'Registrar Admin', type: 'promote' };
+    }
+    if (r === 'registrar admin') {
+      return { target: 'Registrar Staff', type: 'demote' };
+    }
+    if (r === 'accounting staff' || r === 'accounting') {
+      return { target: 'Accounting Admin', type: 'promote' };
+    }
+    if (r === 'accounting admin') {
+      return { target: 'Accounting Staff', type: 'demote' };
+    }
+    return null;
+  };
+
+  const handlePromoteDemote = (targetRole) => {
+    const isPromotion = targetRole.toLowerCase().includes('admin');
+    const staffName = `${formData.firstName} ${formData.lastName}`.trim();
+    showConfirm({
+      title: isPromotion ? `Promote to ${targetRole}` : `Demote to ${targetRole}`,
+      message: isPromotion
+        ? `Are you sure you want to promote ${staffName} to ${targetRole}? They will receive administrative authority and an automated email notification.`
+        : `Are you sure you want to demote ${staffName} to ${targetRole}? Their administrative authority will be revoked and set to staff processing level.`,
+      type: isPromotion ? 'success' : 'warning',
+      confirmText: isPromotion ? 'Promote Account' : 'Demote Account',
+      onConfirm: async () => {
+        try {
+          const res = await api.put(`/registrars/${registrarId || id}/role`, { role: targetRole });
+          if (res.data) {
+            setFormData(prev => ({ ...prev, role: targetRole }));
+            setToast({
+              show: true,
+              message: `${staffName} has been ${isPromotion ? 'promoted' : 'demoted'} to ${targetRole}!`,
+              type: 'success'
+            });
+            setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3500);
+          }
+        } catch (err) {
+          console.error('Error updating role:', err);
+          const errorMsg = err.response?.data?.message || 'Failed to update role.';
+          setToast({ show: true, message: errorMsg, type: 'error' });
+          setTimeout(() => setToast({ show: false, message: '', type: 'error' }), 3500);
+        }
+      }
+    });
+  };
+
   const showConfirm = ({ title, message, onConfirm, type = 'info', confirmText = 'Confirm', cancelText = 'Cancel' }) => {
     setConfirmConfig({
       title,
@@ -196,6 +248,8 @@ export default function RegistrarInformation() {
     });
   };
 
+  const targetPromotion = getPromotionTarget(formData.role);
+
   return (
     <Layout>
       <div className="py-2 px-2 sm:px-4 font-sans space-y-4 relative">
@@ -238,8 +292,80 @@ export default function RegistrarInformation() {
                     <div className="md:col-span-2">
                       <InfoInput label="Email Address" name="email" value={formData.email} onChange={handleInputChange} />
                     </div>
-                    <InfoInput label="Account Role" name="role" value={formData.role} onChange={handleInputChange} />
+                    
+                    {/* Account Role with Super Admin Privilege Indicator */}
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex justify-between items-center">
+                        <label className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Account Role</label>
+                        <span className={`text-[9.5px] font-extrabold uppercase px-2 py-0.5 rounded-full ${
+                          (formData.role || '').toLowerCase().includes('admin')
+                            ? 'bg-purple-100 text-purple-800 border border-purple-200'
+                            : 'bg-blue-100 text-blue-800 border border-blue-200'
+                        }`}>
+                          {(formData.role || '').toLowerCase().includes('admin') ? 'Admin Tier' : 'Staff Tier'}
+                        </span>
+                      </div>
+                      {isSuperAdmin ? (
+                        <div className="relative">
+                          <select
+                            name="role"
+                            value={formData.role}
+                            onChange={handleInputChange}
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:bg-white focus:outline-none focus:border-blue-500 transition-all appearance-none cursor-pointer"
+                          >
+                            <option value="Registrar Staff">Registrar Staff (Document Processing)</option>
+                            <option value="Registrar Admin">Registrar Admin (Department Head)</option>
+                            <option value="Accounting Staff">Accounting Staff (Payment Auditing Desk)</option>
+                            <option value="Accounting Admin">Accounting Admin (Finance Head)</option>
+                            <option value="IT Administrator">IT Administrator (System Security)</option>
+                          </select>
+                          <div className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
+                            <i className="fa-solid fa-chevron-down"></i>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700 flex items-center justify-between">
+                          <span>{formData.role}</span>
+                          <span className="text-[10px] text-slate-400 font-semibold">(Managed by Super Admin)</span>
+                        </div>
+                      )}
+                    </div>
+
                     <InfoInput label="Employee ID" name="employeeId" value={formData.employeeId} onChange={handleInputChange} />
+
+                    {/* Quick 1-Click Promote / Demote Action Card for Super Admin */}
+                    {isSuperAdmin && targetPromotion && (
+                      <div className="md:col-span-2 bg-gradient-to-r from-blue-50/80 to-indigo-50/80 border border-blue-200/90 rounded-2xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-1 shadow-2xs">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 ${
+                            targetPromotion.type === 'promote' ? 'bg-blue-600 text-white shadow-xs' : 'bg-purple-600 text-white shadow-xs'
+                          }`}>
+                            <i className={targetPromotion.type === 'promote' ? 'fa-solid fa-arrow-up' : 'fa-solid fa-arrow-down'}></i>
+                          </div>
+                          <div>
+                            <span className="text-xs font-extrabold text-slate-900 block leading-tight">
+                              {targetPromotion.type === 'promote' ? 'Appoint to Department Administrator' : 'Demote to Staff Processing Level'}
+                            </span>
+                            <span className="text-[11px] text-slate-600">
+                              {targetPromotion.type === 'promote' 
+                                ? `Promote this account to ${targetPromotion.target} with administrative department powers.` 
+                                : `Demote this account to ${targetPromotion.target} (operational staff level).`}
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handlePromoteDemote(targetPromotion.target)}
+                          className={`px-4 py-1.5 rounded-full text-xs font-bold text-white transition-all shadow-xs cursor-pointer shrink-0 border-t border-white/20 border-b-2 ${
+                            targetPromotion.type === 'promote' 
+                              ? 'bg-blue-600 hover:bg-blue-700 border-blue-950/40' 
+                              : 'bg-purple-600 hover:bg-purple-700 border-purple-950/40'
+                          }`}
+                        >
+                          {targetPromotion.type === 'promote' ? `Promote to ${targetPromotion.target}` : `Demote to ${targetPromotion.target}`}
+                        </button>
+                      </div>
+                    )}
                     
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Last Login IP Address</label>

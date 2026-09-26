@@ -54,7 +54,13 @@ const ProfileInfo = () => {
                     <div className="flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left">
                         <div className="w-20 h-20 rounded-full bg-[#2c3543] text-white flex items-center justify-center overflow-hidden flex-shrink-0 shadow-md border-2 border-white">
                             {user.profilePic ? (
-                                <img src={user.profilePic.startsWith('http') ? user.profilePic : `http://localhost:5000${user.profilePic}`} alt="Profile" className="w-full h-full object-cover" />
+                                <img 
+                                    src={user.profilePic.startsWith('http') 
+                                        ? user.profilePic 
+                                        : (import.meta.env.DEV ? `http://localhost:5000${user.profilePic}` : user.profilePic)} 
+                                    alt="Profile" 
+                                    className="w-full h-full object-cover" 
+                                />
                             ) : (
                                 <User size={40} color="white" />
                             )}

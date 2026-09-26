@@ -12,6 +12,84 @@ const AdminLogin = () => {
     const [cooldown, setCooldown] = useState(0);
     const navigate = useNavigate();
 
+    // Create Account Modal States
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [regData, setRegData] = useState({
+        firstName: '',
+        lastName: '',
+        email: '',
+        department: 'Registrar'
+    });
+    const [emailStatus, setEmailStatus] = useState({ checking: false, available: null, message: '' });
+    const [regLoading, setRegLoading] = useState(false);
+    const [regError, setRegError] = useState('');
+    const [regSuccessData, setRegSuccessData] = useState(null);
+
+    // Debounced real-time email check
+    useEffect(() => {
+        const clean = regData.email.trim();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!clean || !emailRegex.test(clean)) {
+            setEmailStatus({ checking: false, available: null, message: '' });
+            return;
+        }
+
+        setEmailStatus({ checking: true, available: null, message: 'Checking email...' });
+        const timer = setTimeout(async () => {
+            try {
+                const res = await api.get(`/auth/check-email?email=${encodeURIComponent(clean)}`);
+                setEmailStatus({
+                    checking: false,
+                    available: res.data.available,
+                    message: res.data.message
+                });
+            } catch (err) {
+                setEmailStatus({ checking: false, available: null, message: '' });
+            }
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [regData.email]);
+
+    const handleCreateAccount = async (e) => {
+        e.preventDefault();
+        setRegError('');
+
+        if (!regData.firstName.trim() || !regData.lastName.trim()) {
+            setRegError('Please enter both First Name and Last Name.');
+            return;
+        }
+        if (!regData.email.trim()) {
+            setRegError('Email address is required.');
+            return;
+        }
+        if (emailStatus.available === false) {
+            setRegError('This email is already registered. Please choose another or log in.');
+            return;
+        }
+
+        setRegLoading(true);
+        try {
+            const res = await api.post('/auth/register-staff', {
+                firstName: regData.firstName.trim(),
+                lastName: regData.lastName.trim(),
+                email: regData.email.trim(),
+                department: regData.department
+            });
+
+            if (res.data.success) {
+                setRegSuccessData({
+                    email: regData.email.trim(),
+                    department: regData.department
+                });
+            }
+        } catch (err) {
+            setRegError(err.response?.data?.message || 'Failed to create account. Please try again.');
+        } finally {
+            setRegLoading(false);
+        }
+    };
+
     useEffect(() => {
         let timer;
         if (cooldown > 0) {
@@ -181,6 +259,26 @@ const AdminLogin = () => {
                                 ) : 'Login'}
                             </button>
                         </div>
+
+                        {/* Create Account Link */}
+                        <div className="pt-3 text-center">
+                            <p className="text-[13px] text-gray-600">
+                                Need a staff or department account?{' '}
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowCreateModal(true);
+                                        setRegSuccessData(null);
+                                        setRegError('');
+                                        setRegData({ firstName: '', lastName: '', email: '', department: 'Registrar' });
+                                        setEmailStatus({ checking: false, available: null, message: '' });
+                                    }}
+                                    className="font-bold text-[#111827] hover:text-[#2B6D9B] transition-colors underline underline-offset-2 ml-1"
+                                >
+                                    Create Account
+                                </button>
+                            </p>
+                        </div>
                     </form>
 
                     {/* Account Hints / Demo Accounts */}
@@ -217,6 +315,178 @@ const AdminLogin = () => {
                     )}
 
                 </div>
+
+                {/* Create Account Modal */}
+                {showCreateModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn">
+                        <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 sm:p-8 relative border border-gray-100 overflow-hidden">
+                            {/* Close Button */}
+                            <button
+                                type="button"
+                                onClick={() => setShowCreateModal(false)}
+                                className="absolute right-5 top-5 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-800 flex items-center justify-center transition-colors"
+                            >
+                                <i className="fa-solid fa-xmark text-sm"></i>
+                            </button>
+
+                            {!regSuccessData ? (
+                                <>
+                                    <div className="mb-6">
+                                        <div className="w-12 h-12 rounded-2xl bg-[#111827] text-white flex items-center justify-center mb-3 text-lg shadow-sm">
+                                            <i className="fa-solid fa-user-plus"></i>
+                                        </div>
+                                        <h3 className="text-2xl font-bold text-gray-900 tracking-tight">Create Staff Account</h3>
+                                        <p className="text-gray-500 text-xs mt-1">
+                                            Register for your department. A temporary password and verification OTP will be delivered to your email.
+                                        </p>
+                                    </div>
+
+                                    {regError && (
+                                        <div className="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-2xl text-[12.5px] flex items-center gap-2">
+                                            <i className="fa-solid fa-circle-exclamation shrink-0"></i>
+                                            <span>{regError}</span>
+                                        </div>
+                                    )}
+
+                                    <form onSubmit={handleCreateAccount} className="space-y-4">
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <label className="block text-[12px] font-semibold text-gray-700 mb-1">First Name</label>
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    placeholder="First name"
+                                                    value={regData.firstName}
+                                                    onChange={(e) => setRegData({ ...regData, firstName: e.target.value })}
+                                                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-[13.5px] text-gray-800 focus:bg-white focus:outline-none focus:border-[#213448] focus:ring-2 focus:ring-[#213448]/10 transition-all"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-[12px] font-semibold text-gray-700 mb-1">Last Name</label>
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    placeholder="Last name"
+                                                    value={regData.lastName}
+                                                    onChange={(e) => setRegData({ ...regData, lastName: e.target.value })}
+                                                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-[13.5px] text-gray-800 focus:bg-white focus:outline-none focus:border-[#213448] focus:ring-2 focus:ring-[#213448]/10 transition-all"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <div className="flex justify-between items-center mb-1">
+                                                <label className="block text-[12px] font-semibold text-gray-700">Official Email</label>
+                                                {emailStatus.checking && (
+                                                    <span className="text-[11px] text-gray-400 flex items-center gap-1">
+                                                        <i className="fa-solid fa-spinner animate-spin"></i> Checking...
+                                                    </span>
+                                                )}
+                                                {!emailStatus.checking && emailStatus.available === true && (
+                                                    <span className="text-[11px] text-green-600 font-medium flex items-center gap-1">
+                                                        <i className="fa-solid fa-circle-check"></i> Available
+                                                    </span>
+                                                )}
+                                                {!emailStatus.checking && emailStatus.available === false && (
+                                                    <span className="text-[11px] text-red-500 font-medium flex items-center gap-1">
+                                                        <i className="fa-solid fa-circle-xmark"></i> Already registered
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <input
+                                                type="email"
+                                                required
+                                                placeholder="e.g. employee@university.edu"
+                                                value={regData.email}
+                                                onChange={(e) => setRegData({ ...regData, email: e.target.value })}
+                                                className={`w-full px-4 py-2.5 bg-gray-50 border rounded-xl text-[13.5px] text-gray-800 focus:bg-white focus:outline-none transition-all ${
+                                                    emailStatus.available === false 
+                                                        ? 'border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-100' 
+                                                        : emailStatus.available === true
+                                                        ? 'border-green-300 focus:border-green-500 focus:ring-2 focus:ring-green-100'
+                                                        : 'border-gray-200 focus:border-[#213448] focus:ring-2 focus:ring-[#213448]/10'
+                                                }`}
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-[12px] font-semibold text-gray-700 mb-1">Department</label>
+                                            <div className="relative">
+                                                <select
+                                                    value={regData.department}
+                                                    onChange={(e) => setRegData({ ...regData, department: e.target.value })}
+                                                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-[13.5px] text-gray-800 focus:bg-white focus:outline-none focus:border-[#213448] focus:ring-2 focus:ring-[#213448]/10 transition-all appearance-none cursor-pointer"
+                                                >
+                                                    <option value="Registrar">Registrar Department (Staff Level)</option>
+                                                    <option value="Accounting">Accounting Department (Staff Level)</option>
+                                                    <option value="IT Administration">IT Administration Department</option>
+                                                </select>
+                                                <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
+                                                    <i className="fa-solid fa-chevron-down"></i>
+                                                </div>
+                                            </div>
+                                            <p className="text-[11px] text-gray-500 mt-1.5 leading-snug">
+                                                <i className="fa-solid fa-circle-info text-blue-500 mr-1"></i>
+                                                New accounts are created at <strong>Staff level</strong>. Administrative roles (Registrar Admin & Accounting Admin) are appointed by the Super Administrator.
+                                            </p>
+                                        </div>
+
+                                        <div className="pt-3 flex gap-3">
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowCreateModal(false)}
+                                                className="w-1/3 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full font-semibold text-[13.5px] transition-colors"
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button
+                                                type="submit"
+                                                disabled={regLoading || emailStatus.available === false}
+                                                className="w-2/3 py-2.5 bg-[#111827] hover:bg-[#213448] text-white rounded-full font-bold text-[13.5px] tracking-wide shadow-md flex items-center justify-center gap-2 transition-all disabled:opacity-60"
+                                            >
+                                                {regLoading ? (
+                                                    <>
+                                                        <i className="fa-solid fa-spinner animate-spin"></i>
+                                                        Sending Credentials...
+                                                    </>
+                                                ) : (
+                                                    'Create Account'
+                                                )}
+                                            </button>
+                                        </div>
+                                    </form>
+                                </>
+                            ) : (
+                                <div className="text-center py-4">
+                                    <div className="w-16 h-16 rounded-full bg-green-100 text-green-600 flex items-center justify-center mx-auto mb-4 text-2xl animate-bounce">
+                                        <i className="fa-solid fa-circle-check"></i>
+                                    </div>
+                                    <h3 className="text-xl font-bold text-gray-900 mb-2">Account Created!</h3>
+                                    <p className="text-gray-600 text-xs leading-relaxed max-w-sm mx-auto mb-6">
+                                        A <strong>Temporary Password</strong> and your <strong>Verification OTP</strong> have been dispatched to <strong>{regSuccessData.email}</strong>.
+                                    </p>
+                                    <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-left mb-6">
+                                        <p className="text-[12px] text-amber-800 leading-relaxed m-0">
+                                            <i className="fa-solid fa-shield-halved text-amber-600 mr-1.5"></i>
+                                            <strong>Next Steps:</strong> Check your inbox for your credentials, log in, and proceed to <em>Profile Settings → Change Password</em> to set your permanent password.
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setEmail(regSuccessData.email);
+                                            setShowCreateModal(false);
+                                            setRegSuccessData(null);
+                                        }}
+                                        className="w-full py-3 bg-[#111827] hover:bg-[#213448] text-white rounded-full font-bold text-[14px] shadow-md transition-all"
+                                    >
+                                        Proceed to Login
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 {/* Hidden UI Button for Demo Accounts Toggle */}
                 <button 

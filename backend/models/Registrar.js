@@ -20,6 +20,14 @@ const registrarSchema = new mongoose.Schema({
     type: String,
     default: 'Registrar Staff'
   },
+  department: {
+    type: String,
+    default: 'Registrar'
+  },
+  mustChangePassword: {
+    type: Boolean,
+    default: false
+  },
   password: {
     type: String,
     required: true

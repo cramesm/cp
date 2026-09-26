@@ -3,9 +3,43 @@ const nodemailer = require('nodemailer');
 const Student = require('../models/Users/Student');
 const Alumni = require('../models/Users/Alumni');
 const SuperAdmin = require('../models/Users/SuperAdmin');
+const Admin = require('../models/Users/Admin');
 const Registrar = require('../models/Registrar');
 const ActivityLog = require('../models/ActivityLog');
 const LoginLockout = require('../models/LoginLockout');
+const { sendStaffWelcomeEmail, sendPasswordChangedEmail } = require('../utils/emailService');
+
+// Universal helper to find user across any collection by _id
+const findUserById = async (id) => {
+  let user = await Registrar.findById(id);
+  if (user) return { user, model: Registrar, modelName: 'Registrar' };
+  user = await SuperAdmin.findById(id);
+  if (user) return { user, model: SuperAdmin, modelName: 'SuperAdmin' };
+  user = await Admin.findById(id);
+  if (user) return { user, model: Admin, modelName: 'Admin' };
+  user = await Student.findById(id);
+  if (user) return { user, model: Student, modelName: 'Student' };
+  user = await Alumni.findById(id);
+  if (user) return { user, model: Alumni, modelName: 'Alumni' };
+  return { user: null, model: null, modelName: '' };
+};
+
+// Universal helper to find user across any collection by email
+const findUserByEmail = async (email) => {
+  const cleanEmail = (email || '').trim().toLowerCase();
+  const query = { email: new RegExp(`^${cleanEmail}$`, 'i') };
+  let user = await Registrar.findOne(query);
+  if (user) return { user, model: Registrar, modelName: 'Registrar' };
+  user = await SuperAdmin.findOne(query);
+  if (user) return { user, model: SuperAdmin, modelName: 'SuperAdmin' };
+  user = await Admin.findOne(query);
+  if (user) return { user, model: Admin, modelName: 'Admin' };
+  user = await Student.findOne(query);
+  if (user) return { user, model: Student, modelName: 'Student' };
+  user = await Alumni.findOne(query);
+  if (user) return { user, model: Alumni, modelName: 'Alumni' };
+  return { user: null, model: null, modelName: '' };
+};
 
 // In-memory OTP store: { email: { otp, expiresAt, modelName } }
 const otpStore = {};
@@ -37,6 +71,115 @@ const generateToken = (user) => {
 };
 
 const AuthController = {
+  // @desc    Check if email is available
+  checkEmailAvailability: async (req, res) => {
+    try {
+      const email = (req.query.email || '').trim().toLowerCase();
+      if (!email) {
+        return res.status(400).json({ success: false, message: 'Email query parameter is required' });
+      }
+
+      const { user } = await findUserByEmail(email);
+      if (user) {
+        return res.json({ success: true, available: false, message: 'This email is already in use.' });
+      }
+      return res.json({ success: true, available: true, message: 'Email is available.' });
+    } catch (err) {
+      console.error('Check email availability error:', err);
+      return res.status(500).json({ success: false, message: 'Error checking email availability' });
+    }
+  },
+
+  // @desc    Register a new staff/department member from Login page
+  registerStaff: async (req, res) => {
+    try {
+      const { firstName, lastName, email, department } = req.body;
+      if (!firstName || !lastName || !email || !department) {
+        return res.status(400).json({ success: false, message: 'First name, last name, email, and department are required' });
+      }
+
+      const cleanEmail = email.trim().toLowerCase();
+      const { user: existing } = await findUserByEmail(cleanEmail);
+      if (existing) {
+        return res.status(400).json({ success: false, message: 'An account with this email already exists.' });
+      }
+
+      // Generate a secure 10-char temporary password
+      const charset = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%";
+      let tempPassword = "";
+      for (let i = 0; i < 10; i++) {
+        tempPassword += charset.charAt(Math.floor(Math.random() * charset.length));
+      }
+
+      // Generate 6-digit OTP
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+      // Determine default role based on department
+      let role = 'Registrar Staff';
+      if (department.toLowerCase().includes('accounting')) {
+        role = 'Accounting Staff';
+      } else if (department.toLowerCase().includes('it')) {
+        role = 'IT Administrator';
+      } else {
+        role = 'Registrar Staff';
+      }
+
+      const deptPrefix = department.substring(0, 3).toUpperCase();
+      const registrarId = `${deptPrefix}-${Math.floor(100000 + Math.random() * 900000)}`;
+      const fullName = `${firstName.trim()} ${lastName.trim()}`;
+
+      const newStaff = await Registrar.create({
+        registrarId,
+        name: fullName,
+        email: cleanEmail,
+        password: tempPassword,
+        department,
+        role,
+        status: 'Active',
+        mustChangePassword: true
+      });
+
+      // Send email with credentials and OTP
+      try {
+        await sendStaffWelcomeEmail({
+          to: cleanEmail,
+          name: fullName,
+          email: cleanEmail,
+          tempPassword,
+          department,
+          role,
+          otp
+        });
+      } catch (mailErr) {
+        console.error('Failed to dispatch welcome email:', mailErr);
+      }
+
+      await ActivityLog.create({
+        userEmail: cleanEmail,
+        userName: fullName,
+        action: 'Account Self-Registration',
+        type: 'Auth',
+        status: 'Successful',
+        details: `Created new staff account for ${fullName} (${cleanEmail}) in ${department}`
+      });
+
+      res.status(201).json({
+        success: true,
+        message: 'Account created successfully! Your temporary password and OTP have been emailed to you.',
+        user: {
+          id: newStaff._id,
+          name: newStaff.name,
+          email: newStaff.email,
+          role: newStaff.role,
+          department: newStaff.department
+        }
+      });
+    } catch (err) {
+      console.error('Staff registration error:', err);
+      res.status(500).json({ success: false, message: 'Server error creating account' });
+    }
+  },
+
   // @desc    Request OTP for registration
   requestRegisterOTP: async (req, res) => {
     try {
@@ -235,6 +378,12 @@ const AuthController = {
         if (user) modelName = 'Registrar';
       }
 
+      // 4. Check Admin
+      if (!user) {
+        user = await Admin.findOne({ email });
+        if (user) modelName = 'Admin';
+      }
+
       if (!user) {
         return res.status(401).json({ success: false, message: 'Invalid credentials' });
       }
@@ -292,6 +441,8 @@ const AuthController = {
           id: user._id,
           email: user.email,
           role: user.role,
+          department: user.department || '',
+          mustChangePassword: user.mustChangePassword || false,
           firstName: user.firstName,
           lastName: user.lastName,
           name: user.name,
@@ -474,24 +625,15 @@ const AuthController = {
   // @desc    Get authenticated user profile
   getProfile: async (req, res) => {
     try {
-      let user = null;
-      const role = (req.user.role || '').toLowerCase();
-      if (role === 'super admin') {
-        user = await SuperAdmin.findById(req.user.id);
-      } else if (role.includes('registrar')) {
-        user = await Registrar.findById(req.user.id);
-      } else if (role === 'alumni') {
-        user = await Alumni.findById(req.user.id);
-      } else {
-        user = await Student.findById(req.user.id);
-      }
-
+      const { user } = await findUserById(req.user.id);
       if (!user) return res.status(404).json({ message: 'User not found' });
 
       res.json({
         id: user._id,
         email: user.email,
         role: user.role,
+        department: user.department || '',
+        mustChangePassword: user.mustChangePassword || false,
         name: user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User',
         firstName: user.firstName,
         lastName: user.lastName,
@@ -510,19 +652,14 @@ const AuthController = {
   // @desc    Update authenticated user profile
   updateProfile: async (req, res) => {
     try {
-      const { name, firstName, lastName, profilePic, course, yearLevel, phoneNumber } = req.body;
-      
-      let userModel;
-      const role = (req.user.role || '').toLowerCase();
-      if (role === 'super admin') userModel = SuperAdmin;
-      else if (role.includes('registrar')) userModel = Registrar;
-      else if (role === 'alumni') userModel = Alumni;
-      else userModel = Student;
+      const { name, firstName, lastName, profilePic, course, yearLevel, phoneNumber, department } = req.body;
+      const { user, model } = await findUserById(req.user.id);
+      if (!user || !model) return res.status(404).json({ message: 'User not found' });
 
       const updateData = {};
       if (name) {
         updateData.name = name;
-        if (req.user.role === 'student' || req.user.role === 'alumni') {
+        if (user.role === 'student' || user.role === 'alumni') {
           const parts = name.trim().split(' ');
           updateData.firstName = parts[0];
           updateData.lastName = parts.slice(1).join(' ') || ' ';
@@ -534,8 +671,9 @@ const AuthController = {
       if (course) updateData.course = course;
       if (yearLevel) updateData.yearLevel = yearLevel;
       if (phoneNumber) updateData.phoneNumber = phoneNumber;
+      if (department) updateData.department = department;
 
-      const updatedUser = await userModel.findByIdAndUpdate(req.user.id, updateData, { new: true });
+      const updatedUser = await model.findByIdAndUpdate(req.user.id, updateData, { new: true });
       res.json(updatedUser);
     } catch (error) {
       console.error('Update profile error:', error);
@@ -547,24 +685,42 @@ const AuthController = {
   changePassword: async (req, res) => {
     try {
       const { currentPassword, newPassword } = req.body;
-      
-      let userModel;
-      const role = (req.user.role || '').toLowerCase();
-      if (role === 'super admin') userModel = SuperAdmin;
-      else if (role.includes('registrar')) userModel = Registrar;
-      else if (role === 'alumni') userModel = Alumni;
-      else userModel = Student;
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ message: 'Current password and new password are required' });
+      }
 
-      const user = await userModel.findById(req.user.id);
+      const { user } = await findUserById(req.user.id);
       if (!user) return res.status(404).json({ message: 'User not found' });
 
       const isMatch = await user.comparePassword(currentPassword);
       if (!isMatch) return res.status(400).json({ message: 'Current password incorrect' });
 
       user.password = newPassword;
+      if ('mustChangePassword' in user) {
+        user.mustChangePassword = false;
+      }
       await user.save();
 
-      res.json({ message: 'Password updated successfully' });
+      // Dispatch security email
+      try {
+        await sendPasswordChangedEmail({
+          to: user.email,
+          name: user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User'
+        });
+      } catch (mailErr) {
+        console.error('Failed to dispatch password changed email:', mailErr);
+      }
+
+      await ActivityLog.create({
+        userEmail: user.email,
+        userName: user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User',
+        action: 'Change Password',
+        type: 'Auth',
+        status: 'Successful',
+        details: `Password changed successfully for ${user.email}`
+      });
+
+      res.json({ success: true, message: 'Password updated successfully' });
     } catch (error) {
       console.error('Change password error:', error);
       res.status(500).json({ message: 'Error updating password' });

@@ -5,6 +5,12 @@ const { auth } = require('../middleware/authMiddleware');
 const { validate, registerValidation, loginValidation, updateProfileValidation } = require('../middleware/validationMiddleware');
 const { registerLimiter, loginProgressiveLimiter } = require('../middleware/rateLimiterMiddleware');
 
+// @route   GET /api/auth/check-email
+router.get('/check-email', AuthController.checkEmailAvailability);
+
+// @route   POST /api/auth/register-staff
+router.post('/register-staff', registerLimiter, AuthController.registerStaff);
+
 // @route   POST /api/auth/register/request-otp
 router.post('/register/request-otp', registerLimiter, AuthController.requestRegisterOTP);
 

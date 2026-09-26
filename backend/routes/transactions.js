@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const TransactionController = require('../controllers/transactionController');
-const { auth, superAdminOnly } = require('../middleware/authMiddleware');
+const { auth, superAdminOnly, accountingOnly } = require('../middleware/authMiddleware');
 
 // --- Multer Configuration for Receipt Uploads ---
 const storage = multer.memoryStorage();
@@ -62,8 +62,8 @@ router.post('/receipt', receiptUpload, TransactionController.uploadReceipt);
 // Create a new transaction (Logged)
 router.post('/', auth, TransactionController.createTransaction);
 
-// Admin: Verify / Approve / Request Update on a receipt
-router.put('/:id/verify', auth, TransactionController.verifyTransaction);
+// Accounting: Verify / Approve / Request Update on a receipt
+router.put('/:id/verify', auth, accountingOnly, TransactionController.verifyTransaction);
 
 // Admin: Re-upload receipt
 router.put('/:id/reupload', receiptUpload, TransactionController.reuploadReceipt);
@@ -71,8 +71,8 @@ router.put('/:id/reupload', receiptUpload, TransactionController.reuploadReceipt
 // Mobile/Student: Submit a refund request
 router.post('/refund-request', TransactionController.submitRefundRequest);
 
-// Admin: Process (approve/reject) a refund request
-router.put('/refunds/:id/process', auth, TransactionController.processRefund);
+// Accounting: Process (approve/reject) a refund request
+router.put('/refunds/:id/process', auth, accountingOnly, TransactionController.processRefund);
 
 // Bulk delete transactions (Super Admin only)
 router.post('/bulk-delete', auth, superAdminOnly, TransactionController.bulkDeleteTransactions);

@@ -20,8 +20,10 @@ const RequestDetails = () => {
 
     const userRole = (localStorage.getItem('userRole') || '').toLowerCase();
     const isSuperAdmin = userRole === 'super admin';
-    const isStaffOrAdmin = ['super admin', 'registrar', 'registrar staff', 'admin', 'staff'].includes(userRole);
+    const isAccounting = ['accounting admin', 'accounting staff'].includes(userRole);
+    const isStaffOrAdmin = ['super admin', 'registrar', 'registrar staff', 'registrar admin', 'admin', 'staff', 'accounting admin', 'accounting staff'].includes(userRole);
     const hasProcessingAccess = isStaffOrAdmin;
+    const canVerifyPayment = isSuperAdmin || isAccounting;
 
     // Core Data State
     const [requestData, setRequestData] = useState(null);
@@ -86,6 +88,42 @@ const RequestDetails = () => {
 
             const found = res.data;
             const foundTx = txRes.data;
+
+            // Auto-populate blockchain form data from request details
+            if (found) {
+                const docType = (found.documentType || found.document_type || '').toLowerCase();
+                const isDiploma = docType.includes('diploma');
+                const detectedOwner = found.ownerType || (isDiploma ? 'Alumni' : 'Student');
+
+                setBlockchainData(prev => ({
+                    ...prev,
+                    ownerType: detectedOwner || prev.ownerType || 'Student',
+                    studentIDNumber: found.studentId || found.studentIDNumber || prev.studentIDNumber || '',
+                    course: found.course || prev.course || '',
+                    yearLevel: found.yearLevel || prev.yearLevel || '',
+                    nameOfSchool: found.nameOfSchool || found.schoolName || prev.nameOfSchool || 'VeriFitor University',
+                    yearGraduated: found.yearGraduated || prev.yearGraduated || new Date().getFullYear(),
+                }));
+            }
+
+            // If already released, attempt to load existing blockchain verification details
+            if (found && found.status === 'Released' && (found.studentId || found.studentIDNumber)) {
+                const sid = found.studentId || found.studentIDNumber;
+                try {
+                    const bcRes = await api.get(`/blockchain/transactions/verify-by-id/${sid}`);
+                    const rec = bcRes.data?.databaseRecord || bcRes.data?.blockchainRecord;
+                    if (rec) {
+                        setBlockchainResult({
+                            referenceNumber: rec.referenceNumber || `TXN-${Date.now()}`,
+                            transactionHash: rec.blockchainTxHash || rec.txHash || rec.txID || 'Recorded on Ledger',
+                            blockchainTimestamp: rec.createdAt ? new Date(rec.createdAt).toLocaleString() : (rec.date ? new Date(rec.date).toLocaleString() : new Date().toLocaleString()),
+                            studentIDNumber: sid,
+                        });
+                    }
+                } catch (bcErr) {
+                    // Non-blocking: transaction might be newly created or not indexed yet
+                }
+            }
 
             // Auto-initialize rejection form if payment was rejected but document request is not yet rejected
             if (foundTx && foundTx.status === 'Rejected' && found && found.status !== 'Rejected') {
@@ -350,9 +388,9 @@ const RequestDetails = () => {
                 });
 
                 setBlockchainResult({
-                    referenceNumber: blockchainRes.data.referenceNumber || `TXN-${Date.now()}`,
-                    transactionHash: blockchainRes.data.blockchainTxHash || blockchainRes.data.transactionHash,
-                    blockchainTimestamp: blockchainRes.data.timestamp || new Date().toLocaleString(),
+                    referenceNumber: blockchainRes.data.referenceNumber || blockchainRes.data.transaction?.referenceNumber || `TXN-${Date.now()}`,
+                    transactionHash: blockchainRes.data.blockchainTxHash || blockchainRes.data.transactionHash || blockchainRes.data.transaction?.blockchainTxHash || 'Recorded on Ledger',
+                    blockchainTimestamp: blockchainRes.data.timestamp || (blockchainRes.data.transaction?.createdAt ? new Date(blockchainRes.data.transaction.createdAt).toLocaleString() : new Date().toLocaleString()),
                     studentIDNumber: blockchainData.studentIDNumber,
                 });
             }
@@ -751,11 +789,11 @@ const RequestDetails = () => {
                                                     )}
 
                                                     {(paymentTx.status === 'Pending Verification' || isEditingPayment) && (
-                                                        hasProcessingAccess ? (
+                                                        canVerifyPayment ? (
                                                             <div className="p-4 bg-slate-50 rounded-xl space-y-3 border border-slate-200">
                                                                 <div className="flex items-center justify-between">
                                                                     <span className="text-xs font-bold text-slate-700">
-                                                                        {isEditingPayment ? 'Update Payment Verification Decision' : 'Verify Payment Receipt'}
+                                                                        {isEditingPayment ? 'Update Payment Verification Decision (Accounting)' : 'Verify Payment Receipt (Accounting)'}
                                                                     </span>
                                                                     {isEditingPayment && (
                                                                         <button
@@ -810,13 +848,13 @@ const RequestDetails = () => {
                                                                 )}
                                                             </div>
                                                         ) : (
-                                                            <div className="p-4 bg-amber-50/70 rounded-xl border border-amber-200 text-xs flex items-center justify-between gap-3 flex-wrap">
-                                                                <div className="flex items-center gap-2 text-amber-800 font-semibold">
-                                                                    <Clock size={16} className="text-amber-600 shrink-0" />
-                                                                    <span>Payment receipt is pending verification. Awaiting staff or administrator verification.</span>
+                                                            <div className="p-4 bg-blue-50/80 rounded-xl border border-blue-200 text-xs flex items-center justify-between gap-3 flex-wrap">
+                                                                <div className="flex items-center gap-2 text-blue-900 font-semibold">
+                                                                    <Clock size={16} className="text-blue-600 shrink-0" />
+                                                                    <span>Payment receipt verification is managed by the <strong>Accounting Department</strong>. Once Accounting verifies this receipt, Stage 2 (Document Verification) will unlock automatically.</span>
                                                                 </div>
-                                                                <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 font-bold uppercase text-[10px] tracking-wider">
-                                                                    Awaiting Verification
+                                                                <span className="px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 font-bold uppercase text-[10px] tracking-wider">
+                                                                    Accounting Verification Required
                                                                 </span>
                                                             </div>
                                                         )
@@ -1407,8 +1445,8 @@ const RequestDetails = () => {
                                                         <select
                                                             value={blockchainData.ownerType}
                                                             onChange={(e) => setBlockchainData({ ...blockchainData, ownerType: e.target.value })}
-                                                            disabled={!isSuperAdmin}
-                                                            className={`w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm outline-none ${!isSuperAdmin ? 'opacity-75 cursor-not-allowed' : 'focus:border-blue-500'}`}
+                                                            disabled={!hasProcessingAccess}
+                                                            className={`w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm outline-none ${!hasProcessingAccess ? 'opacity-75 cursor-not-allowed' : 'focus:border-blue-500'}`}
                                                         >
                                                             <option value="Student">Student</option>
                                                             <option value="Alumni">Alumni</option>
@@ -1422,8 +1460,8 @@ const RequestDetails = () => {
                                                             placeholder="e.g. ID-2023-001"
                                                             value={blockchainData.studentIDNumber}
                                                             onChange={(e) => setBlockchainData({ ...blockchainData, studentIDNumber: e.target.value })}
-                                                            disabled={!isSuperAdmin}
-                                                            className={`w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm outline-none ${!isSuperAdmin ? 'opacity-75 cursor-not-allowed' : 'focus:border-blue-500'}`}
+                                                            disabled={!hasProcessingAccess}
+                                                            className={`w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm outline-none ${!hasProcessingAccess ? 'opacity-75 cursor-not-allowed' : 'focus:border-blue-500'}`}
                                                         />
                                                     </div>
 
@@ -1435,8 +1473,8 @@ const RequestDetails = () => {
                                                                 required
                                                                 value={blockchainData.yearGraduated}
                                                                 onChange={(e) => setBlockchainData({ ...blockchainData, yearGraduated: e.target.value })}
-                                                                disabled={!isSuperAdmin}
-                                                                className={`w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm outline-none ${!isSuperAdmin ? 'opacity-75 cursor-not-allowed' : 'focus:border-blue-500'}`}
+                                                                disabled={!hasProcessingAccess}
+                                                                className={`w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm outline-none ${!hasProcessingAccess ? 'opacity-75 cursor-not-allowed' : 'focus:border-blue-500'}`}
                                                             />
                                                         </div>
                                                     ) : (
@@ -1449,8 +1487,8 @@ const RequestDetails = () => {
                                                                     placeholder="e.g. BSCS"
                                                                     value={blockchainData.course}
                                                                     onChange={(e) => setBlockchainData({ ...blockchainData, course: e.target.value })}
-                                                                    disabled={!isSuperAdmin}
-                                                                    className={`w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm outline-none ${!isSuperAdmin ? 'opacity-75 cursor-not-allowed' : 'focus:border-blue-500'}`}
+                                                                    disabled={!hasProcessingAccess}
+                                                                    className={`w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm outline-none ${!hasProcessingAccess ? 'opacity-75 cursor-not-allowed' : 'focus:border-blue-500'}`}
                                                                 />
                                                             </div>
                                                             <div>
@@ -1461,8 +1499,8 @@ const RequestDetails = () => {
                                                                     placeholder="e.g. 3rd Year"
                                                                     value={blockchainData.yearLevel}
                                                                     onChange={(e) => setBlockchainData({ ...blockchainData, yearLevel: e.target.value })}
-                                                                    disabled={!isSuperAdmin}
-                                                                    className={`w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm outline-none ${!isSuperAdmin ? 'opacity-75 cursor-not-allowed' : 'focus:border-blue-500'}`}
+                                                                    disabled={!hasProcessingAccess}
+                                                                    className={`w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm outline-none ${!hasProcessingAccess ? 'opacity-75 cursor-not-allowed' : 'focus:border-blue-500'}`}
                                                                 />
                                                             </div>
                                                         </>
@@ -1475,8 +1513,8 @@ const RequestDetails = () => {
                                                             required
                                                             value={blockchainData.nameOfSchool}
                                                             onChange={(e) => setBlockchainData({ ...blockchainData, nameOfSchool: e.target.value })}
-                                                            disabled={!isSuperAdmin}
-                                                            className={`w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm outline-none ${!isSuperAdmin ? 'opacity-75 cursor-not-allowed' : 'focus:border-blue-500'}`}
+                                                            disabled={!hasProcessingAccess}
+                                                            className={`w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm outline-none ${!hasProcessingAccess ? 'opacity-75 cursor-not-allowed' : 'focus:border-blue-500'}`}
                                                         />
                                                     </div>
                                                 </div>

@@ -1,10 +1,15 @@
 import axios from 'axios';
 
 const getBaseURL = () => {
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
+  const envUrl = import.meta.env.VITE_API_URL;
+  // If in production build, never use localhost even if incorrectly configured in env
+  if (import.meta.env.PROD && envUrl && (envUrl.includes('localhost') || envUrl.includes('127.0.0.1'))) {
+    return '/api';
   }
-  // Only use window.location in dev mode — Vite tree-shakes this from production builds
+  if (envUrl) {
+    return envUrl;
+  }
+  // Only use localhost in local dev mode
   if (import.meta.env.DEV) {
     return `http://localhost:5000/api`;
   }

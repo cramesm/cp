@@ -64,11 +64,68 @@ const ManageRegistrar = () => {
     fetchRegistrars();
   }, []);
 
+  // User role
+  const userRole = (localStorage.getItem('userRole') || '').toLowerCase();
+  const isSuperAdmin = userRole === 'super admin';
+
+  const getPromotionTarget = (role) => {
+    const r = (role || '').toLowerCase();
+    if (r === 'registrar staff' || r === 'registrar') {
+      return { target: 'Registrar Admin', type: 'promote', label: 'Promote to Admin' };
+    }
+    if (r === 'registrar admin') {
+      return { target: 'Registrar Staff', type: 'demote', label: 'Demote to Staff' };
+    }
+    if (r === 'accounting staff' || r === 'accounting') {
+      return { target: 'Accounting Admin', type: 'promote', label: 'Promote to Admin' };
+    }
+    if (r === 'accounting admin') {
+      return { target: 'Accounting Staff', type: 'demote', label: 'Demote to Staff' };
+    }
+    return null;
+  };
+
+  const handleRoleChange = (registrarId, currentRole, targetRole, staffName) => {
+    const isPromotion = targetRole.toLowerCase().includes('admin');
+    showConfirm({
+      title: isPromotion ? `Promote to ${targetRole}` : `Demote to ${targetRole}`,
+      message: isPromotion 
+        ? `Are you sure you want to promote ${staffName} to ${targetRole}? They will be granted administrative authority over departmental workflows and an automated email notification will be dispatched.`
+        : `Are you sure you want to demote ${staffName} to ${targetRole}? Their administrative authority will be revoked and set to staff processing level. An automated notification email will be sent.`,
+      type: isPromotion ? 'success' : 'warning',
+      confirmText: isPromotion ? 'Promote Account' : 'Demote Account',
+      onConfirm: async () => {
+        try {
+          const response = await api.put(`/registrars/${registrarId}/role`, { role: targetRole });
+          if (response.data) {
+            setRegistrars(prev => prev.map(reg => 
+              (reg._id === registrarId || reg.registrarId === registrarId) 
+                ? { ...reg, role: targetRole } 
+                : reg
+            ));
+            showFeedback({
+              title: isPromotion ? 'Promotion Successful' : 'Demotion Processed',
+              message: `${staffName} has been officially updated to ${targetRole}. An automated notification email was dispatched.`,
+              type: 'success'
+            });
+          }
+        } catch (err) {
+          console.error('Error changing role:', err);
+          showFeedback({
+            title: 'Action Failed',
+            message: err.response?.data?.message || 'Failed to update staff role. Please try again.',
+            type: 'error'
+          });
+        }
+      }
+    });
+  };
+
   const handleToggleStatus = (registrarId, currentStatus) => {
     const newStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
     showConfirm({
         title: newStatus === 'Active' ? 'Activate Account' : 'Deactivate Account',
-        message: `Are you sure you want to ${newStatus === 'Active' ? 'activate' : 'deactivate'} this account?`,
+        message: `Are you sure you want to ${newStatus === 'Active' ? 'activate' : 'deactivate'} this account? An automated email notification will be dispatched to the staff member informing them of their account status.`,
         type: newStatus === 'Active' ? 'success' : 'warning',
         confirmText: newStatus === 'Active' ? 'Activate' : 'Deactivate',
         onConfirm: async () => {
@@ -80,6 +137,11 @@ const ManageRegistrar = () => {
                             ? { ...reg, status: response.data.status } 
                             : reg
                     ));
+                    showFeedback({
+                        title: 'Status Updated',
+                        message: `Account has been marked as ${newStatus}. An email notice has been sent.`,
+                        type: 'success'
+                    });
                 }
             } catch (err) {
                 console.error('Error updating status:', err);
@@ -169,7 +231,11 @@ const ManageRegistrar = () => {
                   {loading ? (
                     <TableSkeleton columns={7} rows={entriesPerPage || 10} />
                   ) : paginatedRegistrars.length > 0 ? (
-                  paginatedRegistrars.map((item, idx) => (
+                  paginatedRegistrars.map((item) => {
+                    const targetInfo = getPromotionTarget(item.role);
+                    const isAdminRole = (item.role || '').toLowerCase().includes('admin');
+
+                    return (
                     <tr
                       key={item._id || item.registrarId}
                       className="hover:bg-slate-50/80 transition-colors"
@@ -181,7 +247,11 @@ const ManageRegistrar = () => {
                       </td>
                       <td className="py-3 px-5 font-bold text-slate-900">{item.name}</td>
                       <td className="py-3 px-5 text-center">
-                        <span className="inline-block px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-extrabold uppercase tracking-wider border border-blue-200/60">
+                        <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider border ${
+                          isAdminRole
+                            ? 'bg-purple-50 text-purple-700 border-purple-200/80'
+                            : 'bg-blue-50 text-blue-700 border-blue-200/60'
+                        }`}>
                           {item.role}
                         </span>
                       </td>
@@ -205,10 +275,23 @@ const ManageRegistrar = () => {
                         </span>
                       </td>
                       <td className="py-3 px-5 text-right">
-                        <div className="flex justify-end gap-2">
+                        <div className="flex justify-end gap-1.5 items-center flex-wrap">
+                          {isSuperAdmin && targetInfo && (
+                            <button
+                              onClick={() => handleRoleChange(item._id || item.registrarId, item.role, targetInfo.target, item.name)}
+                              className={`min-w-[80px] rounded-full px-2.5 py-1 text-[11px] font-bold text-white text-center border-t border-white/20 border-b-2 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all cursor-pointer ${
+                                targetInfo.type === 'promote'
+                                  ? 'bg-blue-600 hover:bg-blue-700 border-blue-900/40'
+                                  : 'bg-purple-600 hover:bg-purple-700 border-purple-900/40'
+                              }`}
+                              title={targetInfo.label}
+                            >
+                              {targetInfo.type === 'promote' ? 'Promote' : 'Demote'}
+                            </button>
+                          )}
                           <button
                             onClick={() => handleToggleStatus(item._id || item.registrarId, item.status || 'Inactive')}
-                            className={`min-w-[85px] rounded-full px-3 py-1 text-[11px] font-bold text-white text-center border-t border-white/20 border-b-2 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all ${
+                            className={`min-w-[80px] rounded-full px-2.5 py-1 text-[11px] font-bold text-white text-center border-t border-white/20 border-b-2 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all cursor-pointer ${
                                 (item.status || 'Inactive') === 'Active'
                                     ? 'bg-amber-600 hover:bg-amber-700 border-amber-900/40'
                                     : 'bg-emerald-600 hover:bg-emerald-700 border-emerald-900/40'
@@ -218,14 +301,15 @@ const ManageRegistrar = () => {
                           </button>
                           <Link
                             to={`/manage-registrar/details/${item._id || item.registrarId}`}
-                            className="min-w-[110px] rounded-full bg-[#2c3543] hover:bg-[#1f2631] px-3.5 py-1 text-[11px] font-bold text-white text-center border-t border-white/20 border-b-2 border-black/50 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all"
+                            className="min-w-[70px] rounded-full bg-[#2c3543] hover:bg-[#1f2631] px-3 py-1 text-[11px] font-bold text-white text-center border-t border-white/20 border-b-2 border-black/50 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all cursor-pointer"
                           >
                             Manage
                           </Link>
                         </div>
                       </td>
                     </tr>
-                  ))
+                    );
+                  })
                 ) : (
                   <tr><td colSpan="7" className="py-12 text-center text-slate-400 italic">No registrars found.</td></tr>
                 )}

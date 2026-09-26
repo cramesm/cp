@@ -126,22 +126,47 @@ const Layout = ({ children }) => {
         }
     };
 
-    const userRole = localStorage.getItem('userRole') || '';
+    const userRole = (localStorage.getItem('userRole') || '').toLowerCase();
 
     const menuItems = [
-        { path: '/dashboard', label: 'Dashboard', icon: 'fa-solid fa-table-cells-large' },
-        { path: '/requests', label: 'Document Requests', icon: 'fa-solid fa-file-lines' },
-        { path: '/transactions', label: 'Payments', icon: 'fa-solid fa-money-check-dollar' },
-        { path: '/blockchain', label: 'Secured Records', icon: 'fa-solid fa-shield-halved' },
-        { path: '/notifications', label: 'Notifications', icon: 'fa-solid fa-bell' }
+        { path: '/dashboard', label: 'Dashboard', icon: 'fa-solid fa-table-cells-large' }
     ];
 
-
-    if (userRole === 'super admin') {
+    // Document Requests & Blockchain Records: Visible to Registrar & Super Admin
+    if (userRole === 'super admin' || userRole.includes('registrar')) {
         menuItems.push(
-            { path: '/manage-registrar', label: 'Manage Registrar', icon: 'fa-solid fa-user-gear' },
+            { path: '/requests', label: 'Document Requests', icon: 'fa-solid fa-file-lines' },
+            { path: '/blockchain', label: 'Secured Records', icon: 'fa-solid fa-shield-halved' }
+        );
+    }
+
+    // Payments: Visible to Accounting & Super Admin (and Registrar for tracking)
+    if (userRole === 'super admin' || userRole.includes('accounting') || userRole.includes('registrar')) {
+        menuItems.push(
+            { path: '/transactions', label: 'Payments', icon: 'fa-solid fa-money-check-dollar' }
+        );
+    }
+
+    menuItems.push(
+        { path: '/notifications', label: 'Notifications', icon: 'fa-solid fa-bell' }
+    );
+
+    // Administrative Menus
+    if (userRole === 'super admin' || userRole === 'it administrator' || userRole === 'it admin') {
+        menuItems.push(
+            { path: '/manage-registrar', label: 'Manage Staff', icon: 'fa-solid fa-user-gear' },
             { path: '/manage-users', label: 'Manage Users', icon: 'fa-solid fa-users' },
             { path: '/activity-logs', label: 'System Logs', icon: 'fa-solid fa-clipboard-list' }
+        );
+    } else if (userRole === 'registrar admin') {
+        menuItems.push(
+            { path: '/manage-registrar', label: 'Registrar Staff', icon: 'fa-solid fa-user-gear' },
+            { path: '/activity-logs', label: 'System Logs', icon: 'fa-solid fa-clipboard-list' }
+        );
+    } else if (userRole === 'accounting admin') {
+        menuItems.push(
+            { path: '/manage-registrar', label: 'Accounting Staff', icon: 'fa-solid fa-user-gear' },
+            { path: '/activity-logs', label: 'Accounting Logs', icon: 'fa-solid fa-clipboard-list' }
         );
     }
     
@@ -342,7 +367,13 @@ const Layout = ({ children }) => {
                             <div className="flex items-center gap-2 p-1 pl-1.5 pr-3 bg-white/15 rounded-full border border-white/20 shadow-xs select-none cursor-default">
                                 <div className="w-7 h-7 rounded-full bg-white text-[#547794] flex items-center justify-center font-extrabold text-[11px] shadow-xs overflow-hidden flex-shrink-0">
                                     {adminUser.profilePic ? (
-                                        <img src={adminUser.profilePic.startsWith('http') ? adminUser.profilePic : `http://localhost:5000${adminUser.profilePic}`} alt="Profile" className="w-full h-full object-cover" />
+                                        <img 
+                                            src={adminUser.profilePic.startsWith('http') 
+                                                ? adminUser.profilePic 
+                                                : (import.meta.env.DEV ? `http://localhost:5000${adminUser.profilePic}` : adminUser.profilePic)} 
+                                            alt="Profile" 
+                                            className="w-full h-full object-cover" 
+                                        />
                                     ) : (
                                         <span className="tracking-tight">{getInitials(adminUser.name || 'Registrar Name')}</span>
                                     )}

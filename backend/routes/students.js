@@ -1,19 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const StudentController = require('../controllers/studentController');
-const { auth, superAdminOnly } = require('../middleware/authMiddleware');
+const { auth, canManageUsers } = require('../middleware/authMiddleware');
 
-// Route to get all students (Super Admin only)
-router.get('/', auth, superAdminOnly, StudentController.getAllStudents);
+// Route to get all students (Super Admin & IT Admin)
+router.get('/', auth, canManageUsers, StudentController.getAllStudents);
 
-// Route to add a new student (Super Admin only)
-router.post('/', auth, superAdminOnly, StudentController.addStudent);
+// Route to add a new student (Super Admin & IT Admin)
+router.post('/', auth, canManageUsers, StudentController.addStudent);
 
-// Route to delete a student (Super Admin only)
-router.delete('/:id', auth, superAdminOnly, StudentController.deleteStudent);
+// Route to delete a student (Super Admin & IT Admin)
+router.delete('/:id', auth, canManageUsers, StudentController.deleteStudent);
 
-// Route to update student status (Super Admin only)
-router.put('/:id/status', auth, superAdminOnly, StudentController.updateStudentStatus);
+// Route to update student status (Super Admin & IT Admin)
+router.put('/:id/status', auth, canManageUsers, StudentController.updateStudentStatus);
 
 // Route for a student to update their own profile (Ownership check inside controller)
 router.put('/:id/profile', auth, StudentController.updateStudentProfile);
