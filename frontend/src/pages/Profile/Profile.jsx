@@ -132,35 +132,116 @@ const Profile = () => {
     };
 
     const handleUpdatePassword = () => {
-        if (!passwords.current) {
+        if (!passwords.current.trim()) {
             triggerToast("Current password is required to change password", "error");
             return;
         }
-        if (!passwords.newGroup) {
+        if (!passwords.newGroup.trim()) {
             triggerToast("New password is required", "error");
             return;
         }
-        if (passwords.newGroup !== passwords.confirm) {
+        if (passwords.newGroup.trim().length < 6) {
+            triggerToast("New password must be at least 6 characters long", "error");
+            return;
+        }
+        if (passwords.newGroup.trim() !== passwords.confirm.trim()) {
             triggerToast("New passwords do not match!", "error");
             return;
         }
 
         showConfirm({
             title: 'Change Password',
-            message: 'Are you sure you want to change your password? You will use this new password next time you log in.',
+            message: 'Are you sure you want to change your password? You will need to use this new password the next time you log in.',
             type: 'warning',
             confirmText: 'Change Password',
             onConfirm: async () => {
                 setSaving(true);
                 try {
                     await api.put('/auth/change-password', {
-                        currentPassword: passwords.current,
-                        newPassword: passwords.newGroup
+                        currentPassword: passwords.current.trim(),
+                        newPassword: passwords.newGroup.trim()
                     });
                     triggerToast("Password changed successfully!", "success");
                     setPasswords({ current: '', newGroup: '', confirm: '' });
                 } catch (err) {
+                    console.error("Change password error:", err);
                     triggerToast(err.response?.data?.message || 'Failed to change password.', "error");
+                } finally {
+                    setSaving(false);
+                }
+            }
+        });
+    };
+
+    const handleSaveChanges = () => {
+        const isChangingPassword = Boolean(passwords.current || passwords.newGroup || passwords.confirm);
+        const fullName = `${user.firstname} ${user.lastname}`.trim();
+
+        if (!fullName) {
+            triggerToast("Firstname and Lastname are required", "error");
+            return;
+        }
+
+        if (isChangingPassword) {
+            if (!passwords.current.trim()) {
+                triggerToast("Current password is required to change password", "error");
+                return;
+            }
+            if (!passwords.newGroup.trim()) {
+                triggerToast("New password is required", "error");
+                return;
+            }
+            if (passwords.newGroup.trim().length < 6) {
+                triggerToast("New password must be at least 6 characters long", "error");
+                return;
+            }
+            if (passwords.newGroup.trim() !== passwords.confirm.trim()) {
+                triggerToast("New passwords do not match!", "error");
+                return;
+            }
+        }
+
+        showConfirm({
+            title: isChangingPassword ? 'Save Profile & Change Password' : 'Save Profile Details',
+            message: isChangingPassword 
+                ? 'Are you sure you want to update your profile details and change your password? You will need to log in with your new password next time.'
+                : 'Are you sure you want to save changes to your profile details?',
+            type: 'info',
+            confirmText: 'Save Changes',
+            onConfirm: async () => {
+                setSaving(true);
+                try {
+                    let passwordUpdated = false;
+                    let profileUpdated = false;
+
+                    // 1. Update password if filled
+                    if (isChangingPassword) {
+                        await api.put('/auth/change-password', {
+                            currentPassword: passwords.current.trim(),
+                            newPassword: passwords.newGroup.trim()
+                        });
+                        passwordUpdated = true;
+                        setPasswords({ current: '', newGroup: '', confirm: '' });
+                    }
+
+                    // 2. Update profile details
+                    const res = await api.put('/auth/profile', { name: fullName });
+                    profileUpdated = true;
+                    const updatedUser = res.data;
+                    const currentAdmin = JSON.parse(localStorage.getItem('adminUser') || '{}');
+                    localStorage.setItem('adminUser', JSON.stringify({ ...currentAdmin, ...updatedUser }));
+                    window.dispatchEvent(new Event('profileUpdated'));
+
+                    if (passwordUpdated && profileUpdated) {
+                        triggerToast("Profile details and password updated successfully!", "success");
+                    } else if (passwordUpdated) {
+                        triggerToast("Password changed successfully!", "success");
+                    } else {
+                        triggerToast("Profile details updated successfully!", "success");
+                    }
+                } catch (err) {
+                    console.error("Error saving changes:", err);
+                    triggerToast(err.response?.data?.message || 'Failed to save changes. Please try again.', "error");
                 } finally {
                     setSaving(false);
                 }
@@ -326,6 +407,17 @@ const Profile = () => {
                                     </button>
                                 </div>
                             </div>
+
+                            <div className="flex justify-end pt-2">
+                                <button
+                                    type="button"
+                                    onClick={handleUpdatePassword}
+                                    disabled={saving || (!passwords.current && !passwords.newGroup)}
+                                    className="bg-[#2c3543] hover:bg-[#1f2631] text-white py-2 px-6 rounded-full font-bold text-xs transition-all shadow-xs hover:shadow-md cursor-pointer border-none disabled:opacity-40"
+                                >
+                                    Update Password
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -340,12 +432,7 @@ const Profile = () => {
                     </button>
                     <button 
                         className="bg-[#2c3543] hover:bg-[#1f2631] text-white py-2 px-7 rounded-full font-bold text-[13px] transition-all shadow-xs hover:shadow-md cursor-pointer border-none active:scale-95"
-                        onClick={() => {
-                            if (passwords.current || passwords.newGroup) {
-                                handleUpdatePassword();
-                            }
-                            handleUpdateProfile();
-                        }}
+                        onClick={handleSaveChanges}
                         disabled={saving}
                     >
                         {saving ? 'Saving...' : 'Confirm Changes'}

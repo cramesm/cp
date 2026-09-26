@@ -676,18 +676,29 @@ const AuthController = {
   // @desc    Change password for authenticated user
   changePassword: async (req, res) => {
     try {
-      const { currentPassword, newPassword } = req.body;
-      if (!currentPassword || !newPassword) {
+      const rawCurrent = req.body.currentPassword || '';
+      const rawNew = req.body.newPassword || '';
+      const cleanCurrent = rawCurrent.trim();
+      const cleanNew = rawNew.trim();
+
+      if (!cleanCurrent || !cleanNew) {
         return res.status(400).json({ message: 'Current password and new password are required' });
+      }
+
+      if (cleanNew.length < 6) {
+        return res.status(400).json({ message: 'New password must be at least 6 characters long' });
       }
 
       const { user } = await findUserById(req.user.id);
       if (!user) return res.status(404).json({ message: 'User not found' });
 
-      const isMatch = await user.comparePassword(currentPassword);
+      let isMatch = await user.comparePassword(cleanCurrent);
+      if (!isMatch && rawCurrent !== cleanCurrent) {
+        isMatch = await user.comparePassword(rawCurrent);
+      }
       if (!isMatch) return res.status(400).json({ message: 'Current password incorrect' });
 
-      user.password = newPassword;
+      user.password = cleanNew;
       if ('mustChangePassword' in user) {
         user.mustChangePassword = false;
       }
