@@ -23,12 +23,14 @@ const notificationSchema = new mongoose.Schema({
   },
   targetRole: {
     type: String,
-    enum: ['admin', 'student', 'all'],
     default: 'admin'
+  },
+  targetDepartment: {
+    type: String,
+    default: ''
   },
   type: {
     type: String,
-    enum: ['request', 'payment', 'refund', 'system', 'general'],
     default: 'general'
   },
   link: {

@@ -35,12 +35,26 @@ const auth = async (req, res, next) => {
             dbUser = await Registrar.findById(decoded.id) || await SuperAdmin.findById(decoded.id);
             if (dbUser) {
               decoded.name = dbUser.name;
+              decoded.role = dbUser.role || decoded.role;
+              decoded.department = dbUser.department || (dbUser.role === 'Super Admin' ? 'Administration' : '');
             }
           }
         }
       } catch (dbErr) {
         console.error('Failed to resolve dynamic name in auth middleware:', dbErr);
       }
+    }
+
+    if (!decoded.department && decoded.id) {
+      try {
+        const Registrar = require('../models/Registrar');
+        const SuperAdmin = require('../models/Users/SuperAdmin');
+        const dbUser = await Registrar.findById(decoded.id) || await SuperAdmin.findById(decoded.id);
+        if (dbUser) {
+          decoded.role = dbUser.role || decoded.role;
+          decoded.department = dbUser.department || (dbUser.role === 'Super Admin' ? 'Administration' : '');
+        }
+      } catch (_e) {}
     }
 
     if (!decoded.name) {

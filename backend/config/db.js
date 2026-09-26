@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const seedUsers = require('../utils/seedUsers');
+const syncNotifications = require('../utils/syncNotifications');
 
 /**
  * Connects to MongoDB (Primary Atlas with Local fallback) and seeds default accounts
@@ -10,6 +11,7 @@ const connectDB = async () => {
     await mongoose.connect(process.env.MONGODB_URI, { serverSelectionTimeoutMS: 4000 });
     console.log('MongoDB (Atlas) connected successfully');
     await seedUsers();
+    await syncNotifications();
   } catch (err) {
     console.warn('MongoDB Atlas connection failed:', err.message);
     console.log('Attempting local MongoDB fallback (mongodb://127.0.0.1:27017/verifitor)...');
@@ -17,6 +19,7 @@ const connectDB = async () => {
       await mongoose.connect('mongodb://127.0.0.1:27017/verifitor', { serverSelectionTimeoutMS: 4000 });
       console.log('MongoDB (Local Fallback) connected successfully!');
       await seedUsers();
+      await syncNotifications();
     } catch (localErr) {
       console.error('Critical Database Error: Both Atlas and Local MongoDB connections failed!');
       console.error('Local error:', localErr.message);

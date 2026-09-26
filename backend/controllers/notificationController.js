@@ -1,6 +1,7 @@
 const Notification = require('../models/Notification');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
+const { resolveUserRoleAndDept, getRoleNotificationFilter } = require('../utils/notificationFilter');
 
 // Helper to build robust user matching clauses (for Mobile & Student/Alumni web)
 const buildUserClauses = (user) => {
@@ -28,45 +29,39 @@ const buildUserClauses = (user) => {
   return clauses;
 };
 
-// Helper filter for admin-actionable notifications
-const getAdminNotificationFilter = () => ({
-  $or: [
-    { targetRole: 'admin' },
-    { targetRole: 'all' },
-    {
-      targetRole: { $exists: false },
-      message: { $not: /^(your request|your refund|your account|your password|your profile)/i }
-    }
-  ]
-});
-
 const NotificationController = {
-  // @desc    Get actionable notifications for Admin/Registrar or delegating student
+  // @desc    Get actionable notifications for Admin/Registrar/Accounting or delegating student
   getAdminNotifications: async (req, res) => {
     try {
-      // Check query params if caller requested student notifications explicitly (e.g. Mobile query params)
+      // 1. Check query params if caller requested student notifications explicitly (e.g. Mobile query params)
       if (req.query.email || req.query.userId || req.query.studentId) {
         const clauses = buildUserClauses(req.query);
         const notifications = await Notification.find({ $or: clauses }).sort({ date: -1, createdAt: -1 });
         return res.json(notifications);
       }
 
-      // Check if caller provides Bearer token for a student or alumni (e.g. Mobile app token)
-      if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+      // 2. Decode user from Bearer token if provided
+      let callerUser = req.user;
+      if (!callerUser && req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
         try {
           const token = req.headers.authorization.split(' ')[1];
-          const decoded = jwt.verify(token, process.env.JWT_SECRET || 'supersecretverifitor123');
-          if (decoded && (decoded.role === 'student' || decoded.role === 'alumni')) {
-            const clauses = buildUserClauses(decoded);
-            const notifications = await Notification.find({ $or: clauses }).sort({ date: -1, createdAt: -1 });
-            return res.json(notifications);
-          }
+          callerUser = jwt.verify(token, process.env.JWT_SECRET || 'supersecretverifitor123');
         } catch (_tokenErr) {
-          // Continue to admin filter
+          // Token invalid or expired
         }
       }
 
-      const filter = getAdminNotificationFilter();
+      // Check if caller provides Bearer token for a student or alumni (e.g. Mobile app token)
+      if (callerUser && (callerUser.role === 'student' || callerUser.role === 'alumni')) {
+        const clauses = buildUserClauses(callerUser);
+        const notifications = await Notification.find({ $or: clauses }).sort({ date: -1, createdAt: -1 });
+        return res.json(notifications);
+      }
+
+      // 3. Resolve role and department for staff / admin
+      const { role, department } = await resolveUserRoleAndDept(callerUser);
+      const filter = getRoleNotificationFilter(role, department);
+
       const notifications = await Notification.find(filter).sort({ date: -1, createdAt: -1 });
       res.json(notifications);
     } catch (error) {
@@ -87,10 +82,21 @@ const NotificationController = {
     }
   },
 
-  // @desc    Mark all admin notifications as read
+  // @desc    Mark all role-appropriate admin notifications as read
   markAllRead: async (req, res) => {
     try {
-      await Notification.updateMany({ isRead: false }, { isRead: true });
+      let callerUser = req.user;
+      if (!callerUser && req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+        try {
+          const token = req.headers.authorization.split(' ')[1];
+          callerUser = jwt.verify(token, process.env.JWT_SECRET || 'supersecretverifitor123');
+        } catch (_tokenErr) {}
+      }
+
+      const { role, department } = await resolveUserRoleAndDept(callerUser);
+      const roleFilter = getRoleNotificationFilter(role, department);
+
+      await Notification.updateMany({ ...roleFilter, isRead: false }, { isRead: true });
       res.json({ message: 'All notifications marked as read' });
     } catch (error) {
       console.error('Error updating notifications:', error);

@@ -16,9 +16,25 @@ const Notifications = () => {
   const [toast, setToast] = useState({ show: false, message: '', type: 'info' });
 
 
+  const user = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem('adminUser') || '{}');
+    } catch (_e) {
+      return {};
+    }
+  }, []);
+
+  const roleLower = (user.role || '').toLowerCase();
+  const deptLower = (user.department || '').toLowerCase();
+  const isSuperAdmin = roleLower.includes('super admin');
+  const isAccounting = !isSuperAdmin && (deptLower === 'accounting' || roleLower.includes('accounting'));
+  const isRegistrar = !isSuperAdmin && (deptLower === 'registrar' || roleLower.includes('registrar'));
+  const isIT = !isSuperAdmin && (deptLower.includes('it') || roleLower.includes('it'));
+
   // Filter States
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('All Status');
+  const [filterCategory, setFilterCategory] = useState('All');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
@@ -55,19 +71,47 @@ const Notifications = () => {
     }
   };
 
+  const categoryOptions = useMemo(() => {
+    const opts = [{ key: 'All', label: 'All Alerts', count: notifications.length }];
+
+    if (isSuperAdmin || isRegistrar) {
+      const docCount = notifications.filter(n => (n.type || '').toLowerCase() === 'request' || (n.message || '').toLowerCase().includes('document request') || (n.message || '').toLowerCase().includes('docu')).length;
+      opts.push({ key: 'Requests', label: 'Document Requests', count: docCount });
+    }
+
+    if (isSuperAdmin || isAccounting) {
+      const payCount = notifications.filter(n => (n.type || '').toLowerCase() === 'payment' || (n.message || '').toLowerCase().includes('payment') || (n.message || '').toLowerCase().includes('receipt')).length;
+      opts.push({ key: 'Payments', label: 'Payments', count: payCount });
+
+      const refCount = notifications.filter(n => (n.type || '').toLowerCase() === 'refund' || (n.message || '').toLowerCase().includes('refund')).length;
+      opts.push({ key: 'Refunds', label: 'Refunds', count: refCount });
+    }
+
+    return opts;
+  }, [notifications, isSuperAdmin, isAccounting, isRegistrar]);
+
   const filteredNotifications = useMemo(() => {
     const sanitizedSearch = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     return notifications.filter((n) => {
       const matchesSearch = n.message?.toLowerCase().includes(sanitizedSearch.toLowerCase());
       const matchesStatus = filterStatus === 'All Status' ? true : (filterStatus === 'Unread' ? !n.isRead : n.isRead);
       
+      const type = (n.type || '').toLowerCase();
+      const msg = (n.message || '').toLowerCase();
+      const matchesCategory = filterCategory === 'All' ? true : (() => {
+        if (filterCategory === 'Requests') return type === 'request' || msg.includes('document request') || msg.includes('docu');
+        if (filterCategory === 'Payments') return type === 'payment' || msg.includes('payment') || msg.includes('receipt');
+        if (filterCategory === 'Refunds') return type === 'refund' || msg.includes('refund');
+        return true;
+      })();
+
       const notifDate = new Date(n.date || n.createdAt);
       const start = startDate ? new Date(startDate) : null;
       const end = endDate ? new Date(endDate) : null;
       if (end) end.setHours(23, 59, 59, 999);
       const matchesDate = (!start || notifDate >= start) && (!end || notifDate <= end);
 
-      return matchesSearch && matchesStatus && matchesDate;
+      return matchesSearch && matchesStatus && matchesCategory && matchesDate;
     }).sort((a, b) => {
         let valA = a[sortConfig.key];
         let valB = b[sortConfig.key];
@@ -84,7 +128,7 @@ const Notifications = () => {
         if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
         return 0;
     });
-  }, [notifications, searchTerm, filterStatus, startDate, endDate, sortConfig]);
+  }, [notifications, searchTerm, filterStatus, filterCategory, startDate, endDate, sortConfig]);
 
   const totalPages = Math.ceil(filteredNotifications.length / entriesPerPage);
   const paginatedNotifications = filteredNotifications.slice(
@@ -94,7 +138,7 @@ const Notifications = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, filterStatus, startDate, endDate, entriesPerPage, sortConfig]);
+  }, [searchTerm, filterStatus, filterCategory, startDate, endDate, entriesPerPage, sortConfig]);
 
   const renderStatusBadge = (isRead) => {
     if (isRead) {
@@ -197,16 +241,44 @@ const Notifications = () => {
             <ActiveFilterChips 
               filters={[
                 { label: 'Status', value: filterStatus, key: 'filterStatus' },
+                { label: 'Category', value: filterCategory !== 'All' ? filterCategory : '', key: 'filterCategory' },
                 { label: 'From', value: startDate, key: 'startDate' },
                 { label: 'To', value: endDate, key: 'endDate' },
               ]}
               onRemove={(key) => {
                 if (key === 'filterStatus') setFilterStatus('All Status');
+                if (key === 'filterCategory') setFilterCategory('All');
                 if (key === 'startDate') setStartDate('');
                 if (key === 'endDate') setEndDate('');
               }}
             />
           </div>
+
+          {/* Category Tab Pills */}
+          {categoryOptions.length > 1 && (
+            <div className="px-4 sm:px-5 pt-3 pb-1 flex items-center gap-2 flex-wrap">
+              {categoryOptions.map((opt) => (
+                <button
+                  key={opt.key}
+                  onClick={() => setFilterCategory(opt.key)}
+                  className={`px-3.5 py-1.5 rounded-full text-[11.5px] font-bold border transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                    filterCategory === opt.key
+                      ? 'bg-[#2c3543] text-white border-[#2c3543] shadow-[0_2px_5px_rgba(0,0,0,0.2)]'
+                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 shadow-2xs'
+                  }`}
+                >
+                  <span>{opt.label}</span>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-extrabold ${
+                    filterCategory === opt.key
+                      ? 'bg-white/20 text-white'
+                      : 'bg-slate-100 text-slate-500'
+                  }`}>
+                    {opt.count}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Table: NOTIFICATION, DATE & TIME, STATUS */}
           <div className="overflow-x-auto">
@@ -388,6 +460,7 @@ const Notifications = () => {
           onClose={() => setIsFilterDrawerOpen(false)}
           onClearAll={() => {
             setFilterStatus('All Status');
+            setFilterCategory('All');
             setStartDate('');
             setEndDate('');
             setSortConfig({ key: 'date', direction: 'desc' });

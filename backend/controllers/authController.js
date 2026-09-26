@@ -65,6 +65,7 @@ const generateToken = (user) => {
       id: user._id,
       email: user.email,
       role: user.role,
+      department: user.department || '',
       name: user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User'
     },
     process.env.JWT_SECRET || 'supersecretverifitor123',

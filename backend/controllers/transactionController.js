@@ -255,6 +255,21 @@ const TransactionController = {
         );
       }
 
+      // Notify Accounting of newly uploaded payment receipt from mobile/web user
+      try {
+        await Notification.create({
+          title: 'New Payment Receipt',
+          message: `New payment receipt submitted for Request #${requestId || 'N/A'} (${effectiveDocType}) by ${payerName || name || 'Student'} — ₱${amount || '0.00'}`,
+          isRead: false,
+          targetRole: 'admin',
+          targetDepartment: 'Accounting',
+          type: 'payment',
+          link: '/payments'
+        });
+      } catch (notifErr) {
+        console.error('Failed to notify accounting of new payment receipt:', notifErr);
+      }
+
       res.status(201).json({ success: true, ...newTx.toObject() });
     } catch (error) {
       console.error('Receipt upload error:', error);
@@ -292,9 +307,11 @@ const TransactionController = {
 
       try {
         await Notification.create({
+          title: 'New Payment Receipt',
           message: `New payment receipt submitted for Request #${req.body.requestId || 'N/A'} (${req.body.documentType || 'Document'}) by ${req.body.payerName || req.user.name || 'Student'} — ₱${req.body.amount || '0.00'}`,
           isRead: false,
           targetRole: 'admin',
+          targetDepartment: 'Accounting',
           type: 'payment',
           link: '/payments'
         });
@@ -588,6 +605,7 @@ const TransactionController = {
         message: `New refund request (${refundId}) received from ${refund.studentName} for ₱${refund.amount} — Awaiting review`,
         isRead: false,
         targetRole: 'admin',
+        targetDepartment: 'Accounting',
         type: 'refund',
         link: '/payments?tab=refunds'
       });

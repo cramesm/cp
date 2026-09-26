@@ -216,9 +216,11 @@ const RequestController = {
       });
 
       await Notification.create({
+        title: 'New Document Request',
         message: `New document request received: ${req.body.documentType} from ${userName} (ID: ${studentId || 'N/A'}) — Request #${requestId}`,
         isRead: false,
         targetRole: 'admin',
+        targetDepartment: 'Registrar',
         type: 'request',
         link: '/requests'
       });

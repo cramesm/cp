@@ -73,6 +73,7 @@ const RefundController = {
           message: `New refund request (${refundId}) submitted by ${req.user.name || req.user.email} for ₱${transaction.amount} — Awaiting review`,
           isRead: false,
           targetRole: 'admin',
+          targetDepartment: 'Accounting',
           type: 'refund',
           link: '/payments?tab=refunds'
         });

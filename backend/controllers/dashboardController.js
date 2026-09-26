@@ -1,3 +1,4 @@
+const jwt = require('jsonwebtoken');
 const Request = require('../models/Request');
 const Transaction = require('../models/Transaction');
 const Notification = require('../models/Notification');
@@ -7,6 +8,7 @@ const Student = require('../models/Users/Student');
 const Alumni = require('../models/Users/Alumni');
 const Registrar = require('../models/Registrar');
 const ActivityLog = require('../models/ActivityLog');
+const { resolveUserRoleAndDept, getRoleNotificationFilter } = require('../utils/notificationFilter');
 
 const DashboardController = {
   // @desc    Get dashboard summary statistics tailored for each role
@@ -146,16 +148,16 @@ const DashboardController = {
   // @desc    Get recent activities tailored for role-specific dashboard views
   getRecentActivity: async (req, res) => {
     try {
-      const adminFilter = {
-        $or: [
-          { targetRole: 'admin' },
-          { targetRole: 'all' },
-          {
-            targetRole: { $exists: false },
-            message: { $not: /^(your request|your refund|your account|your password|your profile)/i }
-          }
-        ]
-      };
+      let callerUser = req.user;
+      if (!callerUser && req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+        try {
+          const token = req.headers.authorization.split(' ')[1];
+          callerUser = jwt.verify(token, process.env.JWT_SECRET || 'supersecretverifitor123');
+        } catch (_tokenErr) {}
+      }
+
+      const { role, department } = await resolveUserRoleAndDept(callerUser);
+      const notifFilter = getRoleNotificationFilter(role, department);
 
       const [
         transactions,
@@ -168,7 +170,7 @@ const DashboardController = {
         recentLogs
       ] = await Promise.all([
         BlockchainTransaction.find().sort({ createdAt: -1 }).limit(6),
-        Notification.find(adminFilter).sort({ date: -1, createdAt: -1 }).limit(6),
+        Notification.find(notifFilter).sort({ date: -1, createdAt: -1 }).limit(6),
         Request.find().sort({ dateRequested: -1, createdAt: -1 }).limit(8),
         Request.find({ status: 'Pending' }).sort({ dateRequested: 1, createdAt: 1 }).limit(5),
         Transaction.find().sort({ createdAt: -1 }).limit(8),
