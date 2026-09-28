@@ -129,7 +129,12 @@ const ManageRegistrar = () => {
           if (response.data) {
             setRegistrars(prev => prev.map(reg => 
               (reg._id === registrarId || reg.registrarId === registrarId) 
-                ? { ...reg, role: targetRole } 
+                ? { 
+                    ...reg, 
+                    role: targetRole,
+                    department: targetRole.toLowerCase().includes('accounting') ? 'Accounting' :
+                               targetRole.toLowerCase().includes('it') ? 'IT Administration' : 'Registrar'
+                  } 
                 : reg
             ));
             showFeedback({
@@ -190,13 +195,21 @@ const ManageRegistrar = () => {
         val?.toString().toLowerCase().includes(search.toLowerCase())
       );
 
-      const itemDept = (item.department || '').toLowerCase();
+      const roleStr = (item.role || '').toLowerCase();
+      let effectiveDept = (item.department || '').toLowerCase();
+      if (roleStr.includes('accounting')) {
+        effectiveDept = 'accounting';
+      } else if (roleStr.includes('it')) {
+        effectiveDept = 'it administration';
+      } else if (roleStr.includes('registrar')) {
+        effectiveDept = 'registrar';
+      }
+
       const matchesDept = 
         !isSuperAdmin ||
         departmentFilter === 'All Departments' || 
-        itemDept.includes(departmentFilter.toLowerCase().replace(' departments', '').replace(' administration', ''));
+        effectiveDept.includes(departmentFilter.toLowerCase().replace(' departments', '').replace(' administration', ''));
 
-      const roleStr = (item.role || '').toLowerCase();
       const matchesRole = 
         roleFilter === 'All Roles' ||
         (roleFilter === 'Department Admins' && roleStr.includes('admin')) ||
@@ -321,7 +334,14 @@ const ManageRegistrar = () => {
                   paginatedRegistrars.map((item) => {
                     const targetInfo = getPromotionTarget(item.role);
                     const isAdminRole = (item.role || '').toLowerCase().includes('admin');
-                    const deptName = item.department || (item.role?.toLowerCase().includes('registrar') ? 'Registrar' : item.role?.toLowerCase().includes('accounting') ? 'Accounting' : 'Administration');
+                    const roleStr = (item.role || '').toLowerCase();
+                    const deptName = roleStr.includes('accounting')
+                      ? 'Accounting'
+                      : roleStr.includes('it')
+                      ? 'IT Administration'
+                      : roleStr.includes('registrar')
+                      ? 'Registrar'
+                      : (item.department || 'Administration');
 
                     return (
                     <tr

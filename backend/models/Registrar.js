@@ -57,8 +57,18 @@ const registrarSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-// Hash password before saving
+// Auto-align department with role and hash password before saving
 registrarSchema.pre('save', async function() {
+  if (this.role) {
+    const r = this.role.toLowerCase();
+    if (r.includes('accounting')) {
+      this.department = 'Accounting';
+    } else if (r.includes('it')) {
+      this.department = 'IT Administration';
+    } else if (r.includes('registrar')) {
+      this.department = 'Registrar';
+    }
+  }
   if (!this.isModified('password')) return;
   this.password = await bcrypt.hash(this.password, 10);
 });

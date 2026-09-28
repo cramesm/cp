@@ -24,10 +24,13 @@ const RegistrarController = {
       if (userRole !== 'super admin') {
         if (userRole.includes('registrar') || userDept === 'registrar') {
           query.department = { $regex: /^registrar/i };
+          query.role = { $not: { $regex: /(accounting|it)/i } };
         } else if (userRole.includes('accounting') || userDept === 'accounting') {
           query.department = { $regex: /^accounting/i };
+          query.role = { $not: { $regex: /(registrar|it)/i } };
         } else if (userRole.includes('it') || userDept.includes('it')) {
           query.department = { $regex: /^it/i };
+          query.role = { $not: { $regex: /(registrar|accounting)/i } };
         }
       } else {
         if (req.query.department && req.query.department !== 'All' && req.query.department !== 'All Departments') {
@@ -65,9 +68,20 @@ const RegistrarController = {
       }
 
       const combined = [
-        ...registrars,
+        ...registrars.map(r => {
+          const obj = r.toObject ? r.toObject() : { ...r };
+          const roleLower = (obj.role || '').toLowerCase();
+          if (roleLower.includes('accounting')) {
+            obj.department = 'Accounting';
+          } else if (roleLower.includes('it')) {
+            obj.department = 'IT Administration';
+          } else if (roleLower.includes('registrar') || !obj.department) {
+            obj.department = 'Registrar';
+          }
+          return obj;
+        }),
         ...admins.map(a => ({
-          ...a.toObject(),
+          ...(a.toObject ? a.toObject() : a),
           registrarId: 'ADMIN-' + a._id.toString().substring(0, 4),
           status: a.status || 'Active',
           department: a.department || 'Administration'
@@ -243,7 +257,17 @@ const RegistrarController = {
       const updateData = {};
       if (name) updateData.name = name;
       if (email) updateData.email = email;
-      if (role) updateData.role = role;
+      if (role) {
+        updateData.role = role;
+        const roleLower = role.toLowerCase();
+        if (roleLower.includes('accounting')) {
+          updateData.department = 'Accounting';
+        } else if (roleLower.includes('it')) {
+          updateData.department = 'IT Administration';
+        } else if (roleLower.includes('registrar')) {
+          updateData.department = 'Registrar';
+        }
+      }
       if (status) updateData.status = status;
       if (department) updateData.department = department;
 
@@ -349,7 +373,17 @@ const RegistrarController = {
         (oldRole?.toLowerCase().includes('admin') && role?.toLowerCase().includes('staff')) ||
         (oldRole?.toLowerCase().includes('admin') && !role?.toLowerCase().includes('admin'));
 
-      const updated = await model.findByIdAndUpdate(req.params.id, { role }, { new: true });
+      let updateData = { role };
+      const roleLower = (role || '').toLowerCase();
+      if (roleLower.includes('accounting')) {
+        updateData.department = 'Accounting';
+      } else if (roleLower.includes('it')) {
+        updateData.department = 'IT Administration';
+      } else if (roleLower.includes('registrar')) {
+        updateData.department = 'Registrar';
+      }
+
+      const updated = await model.findByIdAndUpdate(req.params.id, updateData, { new: true });
 
       try {
         await sendRoleChangeEmail({
