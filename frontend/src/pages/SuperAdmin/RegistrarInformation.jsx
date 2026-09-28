@@ -46,12 +46,6 @@ export default function RegistrarInformation() {
     if (r === 'accounting admin') {
       return { target: 'Accounting Staff', type: 'demote' };
     }
-    if (r === 'it staff' || r === 'it') {
-      return { target: 'IT Administrator', type: 'promote' };
-    }
-    if (r === 'it administrator' || r === 'it admin') {
-      return { target: 'IT Staff', type: 'demote' };
-    }
     return null;
   };
 

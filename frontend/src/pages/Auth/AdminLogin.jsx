@@ -85,18 +85,6 @@ const AdminLogin = () => {
             bg: 'bg-indigo-50/60 border-indigo-200 hover:border-indigo-400',
             badgeBg: 'bg-indigo-100 text-indigo-800',
             desc: 'System health, backups & staff IAM'
-        },
-        {
-            dept: 'IT Administration',
-            role: 'IT Staff',
-            name: 'Angelo Gomez',
-            email: 'it.staff@verifitor.com',
-            pass: 'itstaff123',
-            icon: 'fa-headset',
-            color: 'text-violet-600',
-            bg: 'bg-violet-50/60 border-violet-200 hover:border-violet-400',
-            badgeBg: 'bg-violet-100 text-violet-800',
-            desc: 'Helpdesk, resets & account unlocks'
         }
     ];
 

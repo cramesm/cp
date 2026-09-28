@@ -105,12 +105,6 @@ const ManageRegistrar = () => {
     if (r === 'accounting admin') {
       return { target: 'Accounting Staff', type: 'demote', label: 'Demote to Staff' };
     }
-    if (r === 'it staff' || r === 'it') {
-      return { target: 'IT Administrator', type: 'promote', label: 'Promote to Admin' };
-    }
-    if (r === 'it administrator' || r === 'it admin') {
-      return { target: 'IT Staff', type: 'demote', label: 'Demote to Staff' };
-    }
     return null;
   };
 

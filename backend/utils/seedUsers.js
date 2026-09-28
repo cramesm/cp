@@ -98,16 +98,6 @@ async function seedUsers() {
         registrarId: 'IT-ADM-001',
         status: 'Active',
         mustChangePassword: false
-      },
-      {
-        email: 'it.staff@verifitor.com',
-        password: 'itstaff123',
-        name: 'Angelo Gomez',
-        role: 'IT Staff',
-        department: 'IT Administration',
-        registrarId: 'IT-STF-001',
-        status: 'Active',
-        mustChangePassword: false
       }
     ];
 

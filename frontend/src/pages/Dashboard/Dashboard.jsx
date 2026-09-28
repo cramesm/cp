@@ -70,9 +70,7 @@ const Dashboard = () => {
     const userName = adminUser.name || `${adminUser.firstName || ''} ${adminUser.lastName || ''}`.trim() || 'Staff';
 
     const isSuperAdmin = userRole === 'super admin';
-    const isITAdmin = userRole === 'it administrator' || userRole === 'it admin';
-    const isITStaff = userRole === 'it staff' || (userRole.includes('it') && !userRole.includes('admin'));
-    const isIT = isITAdmin || isITStaff;
+    const isIT = userRole.includes('it administrator') || userRole.includes('it admin') || userRole.includes('it');
     const isRegistrarAdmin = userRole === 'registrar admin';
     const isRegistrarStaff = userRole === 'registrar staff' || (userRole.includes('registrar') && !userRole.includes('admin')) || userRole === 'registrar';
     const isAccountingAdmin = userRole === 'accounting admin';
@@ -237,7 +235,7 @@ const Dashboard = () => {
                 subtitle: 'Payments approved today'
             }
         ];
-    } else if (isITAdmin || isITStaff) {
+    } else if (isIT) {
         // 3. IT Administration (Security, Identity & Logs)
         statCards = [
             {
@@ -486,19 +484,11 @@ const Dashboard = () => {
                 badgeBg: 'bg-sky-100 text-sky-800 border-sky-300'
             };
         }
-        if (isITAdmin) {
+        if (isIT) {
             return {
                 title: 'IT Administration & Security Hub',
                 subtitle: 'Manage user accounts, assign roles and departments, enforce security policies, and monitor system logs.',
                 badge: 'IT Administrator',
-                badgeBg: 'bg-indigo-100 text-indigo-800 border-indigo-300'
-            };
-        }
-        if (isITStaff) {
-            return {
-                title: 'IT Technical Support Desk',
-                subtitle: 'Assist students and alumni with account activation and password resets, and monitor system audit trails.',
-                badge: 'IT Staff',
                 badgeBg: 'bg-indigo-100 text-indigo-800 border-indigo-300'
             };
         }
@@ -891,7 +881,7 @@ const Dashboard = () => {
                             </div>
                         </div>
                     </div>
-                ) : (isITAdmin || isITStaff) ? (
+                ) : isIT ? (
                     /* 3. IT: System Audit Trail & Account Management Shortcuts */
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                         {/* Left Card: Audit Trail Logs */}
