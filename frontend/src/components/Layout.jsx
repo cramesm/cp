@@ -128,7 +128,9 @@ const Layout = ({ children }) => {
     const isSuperAdmin = userRole === 'super admin';
     const isRegistrar = userRole.includes('registrar');
     const isAccounting = userRole.includes('accounting');
-    const isIT = userRole.includes('it administrator') || userRole.includes('it admin');
+    const isITAdmin = userRole === 'it administrator' || userRole === 'it admin';
+    const isITStaff = userRole === 'it staff' || (userRole.includes('it') && !userRole.includes('admin'));
+    const isIT = isITAdmin || isITStaff;
 
     const menuItems = [
         { path: '/dashboard', label: 'Dashboard', icon: 'fa-solid fa-table-cells-large' }
@@ -153,9 +155,20 @@ const Layout = ({ children }) => {
 
     // Management Section (Administrative Scoped)
     const adminItems = [];
-    if (isSuperAdmin || isIT) {
+    if (isSuperAdmin) {
         adminItems.push(
             { path: '/manage-registrar', label: 'Manage Staff', icon: 'fa-solid fa-user-gear' },
+            { path: '/manage-users', label: 'Manage Users', icon: 'fa-solid fa-users' },
+            { path: '/activity-logs', label: 'System Logs', icon: 'fa-solid fa-clipboard-list' }
+        );
+    } else if (isITAdmin) {
+        adminItems.push(
+            { path: '/manage-registrar', label: 'IT Staff', icon: 'fa-solid fa-user-gear' },
+            { path: '/manage-users', label: 'Manage Users', icon: 'fa-solid fa-users' },
+            { path: '/activity-logs', label: 'System Logs', icon: 'fa-solid fa-clipboard-list' }
+        );
+    } else if (isITStaff) {
+        adminItems.push(
             { path: '/manage-users', label: 'Manage Users', icon: 'fa-solid fa-users' },
             { path: '/activity-logs', label: 'System Logs', icon: 'fa-solid fa-clipboard-list' }
         );

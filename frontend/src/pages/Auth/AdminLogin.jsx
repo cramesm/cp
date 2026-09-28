@@ -225,16 +225,27 @@ const AdminLogin = () => {
                     'super admin',
                     'it administrator',
                     'it admin',
+                    'it staff',
+                    'it',
                     'registrar admin',
                     'registrar staff',
                     'registrar',
                     'accounting admin',
                     'accounting staff',
+                    'accounting',
                     'admin',
                     'staff'
                 ];
 
-                if (!staffRoles.includes(role)) {
+                const isInstitutionalStaff = 
+                    staffRoles.includes(role) || 
+                    role.includes('admin') || 
+                    role.includes('staff') || 
+                    role.includes('registrar') || 
+                    role.includes('accounting') || 
+                    role.includes('it');
+
+                if (!isInstitutionalStaff || role === 'student' || role === 'alumni') {
                     setError('Access Restricted: Student and alumni accounts must sign in using the VeriFitor Mobile App.');
                     setIsLoading(false);
                     return;

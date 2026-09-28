@@ -117,13 +117,13 @@ const registrarOnly = (req, res, next) => {
   }
 };
 
-// Restricted to IT Administrator and Super Admin
+// Restricted to IT Department (Administrator & Staff) and Super Admin
 const itOrSuperAdmin = (req, res, next) => {
   const role = (req.user?.role || '').toLowerCase();
-  if (req.user && ['it administrator', 'it admin', 'super admin'].includes(role)) {
+  if (req.user && ['it administrator', 'it admin', 'it staff', 'it', 'super admin'].includes(role)) {
     next();
   } else {
-    res.status(403).json({ message: 'Not authorized. Restricted to IT Administrators.' });
+    res.status(403).json({ message: 'Not authorized. Restricted to IT personnel.' });
   }
 };
 
@@ -144,12 +144,12 @@ const canManageStaff = (req, res, next) => {
   }
 };
 
-// User management (Students, Alumni) - Super Admin and IT Administrator
+// User management (Students, Alumni) - Super Admin, IT Administrator, and IT Staff
 const canManageUsers = (req, res, next) => {
   const role = (req.user?.role || '').toLowerCase();
   if (
     role === 'super admin' ||
-    ['it administrator', 'it admin'].includes(role)
+    ['it administrator', 'it admin', 'it staff', 'it'].includes(role)
   ) {
     next();
   } else {
@@ -162,7 +162,7 @@ const canViewLogs = (req, res, next) => {
   const role = (req.user?.role || '').toLowerCase();
   if (
     role === 'super admin' ||
-    ['it administrator', 'it admin'].includes(role) ||
+    ['it administrator', 'it admin', 'it staff', 'it'].includes(role) ||
     role === 'registrar admin' ||
     role === 'accounting admin'
   ) {

@@ -35,16 +35,24 @@ const ProtectedRoute = ({ children }) => {
     'super admin',
     'it administrator',
     'it admin',
+    'it staff',
+    'it',
     'registrar admin',
     'registrar staff',
     'registrar',
     'accounting admin',
     'accounting staff',
+    'accounting',
     'admin',
     'staff'
   ];
 
-  if (!token || !staffRoles.includes(userRole)) {
+  const isInstitutional = staffRoles.includes(userRole) || 
+    (userRole && !['student', 'alumni'].includes(userRole) && (
+      userRole.includes('admin') || userRole.includes('staff') || userRole.includes('registrar') || userRole.includes('accounting') || userRole.includes('it')
+    ));
+
+  if (!token || !isInstitutional) {
     localStorage.removeItem('token');
     localStorage.removeItem('userRole');
     localStorage.removeItem('adminUser');
@@ -121,7 +129,7 @@ function App() {
         <Route 
           path="/manage-users" 
           element={
-            <RoleRoute allowedRoles={['super admin', 'it administrator', 'it admin']}>
+            <RoleRoute allowedRoles={['super admin', 'it administrator', 'it admin', 'it staff', 'it']}>
               <StudentManagement />
             </RoleRoute>
           } 
@@ -130,7 +138,7 @@ function App() {
         <Route 
           path="/activity-logs" 
           element={
-            <RoleRoute allowedRoles={['super admin', 'it administrator', 'it admin', 'registrar admin', 'accounting admin']}>
+            <RoleRoute allowedRoles={['super admin', 'it administrator', 'it admin', 'it staff', 'it', 'registrar admin', 'accounting admin']}>
               <ActivityLogs />
             </RoleRoute>
           } 

@@ -71,6 +71,8 @@ const Dashboard = () => {
 
     const isSuperAdmin = userRole === 'super admin';
     const isITAdmin = userRole === 'it administrator' || userRole === 'it admin';
+    const isITStaff = userRole === 'it staff' || (userRole.includes('it') && !userRole.includes('admin'));
+    const isIT = isITAdmin || isITStaff;
     const isRegistrarAdmin = userRole === 'registrar admin';
     const isRegistrarStaff = userRole === 'registrar staff' || (userRole.includes('registrar') && !userRole.includes('admin')) || userRole === 'registrar';
     const isAccountingAdmin = userRole === 'accounting admin';
@@ -235,8 +237,8 @@ const Dashboard = () => {
                 subtitle: 'Payments approved today'
             }
         ];
-    } else if (isITAdmin) {
-        // 3. IT Administrator (Security, Identity & Logs)
+    } else if (isITAdmin || isITStaff) {
+        // 3. IT Administration (Security, Identity & Logs)
         statCards = [
             {
                 title: 'Active Students',
@@ -489,6 +491,14 @@ const Dashboard = () => {
                 title: 'IT Administration & Security Hub',
                 subtitle: 'Manage user accounts, assign roles and departments, enforce security policies, and monitor system logs.',
                 badge: 'IT Administrator',
+                badgeBg: 'bg-indigo-100 text-indigo-800 border-indigo-300'
+            };
+        }
+        if (isITStaff) {
+            return {
+                title: 'IT Technical Support Desk',
+                subtitle: 'Assist students and alumni with account activation and password resets, and monitor system audit trails.',
+                badge: 'IT Staff',
                 badgeBg: 'bg-indigo-100 text-indigo-800 border-indigo-300'
             };
         }
@@ -881,8 +891,8 @@ const Dashboard = () => {
                             </div>
                         </div>
                     </div>
-                ) : isITAdmin ? (
-                    /* 3. IT ADMINISTRATOR: System Audit Trail & Account Management Shortcuts */
+                ) : (isITAdmin || isITStaff) ? (
+                    /* 3. IT: System Audit Trail & Account Management Shortcuts */
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                         {/* Left Card: Audit Trail Logs */}
                         <div className="bg-white rounded-[22px] shadow-[0_8px_24px_rgba(0,0,0,0.03)] border border-slate-100/90 flex flex-col h-[340px] overflow-hidden">
