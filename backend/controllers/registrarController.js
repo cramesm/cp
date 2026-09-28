@@ -5,23 +5,72 @@ const { sendStaffWelcomeEmail, sendAccountStatusEmail, sendRoleChangeEmail } = r
 
 const RegistrarController = {
   // @desc    Get all registrars and admins
+  // @desc    Get all registrars and admins (Scoped by department for Dept Admins, global with filters for Super Admin)
   getAllRegistrars: async (req, res) => {
     try {
-      const registrars = await Registrar.find({
+      const userRole = (req.user?.role || '').toLowerCase();
+      const userDept = (req.user?.department || '').toLowerCase();
+
+      let query = {
         isArchived: { $ne: true },
         status: { $ne: 'Archived' }
-      });
-      const admins = await Admin.find({
-        isArchived: { $ne: true },
-        status: { $ne: 'Archived' }
-      });
+      };
+
+      // Department Scoping:
+      // Super Admin: Global access (can optionally filter by req.query.department)
+      // Registrar Admin: strictly scoped to Registrar department
+      // Accounting Admin: strictly scoped to Accounting department
+      // IT Admin: strictly scoped to IT Administration department
+      if (userRole !== 'super admin') {
+        if (userRole.includes('registrar') || userDept === 'registrar') {
+          query.department = { $regex: /^registrar/i };
+        } else if (userRole.includes('accounting') || userDept === 'accounting') {
+          query.department = { $regex: /^accounting/i };
+        } else if (userRole.includes('it') || userDept.includes('it')) {
+          query.department = { $regex: /^it/i };
+        }
+      } else {
+        if (req.query.department && req.query.department !== 'All' && req.query.department !== 'All Departments') {
+          query.department = { $regex: new RegExp(`^${req.query.department}`, 'i') };
+        }
+      }
+
+      if (req.query.role && req.query.role !== 'All' && req.query.role !== 'All Roles') {
+        if (req.query.role.toLowerCase() === 'admins') {
+          query.role = { $regex: /admin/i };
+        } else if (req.query.role.toLowerCase() === 'staff') {
+          query.role = { $regex: /staff/i };
+        } else {
+          query.role = { $regex: new RegExp(req.query.role, 'i') };
+        }
+      }
+
+      if (req.query.status && req.query.status !== 'All' && req.query.status !== 'All Status') {
+        query.status = req.query.status;
+      }
+
+      const registrars = await Registrar.find(query);
+
+      let admins = [];
+      // Only include Admin model accounts if Super Admin
+      if (userRole === 'super admin' && (!req.query.department || req.query.department === 'All' || req.query.department === 'All Departments')) {
+        let adminQuery = {
+          isArchived: { $ne: true },
+          status: { $ne: 'Archived' }
+        };
+        if (req.query.status && req.query.status !== 'All' && req.query.status !== 'All Status') {
+          adminQuery.status = req.query.status;
+        }
+        admins = await Admin.find(adminQuery);
+      }
 
       const combined = [
         ...registrars,
         ...admins.map(a => ({
           ...a.toObject(),
           registrarId: 'ADMIN-' + a._id.toString().substring(0, 4),
-          status: a.status || 'Active'
+          status: a.status || 'Active',
+          department: a.department || 'Administration'
         }))
       ];
 
@@ -35,6 +84,9 @@ const RegistrarController = {
   // @desc    Get single registrar/admin by id
   getRegistrarById: async (req, res) => {
     try {
+      const userRole = (req.user?.role || '').toLowerCase();
+      const userDept = (req.user?.department || '').toLowerCase();
+
       let staff = await Registrar.findById(req.params.id);
       let isAdmin = false;
       
@@ -49,6 +101,19 @@ const RegistrarController = {
 
       if (!staff || staff.isArchived || staff.status === 'Archived') {
         return res.status(404).json({ message: 'User not found' });
+      }
+
+      // Department boundary enforcement for single staff lookup
+      if (userRole !== 'super admin') {
+        const staffDept = (staff.department || '').toLowerCase();
+        let targetPrefix = '';
+        if (userRole.includes('registrar') || userDept === 'registrar') targetPrefix = 'registrar';
+        else if (userRole.includes('accounting') || userDept === 'accounting') targetPrefix = 'accounting';
+        else if (userRole.includes('it') || userDept.includes('it')) targetPrefix = 'it';
+
+        if (targetPrefix && !staffDept.startsWith(targetPrefix)) {
+          return res.status(403).json({ message: `Access denied: You can only view staff within your department (${req.user.department || userRole}).` });
+        }
       }
 
       let responseData = staff.toObject();
