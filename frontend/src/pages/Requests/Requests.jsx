@@ -494,9 +494,13 @@ const Requests = () => {
                                 'All Document',
                                 'Transcript of Records (TOR)',
                                 'Diploma (2nd Copy)',
+                                'Certificate of Enrollment (COE)',
+                                'Good Moral Certificate',
                                 'Certificate of Graduation',
                                 'Certificate of Grades',
                                 'Honorable Dismissal',
+                                'Certified True Copy (CTC)',
+                                'Form 137 (F-137)',
                                 'Course Description'
                             ]} 
                         />

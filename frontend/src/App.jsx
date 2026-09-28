@@ -16,7 +16,6 @@ import ProfileInfo from './pages/Profile/ProfileInfo'; // This is the View Page
 
 // Super Admin Pages
 import ManageRegistrar from './pages/SuperAdmin/ManageRegistrar';
-import AddRegistrar from './pages/SuperAdmin/AddRegistrar';
 import RegistrarInformation from './pages/SuperAdmin/RegistrarInformation';
 import ActivityLogs from './pages/SuperAdmin/ActivityLogs';
 
@@ -31,7 +30,24 @@ import VerifyTransactions from './pages/Blockchain/VerifyTransactions';
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('token');
-  if (!token) {
+  const userRole = (localStorage.getItem('userRole') || '').toLowerCase();
+  const staffRoles = [
+    'super admin',
+    'it administrator',
+    'it admin',
+    'registrar admin',
+    'registrar staff',
+    'registrar',
+    'accounting admin',
+    'accounting staff',
+    'admin',
+    'staff'
+  ];
+
+  if (!token || !staffRoles.includes(userRole)) {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('adminUser');
     return <Navigate to="/" replace />;
   }
   return children;
@@ -93,14 +109,7 @@ function App() {
             </RoleRoute>
           } 
         />
-        <Route 
-          path="/manage-registrar/add" 
-          element={
-            <RoleRoute allowedRoles={['super admin', 'it administrator', 'it admin', 'registrar admin', 'accounting admin']}>
-              <AddRegistrar />
-            </RoleRoute>
-          } 
-        />
+        <Route path="/manage-registrar/add" element={<Navigate to="/manage-registrar" replace />} />
         <Route 
           path="/manage-registrar/details/:id" 
           element={

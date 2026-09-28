@@ -35,23 +35,23 @@ const receiptUpload = (req, res, next) => {
   });
 };
 
-// Get all transactions
-router.get('/', TransactionController.getAllTransactions);
+// Get all transactions (Accounting and Super Admin only)
+router.get('/', auth, accountingOnly, TransactionController.getAllTransactions);
 
 // Get transactions for logged-in user
 router.get('/my-transactions', auth, TransactionController.getMyTransactions);
 
 // Get a receipt for a specific request
-router.get('/receipt', TransactionController.getReceipt);
+router.get('/receipt', auth, TransactionController.getReceipt);
 
-// Admin: Get all refund requests (defined before /:id)
-router.get('/refunds', auth, TransactionController.getRefunds);
+// Admin: Get all refund requests (defined before /:id) - Accounting only
+router.get('/refunds', auth, accountingOnly, TransactionController.getRefunds);
 
-// Get a transaction by requestId
-router.get('/by-request/:requestId', TransactionController.getByRequestId);
+// Get a transaction by requestId (Authenticated staff/student check)
+router.get('/by-request/:requestId', auth, TransactionController.getByRequestId);
 
 // Get a single transaction by transactionId
-router.get('/:id', TransactionController.getTransactionById);
+router.get('/:id', auth, TransactionController.getTransactionById);
 
 // Upload receipt and create a new transaction (supports 'receiptImage' and 'receipt' field names)
 router.post('/upload-receipt', receiptUpload, TransactionController.uploadReceipt);
@@ -66,10 +66,10 @@ router.post('/', auth, TransactionController.createTransaction);
 router.put('/:id/verify', auth, accountingOnly, TransactionController.verifyTransaction);
 
 // Admin: Re-upload receipt
-router.put('/:id/reupload', receiptUpload, TransactionController.reuploadReceipt);
+router.put('/:id/reupload', auth, receiptUpload, TransactionController.reuploadReceipt);
 
-// Mobile/Student: Submit a refund request
-router.post('/refund-request', TransactionController.submitRefundRequest);
+// Mobile/Student: Submit a refund request (Authenticated)
+router.post('/refund-request', auth, TransactionController.submitRefundRequest);
 
 // Accounting: Process (approve/reject) a refund request
 router.put('/refunds/:id/process', auth, accountingOnly, TransactionController.processRefund);

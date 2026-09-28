@@ -939,21 +939,6 @@ const Dashboard = () => {
                                 </p>
 
                                 <div className="space-y-2.5">
-                                    <div 
-                                        onClick={() => navigate('/manage-registrar/add')}
-                                        className="p-3 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-200/80 flex items-center justify-between cursor-pointer transition-all"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-bold">
-                                                <i className="fa-solid fa-user-plus"></i>
-                                            </div>
-                                            <div>
-                                                <span className="text-xs font-bold text-slate-900 block">Provision Staff Account</span>
-                                                <span className="text-[10.5px] text-slate-500">Add Registrar, Accounting, or IT Personnel</span>
-                                            </div>
-                                        </div>
-                                        <ArrowUpRight size={14} className="text-slate-400" />
-                                    </div>
 
                                     <div 
                                         onClick={() => navigate('/manage-users')}

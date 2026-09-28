@@ -215,8 +215,12 @@ const Transactions = () => {
     'Diploma (2nd Copy)',
     'Certificate of Enrollment (COE)',
     'Good Moral Certificate',
+    'Certificate of Graduation',
+    'Certificate of Grades',
+    'Honorable Dismissal',
     'Certified True Copy (CTC)',
-    'Form 137 (F-137)'
+    'Form 137 (F-137)',
+    'Course Description'
   ];
 
   // Financial KPI Metrics Computation

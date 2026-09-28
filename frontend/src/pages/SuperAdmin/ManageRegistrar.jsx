@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import Layout from '../../components/Layout';
 import { Link } from 'react-router-dom';
-import { Search, Plus } from 'lucide-react';
+import { Search } from 'lucide-react';
 import api from '../../api';
 import ConfirmModal from '../../components/ConfirmModal';
 import FeedbackModal from '../../components/FeedbackModal';
@@ -203,14 +203,7 @@ const ManageRegistrar = () => {
                 />
               </div>
 
-              {/* 3D Add Button */}
-              <Link 
-                to="/manage-registrar/add" 
-                className="flex items-center justify-center gap-1.5 rounded-full bg-[#2c3543] hover:bg-[#1f2631] px-4 py-1.5 text-[12px] font-bold text-white border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_6px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 hover:shadow-[0_4px_10px_rgba(0,0,0,0.3)] active:translate-y-0.5 active:border-b-0 transition-all"
-              >
-                <Plus size={14} />
-                <span>Add Registrar</span>
-              </Link>
+              
             </div>
           </div>
 

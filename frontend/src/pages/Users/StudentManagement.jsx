@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import Layout from '../../components/Layout';
-import { Search, Plus, SlidersHorizontal, ArrowDownAZ, ArrowUpZA, Eye, EyeOff } from 'lucide-react';
+import { Search, SlidersHorizontal, ArrowDownAZ, ArrowUpZA } from 'lucide-react';
 import FilterDrawer from '../../components/FilterDrawer';
 import ActiveFilterChips from '../../components/ActiveFilterChips';
 import axiosInstance from '../../components/config/axiosConfig';
@@ -23,20 +23,6 @@ const StudentManagement = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
     const [sortConfig, setSortConfig] = useState({ key: 'createdAt', direction: 'desc' });
-
-    // Modal state
-    const [showModal, setShowModal] = useState(false);
-    const [showPassword, setShowPassword] = useState(false);
-    const [formData, setFormData] = useState({
-        firstName: '',
-        lastName: '',
-        email: '',
-        password: '',
-        studentId: '',
-        programLevel: 'Bachelors'
-    });
-    const [adding, setAdding] = useState(false);
-    const [addError, setAddError] = useState(null);
 
     // Modals
     const { confirmConfig, feedbackConfig, showConfirm, showFeedback, closeConfirm, closeFeedback } = useModals();
@@ -117,35 +103,6 @@ const StudentManagement = () => {
         });
     };
 
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
-    };
-
-    const handleAddStudent = async (e) => {
-        e.preventDefault();
-        setAddError(null);
-        setAdding(true);
-        try {
-            const endpoint = activeTab === 'alumni' ? '/v1/alumni' : '/v1/students';
-            const payload = { ...formData, role: activeTab };
-            const response = await axiosInstance.post(endpoint, payload);
-            
-            const newUser = response.data.data;
-            // Add new user to the top of the list
-            setUsers([newUser, ...users]);
-            setShowModal(false);
-            setFormData({ firstName: '', lastName: '', email: '', password: '', studentId: '', programLevel: 'Bachelors' });
-        } catch (err) {
-            console.error('Error adding user:', err);
-            setAddError(err.response?.data?.message || 'Failed to add user. Please check the details and try again.');
-        } finally {
-            setAdding(false);
-        }
-    };
 
     const filteredUsers = useMemo(() => {
         return users.filter((user) => {
@@ -273,15 +230,6 @@ const StudentManagement = () => {
                                     <span>Filters & Sort</span>
                                 </button>
                             </div>
-
-                            {/* 3D Add Button */}
-                            <button 
-                                onClick={() => setShowModal(true)}
-                                className="flex items-center justify-center gap-1.5 rounded-full bg-[#2c3543] hover:bg-[#1f2631] px-4 py-1.5 text-[12px] font-bold text-white border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_6px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 hover:shadow-[0_4px_10px_rgba(0,0,0,0.3)] active:translate-y-0.5 active:border-b-0 transition-all self-start sm:self-auto"
-                            >
-                                <Plus size={14} />
-                                <span>Add New {activeTab === 'student' ? 'Student' : 'Alumni'}</span>
-                            </button>
                         </div>
 
                         <ActiveFilterChips 
@@ -501,152 +449,7 @@ const StudentManagement = () => {
                     </div>
                 </div>
 
-                {/* Add Student Modal */}
-                {showModal && (
-                    <div className="fixed inset-0 bg-[#1D2D44]/60 flex items-center justify-center z-[1100] backdrop-blur-xs p-4">
-                        <div className="bg-white rounded-[24px] shadow-2xl w-full max-w-md overflow-hidden border border-slate-100">
-                            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                                <div>
-                                    <h3 className="text-[17px] font-black text-slate-900 m-0">Add New {activeTab === 'student' ? 'Student' : 'Alumni'}</h3>
-                                    <p className="text-[11px] text-slate-400 font-medium m-0 mt-0.5">Register a new verified mobile user</p>
-                                </div>
-                                <button
-                                    onClick={() => setShowModal(false)}
-                                    className="w-7 h-7 flex items-center justify-center rounded-full bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition"
-                                >
-                                    <i className="fa-solid fa-xmark text-xs"></i>
-                                </button>
-                            </div>
-                            
-                            <form onSubmit={handleAddStudent} className="p-6">
-                                {addError && (
-                                    <div className="bg-red-50 text-red-600 p-2.5 rounded-xl text-xs font-bold mb-4 border border-red-200">
-                                        <i className="fa-solid fa-circle-exclamation mr-1"></i> {addError}
-                                    </div>
-                                )}
 
-                                <div className="space-y-4">
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <div>
-                                            <label htmlFor="firstName" className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">First Name</label>
-                                            <input
-                                                id="firstName"
-                                                type="text"
-                                                name="firstName"
-                                                value={formData.firstName}
-                                                onChange={handleInputChange}
-                                                required
-                                                className="w-full px-3.5 py-2 text-[13px] border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 bg-white transition-all"
-                                                placeholder="First Name"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label htmlFor="lastName" className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">Last Name</label>
-                                            <input
-                                                id="lastName"
-                                                type="text"
-                                                name="lastName"
-                                                value={formData.lastName}
-                                                onChange={handleInputChange}
-                                                required
-                                                className="w-full px-3.5 py-2 text-[13px] border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 bg-white transition-all"
-                                                placeholder="Last Name"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <div>
-                                            <label htmlFor="email" className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">{activeTab === 'student' ? 'School Email' : 'Email'}</label>
-                                            <input
-                                                id="email"
-                                                type="email"
-                                                name="email"
-                                                value={formData.email}
-                                                onChange={handleInputChange}
-                                                required
-                                                className="w-full px-3.5 py-2 text-[13px] border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 bg-white transition-all"
-                                                placeholder={activeTab === 'student' ? "student@school.edu" : "alumni@email.com"}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label htmlFor="studentId" className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">Student ID</label>
-                                            <input
-                                                id="studentId"
-                                                type="text"
-                                                name="studentId"
-                                                value={activeTab === 'alumni' ? 'Auto-generated' : formData.studentId}
-                                                onChange={handleInputChange}
-                                                required={activeTab === 'student'}
-                                                disabled={activeTab === 'alumni'}
-                                                className={`w-full px-3.5 py-2 text-[13px] border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 transition-all ${activeTab === 'alumni' ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-white'}`}
-                                                placeholder={activeTab === 'student' ? "e.g. 2021-00001" : "Auto-generated"}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label htmlFor="password" className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">Password</label>
-                                        <div className="relative">
-                                            <input
-                                                id="password"
-                                                type={showPassword ? 'text' : 'password'}
-                                                name="password"
-                                                value={formData.password}
-                                                onChange={handleInputChange}
-                                                required
-                                                className="w-full px-3.5 py-2 pr-9 text-[13px] border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 bg-white transition-all"
-                                                placeholder="Assign a secure password"
-                                            />
-                                            <button
-                                                type="button"
-                                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
-                                                onClick={() => setShowPassword(!showPassword)}
-                                            >
-                                                {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
-                                            </button>
-                                        </div>
-                                    </div>
-                                    {activeTab === 'student' && (
-                                        <div>
-                                            <label htmlFor="modalProgramLevel" className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">Program Level</label>
-                                            <select
-                                                id="modalProgramLevel"
-                                                name="programLevel"
-                                                value={formData.programLevel}
-                                                onChange={handleInputChange}
-                                                className="w-full px-3.5 py-2 text-[13px] border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 bg-white transition-all cursor-pointer"
-                                            >
-                                                <option value="Bachelors">Bachelors</option>
-                                                <option value="Masters">Masters</option>
-                                                <option value="Doctorate">Doctorate</option>
-                                            </select>
-                                        </div>
-                                    )}
-                                </div>
-                                
-                                <div className="mt-6 flex justify-end gap-2.5 pt-4 border-t border-slate-100">
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowModal(false)}
-                                        className="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-full transition-colors"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={adding}
-                                        className="px-5 py-2 text-xs font-bold text-white bg-[#2c3543] hover:bg-[#1f2631] rounded-full border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_6px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all disabled:opacity-50 flex items-center"
-                                    >
-                                        {adding ? (
-                                            <><i className="fa-solid fa-spinner fa-spin mr-1.5"></i> Registering...</>
-                                        ) : (
-                                            'Register ' + (activeTab === 'student' ? 'Student' : 'Alumni')
-                                        )}
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                )}
 
                 {/* Feedback Modal */}
                 {feedbackConfig && (

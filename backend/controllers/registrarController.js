@@ -154,8 +154,17 @@ const RegistrarController = {
 
       if (!staff) return res.status(404).json({ message: 'User not found' });
 
-      const oldStatus = staff.status;
-      const oldRole = staff.role;
+      // Department boundary enforcement: Department Admins can only manage staff within their own department
+      const requesterDept = (req.user?.department || '').toLowerCase();
+      const targetDept = (staff.department || '').toLowerCase();
+      const isITOrSuper = requesterRole === 'super admin' || requesterRole.includes('it admin') || requesterRole.includes('it administrator');
+      if (!isITOrSuper) {
+        if (requesterDept && targetDept && requesterDept !== targetDept) {
+          return res.status(403).json({
+            message: `Department Boundary Violation: As a ${req.user.role}, you can only manage staff members within the ${req.user.department} department.`
+          });
+        }
+      }
 
       // Only Super Admin can change staff roles (promote/demote)
       if (role && role !== oldRole) {
@@ -321,6 +330,19 @@ const RegistrarController = {
       }
 
       if (!staff) return res.status(404).json({ message: 'User not found' });
+
+      // Department boundary enforcement: Department Admins can only manage staff within their own department
+      const requesterRole = (req.user?.role || '').toLowerCase();
+      const requesterDept = (req.user?.department || '').toLowerCase();
+      const targetDept = (staff.department || '').toLowerCase();
+      const isITOrSuper = requesterRole === 'super admin' || requesterRole.includes('it admin') || requesterRole.includes('it administrator');
+      if (!isITOrSuper) {
+        if (requesterDept && targetDept && requesterDept !== targetDept) {
+          return res.status(403).json({
+            message: `Department Boundary Violation: As a ${req.user.role}, you can only manage staff members within the ${req.user.department} department.`
+          });
+        }
+      }
 
       const name = staff.name;
       await model.findByIdAndUpdate(req.params.id, {

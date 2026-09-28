@@ -12,6 +12,15 @@ import {
 } from 'lucide-react';
 
 export default function ActivityLogs() {
+  const userRole = (localStorage.getItem('userRole') || '').toLowerCase();
+  const userDept = (localStorage.getItem('userDepartment') || '').toLowerCase();
+  const isSuperOrIT = userRole === 'super admin' || userRole.includes('it') || userDept.includes('it');
+
+  const logsTabLabel = 
+    userRole.includes('registrar') || userDept === 'registrar' ? 'Registrar Issuance Logs' :
+    userRole.includes('accounting') || userDept === 'accounting' ? 'Accounting Finance Logs' :
+    userRole.includes('it') || userDept.includes('it') ? 'IT System Security Logs' :
+    'Global Master Activity Logs';
   const [activeTab, setActiveTab] = useState('logs'); // 'logs' | 'backup'
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -261,22 +270,24 @@ export default function ActivityLogs() {
                   : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
               }`}
             >
-              System Activity Logs
+              {logsTabLabel}
             </button>
-            <button
-              onClick={() => {
-                setActiveTab('backup');
-                fetchBackupStats();
-              }}
-              className={`px-5 py-1.5 rounded-full text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5 ${
-                activeTab === 'backup'
-                  ? 'bg-[#2c3543] text-white shadow-[0_2px_6px_rgba(0,0,0,0.25)] border-t border-white/20 scale-[1.02]'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
-              }`}
-            >
-              <Database size={13} />
-              <span>Database Backup & Recovery</span>
-            </button>
+            {isSuperOrIT && (
+              <button
+                onClick={() => {
+                  setActiveTab('backup');
+                  fetchBackupStats();
+                }}
+                className={`px-5 py-1.5 rounded-full text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  activeTab === 'backup'
+                    ? 'bg-[#2c3543] text-white shadow-[0_2px_6px_rgba(0,0,0,0.25)] border-t border-white/20 scale-[1.02]'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                }`}
+              >
+                <Database size={13} />
+                <span>Database Backup & Recovery</span>
+              </button>
+            )}
           </div>
 
           {activeTab === 'logs' && (
