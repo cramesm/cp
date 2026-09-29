@@ -71,6 +71,7 @@ const Dashboard = () => {
 
     const isSuperAdmin = userRole === 'super admin';
     const isIT = userRole.includes('it administrator') || userRole.includes('it admin') || userRole.includes('it');
+    const isITAdmin = isIT;
     const isRegistrarAdmin = userRole === 'registrar admin';
     const isRegistrarStaff = userRole === 'registrar staff' || (userRole.includes('registrar') && !userRole.includes('admin')) || userRole === 'registrar';
     const isAccountingAdmin = userRole === 'accounting admin';
