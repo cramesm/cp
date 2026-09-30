@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../../components/Layout';
 import ConfirmModal from '../../components/ConfirmModal';
-import { ChevronRight, User, Trash2, Archive, Edit3, X, CheckCircle, Lock, AlertTriangle, RefreshCw, Eye, EyeOff } from 'lucide-react';
+import { ChevronRight, User, Trash2, Archive, Edit3, X, CheckCircle, Lock, AlertTriangle, RefreshCw } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../../api';
 
@@ -26,7 +26,6 @@ export default function RegistrarInformation() {
   const [updating, setUpdating] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
-  const [passwordData, setPasswordData] = useState({ newPassword: '', confirmPassword: '' });
   const [confirmConfig, setConfirmConfig] = useState(null);
 
   const userRole = (localStorage.getItem('userRole') || '').toLowerCase();
@@ -141,12 +140,9 @@ export default function RegistrarInformation() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    // Disallow employeeId changes
+    if (name === 'employeeId') return;
     setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handlePasswordChange = (e) => {
-    const { name, value } = e.target;
-    setPasswordData(prev => ({ ...prev, [name]: value }));
   };
 
   // Update profile information
@@ -180,40 +176,7 @@ export default function RegistrarInformation() {
     });
   };
 
-  // Update password
-  const handlePasswordUpdate = () => {
-    if (!passwordData.newPassword) {
-      setToast({ show: true, message: 'Please enter a new password', type: 'error' });
-      setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
-      return;
-    }
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setToast({ show: true, message: 'Passwords do not match', type: 'error' });
-      setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
-      return;
-    }
 
-    showConfirm({
-      title: 'Reset Password',
-      message: 'Are you sure you want to set a new password for this registrar?',
-      type: 'warning',
-      confirmText: 'Reset Password',
-      onConfirm: async () => {
-        try {
-          await api.put(`/registrars/${registrarId || id}/password`, {
-            password: passwordData.newPassword
-          });
-          setToast({ show: true, message: 'Password successfully updated!', type: 'success' });
-          setPasswordData({ newPassword: '', confirmPassword: '' });
-          setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
-        } catch (error) {
-          console.error('Error resetting password:', error);
-          setToast({ show: true, message: 'Failed to reset password.', type: 'error' });
-          setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
-        }
-      }
-    });
-  };
 
   // Archive registrar account
   const handleDeleteAccount = () => {
@@ -331,7 +294,19 @@ export default function RegistrarInformation() {
                       )}
                     </div>
 
-                    <InfoInput label="Employee ID" name="employeeId" value={formData.employeeId} onChange={handleInputChange} />
+                    {/* Employee ID: Immutable official identifier */}
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex justify-between items-center">
+                        <label className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Employee ID</label>
+                        <span className="text-[9.5px] font-extrabold text-slate-400 uppercase tracking-wider bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
+                          Fixed (Cannot be changed)
+                        </span>
+                      </div>
+                      <div className="w-full bg-slate-100/90 border border-slate-200 rounded-xl px-3.5 py-2 text-[13px] font-mono font-bold text-slate-700 cursor-not-allowed select-all flex items-center justify-between">
+                        <span>{formData.employeeId || 'N/A'}</span>
+                        <span className="text-[10px] text-slate-400 font-semibold font-sans">Official Staff ID</span>
+                      </div>
+                    </div>
 
                     {/* Quick 1-Click Promote / Demote Action Card for Super Admin */}
                     {isSuperAdmin && targetPromotion && (
@@ -410,30 +385,22 @@ export default function RegistrarInformation() {
 
               {/* Right Section: Security Cards */}
               <div className="lg:col-span-5 space-y-4">
+                {/* Account Security Policy Card (Replaces manual password reset form) */}
                 <section className="bg-white p-6 rounded-[22px] shadow-[0_8px_24px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.02)] border border-slate-100/90">
-                  <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100 text-[#2c3543]">
+                  <div className="flex items-center gap-2 mb-3 pb-3 border-b border-slate-100 text-[#2c3543]">
                     <Lock size={18} />
-                    <h3 className="text-[14px] font-black uppercase tracking-wider m-0">Update Security</h3>
+                    <h3 className="text-[14px] font-black uppercase tracking-wider m-0">Account Security Policy</h3>
                   </div>
-                  <div className="space-y-3.5">
-                    <PasswordInput
-                      label="New Password"
-                      name="newPassword"
-                      value={passwordData.newPassword}
-                      onChange={handlePasswordChange}
-                    />
-                    <PasswordInput
-                      label="Confirm New Password"
-                      name="confirmPassword"
-                      value={passwordData.confirmPassword}
-                      onChange={handlePasswordChange}
-                    />
-                    <button
-                      onClick={handlePasswordUpdate}
-                      className="w-full bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold py-2 rounded-full text-xs border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_6px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all mt-2 cursor-pointer"
-                    >
-                      Set New Password
-                    </button>
+                  <div className="space-y-3 text-xs text-slate-600">
+                    <p className="leading-relaxed">
+                      Staff accounts are provisioned with an automated temporary password dispatched via email upon account creation.
+                    </p>
+                    <div className="bg-slate-50 border border-slate-200/90 rounded-xl p-3 text-[11.5px] text-slate-700 font-medium space-y-1">
+                      <div className="font-bold text-slate-900">Self-Managed Passwords:</div>
+                      <p className="m-0 text-slate-600">
+                        For security and compliance, staff members independently manage and update their permanent password in <strong>Profile Settings</strong> after logging in.
+                      </p>
+                    </div>
                   </div>
                 </section>
 
@@ -497,33 +464,6 @@ function InfoInput({ label, name, value, onChange }) {
         onChange={onChange}
         className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-[13px] font-medium text-slate-800 outline-none focus:border-blue-500 transition-all"
       />
-    </div>
-  );
-}
-
-function PasswordInput({ label, name, value, onChange }) {
-  const [showPassword, setShowPassword] = useState(false);
-
-  return (
-    <div className="flex flex-col gap-1.5">
-      <label className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">{label}</label>
-      <div className="relative">
-        <input
-          type={showPassword ? 'text' : 'password'}
-          name={name}
-          value={value}
-          onChange={onChange}
-          className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 pr-9 text-[13px] outline-none focus:border-blue-500 transition-all"
-          placeholder="••••••••"
-        />
-        <button
-          type="button"
-          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
-          onClick={() => setShowPassword(!showPassword)}
-        >
-          {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
-        </button>
-      </div>
     </div>
   );
 }

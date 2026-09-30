@@ -292,6 +292,11 @@ const RegistrarController = {
   // @desc    Update registrar/admin
   updateRegistrar: async (req, res) => {
     try {
+      // Staff Employee ID is immutable and cannot be changed
+      delete req.body.registrarId;
+      delete req.body.employeeId;
+      delete req.body.password;
+
       const { name, email, role, status, department } = req.body;
       const requesterRole = (req.user?.role || '').toLowerCase();
 
