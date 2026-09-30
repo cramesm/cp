@@ -91,9 +91,30 @@ app.use(auditLoggerMiddleware);
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Root endpoint for status checks & Vercel deployment verification
+app.get('/', (req, res) => {
+    res.json({
+        status: 'online',
+        service: 'VeriFitor API',
+        database: mongoose.connection.readyState === 1 ? 'connected' : (mongoose.connection.readyState === 2 ? 'connecting' : 'disconnected')
+    });
+});
+
+app.get('/favicon.ico', (req, res) => res.status(204).end());
+
 // Database Connection
 const connectDB = require('./config/db');
 connectDB();
+
+app.use(async (req, res, next) => {
+    if (req.path === '/api/health' || req.path === '/favicon.ico' || req.path === '/') {
+        return next();
+    }
+    try {
+        await connectDB();
+    } catch (_e) {}
+    next();
+});
 
 // Import Routes
 const authRoutes = require('./routes/auth');

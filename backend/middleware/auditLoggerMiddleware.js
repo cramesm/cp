@@ -1,8 +1,10 @@
+const mongoose = require('mongoose');
 const AuditLog = require('../models/AuditLog');
 
 const logger = {
   info: async (message, metadata = {}) => {
     try {
+      if (mongoose.connection.readyState !== 1) return;
       await AuditLog.create({
         level: 'info',
         message,
@@ -24,6 +26,7 @@ const logger = {
 
   warn: async (message, metadata = {}) => {
     try {
+      if (mongoose.connection.readyState !== 1) return;
       await AuditLog.create({
         level: 'warn',
         message,
@@ -45,6 +48,7 @@ const logger = {
 
   error: async (message, metadata = {}) => {
     try {
+      if (mongoose.connection.readyState !== 1) return;
       await AuditLog.create({
         level: 'error',
         message,
