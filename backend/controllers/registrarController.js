@@ -143,44 +143,102 @@ const RegistrarController = {
     }
   },
 
-  // @desc    Create new registrar/staff
+  // @desc    Create new registrar/staff (Super Admin, IT Admin, or Department Admin)
   createRegistrar: async (req, res) => {
     try {
-      const { name, email, password, role, department } = req.body;
+      let { name, firstName, lastName, email, password, role, department } = req.body;
 
-      const existingReg = await Registrar.findOne({ email });
-      const existingAdmin = await Admin.findOne({ email });
-      
-      if (existingReg || existingAdmin) {
-        return res.status(400).json({ message: 'User with this email already exists' });
+      if (!name && (firstName || lastName)) {
+        name = `${(firstName || '').trim()} ${(lastName || '').trim()}`.trim();
       }
 
-      const assignedDept = department || (
-        (role && role.toLowerCase().includes('accounting')) ? 'Accounting' :
-        (role && role.toLowerCase().includes('it')) ? 'IT Administration' : 'Registrar'
-      );
+      if (!name || !email) {
+        return res.status(400).json({ message: 'First name, last name, and email are required.' });
+      }
+
+      const cleanEmail = email.trim().toLowerCase();
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(cleanEmail)) {
+        return res.status(400).json({ message: 'Please provide a valid email address.' });
+      }
+
+      // Check across all user collections to prevent duplicate email collisions
+      const Student = require('../models/Users/Student');
+      const Alumni = require('../models/Users/Alumni');
+      const SuperAdmin = require('../models/Users/SuperAdmin');
+      const emailQuery = { email: new RegExp(`^${cleanEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') };
+
+      const [existingReg, existingAdmin, existingStudent, existingAlumni, existingSuper] = await Promise.all([
+        Registrar.findOne(emailQuery),
+        Admin.findOne(emailQuery),
+        Student.findOne(emailQuery),
+        Alumni.findOne(emailQuery),
+        SuperAdmin.findOne(emailQuery)
+      ]);
+
+      if (existingReg || existingAdmin || existingStudent || existingAlumni || existingSuper) {
+        return res.status(400).json({ message: 'An account with this email address already exists.' });
+      }
 
       const requesterRole = (req.user?.role || '').toLowerCase();
-      let assignedRole = role || (
-        assignedDept === 'Accounting' ? 'Accounting Staff' :
-        assignedDept === 'IT Administration' ? 'IT Administrator' : 'Registrar Staff'
-      );
+      const requesterDept = (req.user?.department || '').toLowerCase();
+      const isITOrSuper = requesterRole === 'super admin' || requesterRole.includes('it admin') || requesterRole.includes('it administrator');
 
-      // Only Super Admin can appoint Admin roles (Registrar Admin, Accounting Admin, Super Admin)
-      if (
-        (assignedRole.toLowerCase().includes('admin') && assignedRole.toLowerCase() !== 'it administrator') &&
-        requesterRole !== 'super admin'
-      ) {
-        assignedRole = assignedDept === 'Accounting' ? 'Accounting Staff' : 
-                       assignedDept === 'IT Administration' ? 'IT Administrator' : 'Registrar Staff';
+      // Department scoping:
+      // Department admins (Registrar Admin, Accounting Admin) are restricted to their own department
+      let assignedDept = department;
+      if (!isITOrSuper) {
+        if (requesterRole.includes('registrar') || requesterDept === 'registrar') {
+          assignedDept = 'Registrar';
+        } else if (requesterRole.includes('accounting') || requesterDept === 'accounting') {
+          assignedDept = 'Accounting';
+        }
+      }
+      if (!assignedDept) {
+        assignedDept = 'Registrar';
       }
 
-      const registrarId = 'REG-' + Math.floor(100000 + Math.random() * 900000);
+      // Default role to operational staff in that department
+      let assignedRole = role || (
+        assignedDept.toLowerCase().includes('accounting') ? 'Accounting Staff' :
+        assignedDept.toLowerCase().includes('it') ? 'IT Staff' : 'Registrar Staff'
+      );
+
+      // Only Super Admin can appoint Admin roles
+      if (assignedRole.toLowerCase().includes('admin') && requesterRole !== 'super admin') {
+        assignedRole = assignedDept.toLowerCase().includes('accounting') ? 'Accounting Staff' :
+                       assignedDept.toLowerCase().includes('it') ? 'IT Staff' : 'Registrar Staff';
+      }
+
+      // Generate secure temporary password if not provided
+      let finalPassword = password;
+      if (!finalPassword || typeof finalPassword !== 'string' || !finalPassword.trim()) {
+        const uppers = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+        const lowers = "abcdefghijkmnopqrstuvwxyz";
+        const digits = "23456789";
+        const specials = "!@#$*";
+        let temp = "";
+        temp += uppers.charAt(Math.floor(Math.random() * uppers.length));
+        temp += lowers.charAt(Math.floor(Math.random() * lowers.length));
+        temp += lowers.charAt(Math.floor(Math.random() * lowers.length));
+        temp += digits.charAt(Math.floor(Math.random() * digits.length));
+        temp += digits.charAt(Math.floor(Math.random() * digits.length));
+        temp += specials.charAt(Math.floor(Math.random() * specials.length));
+        const pool = uppers + lowers + digits;
+        for (let i = 0; i < 3; i++) {
+          temp += pool.charAt(Math.floor(Math.random() * pool.length));
+        }
+        finalPassword = temp.split('').sort(() => 0.5 - Math.random()).join('');
+      }
+
+      const deptPrefix = assignedDept.substring(0, 3).toUpperCase();
+      const registrarId = `${deptPrefix}-${Math.floor(100000 + Math.random() * 900000)}`;
+
       const newRegistrar = await Registrar.create({
         registrarId,
         name,
-        email,
-        password,
+        email: cleanEmail,
+        password: finalPassword,
         role: assignedRole,
         department: assignedDept,
         status: 'Active',
@@ -190,10 +248,10 @@ const RegistrarController = {
       // Send welcome email with credentials & department info
       try {
         await sendStaffWelcomeEmail({
-          to: email,
+          to: cleanEmail,
           name,
-          email,
-          tempPassword: password,
+          email: cleanEmail,
+          tempPassword: finalPassword,
           department: assignedDept,
           role: newRegistrar.role
         });
@@ -202,18 +260,32 @@ const RegistrarController = {
       }
 
       await ActivityLog.create({
-        userEmail: req.user.email,
-        userName: req.user.name || 'Super Admin',
-        action: 'User Created',
-        type: '------',
+        userEmail: req.user?.email || 'admin@verifitor.edu',
+        userName: req.user?.name || 'Administrator',
+        action: 'Staff Account Created',
+        type: 'Staff Management',
         status: 'Successful',
-        details: `Created new staff account: ${name} (${email}) - Role: ${newRegistrar.role}, Dept: ${assignedDept}`
+        details: `Created new staff account for ${name} (${cleanEmail}) - Role: ${newRegistrar.role}, Dept: ${assignedDept}`
       });
 
-      res.status(201).json({ message: 'Staff created successfully and credentials emailed', registrar: newRegistrar });
+      res.status(201).json({
+        success: true,
+        message: 'Staff account created successfully! Credentials and login instructions have been dispatched via email.',
+        tempPassword: finalPassword,
+        registrar: {
+          _id: newRegistrar._id,
+          registrarId: newRegistrar.registrarId,
+          name: newRegistrar.name,
+          email: newRegistrar.email,
+          role: newRegistrar.role,
+          department: newRegistrar.department,
+          status: newRegistrar.status,
+          mustChangePassword: newRegistrar.mustChangePassword
+        }
+      });
     } catch (error) {
       console.error('Error creating staff:', error);
-      res.status(500).json({ message: 'Error creating staff' });
+      res.status(500).json({ message: 'Error creating staff account' });
     }
   },
 

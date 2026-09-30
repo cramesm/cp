@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import Layout from '../../components/Layout';
 import { Link } from 'react-router-dom';
-import { Search, Building2, Lock, ShieldCheck } from 'lucide-react';
+import { Search, Building2, Lock, ShieldCheck, UserPlus, X, Copy, Check, AlertCircle } from 'lucide-react';
 import api from '../../api';
 import ConfirmModal from '../../components/ConfirmModal';
 import FeedbackModal from '../../components/FeedbackModal';
@@ -21,6 +21,26 @@ const ManageRegistrar = () => {
   const userRole = (localStorage.getItem('userRole') || '').toLowerCase();
   const userDept = (localStorage.getItem('userDepartment') || '').toLowerCase();
   const isSuperAdmin = userRole === 'super admin';
+  const isITAdmin = userRole.includes('it') || userDept.includes('it');
+  const isRegistrarAdmin = userRole.includes('registrar admin') || (userRole.includes('admin') && userDept === 'registrar');
+  const isAccountingAdmin = userRole.includes('accounting admin') || (userRole.includes('admin') && userDept === 'accounting');
+  const canAddStaff = isSuperAdmin || isITAdmin || isRegistrarAdmin || isAccountingAdmin;
+
+  const defaultDept = isAccountingAdmin ? 'Accounting' : (isITAdmin ? 'IT Administration' : 'Registrar');
+
+  // Add Staff Modal State
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [addForm, setAddForm] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    department: defaultDept
+  });
+  const [emailStatus, setEmailStatus] = useState({ checking: false, available: null, message: '' });
+  const [addLoading, setAddLoading] = useState(false);
+  const [addError, setAddError] = useState('');
+  const [addSuccessData, setAddSuccessData] = useState(null);
+  const [copied, setCopied] = useState(false);
 
   // Dynamic titles based on user role
   const pageTitle = 
@@ -77,19 +97,104 @@ const ManageRegistrar = () => {
   };
 
   // Fetch registrars from API
+  const fetchRegistrars = async () => {
+    try {
+      const res = await api.get('/registrars');
+      setRegistrars(res.data || []);
+    } catch (error) {
+      console.error('Error fetching registrars:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchRegistrars = async () => {
-      try {
-        const res = await api.get('/registrars');
-        setRegistrars(res.data || []);
-      } catch (error) {
-        console.error('Error fetching registrars:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchRegistrars();
   }, []);
+
+  // Debounced real-time email check for Add Staff modal
+  useEffect(() => {
+    if (!showAddModal) return;
+    const clean = addForm.email.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!clean || !emailRegex.test(clean)) {
+      setEmailStatus({ checking: false, available: null, message: '' });
+      return;
+    }
+
+    setEmailStatus({ checking: true, available: null, message: 'Checking email...' });
+    const timer = setTimeout(async () => {
+      try {
+        const res = await api.get(`/auth/check-email?email=${encodeURIComponent(clean)}`);
+        setEmailStatus({
+          checking: false,
+          available: res.data.available,
+          message: res.data.message
+        });
+      } catch (err) {
+        setEmailStatus({ checking: false, available: null, message: '' });
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [addForm.email, showAddModal]);
+
+  const handleAddStaffSubmit = async (e) => {
+    e.preventDefault();
+    setAddError('');
+
+    if (!addForm.firstName.trim() || !addForm.lastName.trim()) {
+      setAddError('Please enter both First Name and Last Name.');
+      return;
+    }
+    if (!addForm.email.trim()) {
+      setAddError('Official email address is required.');
+      return;
+    }
+    if (emailStatus.available === false) {
+      setAddError('This email is already registered in the system.');
+      return;
+    }
+
+    setAddLoading(true);
+    try {
+      const res = await api.post('/registrars', {
+        firstName: addForm.firstName.trim(),
+        lastName: addForm.lastName.trim(),
+        email: addForm.email.trim(),
+        department: addForm.department
+      });
+
+      if (res.data) {
+        const createdReg = res.data.registrar || {};
+        const tempPassword = res.data.tempPassword || '';
+
+        setAddSuccessData({
+          name: createdReg.name || `${addForm.firstName.trim()} ${addForm.lastName.trim()}`,
+          email: createdReg.email || addForm.email.trim(),
+          department: createdReg.department || addForm.department,
+          role: createdReg.role || (addForm.department === 'Accounting' ? 'Accounting Staff' : addForm.department === 'IT Administration' ? 'IT Staff' : 'Registrar Staff'),
+          tempPassword
+        });
+
+        // Refresh staff list immediately
+        fetchRegistrars();
+      }
+    } catch (err) {
+      console.error('Error adding staff:', err);
+      setAddError(err.response?.data?.message || 'Failed to create staff account. Please try again.');
+    } finally {
+      setAddLoading(false);
+    }
+  };
+
+  const handleCopyCredentials = () => {
+    if (!addSuccessData) return;
+    const textToCopy = `VeriFitor Staff Account Credentials\nName: ${addSuccessData.name}\nEmail: ${addSuccessData.email}\nTemporary Password: ${addSuccessData.tempPassword}\nDepartment: ${addSuccessData.department}\nNotice: Upon logging in, please change your temporary password in Profile Settings.`;
+    navigator.clipboard.writeText(textToCopy);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  };
 
   const getPromotionTarget = (role) => {
     const r = (role || '').toLowerCase();
@@ -303,6 +408,30 @@ const ManageRegistrar = () => {
                   onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
+
+              {/* Add Staff Button */}
+              {canAddStaff && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddModal(true);
+                    setAddSuccessData(null);
+                    setAddError('');
+                    setAddForm({
+                      firstName: '',
+                      lastName: '',
+                      email: '',
+                      department: defaultDept
+                    });
+                    setEmailStatus({ checking: false, available: null, message: '' });
+                    setCopied(false);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#111827] hover:bg-[#213448] text-white text-[12px] font-bold shadow-2xs hover:shadow-sm transition-all cursor-pointer shrink-0"
+                >
+                  <UserPlus size={13} />
+                  <span>Add Staff</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -450,6 +579,233 @@ const ManageRegistrar = () => {
 
         </div>
       </div>
+
+      {/* Add Staff Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 sm:p-7 relative border border-slate-100 overflow-hidden">
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={() => {
+                setShowAddModal(false);
+                setAddSuccessData(null);
+              }}
+              className="absolute right-5 top-5 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-colors cursor-pointer"
+            >
+              <X size={15} />
+            </button>
+
+            {!addSuccessData ? (
+              <>
+                <div className="mb-5">
+                  <div className="w-11 h-11 rounded-2xl bg-[#111827] text-white flex items-center justify-center mb-3 shadow-2xs">
+                    <UserPlus size={20} />
+                  </div>
+                  <h3 className="text-xl font-black text-slate-900 tracking-tight">Add Staff Member</h3>
+                  <p className="text-slate-500 text-[12px] mt-1 leading-relaxed">
+                    Create an official staff account. A secure temporary password will be automatically generated and emailed to the staff member.
+                  </p>
+                </div>
+
+                {addError && (
+                  <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-3.5 py-2.5 rounded-xl text-[12px] flex items-center gap-2">
+                    <AlertCircle size={15} className="shrink-0 text-red-500" />
+                    <span>{addError}</span>
+                  </div>
+                )}
+
+                <form onSubmit={handleAddStaffSubmit} className="space-y-3.5">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11.5px] font-bold text-slate-700 mb-1">First Name</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="First name"
+                        value={addForm.firstName}
+                        onChange={(e) => setAddForm({ ...addForm, firstName: e.target.value })}
+                        className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[13px] text-slate-900 focus:bg-white focus:outline-none focus:border-[#213448] focus:ring-2 focus:ring-[#213448]/10 transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11.5px] font-bold text-slate-700 mb-1">Last Name</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Last name"
+                        value={addForm.lastName}
+                        onChange={(e) => setAddForm({ ...addForm, lastName: e.target.value })}
+                        className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[13px] text-slate-900 focus:bg-white focus:outline-none focus:border-[#213448] focus:ring-2 focus:ring-[#213448]/10 transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="block text-[11.5px] font-bold text-slate-700">Official Email</label>
+                      {emailStatus.checking && (
+                        <span className="text-[10.5px] text-slate-400 flex items-center gap-1">
+                          <span className="inline-block w-2.5 h-2.5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></span>
+                          Checking...
+                        </span>
+                      )}
+                      {!emailStatus.checking && emailStatus.available === true && (
+                        <span className="text-[10.5px] text-emerald-600 font-bold flex items-center gap-1">
+                          <Check size={11} /> Available
+                        </span>
+                      )}
+                      {!emailStatus.checking && emailStatus.available === false && (
+                        <span className="text-[10.5px] text-red-500 font-bold flex items-center gap-1">
+                          <X size={11} /> Already registered
+                        </span>
+                      )}
+                    </div>
+                    <input
+                      type="email"
+                      required
+                      placeholder="e.g. staff.member@university.edu"
+                      value={addForm.email}
+                      onChange={(e) => setAddForm({ ...addForm, email: e.target.value })}
+                      className={`w-full px-3.5 py-2 bg-slate-50 border rounded-xl text-[13px] text-slate-900 focus:bg-white focus:outline-none transition-all ${
+                        emailStatus.available === false
+                          ? 'border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-100'
+                          : emailStatus.available === true
+                          ? 'border-emerald-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100'
+                          : 'border-slate-200 focus:border-[#213448] focus:ring-2 focus:ring-[#213448]/10'
+                      }`}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11.5px] font-bold text-slate-700 mb-1">Department</label>
+                    {isSuperAdmin || isITAdmin ? (
+                      <div className="relative">
+                        <select
+                          value={addForm.department}
+                          onChange={(e) => setAddForm({ ...addForm, department: e.target.value })}
+                          className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-[13px] text-slate-900 focus:bg-white focus:outline-none focus:border-[#213448] focus:ring-2 focus:ring-[#213448]/10 transition-all appearance-none cursor-pointer"
+                        >
+                          <option value="Registrar">Registrar Department (Staff Level)</option>
+                          <option value="Accounting">Accounting Department (Staff Level)</option>
+                          <option value="IT Administration">IT Administration Department</option>
+                        </select>
+                        <div className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs">
+                          <i className="fa-solid fa-chevron-down"></i>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="px-3.5 py-2 bg-slate-100 border border-slate-200 rounded-xl text-[13px] font-bold text-slate-700 flex items-center justify-between">
+                        <span>{addForm.department} Department</span>
+                        <span className="text-[10px] uppercase tracking-wider bg-slate-200 px-2 py-0.5 rounded text-slate-600 font-bold">Scoped</span>
+                      </div>
+                    )}
+                    <p className="text-[11px] text-slate-500 mt-1.5 leading-snug">
+                      <i className="fa-solid fa-circle-info text-blue-500 mr-1"></i>
+                      New accounts are provisioned at <strong>Staff level</strong>. The temporary password and activation details will be emailed upon creation.
+                    </p>
+                  </div>
+
+                  <div className="pt-2 flex gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => setShowAddModal(false)}
+                      className="w-1/3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-full font-bold text-[13px] transition-colors cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={addLoading || emailStatus.available === false}
+                      className="w-2/3 py-2.5 bg-[#111827] hover:bg-[#213448] text-white rounded-full font-bold text-[13px] shadow-sm flex items-center justify-center gap-2 transition-all disabled:opacity-60 cursor-pointer"
+                    >
+                      {addLoading ? (
+                        <>
+                          <span className="inline-block w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                          <span>Creating & Sending Email...</span>
+                        </>
+                      ) : (
+                        <>
+                          <UserPlus size={14} />
+                          <span>Create & Send Email</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </>
+            ) : (
+              <div className="text-center py-2">
+                <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-3 text-2xl shadow-2xs">
+                  <Check size={28} className="stroke-[3]" />
+                </div>
+                <h3 className="text-xl font-black text-slate-900 mb-1">Staff Successfully Added!</h3>
+                <p className="text-slate-500 text-[12px] leading-relaxed max-w-sm mx-auto mb-4">
+                  An automated email containing credentials and portal access has been dispatched to <strong>{addSuccessData.email}</strong>.
+                </p>
+
+                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 text-left mb-4 space-y-2">
+                  <div className="flex justify-between items-center text-[12px]">
+                    <span className="text-slate-500 font-medium">Full Name:</span>
+                    <span className="font-bold text-slate-900">{addSuccessData.name}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-[12px]">
+                    <span className="text-slate-500 font-medium">Department:</span>
+                    <span className="font-bold text-slate-800">{addSuccessData.department}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-[12px]">
+                    <span className="text-slate-500 font-medium">Role:</span>
+                    <span className="font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full text-[11px]">{addSuccessData.role}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-[12px] pt-1.5 border-t border-slate-200">
+                    <span className="text-slate-500 font-medium">Temp Password:</span>
+                    <code className="bg-white border border-slate-300 px-2.5 py-0.5 rounded font-mono font-bold text-slate-900 text-[13px] select-all">
+                      {addSuccessData.tempPassword}
+                    </code>
+                  </div>
+                </div>
+
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-left mb-4">
+                  <p className="text-[11.5px] text-amber-900 leading-snug m-0">
+                    <i className="fa-solid fa-shield-halved text-amber-600 mr-1.5"></i>
+                    <strong>Important Security Notice:</strong> Upon logging in, it is recommended to change the temporary password in the profile settings.
+                  </p>
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handleCopyCredentials}
+                    className="w-1/2 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-full font-bold text-[12.5px] flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    {copied ? (
+                      <>
+                        <Check size={14} className="text-emerald-600" />
+                        <span className="text-emerald-600">Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy size={14} />
+                        <span>Copy Details</span>
+                      </>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAddModal(false);
+                      setAddSuccessData(null);
+                    }}
+                    className="w-1/2 py-2.5 bg-[#111827] hover:bg-[#213448] text-white rounded-full font-bold text-[12.5px] shadow-sm transition-all cursor-pointer"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </Layout>
   );
 };

@@ -1,15 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const AuthController = require('../controllers/authController');
-const { auth } = require('../middleware/authMiddleware');
+const { auth, canManageStaff } = require('../middleware/authMiddleware');
 const { validate, registerValidation, loginValidation, updateProfileValidation } = require('../middleware/validationMiddleware');
 const { registerLimiter, loginProgressiveLimiter } = require('../middleware/rateLimiterMiddleware');
 
 // @route   GET /api/auth/check-email
 router.get('/check-email', AuthController.checkEmailAvailability);
 
-// @route   POST /api/auth/register-staff
-router.post('/register-staff', registerLimiter, AuthController.registerStaff);
+// @route   POST /api/auth/register-staff (Protected: Administrator only)
+router.post('/register-staff', auth, canManageStaff, AuthController.registerStaff);
 
 // @route   POST /api/auth/register/request-otp
 router.post('/register/request-otp', registerLimiter, AuthController.requestRegisterOTP);

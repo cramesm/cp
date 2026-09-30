@@ -29,37 +29,45 @@ async function sendStaffWelcomeEmail({ to, name, email, tempPassword, department
     <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 580px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
       <div style="background: #111827; padding: 28px 24px; text-align: center;">
         <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 700; letter-spacing: 0.5px;">VeriFitor</h1>
-        <p style="color: #9ca3af; margin: 6px 0 0; font-size: 13px;">Secure Academic Credential & Verification System</p>
+        <p style="color: #9ca3af; margin: 6px 0 0; font-size: 13px;">Official Academic Credential & Staff Portal</p>
       </div>
 
       <div style="padding: 32px 28px;">
-        <h2 style="color: #111827; font-size: 20px; font-weight: 600; margin-top: 0;">Welcome to the Team, ${name || 'Staff Member'}!</h2>
+        <h2 style="color: #111827; font-size: 20px; font-weight: 600; margin-top: 0;">Welcome, ${name || 'Staff Member'}!</h2>
         <p style="color: #4b5563; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
-          An official account has been created for you in the <strong>${department || 'Academic'}</strong> department with the role of <strong>${role || 'Staff'}</strong>.
+          An official staff account has been created for you by the administrator for the <strong>${department || 'Academic'}</strong> department with the role of <strong>${role || 'Staff'}</strong>.
         </p>
 
         <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; margin: 24px 0;">
-          <h3 style="margin: 0 0 14px; font-size: 14px; color: #374151; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700;">Your Login Credentials</h3>
+          <h3 style="margin: 0 0 14px; font-size: 13px; color: #374151; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700;">Your Login Credentials</h3>
           
           <div style="margin-bottom: 10px;">
-            <span style="display: inline-block; width: 130px; font-size: 13px; color: #6b7280;">Login Email:</span>
+            <span style="display: inline-block; width: 145px; font-size: 13px; color: #6b7280;">Staff Name:</span>
+            <strong style="color: #111827; font-size: 14px;">${name || 'Staff Member'}</strong>
+          </div>
+          <div style="margin-bottom: 10px;">
+            <span style="display: inline-block; width: 145px; font-size: 13px; color: #6b7280;">Login Email:</span>
             <strong style="color: #111827; font-size: 14px;">${email || to}</strong>
           </div>
-          <div>
-            <span style="display: inline-block; width: 130px; font-size: 13px; color: #6b7280;">Temporary Password:</span>
-            <span style="background: #e5e7eb; padding: 4px 10px; border-radius: 6px; font-family: monospace; font-size: 15px; font-weight: bold; color: #1f2937;">${tempPassword}</span>
+          <div style="margin-bottom: 10px;">
+            <span style="display: inline-block; width: 145px; font-size: 13px; color: #6b7280;">Department:</span>
+            <span style="color: #374151; font-size: 13.5px; font-weight: 600;">${department || 'Registrar'}</span>
+          </div>
+          <div style="margin-bottom: 4px;">
+            <span style="display: inline-block; width: 145px; font-size: 13px; color: #6b7280;">Temporary Password:</span>
+            <span style="background: #e5e7eb; padding: 5px 12px; border-radius: 6px; font-family: monospace; font-size: 15px; font-weight: bold; color: #111827; letter-spacing: 1px;">${tempPassword}</span>
           </div>
         </div>
 
-        <div style="text-align: center; margin: 28px 0;">
-          <a href="${loginUrl}" style="display: inline-block; background: #111827; color: #ffffff; text-decoration: none; padding: 12px 32px; border-radius: 9999px; font-size: 14px; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-            Access Portal
+        <div style="text-align: center; margin: 26px 0;">
+          <a href="${loginUrl}" style="display: inline-block; background: #111827; color: #ffffff; text-decoration: none; padding: 12px 34px; border-radius: 9999px; font-size: 14px; font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,0.12);">
+            Login to Staff Portal
           </a>
         </div>
 
-        <div style="background: #fffbeb; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 4px; margin-top: 24px;">
-          <p style="color: #92400e; font-size: 12.5px; margin: 0; line-height: 1.5;">
-            <strong>Important Security Notice:</strong> Please log in and change your temporary password immediately in your <em>Profile Settings</em> to safeguard your account.
+        <div style="background: #fffbeb; border-left: 4px solid #f59e0b; padding: 14px 18px; border-radius: 6px; margin-top: 24px;">
+          <p style="color: #92400e; font-size: 13px; margin: 0; line-height: 1.55;">
+            <strong>Important Security Notice:</strong> Upon logging in, it is recommended to change your temporary password in the profile settings.
           </p>
         </div>
       </div>
@@ -75,7 +83,7 @@ async function sendStaffWelcomeEmail({ to, name, email, tempPassword, department
   return transporter.sendMail({
     from: `"VeriFitor System" <${fromEmail}>`,
     to,
-    subject: `Welcome to VeriFitor - Your Account Credentials & Access Details`,
+    subject: `Welcome to VeriFitor - Staff Credentials & Access`,
     html,
   });
 }

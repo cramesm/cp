@@ -167,6 +167,11 @@ const canViewLogs = (req, res, next) => {
     role === 'accounting admin'
   ) {
     next();
+  } else {
+    res.status(403).json({ message: 'Not authorized to view system logs.' });
+  }
+};
+
 // View transactions (Institutional staff)
 const canViewTransactions = (req, res, next) => {
   const role = (req.user?.role || '').toLowerCase().trim();

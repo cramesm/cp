@@ -177,6 +177,7 @@ const AuthController = {
       res.status(201).json({
         success: true,
         message: 'Account created successfully! Your temporary password has been emailed to you.',
+        tempPassword,
         user: {
           id: newStaff._id,
           name: newStaff.name,
