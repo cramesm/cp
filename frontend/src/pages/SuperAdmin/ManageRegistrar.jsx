@@ -196,63 +196,6 @@ const ManageRegistrar = () => {
     setTimeout(() => setCopied(false), 2500);
   };
 
-  const getPromotionTarget = (role) => {
-    const r = (role || '').toLowerCase();
-    if (r === 'registrar staff' || r === 'registrar') {
-      return { target: 'Registrar Admin', type: 'promote', label: 'Promote to Admin' };
-    }
-    if (r === 'registrar admin') {
-      return { target: 'Registrar Staff', type: 'demote', label: 'Demote to Staff' };
-    }
-    if (r === 'accounting staff' || r === 'accounting') {
-      return { target: 'Accounting Admin', type: 'promote', label: 'Promote to Admin' };
-    }
-    if (r === 'accounting admin') {
-      return { target: 'Accounting Staff', type: 'demote', label: 'Demote to Staff' };
-    }
-    return null;
-  };
-
-  const handleRoleChange = (registrarId, currentRole, targetRole, staffName) => {
-    const isPromotion = targetRole.toLowerCase().includes('admin');
-    showConfirm({
-      title: isPromotion ? `Promote to ${targetRole}` : `Demote to ${targetRole}`,
-      message: isPromotion 
-        ? `Are you sure you want to promote ${staffName} to ${targetRole}? They will be granted administrative authority over departmental workflows and an automated email notification will be dispatched.`
-        : `Are you sure you want to demote ${staffName} to ${targetRole}? Their administrative authority will be revoked and set to staff processing level. An automated notification email will be sent.`,
-      type: isPromotion ? 'success' : 'warning',
-      confirmText: isPromotion ? 'Promote Account' : 'Demote Account',
-      onConfirm: async () => {
-        try {
-          const response = await api.put(`/registrars/${registrarId}/role`, { role: targetRole });
-          if (response.data) {
-            setRegistrars(prev => prev.map(reg => 
-              (reg._id === registrarId || reg.registrarId === registrarId) 
-                ? { 
-                    ...reg, 
-                    role: targetRole,
-                    department: targetRole.toLowerCase().includes('accounting') ? 'Accounting' :
-                               targetRole.toLowerCase().includes('it') ? 'IT Administration' : 'Registrar'
-                  } 
-                : reg
-            ));
-            showFeedback({
-              title: isPromotion ? 'Promotion Successful' : 'Demotion Processed',
-              message: `${staffName} has been officially updated to ${targetRole}. An automated notification email was dispatched.`,
-              type: 'success'
-            });
-          }
-        } catch (err) {
-          console.error('Error changing role:', err);
-          showFeedback({
-            title: 'Action Failed',
-            message: err.response?.data?.message || 'Failed to update staff role. Please try again.',
-            type: 'error'
-          });
-        }
-      }
-    });
-  };
 
   const handleToggleStatus = (registrarId, currentStatus) => {
     const newStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
@@ -455,7 +398,6 @@ const ManageRegistrar = () => {
                   <TableSkeleton columns={8} rows={entriesPerPage || 10} />
                 ) : paginatedRegistrars.length > 0 ? (
                   paginatedRegistrars.map((item) => {
-                    const targetInfo = getPromotionTarget(item.role);
                     const isAdminRole = (item.role || '').toLowerCase().includes('admin');
                     const roleStr = (item.role || '').toLowerCase();
                     const deptName = roleStr.includes('accounting')
@@ -513,19 +455,6 @@ const ManageRegistrar = () => {
                       </td>
                       <td className="py-3 px-5 text-right">
                         <div className="flex justify-end gap-1.5 items-center flex-wrap">
-                          {isSuperAdmin && targetInfo && (
-                            <button
-                              onClick={() => handleRoleChange(item._id || item.registrarId, item.role, targetInfo.target, item.name)}
-                              className={`min-w-[80px] rounded-full px-2.5 py-1 text-[11px] font-bold text-white text-center border-t border-white/20 border-b-2 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all cursor-pointer ${
-                                targetInfo.type === 'promote'
-                                  ? 'bg-blue-600 hover:bg-blue-700 border-blue-900/40'
-                                  : 'bg-purple-600 hover:bg-purple-700 border-purple-900/40'
-                              }`}
-                              title={targetInfo.label}
-                            >
-                              {targetInfo.type === 'promote' ? 'Promote' : 'Demote'}
-                            </button>
-                          )}
                           <button
                             onClick={() => handleToggleStatus(item._id || item.registrarId, item.status || 'Inactive')}
                             className={`min-w-[80px] rounded-full px-2.5 py-1 text-[11px] font-bold text-white text-center border-t border-white/20 border-b-2 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all cursor-pointer ${
