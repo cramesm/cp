@@ -38,8 +38,8 @@ function getRoleNotificationFilter(role = '', department = '') {
   const normRole = (role || '').toLowerCase().trim();
   const normDept = (department || '').toLowerCase().trim();
 
-  const isSuperAdmin = normRole.includes('super admin') || normRole === 'admin';
-  const isAdmin = isSuperAdmin || normRole.includes('admin') || normDept === 'administration';
+  // Only Super Admin has executive oversight across all departments
+  const isSuperAdmin = normRole === 'super admin' || normRole === 'superadmin' || (normRole === 'admin' && (normDept === 'administration' || !normDept));
 
   // Common exclusion for student personal notifications
   const baseAdminExclusions = [
@@ -47,9 +47,7 @@ function getRoleNotificationFilter(role = '', department = '') {
     { message: { $not: /^(your request|your refund|your account|your password|your profile|your document request|your payment)/i } }
   ];
 
-  // Super Admin or Departmental Administrators (Registrar Admin, Accounting Admin, IT Admin)
-  // have executive oversight and see all operational alerts across departments
-  if (isAdmin) {
+  if (isSuperAdmin) {
     return {
       $and: [
         ...baseAdminExclusions
@@ -57,20 +55,13 @@ function getRoleNotificationFilter(role = '', department = '') {
     };
   }
 
-  const isAccountingStaff = !isAdmin && (
-    normDept === 'accounting' ||
-    normRole.includes('accounting')
-  );
-  const isRegistrarStaff = !isAdmin && (
-    normDept === 'registrar' ||
-    normRole.includes('registrar')
-  );
-  const isITStaff = !isAdmin && (
-    normDept.includes('it') ||
-    normRole.includes('it')
-  );
+  // Departmental identification
+  const isAccounting = normDept === 'accounting' || normRole.includes('accounting');
+  const isRegistrar = normDept === 'registrar' || normRole.includes('registrar');
+  const isIT = normDept.includes('it') || normRole.includes('it');
 
-  if (isAccountingStaff) {
+  // Accounting Department (Accounting Admin & Accounting Staff)
+  if (isAccounting) {
     return {
       $and: [
         ...baseAdminExclusions,
@@ -90,14 +81,16 @@ function getRoleNotificationFilter(role = '', department = '') {
             }
           ]
         },
-        // Accounting staff excludes registrar document request processing notifications
+        // Accounting excludes registrar document request processing notifications
         { type: { $ne: 'request' } },
         { message: { $not: /^(new document request|document request received)/i } }
       ]
     };
   }
 
-  if (isRegistrarStaff) {
+  // Registrar Department (Registrar Admin & Registrar Staff)
+  // Strictly handles document requests — MUST NEVER receive refund notifications
+  if (isRegistrar) {
     return {
       $and: [
         ...baseAdminExclusions,
@@ -105,25 +98,28 @@ function getRoleNotificationFilter(role = '', department = '') {
           $or: [
             { targetDepartment: { $regex: /^registrar$/i } },
             { targetRole: { $regex: /registrar/i } },
-            { type: { $in: ['request', 'payment'] } },
+            { type: { $in: ['request', 'document', 'system'] } },
             {
               type: { $in: ['system', 'general'] },
               targetRole: 'all'
             },
             // Fallback for notifications where type was not set, check message content
             {
-              message: { $regex: /(document request|docu request|payment receipt|payment verified)/i }
+              message: { $regex: /(document request|docu request|verification request)/i }
             }
           ]
         },
-        // Registrar staff excludes non-document refund notifications
+        // STRICTLY exclude refund notifications from Registrar personnel
         { type: { $ne: 'refund' } },
-        { message: { $not: /(new refund request|refund request received)/i } }
+        { targetDepartment: { $not: /^accounting$/i } },
+        { message: { $not: /(refund)/i } },
+        { link: { $not: /refund/i } }
       ]
     };
   }
 
-  if (isITStaff) {
+  // IT Department (IT Admin & IT Staff)
+  if (isIT) {
     return {
       $and: [
         ...baseAdminExclusions,
@@ -131,18 +127,23 @@ function getRoleNotificationFilter(role = '', department = '') {
           $or: [
             { targetDepartment: { $regex: /it/i } },
             { targetRole: { $regex: /it/i } },
-            { type: { $in: ['system', 'general'] } },
+            { type: { $in: ['system', 'general', 'account'] } },
             { targetRole: 'all' }
           ]
-        }
+        },
+        { type: { $nin: ['refund', 'request'] } },
+        { message: { $not: /(refund|document request)/i } }
       ]
     };
   }
 
-  // Generic fallback admin sees all administrative notifications
+  // Generic fallback: never show refunds to non-accounting staff
   return {
     $and: [
-      ...baseAdminExclusions
+      ...baseAdminExclusions,
+      { type: { $ne: 'refund' } },
+      { targetDepartment: { $not: /^accounting$/i } },
+      { message: { $not: /(refund)/i } }
     ]
   };
 }

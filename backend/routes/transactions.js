@@ -44,8 +44,8 @@ router.get('/my-transactions', auth, TransactionController.getMyTransactions);
 // Get a receipt for a specific request
 router.get('/receipt', auth, TransactionController.getReceipt);
 
-// Admin: Get all refund requests (defined before /:id) - Institutional staff
-router.get('/refunds', auth, canViewTransactions, TransactionController.getRefunds);
+// Accounting: Get all refund requests (defined before /:id) - Accounting department & Super Admin only
+router.get('/refunds', auth, accountingOnly, TransactionController.getRefunds);
 
 // Get a transaction by requestId (Authenticated staff/student check)
 router.get('/by-request/:requestId', auth, TransactionController.getByRequestId);

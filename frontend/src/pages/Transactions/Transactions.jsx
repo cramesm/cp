@@ -20,14 +20,18 @@ const API_BASE = (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.re
 const Transactions = () => {
   const [searchParams] = useSearchParams();
   const [transactions, setTransactions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'payments'); // 'payments' | 'refunds'
-
-  // Role Checks
+  // Role & Department Checks
   const userRole = (localStorage.getItem('userRole') || '').toLowerCase();
+  const userDept = (localStorage.getItem('userDepartment') || '').toLowerCase();
   const isSuperAdmin = userRole === 'super admin';
-  const isStaffOrAdmin = ['super admin', 'registrar', 'registrar staff', 'admin', 'staff'].includes(userRole);
-  const canVerify = isStaffOrAdmin;
+  const isAccounting = userRole.includes('accounting') || userDept === 'accounting';
+  const canManageRefunds = isSuperAdmin || isAccounting;
+  const canVerify = isSuperAdmin || isAccounting;
+
+  const requestedTab = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(
+    requestedTab === 'refunds' && !canManageRefunds ? 'payments' : (requestedTab || 'payments')
+  );
   const { confirmConfig, feedbackConfig, showConfirm, showFeedback, closeConfirm, closeFeedback } = useModals();
 
   // Refund states
@@ -116,16 +120,22 @@ const Transactions = () => {
     };
     fetchUsers();
     fetchTransactions();
-    fetchRefunds();
-  }, []);
+    if (canManageRefunds) {
+      fetchRefunds();
+    }
+  }, [canManageRefunds]);
 
   // Update active tab and filter status if URL changes
   useEffect(() => {
     const tab = searchParams.get('tab');
-    if (tab) setActiveTab(tab);
+    if (tab === 'refunds' && !canManageRefunds) {
+      setActiveTab('payments');
+    } else if (tab) {
+      setActiveTab(tab);
+    }
     const status = searchParams.get('status');
     if (status) setFilterStatus(status);
-  }, [searchParams]);
+  }, [searchParams, canManageRefunds]);
 
   const triggerToast = (message, type = 'info') => {
     setToast({ show: true, message, type });
@@ -478,25 +488,46 @@ const Transactions = () => {
             </div>
           </div>
 
-          {/* Card 3: Total Refunded */}
-          <div className="bg-white rounded-[20px] p-4 flex flex-col justify-between shadow-[0_4px_20px_rgba(0,0,0,0.03),0_1px_3px_rgba(0,0,0,0.02)] border border-slate-100/90 hover:border-slate-300 transition-all">
-            <div className="flex justify-between items-start">
-              <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 border border-purple-200/60 flex items-center justify-center text-xs shadow-2xs">
-                <RotateCcw size={15} />
+          {/* Card 3: Total Refunded (Accounting / Super Admin) or Cleared Receipts (Registrar / View-Only) */}
+          {canManageRefunds ? (
+            <div className="bg-white rounded-[20px] p-4 flex flex-col justify-between shadow-[0_4px_20px_rgba(0,0,0,0.03),0_1px_3px_rgba(0,0,0,0.02)] border border-slate-100/90 hover:border-slate-300 transition-all">
+              <div className="flex justify-between items-start">
+                <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 border border-purple-200/60 flex items-center justify-center text-xs shadow-2xs">
+                  <RotateCcw size={15} />
+                </div>
+                <span className="text-[10.5px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+                  {statsSummary.refundedCount} Refunded
+                </span>
               </div>
-              <span className="text-[10.5px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
-                {statsSummary.refundedCount} Refunded
-              </span>
+              <div className="mt-2.5">
+                <span className="text-[22px] sm:text-[26px] font-black text-slate-900 leading-tight block">
+                  ₱{statsSummary.refundedAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+                <span className="text-[11.5px] font-bold text-slate-500 block truncate">
+                  Total Refunds Processed
+                </span>
+              </div>
             </div>
-            <div className="mt-2.5">
-              <span className="text-[22px] sm:text-[26px] font-black text-slate-900 leading-tight block">
-                ₱{statsSummary.refundedAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </span>
-              <span className="text-[11.5px] font-bold text-slate-500 block truncate">
-                Total Refunds Processed
-              </span>
+          ) : (
+            <div className="bg-white rounded-[20px] p-4 flex flex-col justify-between shadow-[0_4px_20px_rgba(0,0,0,0.03),0_1px_3px_rgba(0,0,0,0.02)] border border-slate-100/90 hover:border-slate-300 transition-all">
+              <div className="flex justify-between items-start">
+                <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200/60 flex items-center justify-center text-xs shadow-2xs">
+                  <CheckCircle size={15} />
+                </div>
+                <span className="text-[10.5px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  {statsSummary.collectedCount} Cleared
+                </span>
+              </div>
+              <div className="mt-2.5">
+                <span className="text-[22px] sm:text-[26px] font-black text-slate-900 leading-tight block">
+                  {statsSummary.collectedCount}
+                </span>
+                <span className="text-[11.5px] font-bold text-slate-500 block truncate">
+                  Verified Payment Receipts
+                </span>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Card 4: Rejected Receipts */}
           <div className="bg-white rounded-[20px] p-4 flex flex-col justify-between shadow-[0_4px_20px_rgba(0,0,0,0.03),0_1px_3px_rgba(0,0,0,0.02)] border border-slate-100/90 hover:border-slate-300 transition-all">
@@ -522,28 +553,35 @@ const Transactions = () => {
 
         {/* 3D Segmented Tab Switcher */}
         <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="inline-flex bg-slate-200/70 p-1 rounded-full border border-slate-200 shadow-inner">
-            <button
-              onClick={() => setActiveTab('payments')}
-              className={`px-5 py-1.5 rounded-full text-xs font-extrabold transition-all cursor-pointer ${
-                activeTab === 'payments'
-                  ? 'bg-[#2c3543] text-white shadow-[0_2px_6px_rgba(0,0,0,0.25)] border-t border-white/20 scale-[1.02]'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
-              }`}
-            >
-              All Payments
-            </button>
-            <button
-              onClick={() => setActiveTab('refunds')}
-              className={`px-5 py-1.5 rounded-full text-xs font-extrabold transition-all cursor-pointer ${
-                activeTab === 'refunds'
-                  ? 'bg-[#2c3543] text-white shadow-[0_2px_6px_rgba(0,0,0,0.25)] border-t border-white/20 scale-[1.02]'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
-              }`}
-            >
-              Refund Requests
-            </button>
-          </div>
+          {canManageRefunds ? (
+            <div className="inline-flex bg-slate-200/70 p-1 rounded-full border border-slate-200 shadow-inner">
+              <button
+                onClick={() => setActiveTab('payments')}
+                className={`px-5 py-1.5 rounded-full text-xs font-extrabold transition-all cursor-pointer ${
+                  activeTab === 'payments'
+                    ? 'bg-[#2c3543] text-white shadow-[0_2px_6px_rgba(0,0,0,0.25)] border-t border-white/20 scale-[1.02]'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                }`}
+              >
+                All Payments
+              </button>
+              <button
+                onClick={() => setActiveTab('refunds')}
+                className={`px-5 py-1.5 rounded-full text-xs font-extrabold transition-all cursor-pointer ${
+                  activeTab === 'refunds'
+                    ? 'bg-[#2c3543] text-white shadow-[0_2px_6px_rgba(0,0,0,0.25)] border-t border-white/20 scale-[1.02]'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                }`}
+              >
+                Refund Requests
+              </button>
+            </div>
+          ) : (
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-xs font-extrabold text-slate-700 shadow-2xs">
+              <Receipt size={14} className="text-[#1D2D44]" />
+              <span>All Payments</span>
+            </div>
+          )}
 
           {/* Export Report Button */}
           <button
@@ -967,7 +1005,7 @@ const Transactions = () => {
         )}
 
         {/* ====== REFUND REQUESTS TAB ====== */}
-        {activeTab === 'refunds' && (
+        {activeTab === 'refunds' && canManageRefunds && (
           <div className="rounded-[22px] bg-white shadow-[0_8px_24px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.02)] border border-slate-100/90 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse table-auto">
@@ -1208,7 +1246,7 @@ const Transactions = () => {
                     </div>
                   ) : (
                     <div className="p-3.5 bg-amber-50 text-amber-800 rounded-xl text-xs font-semibold text-center border border-amber-200 mt-4">
-                      View Only: Only authorized staff or administrators can verify, reject, or request updates for payments.
+                      View Only: Payment receipt verification and audit are restricted to Accounting personnel.
                     </div>
                   )}
                 </div>
@@ -1219,7 +1257,7 @@ const Transactions = () => {
         )}
 
         {/* ====== REFUND REVIEW MODAL ====== */}
-        {selectedRefund && (
+        {selectedRefund && canManageRefunds && (
           <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
             <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-scale-up">
               

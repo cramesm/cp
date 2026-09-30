@@ -159,6 +159,13 @@ const DashboardController = {
       const { role, department } = await resolveUserRoleAndDept(callerUser);
       const notifFilter = getRoleNotificationFilter(role, department);
 
+      const normRole = (role || '').toLowerCase();
+      const normDept = (department || '').toLowerCase();
+      const isAccountingOrSuper =
+        normRole.includes('super admin') ||
+        normRole.includes('accounting') ||
+        normDept === 'accounting';
+
       const [
         transactions,
         notifications,
@@ -175,7 +182,7 @@ const DashboardController = {
         Request.find({ status: 'Pending' }).sort({ dateRequested: 1, createdAt: 1 }).limit(5),
         Transaction.find().sort({ createdAt: -1 }).limit(8),
         Transaction.find({ status: 'Pending Verification' }).sort({ createdAt: 1 }).limit(5),
-        Refund.find().sort({ createdAt: -1 }).limit(6),
+        isAccountingOrSuper ? Refund.find().sort({ createdAt: -1 }).limit(6) : Promise.resolve([]),
         ActivityLog.find().sort({ createdAt: -1 }).limit(8)
       ]);
 

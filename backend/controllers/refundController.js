@@ -7,18 +7,32 @@ const Notification = require('../models/Notification');
 const getClientIp = require('../utils/getClientIp');
 
 const RefundController = {
-  // @desc    Get refunds (all for admin, own for students/alumni)
+  // @desc    Get refunds (Accounting & Super Admin for all, own for students/alumni)
   getRefunds: async (req, res) => {
     try {
       let query = {};
+      const userRole = (req.user?.role || '').toLowerCase();
+      const userDept = (req.user?.department || '').toLowerCase();
       
-      if (req.user.role === 'student' || req.user.role === 'alumni') {
+      if (userRole === 'student' || userRole === 'alumni') {
         query = {
           $or: [
             { studentEmail: req.user.email },
             ...(req.user.id || req.user._id ? [{ userId: req.user.id || req.user._id }] : [])
           ]
         };
+      } else {
+        const isAccountingOrSuper =
+          userRole === 'super admin' ||
+          userRole.includes('accounting') ||
+          userDept === 'accounting';
+
+        if (!isAccountingOrSuper) {
+          return res.status(403).json({
+            success: false,
+            message: 'Access restricted: Refund requests are handled exclusively by the Accounting department.'
+          });
+        }
       }
 
       const refunds = await Refund.find(query).sort({ createdAt: -1 });
@@ -102,13 +116,21 @@ const RefundController = {
     }
   },
 
-  // @desc    Update refund status (Staff & Super Admin)
+  // @desc    Update refund status (Accounting & Super Admin only)
   updateRefundStatus: async (req, res) => {
     try {
       const userRole = (req.user?.role || '').toLowerCase();
-      const isStaffOrAdmin = ['super admin', 'registrar', 'registrar staff', 'admin', 'staff', 'accounting', 'accounting staff', 'accounting admin'].includes(userRole) || userRole.includes('admin') || userRole.includes('staff');
-      if (!isStaffOrAdmin) {
-        return res.status(403).json({ success: false, message: 'Only authorized staff and administrators can approve or reject refund requests.' });
+      const userDept = (req.user?.department || '').toLowerCase();
+      const isAccountingOrSuper =
+        userRole === 'super admin' ||
+        userRole.includes('accounting') ||
+        userDept === 'accounting';
+
+      if (!isAccountingOrSuper) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access restricted: Only Accounting personnel and Super Admins can approve or reject refund requests.'
+        });
       }
 
       const { status, adminRemarks } = req.body;

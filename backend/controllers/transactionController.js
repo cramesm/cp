@@ -108,9 +108,22 @@ const TransactionController = {
     }
   },
 
-  // @desc    Admin: Get all refund requests
+  // @desc    Accounting / Admin: Get all refund requests
   getRefunds: async (req, res) => {
     try {
+      const userRole = (req.user?.role || '').toLowerCase();
+      const userDept = (req.user?.department || '').toLowerCase();
+      const isAccountingOrSuper =
+        userRole === 'super admin' ||
+        userRole.includes('accounting') ||
+        userDept === 'accounting';
+
+      if (!isAccountingOrSuper) {
+        return res.status(403).json({
+          message: 'Access restricted: Refund requests are handled exclusively by the Accounting department.'
+        });
+      }
+
       const query = {};
       if (req.query.status && req.query.status !== 'All') {
         query.status = req.query.status;
