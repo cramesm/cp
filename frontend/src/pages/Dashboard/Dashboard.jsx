@@ -79,8 +79,8 @@ const Dashboard = () => {
     const isAccounting = isAccountingAdmin || isAccountingStaff;
     const isRegistrar = isRegistrarAdmin || isRegistrarStaff;
 
-    const fetchDashboardData = async () => {
-        setLoading(true);
+    const fetchDashboardData = async (showLoading = true) => {
+        if (showLoading) setLoading(true);
         setError(null);
         try {
             const [statsRes, recentRes] = await Promise.all([
@@ -101,14 +101,27 @@ const Dashboard = () => {
             });
         } catch (err) {
             console.error("Error fetching dashboard data", err);
-            setError("Failed to sync dashboard data. Please check your connection.");
+            if (showLoading) setError("Failed to sync dashboard data. Please check your connection.");
         } finally {
-            setLoading(false);
+            if (showLoading) setLoading(false);
         }
     };
 
     useEffect(() => {
         fetchDashboardData();
+
+        // Real-time polling every 8 seconds so recent alerts & metrics update live
+        const interval = setInterval(() => {
+            fetchDashboardData(false);
+        }, 8000);
+
+        const handleFocus = () => fetchDashboardData(false);
+        window.addEventListener('focus', handleFocus);
+
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('focus', handleFocus);
+        };
     }, []);
 
     const handleCopyHash = (hash, e) => {

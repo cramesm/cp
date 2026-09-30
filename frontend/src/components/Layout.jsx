@@ -229,7 +229,19 @@ const Layout = ({ children }) => {
                 console.error("Error fetching notifications for topbar", err);
             }
         };
+
         fetchUnreadCount();
+
+        // Real-time polling every 6 seconds to capture live mobile requests & payments
+        const interval = setInterval(fetchUnreadCount, 6000);
+        window.addEventListener('focus', fetchUnreadCount);
+        window.addEventListener('notificationsUpdated', fetchUnreadCount);
+
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('focus', fetchUnreadCount);
+            window.removeEventListener('notificationsUpdated', fetchUnreadCount);
+        };
     }, [location.pathname]);
 
     return (

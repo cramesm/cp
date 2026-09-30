@@ -167,8 +167,23 @@ const canViewLogs = (req, res, next) => {
     role === 'accounting admin'
   ) {
     next();
+// View transactions (Institutional staff)
+const canViewTransactions = (req, res, next) => {
+  const role = (req.user?.role || '').toLowerCase().trim();
+  const department = (req.user?.department || '').toLowerCase().trim();
+  const allowed = [
+    'super admin', 'admin', 'staff',
+    'accounting admin', 'accounting staff', 'accounting',
+    'registrar admin', 'registrar staff', 'registrar',
+    'it administrator', 'it admin', 'it staff', 'it'
+  ];
+  if (req.user && (
+    allowed.includes(role) ||
+    ['accounting', 'registrar', 'it', 'administration'].includes(department)
+  )) {
+    next();
   } else {
-    res.status(403).json({ message: 'Not authorized to view system logs.' });
+    res.status(403).json({ message: 'Not authorized to view transactions.' });
   }
 };
 
@@ -182,5 +197,6 @@ module.exports = {
   itOrSuperAdmin,
   canManageStaff,
   canManageUsers,
-  canViewLogs
+  canViewLogs,
+  canViewTransactions
 };

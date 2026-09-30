@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Notification = require('../models/Notification');
+const Request = require('../models/Request');
 const Transaction = require('../models/Transaction');
 const Refund = require('../models/Refund');
 
@@ -73,7 +74,43 @@ async function syncNotifications() {
       }
     );
 
-    // 3. Backfill notifications for existing pending transactions if not already notified
+    // 2.1 Migrate any legacy /payments links to /transactions
+    await Notification.updateMany(
+      { link: '/payments' },
+      { $set: { link: '/transactions' } }
+    );
+    await Notification.updateMany(
+      { link: '/payments?tab=refunds' },
+      { $set: { link: '/transactions?tab=refunds' } }
+    );
+    await Notification.updateMany(
+      { targetRole: 'admin', type: 'request', link: { $in: ['', null] } },
+      { $set: { link: '/requests' } }
+    );
+
+    // 3. Backfill notifications for existing pending document requests if not already notified
+    const pendingReqs = await Request.find({ status: 'Pending' }).lean();
+    for (const req of pendingReqs) {
+      const exists = await Notification.findOne({
+        type: 'request',
+        message: { $regex: new RegExp(req.requestId, 'i') }
+      });
+
+      if (!exists) {
+        await Notification.create({
+          title: 'New Document Request',
+          message: `New document request received: ${req.documentType} from ${req.name || 'Student'} (ID: ${req.studentId || 'N/A'}) — Request #${req.requestId}`,
+          isRead: false,
+          targetRole: 'admin',
+          targetDepartment: 'Registrar',
+          type: 'request',
+          link: '/requests',
+          date: req.dateRequested || req.createdAt || new Date()
+        });
+      }
+    }
+
+    // 4. Backfill notifications for existing pending transactions if not already notified
     const pendingTxs = await Transaction.find({ status: 'Pending Verification' }).lean();
     for (const tx of pendingTxs) {
       const exists = await Notification.findOne({
@@ -90,13 +127,13 @@ async function syncNotifications() {
           targetRole: 'admin',
           targetDepartment: 'Accounting',
           type: 'payment',
-          link: '/payments',
+          link: '/transactions',
           date: tx.date || tx.createdAt || new Date()
         });
       }
     }
 
-    // 4. Backfill notifications for existing pending refunds if not already notified
+    // 5. Backfill notifications for existing pending refunds if not already notified
     const pendingRefunds = await Refund.find({ status: { $regex: /^pending$/i } }).lean();
     for (const rf of pendingRefunds) {
       const exists = await Notification.findOne({
@@ -113,7 +150,7 @@ async function syncNotifications() {
           targetRole: 'admin',
           targetDepartment: 'Accounting',
           type: 'refund',
-          link: '/payments?tab=refunds',
+          link: '/transactions?tab=refunds',
           date: rf.createdAt || new Date()
         });
       }

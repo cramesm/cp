@@ -264,10 +264,57 @@ const TransactionController = {
           targetRole: 'admin',
           targetDepartment: 'Accounting',
           type: 'payment',
-          link: '/payments'
+          link: '/transactions'
         });
       } catch (notifErr) {
         console.error('Failed to notify accounting of new payment receipt:', notifErr);
+      }
+
+      // Notify the student / mobile user confirming receipt submission
+      try {
+        let studentEmail = payerEmail || req.user?.email || '';
+        let studentUserId = userId || req.user?.id || req.user?._id || null;
+        let studentIdVal = '';
+
+        if (requestId && requestId !== 'N/A') {
+          const linked = await Request.findOne({
+            $or: [
+              { requestId },
+              ...(mongoose.Types.ObjectId.isValid(requestId) ? [{ _id: requestId }] : [])
+            ]
+          }).lean();
+          if (linked) {
+            studentEmail = studentEmail || linked.email || '';
+            studentUserId = studentUserId || linked.userId || null;
+            studentIdVal = linked.studentId || '';
+          }
+        }
+
+        if (!studentUserId && studentEmail) {
+          try {
+            const Student = require('../models/Users/Student');
+            const Alumni = require('../models/Users/Alumni');
+            const st = await Student.findOne({ email: studentEmail }).lean() || await Alumni.findOne({ email: studentEmail }).lean();
+            if (st) {
+              studentUserId = st._id;
+              studentIdVal = studentIdVal || st.studentId || '';
+            }
+          } catch (_e) {}
+        }
+
+        await Notification.create({
+          title: 'Payment Receipt Submitted',
+          message: `Your payment receipt of ₱${amount || '0.00'} for Request #${requestId || 'N/A'} (${effectiveDocType}) has been submitted and is pending verification.`,
+          isRead: false,
+          email: studentEmail,
+          userId: studentUserId || undefined,
+          studentId: studentIdVal || undefined,
+          targetRole: 'student',
+          type: 'payment',
+          link: requestId && requestId !== 'N/A' ? `/requests/${requestId}` : '/transactions'
+        });
+      } catch (stuNotifErr) {
+        console.error('Failed to notify student of receipt upload:', stuNotifErr);
       }
 
       res.status(201).json({ success: true, ...newTx.toObject() });
@@ -313,11 +360,28 @@ const TransactionController = {
           targetRole: 'admin',
           targetDepartment: 'Accounting',
           type: 'payment',
-          link: '/payments'
+          link: '/transactions'
         });
       } catch (notifErr) {
         console.error('Failed to notify admin of new payment:', notifErr);
       }
+
+      // Notify student if email is known
+      try {
+        const studentEmail = req.body.payerEmail || req.user.email || '';
+        if (studentEmail) {
+          await Notification.create({
+            title: 'Payment Submitted',
+            message: `Your payment of ₱${req.body.amount || '0.00'} for Request #${req.body.requestId || 'N/A'} (${req.body.documentType || 'Document'}) has been submitted.`,
+            isRead: false,
+            email: studentEmail,
+            userId: req.user.id || req.user._id || undefined,
+            targetRole: 'student',
+            type: 'payment',
+            link: req.body.requestId && req.body.requestId !== 'N/A' ? `/requests/${req.body.requestId}` : '/transactions'
+          });
+        }
+      } catch (_stuErr) {}
 
       res.json(newTx);
     } catch (error) {
@@ -330,7 +394,7 @@ const TransactionController = {
   verifyTransaction: async (req, res) => {
     try {
       const userRole = (req.user?.role || '').toLowerCase();
-      const isStaffOrAdmin = ['super admin', 'registrar', 'registrar staff', 'admin', 'staff'].includes(userRole);
+      const isStaffOrAdmin = ['super admin', 'registrar', 'registrar staff', 'admin', 'staff', 'accounting', 'accounting staff', 'accounting admin'].includes(userRole) || userRole.includes('admin') || userRole.includes('staff');
       if (!isStaffOrAdmin) {
         return res.status(403).json({ message: 'Only authorized staff and administrators can verify payment transactions.' });
       }
@@ -453,6 +517,21 @@ const TransactionController = {
           });
         } catch (notifErr) {
           console.error('Failed to notify student of payment approval:', notifErr);
+        }
+
+        // Notify Registrar that request payment is verified and ready for document processing
+        try {
+          await Notification.create({
+            title: 'Payment Verified',
+            message: `Payment of ₱${transaction.amount} for Request #${transaction.requestId} (${targetDocType}) has been verified by Accounting. The request is now ready for processing.`,
+            isRead: false,
+            targetRole: 'admin',
+            targetDepartment: 'Registrar',
+            type: 'request',
+            link: `/requests/${transaction.requestId}`
+          });
+        } catch (regNotifErr) {
+          console.error('Failed to notify registrar of verified payment:', regNotifErr);
         }
       } else if (status === 'Needs Update') {
         if (linkedReq) {
@@ -607,8 +686,22 @@ const TransactionController = {
         targetRole: 'admin',
         targetDepartment: 'Accounting',
         type: 'refund',
-        link: '/payments?tab=refunds'
+        link: '/transactions?tab=refunds'
       });
+
+      // Notify student confirming refund submission
+      try {
+        await Notification.create({
+          title: 'Refund Request Submitted',
+          message: `Your refund request (${refundId}) for ₱${refund.amount} has been submitted and is awaiting review.`,
+          isRead: false,
+          email: refund.studentEmail || '',
+          userId: refund.userId || undefined,
+          targetRole: 'student',
+          type: 'refund',
+          link: '/transactions?tab=refunds'
+        });
+      } catch (_stuErr) {}
 
       res.status(201).json({ success: true, message: 'Refund request submitted', refund });
     } catch (error) {

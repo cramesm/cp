@@ -30,7 +30,7 @@ import VerifyTransactions from './pages/Blockchain/VerifyTransactions';
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('token');
-  const userRole = (localStorage.getItem('userRole') || '').toLowerCase();
+  const userRole = (localStorage.getItem('userRole') || '').toLowerCase().trim();
   const staffRoles = [
     'super admin',
     'it administrator',
@@ -63,14 +63,23 @@ const ProtectedRoute = ({ children }) => {
 
 const RoleRoute = ({ children, allowedRoles }) => {
   const token = localStorage.getItem('token');
-  const userRole = (localStorage.getItem('userRole') || '').toLowerCase();
+  const userRole = (localStorage.getItem('userRole') || '').toLowerCase().trim();
   if (!token) {
     return <Navigate to="/" replace />;
   }
-  if (allowedRoles && !allowedRoles.map(r => r.toLowerCase()).includes(userRole)) {
+  if (allowedRoles && !allowedRoles.map(r => r.toLowerCase().trim()).includes(userRole)) {
     return <Navigate to="/dashboard" replace />;
   }
   return children;
+};
+
+const AuthenticatedWildcardRedirect = () => {
+  const token = localStorage.getItem('token');
+  const userRole = (localStorage.getItem('userRole') || '').toLowerCase().trim();
+  if (token && userRole) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  return <Navigate to="/" replace />;
 };
 
 function App() {
@@ -144,12 +153,18 @@ function App() {
           } 
         />
 
+        {/* Legacy / Alias Routes */}
+        <Route path="/payments" element={<Navigate to="/transactions" replace />} />
+        <Route path="/payments/*" element={<Navigate to="/transactions" replace />} />
+        <Route path="/refunds" element={<Navigate to="/transactions?tab=refunds" replace />} />
+        <Route path="/document-requests" element={<Navigate to="/requests" replace />} />
+
         {/* Public Validation Page (QR Scans go straight to /verify/results) */}
         <Route path="/verify" element={<Navigate to="/" replace />} />
         <Route path="/verify/results" element={<ValidationResults />} />
 
         {/* Catch-all redirect */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<AuthenticatedWildcardRedirect />} />
       </Routes>
     </Router>
   );

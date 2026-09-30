@@ -26,10 +26,11 @@ const Notifications = () => {
 
   const roleLower = (user.role || '').toLowerCase();
   const deptLower = (user.department || '').toLowerCase();
-  const isSuperAdmin = roleLower.includes('super admin');
-  const isAccounting = !isSuperAdmin && (deptLower === 'accounting' || roleLower.includes('accounting'));
-  const isRegistrar = !isSuperAdmin && (deptLower === 'registrar' || roleLower.includes('registrar'));
-  const isIT = !isSuperAdmin && (deptLower.includes('it') || roleLower.includes('it'));
+  const isSuperAdmin = roleLower.includes('super admin') || roleLower === 'admin';
+  const isAdmin = isSuperAdmin || roleLower.includes('admin') || deptLower === 'administration';
+  const isAccounting = !isAdmin && (deptLower === 'accounting' || roleLower.includes('accounting'));
+  const isRegistrar = !isAdmin && (deptLower === 'registrar' || roleLower.includes('registrar'));
+  const isIT = !isAdmin && (deptLower.includes('it') || roleLower.includes('it'));
 
   // Filter States
   const [searchTerm, setSearchTerm] = useState('');
@@ -42,17 +43,30 @@ const Notifications = () => {
 
   useEffect(() => {
     fetchNotifications();
+
+    // Auto-poll every 6 seconds so incoming requests and payments update live
+    const interval = setInterval(() => {
+      fetchNotifications(false);
+    }, 6000);
+
+    const handleFocus = () => fetchNotifications(false);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
 
-  const fetchNotifications = async () => {
-    setLoading(true);
+  const fetchNotifications = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     try {
       const res = await api.get('/notifications');
       setNotifications(res.data || []);
     } catch (error) {
-      triggerToast("Failed to load notifications from server.", "error");
+      if (showLoading) triggerToast("Failed to load notifications from server.", "error");
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
@@ -65,6 +79,7 @@ const Notifications = () => {
     try {
       await api.put('/notifications/mark-all-read'); 
       setNotifications(notifications.map(n => ({ ...n, isRead: true })));
+      window.dispatchEvent(new CustomEvent('notificationsUpdated'));
       triggerToast("All notifications marked as read!", "info");
     } catch (error) {
       triggerToast("Could not update notifications on server.", "error");
@@ -74,21 +89,23 @@ const Notifications = () => {
   const categoryOptions = useMemo(() => {
     const opts = [{ key: 'All', label: 'All Alerts', count: notifications.length }];
 
-    if (isSuperAdmin || isRegistrar) {
+    if (isAdmin || isRegistrar) {
       const docCount = notifications.filter(n => (n.type || '').toLowerCase() === 'request' || (n.message || '').toLowerCase().includes('document request') || (n.message || '').toLowerCase().includes('docu')).length;
       opts.push({ key: 'Requests', label: 'Document Requests', count: docCount });
     }
 
-    if (isSuperAdmin || isAccounting) {
+    if (isAdmin || isAccounting || isRegistrar) {
       const payCount = notifications.filter(n => (n.type || '').toLowerCase() === 'payment' || (n.message || '').toLowerCase().includes('payment') || (n.message || '').toLowerCase().includes('receipt')).length;
       opts.push({ key: 'Payments', label: 'Payments', count: payCount });
+    }
 
+    if (isAdmin || isAccounting) {
       const refCount = notifications.filter(n => (n.type || '').toLowerCase() === 'refund' || (n.message || '').toLowerCase().includes('refund')).length;
       opts.push({ key: 'Refunds', label: 'Refunds', count: refCount });
     }
 
     return opts;
-  }, [notifications, isSuperAdmin, isAccounting, isRegistrar]);
+  }, [notifications, isAdmin, isSuperAdmin, isAccounting, isRegistrar]);
 
   const filteredNotifications = useMemo(() => {
     const sanitizedSearch = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -320,7 +337,7 @@ const Notifications = () => {
                         iconBg: 'bg-amber-100 text-amber-700',
                         badge: 'Refund',
                         badgeColor: 'bg-amber-50 text-amber-700 border-amber-200/80',
-                        link: n.link || '/payments?tab=refunds'
+                        link: n.link || '/transactions?tab=refunds'
                       };
                     } else if (n.type === 'payment' || msg.includes('payment') || msg.includes('receipt')) {
                       notifConfig = {
@@ -328,7 +345,7 @@ const Notifications = () => {
                         iconBg: 'bg-emerald-100 text-emerald-700',
                         badge: 'Payment',
                         badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200/80',
-                        link: n.link || '/payments'
+                        link: n.link || '/transactions'
                       };
                     } else if (n.type === 'request' || msg.includes('document request') || msg.includes('request')) {
                       notifConfig = {
@@ -345,13 +362,34 @@ const Notifications = () => {
                         try {
                           await api.put(`/notifications/${n._id || n.id}/read`);
                           setNotifications(prev => prev.map(item => (item._id === n._id ? { ...item, isRead: true } : item)));
+                          window.dispatchEvent(new CustomEvent('notificationsUpdated'));
                         } catch (err) {
                           // silent
                         }
                       }
-                      if (notifConfig.link) {
-                        navigate(notifConfig.link);
+
+                      let targetLink = notifConfig.link || '';
+                      if (targetLink.startsWith('/payments')) {
+                        targetLink = targetLink.replace('/payments', '/transactions');
                       }
+                      if (targetLink.includes('/undefined') || targetLink.includes('/null') || targetLink.includes('/N/A') || targetLink.includes('/[object')) {
+                        targetLink = targetLink.startsWith('/requests') ? '/requests' : '/transactions';
+                      }
+
+                      // If targetLink is empty or points to public root/login, fallback to safe page based on type
+                      if (!targetLink || targetLink === '/' || targetLink === '/login') {
+                        if (n.type === 'refund' || msg.includes('refund')) {
+                          targetLink = '/transactions?tab=refunds';
+                        } else if (n.type === 'payment' || msg.includes('payment') || msg.includes('receipt')) {
+                          targetLink = '/transactions';
+                        } else if (n.type === 'request' || msg.includes('document request') || msg.includes('request') || msg.includes('docu')) {
+                          targetLink = '/requests';
+                        } else {
+                          return;
+                        }
+                      }
+
+                      navigate(targetLink);
                     };
 
                     return (

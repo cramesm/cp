@@ -75,11 +75,25 @@ const RefundController = {
           targetRole: 'admin',
           targetDepartment: 'Accounting',
           type: 'refund',
-          link: '/payments?tab=refunds'
+          link: '/transactions?tab=refunds'
         });
       } catch (notifErr) {
         console.error('Failed to create refund notification:', notifErr);
       }
+
+      // Notify student confirming refund submission
+      try {
+        await Notification.create({
+          title: 'Refund Request Submitted',
+          message: `Your refund request (${refundId}) for ₱${transaction.amount} has been submitted and is awaiting review.`,
+          isRead: false,
+          email: req.user.email || '',
+          userId: req.user.id || req.user._id || undefined,
+          targetRole: 'student',
+          type: 'refund',
+          link: '/transactions?tab=refunds'
+        });
+      } catch (_stuErr) {}
 
       res.status(201).json({ success: true, message: 'Refund requested successfully', refund });
     } catch (error) {
@@ -92,7 +106,7 @@ const RefundController = {
   updateRefundStatus: async (req, res) => {
     try {
       const userRole = (req.user?.role || '').toLowerCase();
-      const isStaffOrAdmin = ['super admin', 'registrar', 'registrar staff', 'admin', 'staff'].includes(userRole);
+      const isStaffOrAdmin = ['super admin', 'registrar', 'registrar staff', 'admin', 'staff', 'accounting', 'accounting staff', 'accounting admin'].includes(userRole) || userRole.includes('admin') || userRole.includes('staff');
       if (!isStaffOrAdmin) {
         return res.status(403).json({ success: false, message: 'Only authorized staff and administrators can approve or reject refund requests.' });
       }

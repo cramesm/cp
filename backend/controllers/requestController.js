@@ -215,15 +215,37 @@ const RequestController = {
         ipAddress: getClientIp(req)
       });
 
-      await Notification.create({
-        title: 'New Document Request',
-        message: `New document request received: ${req.body.documentType} from ${userName} (ID: ${studentId || 'N/A'}) — Request #${requestId}`,
-        isRead: false,
-        targetRole: 'admin',
-        targetDepartment: 'Registrar',
-        type: 'request',
-        link: '/requests'
-      });
+      // Admin notification for Registrar
+      try {
+        await Notification.create({
+          title: 'New Document Request',
+          message: `New document request received: ${req.body.documentType} from ${userName} (ID: ${studentId || 'N/A'}) — Request #${requestId}`,
+          isRead: false,
+          targetRole: 'admin',
+          targetDepartment: 'Registrar',
+          type: 'request',
+          link: '/requests'
+        });
+      } catch (adminNotifErr) {
+        console.error('Failed to create admin request notification:', adminNotifErr);
+      }
+
+      // Student / Mobile notification confirming request submission
+      try {
+        await Notification.create({
+          title: 'Document Request Submitted',
+          message: `Your document request #${requestId} for ${req.body.documentType} has been submitted successfully and is pending review.`,
+          isRead: false,
+          email: req.user?.email || newDoc.email || '',
+          userId: req.user?.id || req.user?._id || newDoc.userId || undefined,
+          studentId: studentId || undefined,
+          targetRole: 'student',
+          type: 'request',
+          link: `/requests/${requestId}`
+        });
+      } catch (stuNotifErr) {
+        console.error('Failed to create student request notification:', stuNotifErr);
+      }
 
       res.json(newDoc);
     } catch (error) {

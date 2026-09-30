@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const TransactionController = require('../controllers/transactionController');
-const { auth, superAdminOnly, accountingOnly } = require('../middleware/authMiddleware');
+const { auth, superAdminOnly, accountingOnly, canViewTransactions } = require('../middleware/authMiddleware');
 
 // --- Multer Configuration for Receipt Uploads ---
 const storage = multer.memoryStorage();
@@ -35,8 +35,8 @@ const receiptUpload = (req, res, next) => {
   });
 };
 
-// Get all transactions (Accounting and Super Admin only)
-router.get('/', auth, accountingOnly, TransactionController.getAllTransactions);
+// Get all transactions (Institutional staff)
+router.get('/', auth, canViewTransactions, TransactionController.getAllTransactions);
 
 // Get transactions for logged-in user
 router.get('/my-transactions', auth, TransactionController.getMyTransactions);
@@ -44,8 +44,8 @@ router.get('/my-transactions', auth, TransactionController.getMyTransactions);
 // Get a receipt for a specific request
 router.get('/receipt', auth, TransactionController.getReceipt);
 
-// Admin: Get all refund requests (defined before /:id) - Accounting only
-router.get('/refunds', auth, accountingOnly, TransactionController.getRefunds);
+// Admin: Get all refund requests (defined before /:id) - Institutional staff
+router.get('/refunds', auth, canViewTransactions, TransactionController.getRefunds);
 
 // Get a transaction by requestId (Authenticated staff/student check)
 router.get('/by-request/:requestId', auth, TransactionController.getByRequestId);

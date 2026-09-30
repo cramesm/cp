@@ -13,6 +13,26 @@ const AdminLogin = () => {
     const [cooldown, setCooldown] = useState(0);
     const navigate = useNavigate();
 
+    // If already authenticated with active token & staff role, auto-navigate to dashboard
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        const role = (localStorage.getItem('userRole') || '').toLowerCase().trim();
+        const staffRoles = [
+            'super admin', 'it administrator', 'it admin', 'it staff', 'it',
+            'registrar admin', 'registrar staff', 'registrar',
+            'accounting admin', 'accounting staff', 'accounting',
+            'admin', 'staff'
+        ];
+        const isStaff = staffRoles.includes(role) || 
+            (role && !['student', 'alumni'].includes(role) && (
+                role.includes('admin') || role.includes('staff') || role.includes('registrar') || role.includes('accounting') || role.includes('it')
+            ));
+
+        if (token && isStaff) {
+            navigate('/dashboard', { replace: true });
+        }
+    }, [navigate]);
+
     const demoAccountsList = [
         {
             dept: 'Executive',
