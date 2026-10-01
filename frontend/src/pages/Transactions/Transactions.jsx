@@ -20,6 +20,7 @@ const API_BASE = (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.re
 const Transactions = () => {
   const [searchParams] = useSearchParams();
   const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
   // Role & Department Checks
   const userRole = (localStorage.getItem('userRole') || '').toLowerCase();
   const userDept = (localStorage.getItem('userDepartment') || '').toLowerCase();
