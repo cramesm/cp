@@ -407,9 +407,10 @@ const TransactionController = {
   verifyTransaction: async (req, res) => {
     try {
       const userRole = (req.user?.role || '').toLowerCase();
-      const isStaffOrAdmin = ['super admin', 'registrar', 'registrar staff', 'admin', 'staff', 'accounting', 'accounting staff', 'accounting admin'].includes(userRole) || userRole.includes('admin') || userRole.includes('staff');
-      if (!isStaffOrAdmin) {
-        return res.status(403).json({ message: 'Only authorized staff and administrators can verify payment transactions.' });
+      const userDept = (req.user?.department || '').toLowerCase();
+      const canVerifyPayment = ['super admin', 'accounting', 'accounting staff', 'accounting admin'].includes(userRole) || userDept === 'accounting';
+      if (!canVerifyPayment) {
+        return res.status(403).json({ message: 'Permission denied: Payment verification is restricted to the Accounting department and Super Admin.' });
       }
 
       const { status, adminRemarks } = req.body;

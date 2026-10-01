@@ -1570,7 +1570,8 @@ const Dashboard = () => {
                                         <th className="py-3 px-5 text-[11.5px] font-extrabold text-slate-500 uppercase tracking-wider">Student Name</th>
                                         <th className="py-3 px-5 text-[11.5px] font-extrabold text-slate-500 uppercase tracking-wider">Document Type</th>
                                         <th className="py-3 px-5 text-[11.5px] font-extrabold text-slate-500 uppercase tracking-wider">Date Requested</th>
-                                        <th className="py-3 px-5 text-[11.5px] font-extrabold text-slate-500 uppercase tracking-wider text-center">Status</th>
+                                        <th className="py-3 px-5 text-[11.5px] font-extrabold text-slate-500 uppercase tracking-wider text-center">Payment Status</th>
+                                        <th className="py-3 px-5 text-[11.5px] font-extrabold text-slate-500 uppercase tracking-wider text-center">Request Status</th>
                                         <th className="py-3 px-5 text-[11.5px] font-extrabold text-slate-500 uppercase tracking-wider text-right">Action</th>
                                     </tr>
                                 </thead>
@@ -1596,6 +1597,26 @@ const Dashboard = () => {
                                                     {req.dateRequested ? new Date(req.dateRequested).toLocaleDateString() : 'Recent'}
                                                 </td>
                                                 <td className="py-3 px-5 text-center">
+                                                    {req.isPaymentVerified || req.paymentStatus === 'Completed' ? (
+                                                        <span className="inline-flex items-center gap-1 py-0.5 px-2.5 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                            <Check size={11} className="text-emerald-600" />
+                                                            <span>Payment Verified</span>
+                                                        </span>
+                                                    ) : req.paymentStatus === 'Rejected' ? (
+                                                        <span className="inline-flex items-center gap-1 py-0.5 px-2.5 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider bg-red-50 text-red-700 border border-red-200">
+                                                            <span>Payment Rejected</span>
+                                                        </span>
+                                                    ) : req.paymentStatus === 'Needs Update' ? (
+                                                        <span className="inline-flex items-center gap-1 py-0.5 px-2.5 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">
+                                                            <span>Needs Update</span>
+                                                        </span>
+                                                    ) : (
+                                                        <span className="inline-flex items-center gap-1 py-0.5 px-2.5 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200">
+                                                            <span>Awaiting Accounting</span>
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td className="py-3 px-5 text-center">
                                                     <span className={`inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider ${
                                                         req.status === 'Released' || req.status === 'Approved'
                                                             ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
@@ -1618,7 +1639,7 @@ const Dashboard = () => {
                                         ))
                                     ) : (
                                         <tr>
-                                            <td colSpan={6} className="py-6 text-center text-slate-400">
+                                            <td colSpan={7} className="py-6 text-center text-slate-400">
                                                 No document requests found matching criteria.
                                             </td>
                                         </tr>

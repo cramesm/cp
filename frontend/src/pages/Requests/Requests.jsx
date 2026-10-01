@@ -319,13 +319,14 @@ const Requests = () => {
                                     <th className="py-3.5 px-5">Student Name</th>
                                     <th className="py-3.5 px-5">Document Type</th>
                                     <th className="py-3.5 px-5">Date Requested</th>
+                                    <th className="py-3.5 px-5 text-center">Payment</th>
                                     <th className="py-3.5 px-5 text-center">Status</th>
                                     <th className="py-3.5 px-5 text-right">Action</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 text-[12.5px]">
                                 {loading ? (
-                                    <TableSkeleton columns={6} rows={entriesPerPage || 10} />
+                                    <TableSkeleton columns={7} rows={entriesPerPage || 10} />
                                 ) : paginatedRequests.length > 0 ? (
                                     paginatedRequests.map((req, idx) => {
                                         const reqId = req.requestId || req._id;
@@ -365,6 +366,26 @@ const Requests = () => {
                                                     ) : '2026-08-21'}
                                                 </td>
                                                 <td className="py-3.5 px-5 align-middle text-center">
+                                                    {req.isPaymentVerified || req.paymentStatus === 'Completed' ? (
+                                                        <span className="inline-flex items-center gap-1 py-0.5 px-2.5 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                            <Check size={11} className="text-emerald-600" />
+                                                            <span>Payment Verified</span>
+                                                        </span>
+                                                    ) : req.paymentStatus === 'Rejected' ? (
+                                                        <span className="inline-flex items-center gap-1 py-0.5 px-2.5 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider bg-red-50 text-red-700 border border-red-200">
+                                                            <span>Payment Rejected</span>
+                                                        </span>
+                                                    ) : req.paymentStatus === 'Needs Update' ? (
+                                                        <span className="inline-flex items-center gap-1 py-0.5 px-2.5 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">
+                                                            <span>Needs Update</span>
+                                                        </span>
+                                                    ) : (
+                                                        <span className="inline-flex items-center gap-1 py-0.5 px-2.5 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200">
+                                                            <span>Awaiting Accounting</span>
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td className="py-3.5 px-5 align-middle text-center">
                                                     {renderStatusBadge(req.status)}
                                                 </td>
                                                 <td className="py-3.5 px-5 align-middle text-right">
@@ -383,7 +404,7 @@ const Requests = () => {
                                     })
                                 ) : (
                                     <tr>
-                                        <td colSpan={6} className="py-16 text-center text-slate-400 italic">
+                                        <td colSpan={7} className="py-16 text-center text-slate-400 italic">
                                             No document requests found matching your filters.
                                         </td>
                                     </tr>

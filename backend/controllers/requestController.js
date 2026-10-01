@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const QRCode = require('qrcode');
 const { PDFDocument } = require('pdf-lib');
 const Request = require('../models/Request');
+const Transaction = require('../models/Transaction');
 const ActivityLog = require('../models/ActivityLog');
 const Notification = require('../models/Notification');
 const Student = require('../models/Users/Student');
@@ -28,7 +29,8 @@ const batchEnrichRequests = async (requestsList) => {
 
     if (studentIds.length === 0 && userEmails.length === 0) return requestsList;
 
-    const [students, alumni] = await Promise.all([
+    const requestIds = requestsList.map(r => r.requestId).filter(Boolean);
+    const [students, alumni, transactions] = await Promise.all([
       Student.find({
         $or: [
           ...(studentIds.length ? [{ studentId: { $in: studentIds } }] : []),
@@ -40,8 +42,14 @@ const batchEnrichRequests = async (requestsList) => {
           ...(studentIds.length ? [{ studentId: { $in: studentIds } }] : []),
           ...(userEmails.length ? [{ email: { $in: userEmails } }] : [])
         ]
-      }).lean()
+      }).lean(),
+      requestIds.length > 0 ? Transaction.find({ requestId: { $in: requestIds } }).lean() : Promise.resolve([])
     ]);
+
+    const txMap = {};
+    (transactions || []).forEach(t => {
+      if (t.requestId) txMap[t.requestId] = t;
+    });
 
     const studentMap = {};
     students.forEach(s => {
@@ -69,6 +77,12 @@ const batchEnrichRequests = async (requestsList) => {
         const isDiploma = (reqObj.documentType || reqObj.document_type || '').toLowerCase().includes('diploma');
         reqObj.ownerType = isDiploma ? 'Alumni' : 'Student';
       }
+
+      const tx = txMap[reqObj.requestId];
+      reqObj.paymentStatus = tx ? tx.status : (reqObj.paymentReceiptId ? 'Pending Verification' : 'No Transaction');
+      reqObj.isPaymentVerified = tx?.status === 'Completed';
+      reqObj.paymentTx = tx || null;
+
       return reqObj;
     });
   } catch (err) {
@@ -257,7 +271,7 @@ const RequestController = {
   // @desc    Update request status/details
   updateRequest: async (req, res) => {
     try {
-      const { status, name, documentHash, forceOverride, rejectionReason } = req.body;
+      const { status, name, documentHash, forceOverride, rejectionReason, estimatedProcessingStart, estimatedProcessingEnd } = req.body;
       const userRole = (req.user?.role || '').toLowerCase();
 
       if (forceOverride && userRole !== 'super admin') {
@@ -281,6 +295,8 @@ const RequestController = {
       if (documentHash !== undefined) updateData.documentHash = documentHash;
       if (rejectionReason !== undefined) updateData.rejectionReason = rejectionReason;
       if (status === 'In Process') updateData.rejectionReason = '';
+      if (estimatedProcessingStart !== undefined) updateData.estimatedProcessingStart = estimatedProcessingStart;
+      if (estimatedProcessingEnd !== undefined) updateData.estimatedProcessingEnd = estimatedProcessingEnd;
 
       const query = {
         $or: [
@@ -341,7 +357,13 @@ const RequestController = {
 
           if (status === 'In Process') {
             title = 'Document Request Approved';
-            message = `Your document request #${request.requestId} for ${request.documentType} has been approved and is now being processed!`;
+            let windowInfo = '';
+            if (request.estimatedProcessingStart && request.estimatedProcessingEnd) {
+              const startStr = new Date(request.estimatedProcessingStart).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+              const endStr = new Date(request.estimatedProcessingEnd).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+              windowInfo = ` Estimated processing window: ${startStr} – ${endStr}.`;
+            }
+            message = `Your document request #${request.requestId} for ${request.documentType} has been approved and is now being processed!${windowInfo}`;
           } else if (status === 'Released') {
             title = 'Document Ready for Pickup';
             message = `Your document request #${request.requestId} for ${request.documentType} is ready for pickup/delivery!`;

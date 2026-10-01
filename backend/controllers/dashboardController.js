@@ -186,11 +186,37 @@ const DashboardController = {
         ActivityLog.find().sort({ createdAt: -1 }).limit(8)
       ]);
 
+      // Batch query linked payment transactions for requests
+      const allReqIds = [
+        ...new Set(
+          [...pendingRequests, ...priorityPendingRequests]
+            .map(r => r.requestId)
+            .filter(Boolean)
+        )
+      ];
+      const linkedTransactions = allReqIds.length > 0
+        ? await Transaction.find({ requestId: { $in: allReqIds } }).lean()
+        : [];
+      const txMap = {};
+      linkedTransactions.forEach(t => {
+        if (t.requestId) txMap[t.requestId] = t;
+      });
+
+      const enrich = (list) =>
+        list.map(r => {
+          const obj = r.toObject ? r.toObject() : { ...r };
+          const tx = txMap[obj.requestId];
+          obj.paymentStatus = tx ? tx.status : (obj.paymentReceiptId ? 'Pending Verification' : 'No Transaction');
+          obj.isPaymentVerified = tx?.status === 'Completed';
+          obj.paymentTx = tx || null;
+          return obj;
+        });
+
       res.json({
         transactions,
         notifications,
-        pendingRequests,
-        priorityPendingRequests,
+        pendingRequests: enrich(pendingRequests),
+        priorityPendingRequests: enrich(priorityPendingRequests),
         recentPayments,
         priorityPendingPayments,
         recentRefunds,

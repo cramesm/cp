@@ -80,6 +80,14 @@ const requestSchema = new mongoose.Schema({
   dateRequested: {
     type: Date,
     default: Date.now
+  },
+  estimatedProcessingStart: {
+    type: Date,
+    default: null
+  },
+  estimatedProcessingEnd: {
+    type: Date,
+    default: null
   }
 }, { timestamps: true });
 
