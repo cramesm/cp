@@ -1,32 +1,32 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import AdminLogin from './pages/Auth/AdminLogin';
-import ForgotPassword from './pages/Auth/ForgotPassword';
-import OTP from './pages/Auth/OTP';
-import ChangePassword from './pages/Auth/ChangePassword';
+import AdminLogin from './pages/auth/AdminLogin';
+import ForgotPassword from './pages/auth/ForgotPassword';
+import OTP from './pages/auth/OTP';
+import ChangePassword from './pages/auth/ChangePassword';
 
 // Registrar Staff Pages
-import Dashboard from './pages/Dashboard/Dashboard';
-import Requests from './pages/Requests/Requests';
-import RequestDetails from './pages/Requests/RequestDetails';
-import Transactions from './pages/Transactions/Transactions';
-import TransactionDetails from './pages/Transactions/TransactionDetails';
-import Notifications from './pages/Notifications/Notifications';
-import Profile from './pages/Profile/Profile'; // This is the Edit Page
-import ProfileInfo from './pages/Profile/ProfileInfo'; // This is the View Page
+import Dashboard from './pages/dashboard/Dashboard';
+import Requests from './pages/requests/Requests';
+import RequestDetails from './pages/requests/RequestDetails';
+import Transactions from './pages/transactions/Transactions';
+import TransactionDetails from './pages/transactions/TransactionDetails';
+import Notifications from './pages/notifications/Notifications';
+import Profile from './pages/profile/Profile'; // This is the Edit Page
+import ProfileInfo from './pages/profile/ProfileInfo'; // This is the View Page
 
 // Super Admin Pages
-import ManageRegistrar from './pages/SuperAdmin/ManageRegistrar';
-import RegistrarInformation from './pages/SuperAdmin/RegistrarInformation';
-import ActivityLogs from './pages/SuperAdmin/ActivityLogs';
+import ManageRegistrar from './pages/super-admin/ManageRegistrar';
+import RegistrarInformation from './pages/super-admin/RegistrarInformation';
+import ActivityLogs from './pages/super-admin/ActivityLogs';
 
-import ValidationResults from './pages/Validation/Validation';
+import ValidationResults from './pages/validation/Validation';
 
-import StudentManagement from './pages/Users/StudentManagement';
+import StudentManagement from './pages/users/StudentManagement';
 
 // Blockchain Pages
-import Blockchain from './pages/Blockchain/Blockchain';
-import MyTransactions from './pages/Blockchain/MyTransactions';
-import VerifyTransactions from './pages/Blockchain/VerifyTransactions';
+import Blockchain from './pages/blockchain/Blockchain';
+import MyTransactions from './pages/blockchain/MyTransactions';
+import VerifyTransactions from './pages/blockchain/VerifyTransactions';
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('token');

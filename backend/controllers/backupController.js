@@ -8,7 +8,7 @@ const ActivityLog = require('../models/ActivityLog');
 
 let BlockchainTransaction;
 try {
-  BlockchainTransaction = require('../blockchain_essentials/modelBC/blockchainTransactionModel');
+  BlockchainTransaction = require('../models/BlockchainTransaction');
 } catch (e) {
   BlockchainTransaction = null;
 }

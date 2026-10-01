@@ -1,0 +1,447 @@
+import { useState, useEffect, useRef } from 'react';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import verifitorLogo from '../../assets/verifitor_logo.png';
+import verifitorIcon from '../../assets/logo-verifitor.png';
+import api from '../../api';
+import { useAccessibility } from '../../context/AccessibilityContext';
+import AccessibilityModal from '../modals/AccessibilityModal';
+
+const getInitials = (name) => {
+    if (!name) return 'U';
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+        return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+};
+
+const Layout = ({ children }) => {
+    const [menuOpen, setMenuOpen] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(() => {
+        return localStorage.getItem('sidebarCollapsed') === 'true';
+    });
+    const [isMobileOpen, setIsMobileOpen] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(0);
+
+    const { setSettingsModalOpen, simpleMode } = useAccessibility();
+
+    const navigate = useNavigate();
+    const location = useLocation();
+    const dropdownRef = useRef(null);
+
+    const toggleSidebar = () => {
+        setIsCollapsed(prev => {
+            const nextState = !prev;
+            localStorage.setItem('sidebarCollapsed', String(nextState));
+            return nextState;
+        });
+    };
+
+    const handleToggle = () => {
+        if (window.innerWidth < 768) {
+            setIsMobileOpen(prev => !prev);
+        } else {
+            toggleSidebar();
+        }
+    };
+
+    const toggleMenu = () => {
+        setMenuOpen((prev) => !prev);
+    };
+
+    const handleLogout = async () => {
+        try {
+            const adminUserStr = localStorage.getItem('adminUser');
+            const adminUser = adminUserStr ? JSON.parse(adminUserStr) : null;
+            await api.post('/auth/logout', {
+                userEmail: adminUser?.email,
+                userName: adminUser?.name || `${adminUser?.firstName || ''} ${adminUser?.lastName || ''}`.trim(),
+                userRole: localStorage.getItem('userRole') || adminUser?.role
+            });
+        } catch (err) {
+            console.error('Logout logging error:', err);
+        } finally {
+            localStorage.removeItem('token');
+            localStorage.removeItem('userRole');
+            localStorage.removeItem('adminUser');
+            navigate('/login');
+        }
+    };
+
+    const getPageTitle = () => {
+        const path = location.pathname;
+
+        switch (path) {
+            case '/dashboard':
+                return 'Dashboard';
+            case '/requests':
+                return 'Document Requests';
+            case '/transactions':
+                return 'Payments';
+            case '/notifications':
+                return 'Notifications';
+            case '/blockchain':
+                return 'Secured Digital Records';
+            case '/manage-registrar':
+                return 'Manage Registrars';
+            case '/manage-users':
+                return 'User Management';
+            case '/activity-logs':
+                return 'Audit Trail / System Logs';
+            case '/tor':
+                return 'Document Management';
+            case '/profile/info':
+                return 'Profile Information';
+            case '/profile':
+                return 'Edit Profile';
+            default:
+                // Check for dynamic routes
+                if (path.startsWith('/requests/')) {
+                    return 'Request Details';
+                }
+                if (path.startsWith('/transactions/')) {
+                    return 'Transaction Details';
+                }
+                if (path.startsWith('/manage-registrar/details/')) {
+                    return 'Registrar Information';
+                }
+                if (path.startsWith('/tor/')) {
+                    return 'TOR Details';
+                }
+                if (path === '/blockchain/create') {
+                    return 'Create Secured Record';
+                }
+                if (path === '/blockchain/my-transactions') {
+                    return 'My Secured Records';
+                }
+                if (path === '/blockchain/verify') {
+                    return 'Verify Secured Record';
+                }
+                return 'Dashboard';
+        }
+    };
+
+    const userRole = (localStorage.getItem('userRole') || '').toLowerCase();
+    const isSuperAdmin = userRole === 'super admin';
+    const isRegistrar = userRole.includes('registrar');
+    const isAccounting = userRole.includes('accounting');
+    const isIT = userRole.includes('it administrator') || userRole.includes('it admin') || userRole.includes('it');
+
+    const menuItems = [
+        { path: '/dashboard', label: 'Dashboard', icon: 'fa-solid fa-table-cells-large' }
+    ];
+
+    // Operations Section (Department Scoped)
+    const operationsItems = [];
+    if (isSuperAdmin || isRegistrar) {
+        operationsItems.push(
+            { path: '/requests', label: 'Document Requests', icon: 'fa-solid fa-file-lines' },
+            { path: '/blockchain', label: 'Secured Records', icon: 'fa-solid fa-shield-halved' }
+        );
+    }
+    if (isSuperAdmin || isAccounting) {
+        operationsItems.push(
+            { path: '/transactions', label: 'Payments', icon: 'fa-solid fa-money-check-dollar' }
+        );
+    }
+    if (operationsItems.length > 0) {
+        menuItems.push({ isDivider: true, section: 'Operations' }, ...operationsItems);
+    }
+
+    // Management Section (Administrative Scoped)
+    const adminItems = [];
+    if (isSuperAdmin) {
+        adminItems.push(
+            { path: '/manage-registrar', label: 'Manage Staff', icon: 'fa-solid fa-user-gear' },
+            { path: '/manage-users', label: 'Manage Users', icon: 'fa-solid fa-users' },
+            { path: '/activity-logs', label: 'System Logs', icon: 'fa-solid fa-clipboard-list' }
+        );
+    } else if (isIT) {
+        adminItems.push(
+            { path: '/manage-registrar', label: 'IT Staff', icon: 'fa-solid fa-user-gear' },
+            { path: '/manage-users', label: 'Manage Users', icon: 'fa-solid fa-users' },
+            { path: '/activity-logs', label: 'System Logs', icon: 'fa-solid fa-clipboard-list' }
+        );
+    } else if (userRole === 'registrar admin') {
+        adminItems.push(
+            { path: '/manage-registrar', label: 'Registrar Staff', icon: 'fa-solid fa-user-gear' },
+            { path: '/activity-logs', label: 'Issuance Logs', icon: 'fa-solid fa-clipboard-list' }
+        );
+    } else if (userRole === 'accounting admin') {
+        adminItems.push(
+            { path: '/manage-registrar', label: 'Accounting Staff', icon: 'fa-solid fa-user-gear' },
+            { path: '/activity-logs', label: 'Financial Logs', icon: 'fa-solid fa-clipboard-list' }
+        );
+    }
+    if (adminItems.length > 0) {
+        menuItems.push({ isDivider: true, section: 'Management' }, ...adminItems);
+    }
+
+    // Account Section
+    menuItems.push(
+        { isDivider: true, section: 'Account' },
+        { path: '/profile/info', label: 'My Profile', icon: 'fa-solid fa-circle-user' }
+    );
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setMenuOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
+    const [adminUser, setAdminUser] = useState(() => {
+        const adminUserStr = localStorage.getItem('adminUser');
+        return adminUserStr ? JSON.parse(adminUserStr) : {};
+    });
+
+    useEffect(() => {
+        const handleProfileUpdate = () => {
+            const adminUserStr = localStorage.getItem('adminUser');
+            setAdminUser(adminUserStr ? JSON.parse(adminUserStr) : {});
+        };
+        window.addEventListener('profileUpdated', handleProfileUpdate);
+        return () => window.removeEventListener('profileUpdated', handleProfileUpdate);
+    }, []);
+
+    useEffect(() => {
+        setIsMobileOpen(false);
+        setMenuOpen(false);
+
+        // Fetch unread notifications
+        const fetchUnreadCount = async () => {
+            try {
+                const res = await api.get('/notifications');
+                if (res.data) {
+                    const unread = res.data.filter(n => !n.isRead).length;
+                    setUnreadCount(unread);
+                }
+            } catch (err) {
+                console.error("Error fetching notifications for topbar", err);
+            }
+        };
+
+        fetchUnreadCount();
+
+        // Real-time polling every 6 seconds to capture live mobile requests & payments
+        const interval = setInterval(fetchUnreadCount, 6000);
+        window.addEventListener('focus', fetchUnreadCount);
+        window.addEventListener('notificationsUpdated', fetchUnreadCount);
+
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('focus', fetchUnreadCount);
+            window.removeEventListener('notificationsUpdated', fetchUnreadCount);
+        };
+    }, [location.pathname]);
+
+    return (
+        <div className="flex min-h-screen bg-[#e9e9e9]">
+            {/* Skip to content link for accessibility */}
+            <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[9999] focus:bg-white focus:text-[#2f3947] focus:px-4 focus:py-2 focus:rounded-lg focus:shadow-lg focus:text-sm focus:font-bold">
+                Skip to main content
+            </a>
+
+            {/* Mobile Backdrop overlay */}
+            {isMobileOpen && (
+                <div
+                    className="fixed inset-0 bg-black/40 z-[998] md:hidden animate-in fade-in duration-200"
+                    onClick={() => setIsMobileOpen(false)}
+                ></div>
+            )}
+
+            {/* 3D Floating Dock Sidebar with Original Colors & Logos */}
+            <aside data-tour="sidebar" className={`fixed top-3 left-3 bottom-3 bg-[#2c3543] rounded-[24px] shadow-[0_16px_40px_rgba(0,0,0,0.3),0_4px_12px_rgba(0,0,0,0.18)] border border-slate-700/50 flex flex-col z-[1000] sidebar transition-all duration-300 overflow-hidden ${
+                isMobileOpen ? 'translate-x-0 w-[245px]' : '-translate-x-[120%] md:translate-x-0'
+            } ${isCollapsed ? 'md:w-[76px]' : 'md:w-[245px]'}`}>
+                
+                {/* White Logo Container with 3D inset/border */}
+                <div className={`h-[96px] bg-white flex items-center justify-center overflow-hidden transition-all duration-300 rounded-t-[24px] shadow-xs border-b border-gray-100 select-none ${isCollapsed ? 'px-2' : 'px-5'}`}>
+                    {isCollapsed ? (
+                        <div className="w-[40px] h-[40px] flex items-center justify-center flex-shrink-0 transition-transform duration-300 hover:scale-105 select-none">
+                            <img src={verifitorIcon} alt="Verifitor Icon" draggable="false" onDragStart={(e) => e.preventDefault()} className="w-full h-full object-contain pointer-events-none" />
+                        </div>
+                    ) : (
+                        <img
+                            src={verifitorLogo}
+                            alt="Verifitor"
+                            draggable="false"
+                            onDragStart={(e) => e.preventDefault()}
+                            className="w-full max-w-[155px] object-contain transition-all duration-300 hover:scale-105 pointer-events-none"
+                        />
+                    )}
+                </div>
+
+                {/* Navigation Items in Original Dark Colors with Tactile 3D Shaped Buttons */}
+                <nav className="flex-1 px-2.5 py-3 overflow-y-auto space-y-1.5 custom-scrollbar select-none" aria-label="Main navigation">
+                    {menuItems.map((item, index) => {
+                        if (item.isDivider) {
+                            return (
+                                <div key={`divider-${index}`} className="pt-2.5 pb-1 px-1">
+                                    {!isCollapsed && (
+                                        <span className="block px-2 text-[10px] font-black uppercase tracking-wider text-slate-400/80">
+                                            {item.section}
+                                        </span>
+                                    )}
+                                    {isCollapsed && (
+                                        <div className="w-8 mx-auto border-t border-slate-700/60 my-1" />
+                                    )}
+                                </div>
+                            );
+                        }
+                        return (
+                            <NavLink
+                                key={item.path}
+                                to={item.path}
+                                end={item.path === '/dashboard'}
+                                title={isCollapsed ? item.label : ''}
+                                draggable="false"
+                                onDragStart={(e) => e.preventDefault()}
+                                onClick={() => {
+                                    if (window.innerWidth < 768) {
+                                        setIsMobileOpen(false);
+                                    }
+                                }}
+                                className={({ isActive }) =>
+                                    `group relative flex items-center gap-3 px-3 py-2 rounded-xl font-bold text-[13px] transition-all duration-200 select-none cursor-pointer ${
+                                        isActive
+                                            ? 'bg-gradient-to-b from-[#3e4c5e] to-[#2d3846] text-white border-t border-white/20 border-b-2 border-black/40 shadow-[0_4px_12px_rgba(0,0,0,0.35),inset_0_1px_1px_rgba(255,255,255,0.2)] scale-[1.01]'
+                                            : 'bg-[#252d3a]/60 text-[#9ba4b5] border-t border-white/5 border-b border-black/20 hover:bg-gradient-to-b hover:from-[#354253] hover:to-[#293442] hover:text-white hover:shadow-[0_3px_10px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 active:translate-y-0.5'
+                                    } ${isCollapsed ? 'justify-center px-0 py-2' : ''}`
+                                }
+                            >
+                                {({ isActive }) => (
+                                    <>
+                                        {/* 3D Inner Icon Tile */}
+                                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
+                                            isActive 
+                                                ? 'bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-[0_2px_6px_rgba(37,99,235,0.4),inset_0_1px_1px_rgba(255,255,255,0.4)]' 
+                                                : 'bg-[#1e2531] text-[#9ba4b5] group-hover:text-white group-hover:bg-[#283342] shadow-[inset_0_1px_2px_rgba(0,0,0,0.4)]'
+                                        }`}>
+                                            <i className={`${item.icon} ${isCollapsed ? 'text-[15px]' : 'text-[13px]'}`}></i>
+                                        </div>
+
+                                        {!isCollapsed && (
+                                            <span className="tracking-wide truncate">{item.label}</span>
+                                        )}
+                                    </>
+                                )}
+                            </NavLink>
+                        );
+                    })}
+                </nav>
+
+                {/* Bottom Dock Actions with 3D Shaped Logout Button */}
+                <div className="p-3 border-t border-slate-700/60">
+                    <button 
+                        onClick={handleLogout}
+                        className={`w-full bg-white text-[#2c3543] py-2 rounded-xl font-bold flex justify-center items-center gap-2 border-t border-white border-b-4 border-slate-300 shadow-[0_4px_12px_rgba(0,0,0,0.2)] hover:bg-gray-50 hover:-translate-y-0.5 active:translate-y-1 active:border-b-0 transition-all ${isCollapsed ? 'px-0' : 'px-3'}`}
+                        title={isCollapsed ? "Logout" : ""}
+                    >
+                        <i className="fa-solid fa-arrow-right-from-bracket text-sm"></i>
+                        {!isCollapsed && <span className="text-[13px]">Logout</span>}
+                    </button>
+                </div>
+            </aside>
+
+            <div className={`flex flex-col w-full ${isCollapsed ? 'md:ml-[88px] md:w-[calc(100%-88px)]' : 'md:ml-[258px] md:w-[calc(100%-258px)]'} transition-all duration-300 main-content min-w-0`}>
+                
+                {/* Sticky Header Wrapper (Tightened gap, no bleed) */}
+                <div className="sticky top-0 z-[990] pt-3 pb-1.5 px-3 sm:px-4 bg-[#e9e9e9]/95 backdrop-blur-md transition-colors">
+                    <header className="flex items-center justify-between px-5 sm:px-6 bg-gradient-to-r from-[#44627d] via-[#4d6f8c] to-[#547794] rounded-[22px] h-[62px] shadow-[0_8px_24px_rgba(44,53,67,0.12),0_2px_6px_rgba(0,0,0,0.03)] border border-white/20">
+                        <div className="flex items-center gap-3" data-tour="header-title">
+                            <button
+                                onClick={handleToggle}
+                                className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer focus:outline-none flex items-center justify-center border border-white/15 shadow-inner"
+                                title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+                                aria-label={isCollapsed ? "Expand sidebar navigation" : "Collapse sidebar navigation"}
+                                aria-expanded={!isCollapsed}
+                            >
+                                <i className="fa-solid fa-angles-left text-base"></i>
+                            </button>
+                            <h2 className="text-white text-[19px] sm:text-[21px] font-extrabold m-0 tracking-tight drop-shadow-xs truncate max-w-[260px] sm:max-w-none">
+                                {getPageTitle()}
+                            </h2>
+                        </div>
+
+                        <div className="flex items-center gap-2.5 sm:gap-3">
+                            {/* Display & Accessibility Settings Gear Button */}
+                            <button
+                                type="button"
+                                onClick={() => setSettingsModalOpen(true)}
+                                data-tour="gear-settings"
+                                className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all border border-white/15 shadow-inner relative group cursor-pointer"
+                                title="Display & Accessibility Settings (Simple Mode, Text Size)"
+                                aria-label="Open Display and Accessibility Settings"
+                            >
+                                <i className={`fa-solid fa-gear text-[14px] transition-transform duration-300 group-hover:rotate-45 ${simpleMode ? 'text-cyan-300' : ''}`}></i>
+                                {simpleMode && (
+                                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-cyan-400 rounded-full ring-2 ring-[#4d6f8c]"></span>
+                                )}
+                            </button>
+
+                            {/* Notification Pill Button */}
+                            <button
+                                type="button"
+                                onClick={() => navigate('/notifications')}
+                                data-tour="notifications"
+                                className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all border border-white/15 shadow-inner relative cursor-pointer"
+                                aria-label={`View notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
+                            >
+                                <i className="fa-solid fa-bell text-[14px]"></i>
+                                {unreadCount > 0 && (
+                                    <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-0.5 flex items-center justify-center bg-red-500 text-white text-[9.5px] font-extrabold rounded-full ring-2 ring-[#4d6f8c] shadow-sm animate-pulse">
+                                        {unreadCount}
+                                    </span>
+                                )}
+                            </button>
+
+                            {/* Non-Clickable User Profile Badge */}
+                            <div className="flex items-center gap-2 p-1 pl-1.5 pr-3 bg-white/15 rounded-full border border-white/20 shadow-xs select-none cursor-default">
+                                <div className="w-7 h-7 rounded-full bg-white text-[#547794] flex items-center justify-center font-extrabold text-[11px] shadow-xs overflow-hidden flex-shrink-0">
+                                    {adminUser.profilePic ? (
+                                        <img 
+                                            src={adminUser.profilePic.startsWith('http') 
+                                                ? adminUser.profilePic 
+                                                : (import.meta.env.DEV ? `http://localhost:5000${adminUser.profilePic}` : adminUser.profilePic)} 
+                                            alt="Profile" 
+                                            className="w-full h-full object-cover" 
+                                        />
+                                    ) : (
+                                        <span className="tracking-tight">{getInitials(adminUser.name || 'Registrar Name')}</span>
+                                    )}
+                                </div>
+                                <div className="hidden md:flex flex-col text-left">
+                                    <span className="text-white text-[12.5px] font-bold m-0 leading-tight truncate max-w-[120px]">{adminUser.name || 'Registrar Name'}</span>
+                                    <span className="text-white/80 text-[10px] font-medium m-0 leading-tight lowercase truncate max-w-[120px]">{adminUser.email || `${userRole.replace(' ', '')}name@sample.com`}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </header>
+                </div>
+
+                <main id="main-content" data-tour="main-content" className="flex-1 w-full px-3 sm:px-4 py-1.5">
+                    <motion.div
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.2 }}
+                    >
+                        {children}
+                    </motion.div>
+                </main>
+
+                {/* Modals */}
+                <AccessibilityModal />
+            </div>
+        </div>
+    );
+};
+
+export default Layout;

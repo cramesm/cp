@@ -1,5 +1,5 @@
 const Request = require('../models/Request');
-const BlockchainTransaction = require('../blockchain_essentials/modelBC/blockchainTransactionModel');
+const BlockchainTransaction = require('../models/BlockchainTransaction');
 const TOR = require('../models/TOR');
 const Diploma = require('../models/Diploma');
 const Document = require('../models/Document');

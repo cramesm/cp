@@ -53,4 +53,10 @@ Thumbs.db
 *.key
 
 # Vite temp files
-*.timestamp-*.mjs
+*.timestamp-*.mjs
+
+# AI Agent Instructions
+AGENTS.md
+.agent/
+.agents/
+

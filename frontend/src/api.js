@@ -18,6 +18,9 @@ const getBaseURL = () => {
 
 const api = axios.create({
   baseURL: getBaseURL(),
+  headers: {
+    'ngrok-skip-browser-warning': 'true',
+  },
 });
 
 // Add a request interceptor to include the Bearer token
