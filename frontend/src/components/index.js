@@ -14,4 +14,4 @@ export { default as AccessibilityModal } from './modals/AccessibilityModal';
 export { default as TableSkeleton } from './common/TableSkeleton';
 export { default as ActiveFilterChips } from './common/ActiveFilterChips';
 export { default as FilterDrawer } from './common/FilterDrawer';
-export { default as AirbnbDateRangePicker } from './common/AirbnbDateRangePicker';
+export { default as DateRangePicker } from './common/DateRangePicker';

@@ -69,7 +69,7 @@ const monthNames = [
 
 const dayLabels = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
-export default function AirbnbDateRangePicker({
+export default function DateRangePicker({
   startDate: propStartDate = null,
   endDate: propEndDate = null,
   onChange,

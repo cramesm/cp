@@ -4,7 +4,7 @@ import { ChevronRight, ArrowLeft, FileText, Upload, CheckCircle2, AlertCircle, S
 import Layout from '../../components/Layout';
 import ConfirmModal from '../../components/ConfirmModal';
 import FeedbackModal from '../../components/FeedbackModal';
-import AirbnbDateRangePicker from '../../components/AirbnbDateRangePicker';
+import DateRangePicker from '../../components/common/DateRangePicker';
 import api from '../../api';
 import { useModals } from '../../hooks/useModals';
 
@@ -35,7 +35,7 @@ const RequestDetails = () => {
     const [actionLoading, setActionLoading] = useState(false);
     const [copiedId, setCopiedId] = useState(null);
 
-    // Estimated Processing Window State (Airbnb Calendar)
+    // Estimated Processing Window State (Date Range Picker)
     const [processingWindow, setProcessingWindow] = useState({
         startDate: '',
         endDate: ''
@@ -983,7 +983,7 @@ const RequestDetails = () => {
                                         </div>
 
                                         {/* ========================================================= */}
-                                        {/* ESTIMATED PROCESSING WINDOW (AIRBNB-STYLE CALENDAR) */}
+                                        {/* ESTIMATED PROCESSING WINDOW (DATE RANGE PICKER) */}
                                         {/* ========================================================= */}
                                         <div className="border border-blue-200/80 rounded-2xl overflow-hidden shadow-2xs bg-white">
                                             <div className="bg-gradient-to-r from-blue-50/90 to-indigo-50/50 px-5 py-3.5 border-b border-blue-100 flex items-center justify-between gap-3 flex-wrap">
@@ -1008,8 +1008,8 @@ const RequestDetails = () => {
 
                                             <div className="p-5 sm:p-6 space-y-4">
 
-                                                {/* Airbnb Calendar Component */}
-                                                <AirbnbDateRangePicker
+                                                {/* Date Range Picker Component */}
+                                                <DateRangePicker
                                                     startDate={processingWindow.startDate}
                                                     endDate={processingWindow.endDate}
                                                     onChange={({ startDate, endDate }) => setProcessingWindow({ startDate, endDate })}
