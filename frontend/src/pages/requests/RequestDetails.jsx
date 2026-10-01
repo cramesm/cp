@@ -992,8 +992,7 @@ const RequestDetails = () => {
                                                         <Calendar size={15} />
                                                     </div>
                                                     <div>
-                                                        <h3 className="font-bold text-slate-900 text-sm">Estimated Document Processing Window</h3>
-                                                        <span className="text-[10.5px] text-blue-700 font-semibold block">Airbnb-Style Dual Calendar Range Picker</span>
+                                                        <h3 className="font-bold text-slate-900 text-sm">Estimated Processing Schedule</h3>
                                                     </div>
                                                 </div>
 
@@ -1008,9 +1007,6 @@ const RequestDetails = () => {
                                             </div>
 
                                             <div className="p-5 sm:p-6 space-y-4">
-                                                <p className="text-xs text-slate-500">
-                                                    Select the processing window (start date and expected completion date) for this request. When approved, this estimated window will be saved and displayed to the student on their tracking portal.
-                                                </p>
 
                                                 {/* Airbnb Calendar Component */}
                                                 <AirbnbDateRangePicker

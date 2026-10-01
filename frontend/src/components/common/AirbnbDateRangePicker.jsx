@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { 
   ChevronLeft, ChevronRight, Calendar as CalendarIcon, 
-  RotateCcw, Sparkles, Check, Clock, ArrowRight, Info 
+  RotateCcw, Check, Clock, ArrowRight, Info 
 } from 'lucide-react';
 
 // Helper date utilities
@@ -48,12 +48,6 @@ const isBetweenDays = (date, start, end) => {
   return isAfterDay(date, start) && isBeforeDay(date, end);
 };
 
-const addDays = (date, n) => {
-  const d = new Date(date);
-  d.setDate(d.getDate() + n);
-  return d;
-};
-
 const countBusinessDays = (start, end) => {
   if (!start || !end) return 0;
   let count = 0;
@@ -81,8 +75,8 @@ export default function AirbnbDateRangePicker({
   onChange,
   readOnly = false,
   minDate = null,
-  label = 'Estimated Document Processing Window',
-  hint = 'Select start and completion dates to establish the student processing schedule.'
+  label = null,
+  hint = null
 }) {
   const today = useMemo(() => {
     if (minDate) {
@@ -96,19 +90,11 @@ export default function AirbnbDateRangePicker({
   const parsedStart = toDate(propStartDate);
   const parsedEnd = toDate(propEndDate);
 
-  // Current view offset: displayed month for Left calendar
+  // Current view offset: single displayed month
   const initialMonth = parsedStart ? new Date(parsedStart.getFullYear(), parsedStart.getMonth(), 1) : new Date(today.getFullYear(), today.getMonth(), 1);
   const [currentMonthDate, setCurrentMonthDate] = useState(initialMonth);
   const [hoveredDate, setHoveredDate] = useState(null);
   const [activeInput, setActiveInput] = useState('start'); // 'start' | 'end'
-
-  // Standard document processing presets
-  const presets = [
-    { label: '3 Days (Rush)', days: 3, desc: 'Expedited processing' },
-    { label: '5 Days (Standard)', days: 5, desc: 'TOR, Certifications' },
-    { label: '7 Days (Comprehensive)', days: 7, desc: 'CTC, Verification' },
-    { label: '10 Days (Diploma Copy)', days: 10, desc: 'Archived records' }
-  ];
 
   const handlePrevMonth = () => {
     setCurrentMonthDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
@@ -117,10 +103,6 @@ export default function AirbnbDateRangePicker({
   const handleNextMonth = () => {
     setCurrentMonthDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
   };
-
-  // Month 1 and Month 2
-  const month1 = currentMonthDate;
-  const month2 = new Date(currentMonthDate.getFullYear(), currentMonthDate.getMonth() + 1, 1);
 
   const handleDateClick = (clickedDate) => {
     if (readOnly) return;
@@ -164,21 +146,6 @@ export default function AirbnbDateRangePicker({
     }
   };
 
-  const handleApplyPreset = (days) => {
-    if (readOnly) return;
-    const start = parsedStart && !isBeforeDay(parsedStart, today) ? parsedStart : today;
-    const end = addDays(start, days);
-    if (onChange) {
-      onChange({
-        startDate: toISODateString(start),
-        endDate: toISODateString(end),
-        startDateObj: start,
-        endDateObj: end
-      });
-    }
-    setActiveInput('start');
-  };
-
   const handleClear = () => {
     if (readOnly) return;
     if (onChange) {
@@ -192,7 +159,7 @@ export default function AirbnbDateRangePicker({
     setActiveInput('start');
   };
 
-  // Render a single calendar month grid
+  // Render calendar month grid
   const renderMonth = (monthDate) => {
     const year = monthDate.getFullYear();
     const month = monthDate.getMonth();
@@ -273,10 +240,7 @@ export default function AirbnbDateRangePicker({
     }
 
     return (
-      <div className="flex-1 min-w-[270px]">
-        <div className="text-center font-bold text-slate-800 text-sm py-2 mb-1 tracking-tight">
-          {monthNames[month]} {year}
-        </div>
+      <div className="w-full">
         <div className="grid grid-cols-7 mb-1 text-center">
           {dayLabels.map(d => (
             <span key={d} className="text-[11px] font-bold text-slate-400 py-1">
@@ -304,42 +268,42 @@ export default function AirbnbDateRangePicker({
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden transition-all">
-      {/* Header Bar */}
-      <div className="p-4 sm:p-5 bg-gradient-to-r from-slate-50 to-blue-50/40 border-b border-slate-200">
-        <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
+      {/* Top Range Inputs & Controls Bar */}
+      <div className="p-4 sm:p-5 bg-gradient-to-r from-slate-50 to-blue-50/40 border-b border-slate-200 space-y-3">
+        {label && (
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-xs">
-              <CalendarIcon size={16} />
-            </div>
-            <div>
-              <h3 className="font-extrabold text-slate-800 text-sm tracking-tight">{label}</h3>
-              <p className="text-[11px] text-slate-500 font-medium">{hint}</p>
-            </div>
+            <h4 className="font-bold text-slate-800 text-sm">{label}</h4>
+            {hint && <span className="text-xs text-slate-400 font-normal">({hint})</span>}
           </div>
+        )}
 
-          {/* Duration Badge & Reset */}
-          <div className="flex items-center gap-2">
-            {parsedStart && parsedEnd && (
+        {/* Duration Badge & Reset Row */}
+        <div className="flex items-center justify-between gap-2 flex-wrap min-h-[28px]">
+          <div>
+            {parsedStart && parsedEnd ? (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800 border border-blue-200">
                 <Clock size={12} className="text-blue-600" />
                 <span>{totalCalendarDays} Days Window ({totalBusinessDays} Working Days)</span>
               </span>
-            )}
-            {!readOnly && (parsedStart || parsedEnd) && (
-              <button
-                type="button"
-                onClick={handleClear}
-                className="text-xs font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1 px-2.5 py-1 rounded-lg hover:bg-slate-200/60 transition-colors cursor-pointer"
-                title="Reset date selection"
-              >
-                <RotateCcw size={12} />
-                <span>Reset</span>
-              </button>
+            ) : (
+              <span className="text-xs text-slate-500 font-medium">Select start and target completion dates</span>
             )}
           </div>
+
+          {!readOnly && (parsedStart || parsedEnd) && (
+            <button
+              type="button"
+              onClick={handleClear}
+              className="text-xs font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1 px-2.5 py-1 rounded-lg hover:bg-slate-200/60 transition-colors cursor-pointer"
+              title="Reset date selection"
+            >
+              <RotateCcw size={12} />
+              <span>Reset</span>
+            </button>
+          )}
         </div>
 
-        {/* Airbnb-style Split Date Inputs */}
+        {/* Split Date Inputs */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-white p-1 rounded-xl border border-slate-200 shadow-2xs">
           <div
             onClick={() => !readOnly && setActiveInput('start')}
@@ -383,60 +347,39 @@ export default function AirbnbDateRangePicker({
             <ArrowRight size={16} className={activeInput === 'end' ? 'text-blue-600' : 'text-slate-400'} />
           </div>
         </div>
-
-        {/* Quick Presets */}
-        {!readOnly && (
-          <div className="flex items-center gap-1.5 flex-wrap mt-3 pt-2 border-t border-slate-200/60">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1 flex items-center gap-1">
-              <Sparkles size={11} className="text-amber-500" />
-              <span>Standard Presets:</span>
-            </span>
-            {presets.map(p => (
-              <button
-                key={p.days}
-                type="button"
-                onClick={() => handleApplyPreset(p.days)}
-                className="text-[11px] font-bold px-3 py-1 rounded-full bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 hover:border-slate-300 transition-all shadow-2xs cursor-pointer flex items-center gap-1"
-                title={p.desc}
-              >
-                <span>{p.label}</span>
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
-      {/* Dual Month Calendar View */}
-      <div className="p-4 sm:p-6 space-y-4">
-        {/* Navigation arrows */}
-        <div className="flex items-center justify-between px-2">
-          <button
-            type="button"
-            onClick={handlePrevMonth}
-            disabled={isBeforeDay(month1, new Date(today.getFullYear(), today.getMonth(), 1))}
-            className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer shadow-2xs"
-            title="Previous month"
-          >
-            <ChevronLeft size={16} />
-          </button>
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-            Navigate Months
-          </span>
-          <button
-            type="button"
-            onClick={handleNextMonth}
-            className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer shadow-2xs"
-            title="Next month"
-          >
-            <ChevronRight size={16} />
-          </button>
-        </div>
+      {/* Single Month Calendar View */}
+      <div className="p-4 sm:p-6">
+        <div className="max-w-md mx-auto">
+          {/* Month Header Navigation */}
+          <div className="flex items-center justify-between px-2 mb-3">
+            <button
+              type="button"
+              onClick={handlePrevMonth}
+              disabled={isBeforeDay(currentMonthDate, new Date(today.getFullYear(), today.getMonth(), 1))}
+              className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer shadow-2xs"
+              title="Previous month"
+              aria-label="Previous month"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <span className="font-bold text-slate-800 text-sm tracking-tight">
+              {monthNames[currentMonthDate.getMonth()]} {currentMonthDate.getFullYear()}
+            </span>
+            <button
+              type="button"
+              onClick={handleNextMonth}
+              className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer shadow-2xs"
+              title="Next month"
+              aria-label="Next month"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
 
-        {/* Side-by-side Months Container */}
-        <div className="flex flex-col md:flex-row gap-8 justify-between">
-          {renderMonth(month1)}
-          <div className="hidden md:block w-px bg-slate-100 self-stretch my-2"></div>
-          {renderMonth(month2)}
+          {/* 1 Month Grid */}
+          {renderMonth(currentMonthDate)}
         </div>
       </div>
 
