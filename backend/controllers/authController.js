@@ -49,17 +49,42 @@ const otpStore = {};
 // Temporary store for registration OTPs
 const registrationOtpStore = {};
 
-// Nodemailer transporter (Gmail)
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.SMTP_EMAIL,
-    pass: process.env.SMTP_PASSWORD,
-  },
-});
+// Nodemailer transporter (Gmail or custom SMTP)
+const smtpUser = process.env.SMTP_USER || process.env.SMTP_EMAIL;
+const smtpPass = process.env.SMTP_PASS || process.env.SMTP_PASSWORD;
+const transporter = process.env.SMTP_HOST
+  ? nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT) || 465,
+      secure: process.env.SMTP_SECURE === 'true' || process.env.SMTP_PORT === '465',
+      auth: {
+        user: smtpUser,
+        pass: smtpPass,
+      },
+    })
+  : nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: smtpUser,
+        pass: smtpPass,
+      },
+    });
 
 // Helper to generate JWT
 const generateToken = (user) => {
+  const signOptions = {};
+  if (process.env.JWT_ACCESS_TTL_MINUTES) {
+    signOptions.expiresIn = `${process.env.JWT_ACCESS_TTL_MINUTES}m`;
+  } else {
+    signOptions.expiresIn = '1d';
+  }
+  if (process.env.JWT_ISSUER) {
+    signOptions.issuer = process.env.JWT_ISSUER;
+  }
+  if (process.env.JWT_AUDIENCE) {
+    signOptions.audience = process.env.JWT_AUDIENCE;
+  }
+
   return jwt.sign(
     {
       id: user._id,
@@ -69,7 +94,7 @@ const generateToken = (user) => {
       name: user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User'
     },
     process.env.JWT_SECRET || 'supersecretverifitor123',
-    { expiresIn: '1d' }
+    signOptions
   );
 };
 
@@ -209,12 +234,18 @@ const AuthController = {
       }
 
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
-      const expiresAt = Date.now() + 10 * 60 * 1000; // 10 mins
+      const otpTtlMinutes = Number(process.env.OTP_TTL_MINUTES) || 10;
+      const expiresAt = Date.now() + otpTtlMinutes * 60 * 1000;
       
       registrationOtpStore[email] = { otp, expiresAt };
 
+      if (process.env.OTP_DEV_MODE === 'true') {
+        console.log(`[OTP_DEV_MODE] Registration OTP for ${email}: ${otp}`);
+      }
+
+      const emailSender = process.env.SMTP_FROM || `"VeriFitor System" <${smtpUser || 'verifitor@gmail.com'}>`;
       await transporter.sendMail({
-        from: `"VeriFitor System" <${process.env.SMTP_EMAIL}>`,
+        from: emailSender,
         to: email,
         subject: 'VeriFitor - Registration OTP',
         html: `
@@ -224,7 +255,7 @@ const AuthController = {
             <div style="background: #f4f4f4; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0;">
               <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #2f3947;">${otp}</span>
             </div>
-            <p style="color: #666;">This OTP expires in <strong>10 minutes</strong>.</p>
+            <p style="color: #666;">This OTP expires in <strong>${otpTtlMinutes} minutes</strong>.</p>
           </div>
         `
       });
@@ -524,12 +555,18 @@ const AuthController = {
       }
 
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
-      const expiresAt = Date.now() + 10 * 60 * 1000;
+      const otpTtlMinutes = Number(process.env.OTP_TTL_MINUTES) || 10;
+      const expiresAt = Date.now() + otpTtlMinutes * 60 * 1000;
 
       otpStore[email] = { otp, expiresAt, modelName };
 
+      if (process.env.OTP_DEV_MODE === 'true') {
+        console.log(`[OTP_DEV_MODE] Password Reset OTP for ${email}: ${otp}`);
+      }
+
+      const emailSender = process.env.SMTP_FROM || `"VeriFitor System" <${smtpUser || 'verifitor@gmail.com'}>`;
       await transporter.sendMail({
-        from: `"VeriFitor System" <${process.env.SMTP_EMAIL}>`,
+        from: emailSender,
         to: email,
         subject: 'VeriFitor - Password Reset OTP',
         html: `
@@ -539,7 +576,7 @@ const AuthController = {
             <div style="background: #f4f4f4; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0;">
               <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #2f3947;">${otp}</span>
             </div>
-            <p style="color: #666;">This OTP expires in <strong>10 minutes</strong>.</p>
+            <p style="color: #666;">This OTP expires in <strong>${otpTtlMinutes} minutes</strong>.</p>
             <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
             <p style="color: #999; font-size: 11px; text-align: center;">VeriFitor — Document Verification System</p>
           </div>

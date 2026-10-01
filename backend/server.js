@@ -11,6 +11,13 @@ const { globalLimiter, authLimiter } = require('./middleware/rateLimiter');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Trust reverse proxy if configured (supports Vercel, Cloudflare, NGINX)
+if (process.env.TRUST_PROXY_HOPS) {
+  app.set('trust proxy', Number(process.env.TRUST_PROXY_HOPS) || 1);
+} else {
+  app.set('trust proxy', 1);
+}
+
 // Apply Helmet Security Headers
 app.use(helmet({
   contentSecurityPolicy: {
@@ -54,6 +61,7 @@ const corsOptions = {
 
     const allowedOrigins = [
       process.env.FRONTEND_URL,
+      ...(process.env.ALLOWED_ORIGIN ? process.env.ALLOWED_ORIGIN.split(',').map(s => s.trim()) : []),
       'https://verifitor-frontend.vercel.app',
       'http://localhost:3000',
       'http://localhost:5173'
@@ -186,7 +194,7 @@ app.use((err, req, res, next) => {
     }
 });
 
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 }
 

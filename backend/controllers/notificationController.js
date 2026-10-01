@@ -33,6 +33,10 @@ const NotificationController = {
   // @desc    Get actionable notifications for Admin/Registrar/Accounting or delegating student
   getAdminNotifications: async (req, res) => {
     try {
+      // Check API Key authentication (e.g., from mobile notification service or background worker)
+      const apiKey = req.headers['x-api-key'] || req.headers['x-notification-key'];
+      const isApiKeyAuthorized = Boolean(process.env.NOTIFICATIONS_API_KEY && apiKey === process.env.NOTIFICATIONS_API_KEY);
+
       // 1. Check query params if caller requested student notifications explicitly (e.g. Mobile query params)
       if (req.query.email || req.query.userId || req.query.studentId) {
         const clauses = buildUserClauses(req.query);

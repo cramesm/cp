@@ -1,12 +1,33 @@
 const nodemailer = require('nodemailer');
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.SMTP_EMAIL || process.env.SMTP_USER,
-    pass: process.env.SMTP_PASSWORD || process.env.SMTP_PASS,
-  },
-});
+const smtpUser = process.env.SMTP_USER || process.env.SMTP_EMAIL;
+const smtpPass = process.env.SMTP_PASS || process.env.SMTP_PASSWORD;
+
+const transporter = process.env.SMTP_HOST
+  ? nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT) || 465,
+      secure: process.env.SMTP_SECURE === 'true' || process.env.SMTP_PORT === '465',
+      auth: {
+        user: smtpUser,
+        pass: smtpPass,
+      },
+    })
+  : nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: smtpUser,
+        pass: smtpPass,
+      },
+    });
+
+const getFromAddress = (defaultLabel = 'VeriFitor System') => {
+  if (process.env.SMTP_FROM) {
+    return process.env.SMTP_FROM;
+  }
+  const email = smtpUser || 'verifitorr@gmail.com';
+  return `"${defaultLabel}" <${email}>`;
+};
 
 const getFrontendUrl = () => {
   if (process.env.FRONTEND_URL && !process.env.FRONTEND_URL.includes('localhost')) {
@@ -81,7 +102,7 @@ async function sendStaffWelcomeEmail({ to, name, email, tempPassword, department
   `;
 
   return transporter.sendMail({
-    from: `"VeriFitor System" <${fromEmail}>`,
+    from: getFromAddress('VeriFitor System'),
     to,
     subject: `Welcome to VeriFitor - Staff Credentials & Access`,
     html,
@@ -135,7 +156,7 @@ async function sendAccountStatusEmail({ to, name, status }) {
   `;
 
   return transporter.sendMail({
-    from: `"VeriFitor System" <${fromEmail}>`,
+    from: getFromAddress('VeriFitor System'),
     to,
     subject: `VeriFitor - Account Status Update: ${status}`,
     html,
@@ -167,7 +188,7 @@ async function sendPasswordChangedEmail({ to, name }) {
   `;
 
   return transporter.sendMail({
-    from: `"VeriFitor Security" <${fromEmail}>`,
+    from: getFromAddress('VeriFitor Security'),
     to,
     subject: `VeriFitor - Password Changed Successfully`,
     html,
@@ -224,7 +245,7 @@ async function sendRoleChangeEmail({ to, name, oldRole, newRole, isPromotion }) 
   `;
 
   return transporter.sendMail({
-    from: `"VeriFitor System" <${fromEmail}>`,
+    from: getFromAddress('VeriFitor System'),
     to,
     subject: `VeriFitor - Role Update: Assigned as ${newRole}`,
     html,

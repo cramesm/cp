@@ -12,6 +12,11 @@ const connectDB = async () => {
     return mongoose.connection;
   }
 
+  if (process.env.DISABLE_DB === 'true') {
+    console.warn('MongoDB connection skipped: DISABLE_DB is set to true');
+    return null;
+  }
+
   if (cachedConnection) {
     return cachedConnection;
   }
@@ -25,14 +30,19 @@ const connectDB = async () => {
 
   try {
     console.log('Connecting to primary MongoDB (Atlas)...');
-    cachedConnection = mongoose.connect(uri, {
+    const connectOptions = {
       serverSelectionTimeoutMS: 15000,
       connectTimeoutMS: 15000,
       bufferCommands: true,
-    });
+    };
+    if (process.env.MONGODB_DB_NAME) {
+      connectOptions.dbName = process.env.MONGODB_DB_NAME;
+    }
+
+    cachedConnection = mongoose.connect(uri, connectOptions);
 
     await cachedConnection;
-    console.log('MongoDB (Atlas) connected successfully');
+    console.log(`MongoDB (Atlas) connected successfully to database: "${process.env.MONGODB_DB_NAME || 'default'}"`);
 
     // Run seed and sync non-blockingly so serverless requests respond promptly
     seedUsers().catch(e => console.warn('Background seed notice:', e.message));
