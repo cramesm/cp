@@ -76,7 +76,33 @@ function applyLockout(attempt, now) {
   }
 }
 
+// 3. Rate limiter for password reset requests (5 requests per 15 minutes)
+const passwordResetLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: {
+    success: false,
+    message: 'Too many password reset attempts from this IP, please try again after 15 minutes'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// 4. Rate limiter for OTP verification (10 attempts per 15 minutes)
+const otpLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: {
+    success: false,
+    message: 'Too many verification attempts from this IP, please try again after 15 minutes'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 module.exports = {
   registerLimiter,
-  loginProgressiveLimiter
+  loginProgressiveLimiter,
+  passwordResetLimiter,
+  otpLimiter
 };

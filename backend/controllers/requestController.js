@@ -102,6 +102,19 @@ const enrichRequestWithStudentData = async (reqObj) => {
   }
 };
 
+const isStaffUser = (user) => {
+  if (!user) return false;
+  const role = (user.role || '').toLowerCase().trim();
+  const department = (user.department || '').toLowerCase().trim();
+  const allowed = [
+    'super admin', 'admin', 'staff',
+    'accounting admin', 'accounting staff', 'accounting',
+    'registrar admin', 'registrar staff', 'registrar',
+    'it administrator', 'it admin', 'it staff', 'it'
+  ];
+  return allowed.includes(role) || ['accounting', 'registrar', 'it', 'administration'].includes(department);
+};
+
 const RequestController = {
   // @desc    Get all requests (filtered for student/alumni, unfiltered for staff/admin)
   getAllRequests: async (req, res) => {
@@ -138,6 +151,19 @@ const RequestController = {
       };
       const request = await Request.findOne(query).lean();
       if (!request) return res.status(404).json({ message: 'Request not found' });
+
+      // BOLA/IDOR protection: Students and Alumni can only view their own requests
+      if (!isStaffUser(req.user)) {
+        const callerEmail = (req.user?.email || '').toLowerCase().trim();
+        const callerId = String(req.user?.id || req.user?._id || '');
+        const reqEmail = (request.email || '').toLowerCase().trim();
+        const reqUserId = String(request.userId || '');
+
+        const isOwner = (reqEmail && reqEmail === callerEmail) || (reqUserId && reqUserId === callerId);
+        if (!isOwner) {
+          return res.status(403).json({ message: 'Access denied. You can only view your own requests.' });
+        }
+      }
       
       const enrichedRequest = await enrichRequestWithStudentData(request);
       res.json(enrichedRequest);

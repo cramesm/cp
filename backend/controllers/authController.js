@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const { JWT_SECRET } = require('../config/jwtConfig');
 const nodemailer = require('nodemailer');
 const Student = require('../models/Users/Student');
@@ -140,15 +141,15 @@ const AuthController = {
       const specials = "!@#$*";
 
       let tempPassword = "";
-      tempPassword += uppers.charAt(Math.floor(Math.random() * uppers.length));
-      tempPassword += lowers.charAt(Math.floor(Math.random() * lowers.length));
-      tempPassword += lowers.charAt(Math.floor(Math.random() * lowers.length));
-      tempPassword += digits.charAt(Math.floor(Math.random() * digits.length));
-      tempPassword += digits.charAt(Math.floor(Math.random() * digits.length));
-      tempPassword += specials.charAt(Math.floor(Math.random() * specials.length));
+      tempPassword += uppers.charAt(crypto.randomInt(0, uppers.length));
+      tempPassword += lowers.charAt(crypto.randomInt(0, lowers.length));
+      tempPassword += lowers.charAt(crypto.randomInt(0, lowers.length));
+      tempPassword += digits.charAt(crypto.randomInt(0, digits.length));
+      tempPassword += digits.charAt(crypto.randomInt(0, digits.length));
+      tempPassword += specials.charAt(crypto.randomInt(0, specials.length));
       const pool = uppers + lowers + digits;
       for (let i = 0; i < 3; i++) {
-        tempPassword += pool.charAt(Math.floor(Math.random() * pool.length));
+        tempPassword += pool.charAt(crypto.randomInt(0, pool.length));
       }
       tempPassword = tempPassword.split('').sort(() => 0.5 - Math.random()).join('');
 
@@ -163,7 +164,7 @@ const AuthController = {
       }
 
       const deptPrefix = department.substring(0, 3).toUpperCase();
-      const registrarId = `${deptPrefix}-${Math.floor(100000 + Math.random() * 900000)}`;
+      const registrarId = `${deptPrefix}-${crypto.randomInt(100000, 999999)}`;
       const fullName = `${firstName.trim()} ${lastName.trim()}`;
 
       const newStaff = await Registrar.create({
@@ -203,7 +204,6 @@ const AuthController = {
       res.status(201).json({
         success: true,
         message: 'Account created successfully! Your temporary password has been emailed to you.',
-        tempPassword,
         user: {
           id: newStaff._id,
           name: newStaff.name,
@@ -234,11 +234,11 @@ const AuthController = {
         return res.status(400).json({ success: false, message: 'Email is already registered' });
       }
 
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const otp = crypto.randomInt(100000, 999999).toString();
       const otpTtlMinutes = Number(process.env.OTP_TTL_MINUTES) || 10;
       const expiresAt = Date.now() + otpTtlMinutes * 60 * 1000;
       
-      registrationOtpStore[email] = { otp, expiresAt };
+      registrationOtpStore[email] = { otp, expiresAt, attempts: 0 };
 
       if (process.env.OTP_DEV_MODE === 'true') {
         console.log(`[OTP_DEV_MODE] Registration OTP for ${email}: ${otp}`);
@@ -274,9 +274,21 @@ const AuthController = {
       const { email, otp, firstName, lastName, password, role, studentId, course, yearLevel, phoneNumber } = req.body;
       
       const stored = registrationOtpStore[email];
-      if (!stored || Date.now() > stored.expiresAt || stored.otp !== otp) {
-        return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
+      if (!stored || Date.now() > stored.expiresAt) {
+        if (stored) delete registrationOtpStore[email];
+        return res.status(400).json({ success: false, message: 'OTP has expired or is invalid. Please request a new one.' });
       }
+
+      if (stored.otp !== otp) {
+        stored.attempts = (stored.attempts || 0) + 1;
+        if (stored.attempts >= 5) {
+          delete registrationOtpStore[email];
+          return res.status(429).json({ success: false, message: 'Too many failed attempts. This OTP has been invalidated. Please request a new one.' });
+        }
+        return res.status(400).json({ success: false, message: `Invalid OTP. ${5 - stored.attempts} attempts remaining.` });
+      }
+
+      delete registrationOtpStore[email];
 
       // Check again to avoid race conditions
       const existingStudent = await Student.findOne({ email });
@@ -552,14 +564,15 @@ const AuthController = {
       }
 
       if (!user) {
-        return res.status(404).json({ success: false, message: 'No account found with that email' });
+        // Return uniform response to prevent user account enumeration
+        return res.json({ success: true, message: 'If an account is associated with this email address, a password reset code has been sent.' });
       }
 
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const otp = crypto.randomInt(100000, 999999).toString();
       const otpTtlMinutes = Number(process.env.OTP_TTL_MINUTES) || 10;
       const expiresAt = Date.now() + otpTtlMinutes * 60 * 1000;
 
-      otpStore[email] = { otp, expiresAt, modelName };
+      otpStore[email] = { otp, expiresAt, modelName, attempts: 0 };
 
       if (process.env.OTP_DEV_MODE === 'true') {
         console.log(`[OTP_DEV_MODE] Password Reset OTP for ${email}: ${otp}`);
@@ -584,7 +597,7 @@ const AuthController = {
         `
       });
 
-      res.json({ success: true, message: 'OTP sent to your email' });
+      res.json({ success: true, message: 'If an account is associated with this email address, a password reset code has been sent.' });
     } catch (error) {
       console.error('Forgot password error:', error);
       res.status(500).json({ success: false, message: 'Error sending OTP email' });
@@ -596,8 +609,18 @@ const AuthController = {
     try {
       const { email, otp } = req.body;
       const stored = otpStore[email];
-      if (!stored || Date.now() > stored.expiresAt || stored.otp !== otp) {
-        return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
+      if (!stored || Date.now() > stored.expiresAt) {
+        if (stored) delete otpStore[email];
+        return res.status(400).json({ success: false, message: 'OTP has expired or is invalid. Please request a new one.' });
+      }
+
+      if (stored.otp !== otp) {
+        stored.attempts = (stored.attempts || 0) + 1;
+        if (stored.attempts >= 5) {
+          delete otpStore[email];
+          return res.status(429).json({ success: false, message: 'Too many failed attempts. This OTP has been invalidated. Please request a new one.' });
+        }
+        return res.status(400).json({ success: false, message: `Invalid OTP. ${5 - stored.attempts} attempts remaining.` });
       }
 
       const resetToken = jwt.sign(
@@ -684,7 +707,7 @@ const AuthController = {
   // @desc    Update authenticated user profile
   updateProfile: async (req, res) => {
     try {
-      const { name, firstName, lastName, profilePic, course, yearLevel, phoneNumber, department } = req.body;
+      const { name, firstName, lastName, profilePic, course, yearLevel, phoneNumber } = req.body;
       const { user, model } = await findUserById(req.user.id);
       if (!user || !model) return res.status(404).json({ message: 'User not found' });
 
@@ -703,7 +726,6 @@ const AuthController = {
       if (course) updateData.course = course;
       if (yearLevel) updateData.yearLevel = yearLevel;
       if (phoneNumber) updateData.phoneNumber = phoneNumber;
-      if (department) updateData.department = department;
 
       const updatedUser = await model.findByIdAndUpdate(req.user.id, updateData, { new: true });
       res.json(updatedUser);

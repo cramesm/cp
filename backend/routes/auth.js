@@ -10,7 +10,7 @@ const {
   changePasswordValidation,
   resetPasswordValidation
 } = require('../middleware/validationMiddleware');
-const { registerLimiter, loginProgressiveLimiter } = require('../middleware/rateLimiterMiddleware');
+const { registerLimiter, loginProgressiveLimiter, passwordResetLimiter, otpLimiter } = require('../middleware/rateLimiterMiddleware');
 
 // @route   GET /api/auth/check-email
 router.get('/check-email', AuthController.checkEmailAvailability);
@@ -34,13 +34,13 @@ router.post('/login', loginProgressiveLimiter, loginValidation, validate, AuthCo
 router.post('/logout', AuthController.logout);
 
 // @route   POST /api/auth/forgot-password
-router.post('/forgot-password', AuthController.forgotPassword);
+router.post('/forgot-password', passwordResetLimiter, AuthController.forgotPassword);
 
 // @route   POST /api/auth/verify-otp
-router.post('/verify-otp', AuthController.verifyPasswordResetOTP);
+router.post('/verify-otp', otpLimiter, AuthController.verifyPasswordResetOTP);
 
 // @route   POST /api/auth/reset-password
-router.post('/reset-password', resetPasswordValidation, validate, AuthController.resetPassword);
+router.post('/reset-password', passwordResetLimiter, resetPasswordValidation, validate, AuthController.resetPassword);
 
 // @route   GET /api/auth/profile
 router.get('/profile', auth, AuthController.getProfile);

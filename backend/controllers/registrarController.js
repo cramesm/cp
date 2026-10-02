@@ -3,6 +3,10 @@ const Admin = require('../models/Users/Admin');
 const ActivityLog = require('../models/ActivityLog');
 const { sendStaffWelcomeEmail, sendAccountStatusEmail, sendRoleChangeEmail } = require('../utils/emailService');
 
+const escapeRegex = (string) => {
+  return String(string).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+};
+
 const RegistrarController = {
   // @desc    Get all registrars and admins
   // @desc    Get all registrars and admins (Scoped by department for Dept Admins, global with filters for Super Admin)
@@ -34,7 +38,7 @@ const RegistrarController = {
         }
       } else {
         if (req.query.department && req.query.department !== 'All' && req.query.department !== 'All Departments') {
-          query.department = { $regex: new RegExp(`^${req.query.department}`, 'i') };
+          query.department = { $regex: new RegExp(`^${escapeRegex(req.query.department)}`, 'i') };
         }
       }
 
@@ -44,7 +48,7 @@ const RegistrarController = {
         } else if (req.query.role.toLowerCase() === 'staff') {
           query.role = { $regex: /staff/i };
         } else {
-          query.role = { $regex: new RegExp(req.query.role, 'i') };
+          query.role = { $regex: new RegExp(escapeRegex(req.query.role), 'i') };
         }
       }
 

@@ -7,6 +7,19 @@ const Refund = require('../models/Refund');
 const { uploadStream } = require('../utils/cloudinary');
 const getClientIp = require('../utils/getClientIp');
 
+const isStaffUser = (user) => {
+  if (!user) return false;
+  const role = (user.role || '').toLowerCase().trim();
+  const department = (user.department || '').toLowerCase().trim();
+  const allowed = [
+    'super admin', 'admin', 'staff',
+    'accounting admin', 'accounting staff', 'accounting',
+    'registrar admin', 'registrar staff', 'registrar',
+    'it administrator', 'it admin', 'it staff', 'it'
+  ];
+  return allowed.includes(role) || ['accounting', 'registrar', 'it', 'administration'].includes(department);
+};
+
 const TransactionController = {
   // @desc    Get all transactions
   getAllTransactions: async (req, res) => {
@@ -99,6 +112,18 @@ const TransactionController = {
 
       if (!transaction) {
         return res.json({ success: true, receipt: null });
+      }
+
+      // BOLA/IDOR protection: verify ownership for non-staff
+      if (!isStaffUser(req.user)) {
+        const callerEmail = (req.user?.email || '').toLowerCase().trim();
+        const callerId = String(req.user?.id || req.user?._id || '');
+        const txPayerEmail = (transaction.payerEmail || transaction.email || '').toLowerCase().trim();
+        const txUserId = String(transaction.userId || '');
+        const isTxOwner = (txPayerEmail && txPayerEmail === callerEmail) || (txUserId && txUserId === callerId);
+        if (!isTxOwner) {
+          return res.status(403).json({ success: false, message: 'Access denied. You can only view your own receipts.' });
+        }
       }
 
       res.json({ success: true, receipt: transaction });
@@ -199,6 +224,32 @@ const TransactionController = {
       }
 
       if (!transaction) return res.json(null);
+
+      // BOLA/IDOR protection: verify ownership for non-staff
+      if (!isStaffUser(req.user)) {
+        const callerEmail = (req.user?.email || '').toLowerCase().trim();
+        const callerId = String(req.user?.id || req.user?._id || '');
+        let isOwner = false;
+
+        if (linkedReq) {
+          const reqEmail = (linkedReq.email || '').toLowerCase().trim();
+          const reqUserId = String(linkedReq.userId || '');
+          if ((reqEmail && reqEmail === callerEmail) || (reqUserId && reqUserId === callerId)) {
+            isOwner = true;
+          }
+        }
+
+        const txPayerEmail = (transaction.payerEmail || transaction.email || '').toLowerCase().trim();
+        const txUserId = String(transaction.userId || '');
+        if ((txPayerEmail && txPayerEmail === callerEmail) || (txUserId && txUserId === callerId)) {
+          isOwner = true;
+        }
+
+        if (!isOwner) {
+          return res.status(403).json({ message: 'Access denied. You can only view transactions for your own requests.' });
+        }
+      }
+
       res.json(transaction);
     } catch (error) {
       console.error('Error fetching transaction by request:', error);
@@ -211,6 +262,19 @@ const TransactionController = {
     try {
       const transaction = await Transaction.findOne({ transactionId: req.params.id });
       if (!transaction) return res.status(404).json({ message: 'Transaction not found' });
+
+      // BOLA/IDOR protection: verify ownership for non-staff
+      if (!isStaffUser(req.user)) {
+        const callerEmail = (req.user?.email || '').toLowerCase().trim();
+        const callerId = String(req.user?.id || req.user?._id || '');
+        const txPayerEmail = (transaction.payerEmail || transaction.email || '').toLowerCase().trim();
+        const txUserId = String(transaction.userId || '');
+        const isTxOwner = (txPayerEmail && txPayerEmail === callerEmail) || (txUserId && txUserId === callerId);
+        if (!isTxOwner) {
+          return res.status(403).json({ message: 'Access denied. You can only view your own transactions.' });
+        }
+      }
+
       res.json(transaction);
     } catch (error) {
       console.error('Error fetching transaction:', error);
@@ -639,6 +703,20 @@ const TransactionController = {
   // @desc    Re-upload receipt
   reuploadReceipt: async (req, res) => {
     try {
+      const existingTx = await Transaction.findOne({ transactionId: req.params.id });
+      if (!existingTx) return res.status(404).json({ message: 'Transaction not found' });
+
+      if (!isStaffUser(req.user)) {
+        const callerEmail = (req.user?.email || '').toLowerCase().trim();
+        const callerId = String(req.user?.id || req.user?._id || '');
+        const txPayerEmail = (existingTx.payerEmail || existingTx.email || '').toLowerCase().trim();
+        const txUserId = String(existingTx.userId || '');
+        const isTxOwner = (txPayerEmail && txPayerEmail === callerEmail) || (txUserId && txUserId === callerId);
+        if (!isTxOwner) {
+          return res.status(403).json({ message: 'Access denied. You can only re-upload receipts for your own transactions.' });
+        }
+      }
+
       const updateData = { status: 'Pending Verification', adminRemarks: '' };
       if (req.file) {
         const uploadResult = await uploadStream(req.file.buffer, 'receipts');
@@ -651,7 +729,6 @@ const TransactionController = {
         { new: true }
       );
 
-      if (!transaction) return res.status(404).json({ message: 'Transaction not found' });
       res.json(transaction);
     } catch (error) {
       console.error('Error re-uploading receipt:', error);
@@ -671,6 +748,17 @@ const TransactionController = {
       const transaction = await Transaction.findOne({ transactionId });
       if (!transaction) {
         return res.status(404).json({ success: false, message: 'Transaction not found' });
+      }
+
+      if (!isStaffUser(req.user)) {
+        const callerEmail = (req.user?.email || '').toLowerCase().trim();
+        const callerId = String(req.user?.id || req.user?._id || '');
+        const txPayerEmail = (transaction.payerEmail || transaction.email || '').toLowerCase().trim();
+        const txUserId = String(transaction.userId || '');
+        const isTxOwner = (txPayerEmail && txPayerEmail === callerEmail) || (txUserId && txUserId === callerId);
+        if (!isTxOwner) {
+          return res.status(403).json({ success: false, message: 'Access denied. You can only request refunds for your own transactions.' });
+        }
       }
 
       const existingRefund = await Refund.findOne({ transactionId, status: 'Pending' });
