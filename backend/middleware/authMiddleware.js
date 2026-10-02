@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const { JWT_SECRET } = require('../config/jwtConfig');
 
 const auth = async (req, res, next) => {
   let token;
@@ -13,7 +14,7 @@ const auth = async (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'supersecretverifitor123');
+    const decoded = jwt.verify(token, JWT_SECRET);
     console.log('Token decoded:', decoded);
 
     // Dynamic database name resolution fallback to prevent cached "User" names

@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const { JWT_SECRET } = require('../config/jwtConfig');
 const nodemailer = require('nodemailer');
 const Student = require('../models/Users/Student');
 const Alumni = require('../models/Users/Alumni');
@@ -93,7 +94,7 @@ const generateToken = (user) => {
       department: user.department || '',
       name: user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User'
     },
-    process.env.JWT_SECRET || 'supersecretverifitor123',
+    JWT_SECRET,
     signOptions
   );
 };
@@ -495,7 +496,7 @@ const AuthController = {
       }
       if (token) {
         try {
-          user = jwt.verify(token, process.env.JWT_SECRET || 'supersecretverifitor123');
+          user = jwt.verify(token, JWT_SECRET);
         } catch (jwtErr) {
           console.warn('Logout token verification warning:', jwtErr.message);
         }
@@ -601,7 +602,7 @@ const AuthController = {
 
       const resetToken = jwt.sign(
         { email, modelName: stored.modelName },
-        process.env.JWT_SECRET || 'supersecretverifitor123',
+        JWT_SECRET,
         { expiresIn: '15m' }
       );
 
@@ -617,7 +618,7 @@ const AuthController = {
   resetPassword: async (req, res) => {
     try {
       const { resetToken, newPassword, password } = req.body;
-      const decoded = jwt.verify(resetToken, process.env.JWT_SECRET || 'supersecretverifitor123');
+      const decoded = jwt.verify(resetToken, JWT_SECRET);
       const { email, modelName } = decoded;
 
       const targetPassword = newPassword || password;

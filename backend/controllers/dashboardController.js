@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const { JWT_SECRET } = require('../config/jwtConfig');
 const Request = require('../models/Request');
 const Transaction = require('../models/Transaction');
 const Notification = require('../models/Notification');
@@ -152,7 +153,7 @@ const DashboardController = {
       if (!callerUser && req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
         try {
           const token = req.headers.authorization.split(' ')[1];
-          callerUser = jwt.verify(token, process.env.JWT_SECRET || 'supersecretverifitor123');
+          callerUser = jwt.verify(token, JWT_SECRET);
         } catch (_tokenErr) {}
       }
 

@@ -1,5 +1,6 @@
 const Notification = require('../models/Notification');
 const jwt = require('jsonwebtoken');
+const { JWT_SECRET } = require('../config/jwtConfig');
 const mongoose = require('mongoose');
 const { resolveUserRoleAndDept, getRoleNotificationFilter } = require('../utils/notificationFilter');
 
@@ -49,7 +50,7 @@ const NotificationController = {
       if (!callerUser && req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
         try {
           const token = req.headers.authorization.split(' ')[1];
-          callerUser = jwt.verify(token, process.env.JWT_SECRET || 'supersecretverifitor123');
+          callerUser = jwt.verify(token, JWT_SECRET);
         } catch (_tokenErr) {
           // Token invalid or expired
         }
@@ -93,7 +94,7 @@ const NotificationController = {
       if (!callerUser && req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
         try {
           const token = req.headers.authorization.split(' ')[1];
-          callerUser = jwt.verify(token, process.env.JWT_SECRET || 'supersecretverifitor123');
+          callerUser = jwt.verify(token, JWT_SECRET);
         } catch (_tokenErr) {}
       }
 
