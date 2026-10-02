@@ -105,6 +105,16 @@ const Profile = () => {
             return;
         }
 
+        const nameRegex = /^[a-zA-ZÀ-ÿ\s'-]+$/;
+        if (!nameRegex.test(user.firstname.trim())) {
+            triggerToast("Firstname can only contain letters, spaces, hyphens, and apostrophes (no numbers or symbols)", "error");
+            return;
+        }
+        if (!nameRegex.test(user.lastname.trim())) {
+            triggerToast("Lastname can only contain letters, spaces, hyphens, and apostrophes (no numbers or symbols)", "error");
+            return;
+        }
+
         showConfirm({
             title: 'Update Profile Details',
             message: 'Are you sure you want to update your profile information?',

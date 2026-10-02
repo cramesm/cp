@@ -147,6 +147,15 @@ const ManageRegistrar = () => {
       setAddError('Please enter both First Name and Last Name.');
       return;
     }
+    const nameRegex = /^[a-zA-ZÀ-ÿ\s'-]+$/;
+    if (!nameRegex.test(addForm.firstName.trim())) {
+      setAddError('First Name can only contain letters, spaces, hyphens, and apostrophes (numbers and special characters are not allowed).');
+      return;
+    }
+    if (!nameRegex.test(addForm.lastName.trim())) {
+      setAddError('Last Name can only contain letters, spaces, hyphens, and apostrophes (numbers and special characters are not allowed).');
+      return;
+    }
     if (!addForm.email.trim()) {
       setAddError('Official email address is required.');
       return;

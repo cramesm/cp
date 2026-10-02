@@ -98,6 +98,18 @@ export default function RegistrarInformation() {
 
   // Update profile information
   const handleUpdateInfo = () => {
+    const nameRegex = /^[a-zA-ZÀ-ÿ\s'-]+$/;
+    if (!nameRegex.test(formData.firstName.trim())) {
+      setToast({ show: true, message: 'First name can only contain letters, spaces, hyphens, and apostrophes (no numbers or symbols).', type: 'error' });
+      setTimeout(() => setToast({ show: false, message: '', type: 'error' }), 3000);
+      return;
+    }
+    if (!nameRegex.test(formData.lastName.trim())) {
+      setToast({ show: true, message: 'Last name can only contain letters, spaces, hyphens, and apostrophes (no numbers or symbols).', type: 'error' });
+      setTimeout(() => setToast({ show: false, message: '', type: 'error' }), 3000);
+      return;
+    }
+
     showConfirm({
       title: 'Update Registrar Profile',
       message: 'Are you sure you want to update this registrar\'s information?',

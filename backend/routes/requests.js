@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const RequestController = require('../controllers/requestController');
 const { auth, superAdminOnly, registrarOnly } = require('../middleware/authMiddleware');
+const { validate, createRequestValidation, requestStatusValidation } = require('../middleware/validationMiddleware');
 
 // Get all requests
 router.get('/', auth, RequestController.getAllRequests);
@@ -10,10 +11,10 @@ router.get('/', auth, RequestController.getAllRequests);
 router.get('/:id', auth, RequestController.getRequestById);
 
 // Create new request
-router.post('/', auth, RequestController.createRequest);
+router.post('/', auth, createRequestValidation, validate, RequestController.createRequest);
 
 // Update request (Registrar Staff, Registrar Admin, Super Admin only)
-router.put('/:id', auth, registrarOnly, RequestController.updateRequest);
+router.put('/:id', auth, registrarOnly, requestStatusValidation, validate, RequestController.updateRequest);
 
 // Generate hash for request (Registrar Staff, Registrar Admin, Super Admin only)
 router.post('/:id/generate-hash', auth, registrarOnly, RequestController.generateHash);
