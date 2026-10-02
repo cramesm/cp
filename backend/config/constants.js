@@ -8,4 +8,26 @@ const HttpStatus = {
   INTERNAL_SERVER_ERROR: 500,
 };
 
-module.exports = { HttpStatus };
+const STAFF_ROLES = {
+  SUPER_ADMIN: 'super admin',
+  IT_ADMIN: 'it admin',
+  IT_ADMINISTRATOR: 'it administrator',
+  IT_STAFF: 'it staff',
+  REGISTRAR_ADMIN: 'registrar admin',
+  REGISTRAR_STAFF: 'registrar staff',
+  ACCOUNTING_ADMIN: 'accounting admin',
+  ACCOUNTING_STAFF: 'accounting staff',
+};
+
+const DEPARTMENTS = {
+  ADMINISTRATION: 'Administration',
+  IT: 'IT Administration',
+  REGISTRAR: 'Registrar',
+  ACCOUNTING: 'Accounting',
+};
+
+module.exports = { 
+  HttpStatus,
+  STAFF_ROLES,
+  DEPARTMENTS
+};

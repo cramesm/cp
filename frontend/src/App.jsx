@@ -1,32 +1,40 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+
+// Authentication
 import AdminLogin from './pages/auth/AdminLogin';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import OTP from './pages/auth/OTP';
 import ChangePassword from './pages/auth/ChangePassword';
 
-// Registrar Staff Pages
-import Dashboard from './pages/dashboard/Dashboard';
-import Requests from './pages/requests/Requests';
-import RequestDetails from './pages/requests/RequestDetails';
-import Transactions from './pages/transactions/Transactions';
-import TransactionDetails from './pages/transactions/TransactionDetails';
-import Notifications from './pages/notifications/Notifications';
-import Profile from './pages/profile/Profile'; // This is the Edit Page
-import ProfileInfo from './pages/profile/ProfileInfo'; // This is the View Page
+// Shared Across All Roles
+import Dashboard from './pages/shared/Dashboard';
+import Notifications from './pages/shared/Notifications';
+import Profile from './pages/shared/Profile';
+import ProfileInfo from './pages/shared/ProfileInfo';
 
-// Super Admin Pages
-import ManageRegistrar from './pages/super-admin/ManageRegistrar';
-import RegistrarInformation from './pages/super-admin/RegistrarInformation';
+// Registrar Department (Registrar Admin & Staff)
+import DocumentRequests from './pages/registrar/DocumentRequests';
+import RequestDetails from './pages/registrar/RequestDetails';
+import BlockchainRecords from './pages/registrar/BlockchainRecords';
+import MyBlockchainTransactions from './pages/registrar/MyTransactions';
+import VerifyBlockchainTransaction from './pages/registrar/VerifyTransactions';
+
+// Accounting Department (Accounting Admin & Staff)
+import Payments from './pages/accounting/Payments';
+import TransactionDetails from './pages/accounting/TransactionDetails';
+
+// IT Department (IT Admin & Staff)
+import UserManagement from './pages/it/UserManagement';
+
+// Super Admin & Staff Oversight
+import StaffManagement from './pages/super-admin/StaffManagement';
+import StaffDetails from './pages/super-admin/StaffDetails';
 import ActivityLogs from './pages/super-admin/ActivityLogs';
 
-import ValidationResults from './pages/validation/Validation';
+// Public Validation Portal
+import ValidationResults from './pages/public/Validation';
 
-import StudentManagement from './pages/users/StudentManagement';
-
-// Blockchain Pages
-import Blockchain from './pages/blockchain/Blockchain';
-import MyTransactions from './pages/blockchain/MyTransactions';
-import VerifyTransactions from './pages/blockchain/VerifyTransactions';
+import PropTypes from 'prop-types';
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('token');
@@ -61,6 +69,10 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
+ProtectedRoute.propTypes = {
+  children: PropTypes.node.isRequired,
+};
+
 const RoleRoute = ({ children, allowedRoles }) => {
   const token = localStorage.getItem('token');
   const userRole = (localStorage.getItem('userRole') || '').toLowerCase().trim();
@@ -71,6 +83,11 @@ const RoleRoute = ({ children, allowedRoles }) => {
     return <Navigate to="/dashboard" replace />;
   }
   return children;
+};
+
+RoleRoute.propTypes = {
+  children: PropTypes.node.isRequired,
+  allowedRoles: PropTypes.arrayOf(PropTypes.string).isRequired,
 };
 
 const AuthenticatedWildcardRedirect = () => {
@@ -96,33 +113,32 @@ function App() {
         {/* Main Dashboard - Protected */}
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         
-        {/* Requests Management - Protected */}
-        <Route path="/requests" element={<ProtectedRoute><Requests /></ProtectedRoute>} />
+        {/* Registrar Department - Requests Management */}
+        <Route path="/requests" element={<ProtectedRoute><DocumentRequests /></ProtectedRoute>} />
         <Route path="/requests/:id" element={<ProtectedRoute><RequestDetails /></ProtectedRoute>} />
 
-        
-        {/* Transaction History - Protected */}
-        <Route path="/transactions" element={<ProtectedRoute><Transactions /></ProtectedRoute>} />
+        {/* Accounting Department - Payments & Transactions */}
+        <Route path="/transactions" element={<ProtectedRoute><Payments /></ProtectedRoute>} />
         <Route path="/transactions/:id" element={<ProtectedRoute><TransactionDetails /></ProtectedRoute>} />
         
-        {/* Notifications - Protected */}
+        {/* Shared - Notifications */}
         <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
 
-        {/* Blockchain - Protected */}
-        <Route path="/blockchain" element={<ProtectedRoute><Blockchain /></ProtectedRoute>} />
-        <Route path="/blockchain/my-transactions" element={<ProtectedRoute><MyTransactions /></ProtectedRoute>} />
-        <Route path="/blockchain/verify" element={<ProtectedRoute><VerifyTransactions /></ProtectedRoute>} />
+        {/* Registrar Department - Blockchain Records */}
+        <Route path="/blockchain" element={<ProtectedRoute><BlockchainRecords /></ProtectedRoute>} />
+        <Route path="/blockchain/my-transactions" element={<ProtectedRoute><MyBlockchainTransactions /></ProtectedRoute>} />
+        <Route path="/blockchain/verify" element={<ProtectedRoute><VerifyBlockchainTransaction /></ProtectedRoute>} />
 
-        {/* Profile Management - Protected */}
+        {/* Shared - Profile Management */}
         <Route path="/profile/info" element={<ProtectedRoute><ProfileInfo /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
-        {/* Staff Management - Protected */}
+        {/* Super Admin & Department Staff Management */}
         <Route 
           path="/manage-registrar" 
           element={
             <RoleRoute allowedRoles={['super admin', 'it administrator', 'it admin', 'registrar admin', 'accounting admin']}>
-              <ManageRegistrar />
+              <StaffManagement />
             </RoleRoute>
           } 
         />
@@ -131,19 +147,22 @@ function App() {
           path="/manage-registrar/details/:id" 
           element={
             <RoleRoute allowedRoles={['super admin', 'it administrator', 'it admin', 'registrar admin', 'accounting admin']}>
-              <RegistrarInformation />
+              <StaffDetails />
             </RoleRoute>
           } 
         />
+
+        {/* IT Department - User Management */}
         <Route 
           path="/manage-users" 
           element={
             <RoleRoute allowedRoles={['super admin', 'it administrator', 'it admin', 'it staff', 'it']}>
-              <StudentManagement />
+              <UserManagement />
             </RoleRoute>
           } 
         />
         
+        {/* System & Activity Logs */}
         <Route 
           path="/activity-logs" 
           element={
@@ -171,4 +190,3 @@ function App() {
 }
 
 export default App;
-
