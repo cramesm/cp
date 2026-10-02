@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Layout from '../../components/Layout';
 import ConfirmModal from '../../components/ConfirmModal';
-import { ChevronRight, User, Trash2, Archive, Edit3, X, CheckCircle, Lock, AlertTriangle, RefreshCw } from 'lucide-react';
+import { User, Archive, Edit3, CheckCircle, Lock, AlertTriangle, RefreshCw, ArrowLeft } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../../api';
+import PropTypes from 'prop-types';
 
 export default function RegistrarInformation() {
   const navigate = useNavigate();
@@ -27,9 +28,6 @@ export default function RegistrarInformation() {
   const [deleting, setDeleting] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [confirmConfig, setConfirmConfig] = useState(null);
-
-  const userRole = (localStorage.getItem('userRole') || '').toLowerCase();
-  const isSuperAdmin = userRole === 'super admin';
 
 
 
@@ -182,6 +180,40 @@ export default function RegistrarInformation() {
           </div>
         ) : (
           <div className="max-w-6xl mx-auto w-full space-y-4">
+            {/* Header with Back Button */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-[22px] shadow-[0_8px_24px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.02)] border border-slate-100/90">
+              <div>
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <h1 className="text-[18px] font-black text-slate-900 m-0">Staff Profile Details</h1>
+                  <span className={`px-3 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider border ${
+                    formData.status === 'Active' 
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                      : 'bg-red-50 text-red-700 border-red-200'
+                  }`}>
+                    {formData.status}
+                  </span>
+                </div>
+                {formData.employeeId && (
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <span className="text-xs text-slate-400 font-medium">Employee ID:</span>
+                    <span className="bg-slate-100 px-2 py-0.5 rounded-md text-slate-800 font-mono text-[11.5px] font-bold">
+                      {formData.employeeId}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <button 
+                  type="button"
+                  onClick={() => navigate('/manage-registrar')}
+                  className="bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold text-xs px-4 py-2 rounded-full border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-2 cursor-pointer w-fit"
+                >
+                  <ArrowLeft size={13} />
+                  <span>Back to Staff Management</span>
+                </button>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
               {/* Left Section: Info Card */}
               <div className="lg:col-span-7 space-y-4">
@@ -359,3 +391,10 @@ function InfoInput({ label, name, value, onChange }) {
     </div>
   );
 }
+
+InfoInput.propTypes = {
+  label: PropTypes.string,
+  name: PropTypes.string,
+  value: PropTypes.string,
+  onChange: PropTypes.func,
+};
