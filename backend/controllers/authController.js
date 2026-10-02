@@ -601,7 +601,7 @@ const AuthController = {
 
       const resetToken = jwt.sign(
         { email, modelName: stored.modelName },
-        process.env.JWT_SECRET,
+        process.env.JWT_SECRET || 'supersecretverifitor123',
         { expiresIn: '15m' }
       );
 
@@ -617,7 +617,7 @@ const AuthController = {
   resetPassword: async (req, res) => {
     try {
       const { resetToken, newPassword, password } = req.body;
-      const decoded = jwt.verify(resetToken, process.env.JWT_SECRET);
+      const decoded = jwt.verify(resetToken, process.env.JWT_SECRET || 'supersecretverifitor123');
       const { email, modelName } = decoded;
 
       const targetPassword = newPassword || password;

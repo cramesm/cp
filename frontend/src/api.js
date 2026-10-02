@@ -28,11 +28,37 @@ api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
-      config.headers.set('Authorization', `Bearer ${token}`);
+      if (config.headers && typeof config.headers.set === 'function') {
+        config.headers.set('Authorization', `Bearer ${token}`);
+      } else {
+        config.headers = config.headers || {};
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
     return config;
   },
   (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Handle session expiration on 401 Unauthorized
+api.interceptors.response.use(
+  (apiResponse) => apiResponse,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      const requestUrl = error.config?.url || '';
+      const isAuthAttempt = requestUrl.includes('/auth/login') || requestUrl.includes('/auth/register') || requestUrl.includes('/auth/admin-login');
+      if (!isAuthAttempt) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('adminUser');
+        localStorage.removeItem('userRole');
+        localStorage.removeItem('userDepartment');
+        if (window.location.pathname !== '/' && !window.location.pathname.includes('/login')) {
+          window.location.href = '/?sessionExpired=1';
+        }
+      }
+    }
     return Promise.reject(error);
   }
 );

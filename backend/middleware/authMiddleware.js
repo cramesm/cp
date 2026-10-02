@@ -13,7 +13,7 @@ const auth = async (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'supersecretverifitor123');
     console.log('Token decoded:', decoded);
 
     // Dynamic database name resolution fallback to prevent cached "User" names
