@@ -543,6 +543,17 @@ const RequestDetails = () => {
                         </div>
                     </div>
 
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                        <button 
+                            type="button"
+                            onClick={() => navigate(backToRequests)}
+                            className="bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold text-xs px-4 py-2 rounded-full border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-2 cursor-pointer w-fit"
+                        >
+                            <ArrowLeft size={13} />
+                            <span>Back to Document Requests</span>
+                        </button>
+                    </div>
+
                 </div>
 
                     {status === 'Rejected' && (
@@ -598,34 +609,21 @@ const RequestDetails = () => {
                             {/* Stepper Sidebar */}
                             <div className="lg:col-span-1">
                                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 sticky top-8">
-                                    <div className="flex items-center justify-between mb-6">
-                                        <h3 className="font-bold text-slate-800 uppercase tracking-wider text-xs">Processing Steps</h3>
-                                        {hasProcessingAccess ? (
-                                            <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">Interactive</span>
-                                        ) : (
-                                            <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">View Only</span>
-                                        )}
-                                    </div>
+                                    <h3 className="font-bold text-slate-800 mb-6 uppercase tracking-wider text-xs">Processing Steps</h3>
                                     <div className="space-y-6">
                                         {(isBlockchainEligible ? [
                                             { step: 1, title: 'Review & Schedule', desc: 'Review request, accounting payment verification & schedule window' },
                                             { step: 2, title: 'Upload Document', desc: 'Upload the PDF document' },
                                             { step: 3, title: 'Secure on Blockchain', desc: 'Blockchain embedding and finalization' },
-                                            { step: 4, title: 'Release', desc: 'Document ready for pickup/delivery' }
+                                            { step: 4, title: 'Release', desc: 'Document ready for pickup' }
                                         ] : [
                                             { step: 1, title: 'Review & Schedule', desc: 'Review request, accounting payment verification & schedule window' },
                                             { step: 2, title: 'Finalize & Release', desc: 'Confirm and release request for issuance/pickup' },
-                                            { step: 3, title: 'Release', desc: 'Document ready for pickup/delivery' }
+                                            { step: 3, title: 'Release', desc: 'Document ready for pickup' }
                                         ]).map(s => (
                                             <div
                                                 key={s.step}
-                                                onClick={() => {
-                                                    if (hasProcessingAccess) setCurrentStep(s.step);
-                                                }}
-                                                className={`flex gap-4 ${currentStep === s.step ? 'opacity-100' : 'opacity-40'} ${
-                                                    hasProcessingAccess ? 'cursor-pointer hover:opacity-100 transition-opacity' : 'cursor-default select-none'
-                                                }`}
-                                                title={hasProcessingAccess ? `Click to jump to Step ${s.step}` : 'Step navigation is restricted to authorized staff'}
+                                                className={`flex gap-4 ${currentStep === s.step ? 'opacity-100' : 'opacity-40'} cursor-default select-none`}
                                             >
                                                 <div className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center font-bold text-sm ${currentStep >= s.step ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
                                                     {currentStep > s.step ? <CheckCircle2 size={16} /> : s.step}
