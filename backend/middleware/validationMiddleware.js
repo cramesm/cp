@@ -24,38 +24,19 @@ const validate = (req, res, next) => {
 };
 
 // ============================================================================
-// Helper Regular Expressions for Strict Field Formatting
-// ============================================================================
-
-// Letters, spaces, hyphens, and apostrophes only (No numbers or symbols allowed)
-const NAME_REGEX = /^[a-zA-ZÀ-ÿ\s'-]+$/;
-
-// Standard alphanumeric identifier with hyphens and underscores (No unsafe characters)
-const SAFE_ID_REGEX = /^[0-9A-Za-z_-]+$/;
-
-// Phone number: optional leading +, digits, hyphens, and spaces only
-const PHONE_REGEX = /^\+?[0-9\s-]{7,15}$/;
-
-// Safe text for titles, courses, document types (alphanumeric, spaces, parentheses, hyphens, periods)
-const SAFE_TEXT_REGEX = /^[a-zA-Z0-9\s().,:-]+$/;
-
-// Positive decimal amount with up to 2 decimal places
-const AMOUNT_REGEX = /^\d+(\.\d{1,2})?$/;
-
-// ============================================================================
-// Authentication & Account Validations
+// Authentication & Account Validations 
 // ============================================================================
 
 const registerValidation = [
   body('firstName')
     .trim()
     .notEmpty().withMessage('First name is required')
-    .matches(NAME_REGEX).withMessage('First name must contain only letters, spaces, hyphens, and apostrophes (numbers and special characters are not allowed)')
+    .isAlpha('en-US', { ignore: " -'" }).withMessage('First name must contain only letters, spaces, hyphens, and apostrophes (numbers and special characters are not allowed)')
     .isLength({ min: 2, max: 50 }).withMessage('First name must be between 2 and 50 characters long'),
   body('lastName')
     .trim()
     .notEmpty().withMessage('Last name is required')
-    .matches(NAME_REGEX).withMessage('Last name must contain only letters, spaces, hyphens, and apostrophes (numbers and special characters are not allowed)')
+    .isAlpha('en-US', { ignore: " -'" }).withMessage('Last name must contain only letters, spaces, hyphens, and apostrophes (numbers and special characters are not allowed)')
     .isLength({ min: 2, max: 50 }).withMessage('Last name must be between 2 and 50 characters long'),
   body('email')
     .trim()
@@ -66,11 +47,11 @@ const registerValidation = [
   body('phoneNumber')
     .optional({ checkFalsy: true })
     .trim()
-    .matches(PHONE_REGEX).withMessage('Phone number must contain only numbers and optional leading +'),
+    .isMobilePhone('any').withMessage('Phone number must be a valid mobile phone number'),
   body('studentId')
     .optional({ checkFalsy: true })
     .trim()
-    .matches(SAFE_ID_REGEX).withMessage('Student ID can only contain letters, numbers, hyphens, and underscores'),
+    .isAlphanumeric('en-US', { ignore: '-_' }).withMessage('Student ID can only contain letters, numbers, hyphens, and underscores'),
   body('role')
     .optional()
     .isIn(['student', 'alumni']).withMessage('Role must be student or alumni')
@@ -90,30 +71,30 @@ const updateProfileValidation = [
   body('firstName')
     .optional()
     .trim()
-    .matches(NAME_REGEX).withMessage('First name must contain only letters, spaces, hyphens, and apostrophes (no numbers or special characters)')
+    .isAlpha('en-US', { ignore: " -'" }).withMessage('First name must contain only letters, spaces, hyphens, and apostrophes (no numbers or special characters)')
     .isLength({ min: 2, max: 50 }).withMessage('First name must be between 2 and 50 characters long'),
   body('lastName')
     .optional()
     .trim()
-    .matches(NAME_REGEX).withMessage('Last name must contain only letters, spaces, hyphens, and apostrophes (no numbers or special characters)')
+    .isAlpha('en-US', { ignore: " -'" }).withMessage('Last name must contain only letters, spaces, hyphens, and apostrophes (no numbers or special characters)')
     .isLength({ min: 2, max: 50 }).withMessage('Last name must be between 2 and 50 characters long'),
   body('name')
     .optional()
     .trim()
-    .matches(NAME_REGEX).withMessage('Name must contain only letters, spaces, hyphens, and apostrophes (no numbers or special characters)')
+    .isAlpha('en-US', { ignore: " -'" }).withMessage('Name must contain only letters, spaces, hyphens, and apostrophes (no numbers or special characters)')
     .isLength({ min: 2, max: 100 }).withMessage('Name must be between 2 and 100 characters long'),
   body('phoneNumber')
     .optional({ checkFalsy: true })
     .trim()
-    .matches(PHONE_REGEX).withMessage('Phone number must contain only numbers and optional leading +'),
+    .isMobilePhone('any').withMessage('Phone number must be a valid mobile phone number'),
   body('course')
     .optional({ checkFalsy: true })
     .trim()
-    .matches(SAFE_TEXT_REGEX).withMessage('Course contains invalid characters'),
+    .isAlphanumeric('en-US', { ignore: " ().,-" }).withMessage('Course contains invalid characters'),
   body('yearLevel')
     .optional({ checkFalsy: true })
     .trim()
-    .matches(SAFE_TEXT_REGEX).withMessage('Year level contains invalid characters'),
+    .isAlphanumeric('en-US', { ignore: " -" }).withMessage('Year level contains invalid characters'),
   body('email')
     .optional()
     .trim()
@@ -143,7 +124,7 @@ const resetPasswordValidation = [
 ];
 
 // ============================================================================
-// Staff Management Validations
+// Staff Management Validations 
 // ============================================================================
 
 const createStaffValidation = [
@@ -154,17 +135,17 @@ const createStaffValidation = [
   body('firstName')
     .trim()
     .notEmpty().withMessage('First name is required')
-    .matches(NAME_REGEX).withMessage('First name must contain only letters, spaces, hyphens, and apostrophes (numbers and special characters are not allowed)')
+    .isAlpha('en-US', { ignore: " -'" }).withMessage('First name must contain only letters, spaces, hyphens, and apostrophes (numbers and special characters are not allowed)')
     .isLength({ min: 2, max: 50 }).withMessage('First name must be between 2 and 50 characters long'),
   body('lastName')
     .trim()
     .notEmpty().withMessage('Last name is required')
-    .matches(NAME_REGEX).withMessage('Last name must contain only letters, spaces, hyphens, and apostrophes (numbers and special characters are not allowed)')
+    .isAlpha('en-US', { ignore: " -'" }).withMessage('Last name must contain only letters, spaces, hyphens, and apostrophes (numbers and special characters are not allowed)')
     .isLength({ min: 2, max: 50 }).withMessage('Last name must be between 2 and 50 characters long'),
   body('name')
     .optional()
     .trim()
-    .matches(NAME_REGEX).withMessage('Name must contain only letters, spaces, hyphens, and apostrophes')
+    .isAlpha('en-US', { ignore: " -'" }).withMessage('Name must contain only letters, spaces, hyphens, and apostrophes')
     .isLength({ min: 2, max: 100 }).withMessage('Name must be between 2 and 100 characters long'),
   body('department')
     .optional()
@@ -173,24 +154,24 @@ const createStaffValidation = [
   body('role')
     .optional()
     .isString().trim()
-    .matches(/^[a-zA-Z\s]+$/).withMessage('Role can only contain letters and spaces')
+    .isAlpha('en-US', { ignore: " " }).withMessage('Role can only contain letters and spaces')
 ];
 
 const updateStaffValidation = [
   body('name')
     .optional()
     .trim()
-    .matches(NAME_REGEX).withMessage('Name must contain only letters, spaces, hyphens, and apostrophes (no numbers or special characters)')
+    .isAlpha('en-US', { ignore: " -'" }).withMessage('Name must contain only letters, spaces, hyphens, and apostrophes (no numbers or special characters)')
     .isLength({ min: 2, max: 100 }).withMessage('Name must be between 2 and 100 characters long'),
   body('firstName')
     .optional()
     .trim()
-    .matches(NAME_REGEX).withMessage('First name must contain only letters, spaces, hyphens, and apostrophes (no numbers or special characters)')
+    .isAlpha('en-US', { ignore: " -'" }).withMessage('First name must contain only letters, spaces, hyphens, and apostrophes (no numbers or special characters)')
     .isLength({ min: 2, max: 50 }).withMessage('First name must be between 2 and 50 characters long'),
   body('lastName')
     .optional()
     .trim()
-    .matches(NAME_REGEX).withMessage('Last name must contain only letters, spaces, hyphens, and apostrophes (no numbers or special characters)')
+    .isAlpha('en-US', { ignore: " -'" }).withMessage('Last name must contain only letters, spaces, hyphens, and apostrophes (no numbers or special characters)')
     .isLength({ min: 2, max: 50 }).withMessage('Last name must be between 2 and 50 characters long'),
   body('email')
     .optional()
@@ -204,42 +185,42 @@ const updateStaffValidation = [
 ];
 
 // ============================================================================
-// Department Operations Validations
+// Department Operations Validations 
 // ============================================================================
 
 const createRequestValidation = [
   body('documentType')
     .trim()
     .notEmpty().withMessage('Document type is required')
-    .matches(SAFE_TEXT_REGEX).withMessage('Document type contains invalid characters')
+    .isAlphanumeric('en-US', { ignore: " ().,-" }).withMessage('Document type contains invalid characters')
     .isLength({ min: 2, max: 100 }).withMessage('Document type must be between 2 and 100 characters'),
   body('subDocumentType')
     .optional({ checkFalsy: true })
     .trim()
-    .matches(SAFE_TEXT_REGEX).withMessage('Sub-document type contains invalid characters')
+    .isAlphanumeric('en-US', { ignore: " ().,-" }).withMessage('Sub-document type contains invalid characters')
     .isLength({ max: 100 }),
   body('purpose')
     .optional({ checkFalsy: true })
     .trim()
-    .matches(SAFE_TEXT_REGEX).withMessage('Purpose contains invalid characters')
+    .isAlphanumeric('en-US', { ignore: " ().,:-" }).withMessage('Purpose contains invalid characters')
     .isLength({ max: 200 }),
   body('otherPurpose')
     .optional({ checkFalsy: true })
     .trim()
-    .matches(SAFE_TEXT_REGEX).withMessage('Other purpose contains invalid characters')
+    .isAlphanumeric('en-US', { ignore: " ().,:-" }).withMessage('Other purpose contains invalid characters')
     .isLength({ max: 200 }),
   body('studentId')
     .optional({ checkFalsy: true })
     .trim()
-    .matches(SAFE_ID_REGEX).withMessage('Student ID can only contain letters, numbers, and dashes'),
+    .isAlphanumeric('en-US', { ignore: '-_' }).withMessage('Student ID can only contain letters, numbers, and dashes'),
   body('course')
     .optional({ checkFalsy: true })
     .trim()
-    .matches(SAFE_TEXT_REGEX).withMessage('Course contains invalid characters'),
+    .isAlphanumeric('en-US', { ignore: " ().,-" }).withMessage('Course contains invalid characters'),
   body('yearLevel')
     .optional({ checkFalsy: true })
     .trim()
-    .matches(SAFE_TEXT_REGEX).withMessage('Year level contains invalid characters'),
+    .isAlphanumeric('en-US', { ignore: " -" }).withMessage('Year level contains invalid characters'),
   body('quantity')
     .optional()
     .isInt({ min: 1, max: 20 }).withMessage('Quantity must be an integer between 1 and 20')
@@ -253,7 +234,7 @@ const requestStatusValidation = [
   body('rejectionReason')
     .optional({ checkFalsy: true })
     .trim()
-    .matches(SAFE_TEXT_REGEX).withMessage('Rejection reason contains invalid characters'),
+    .isAlphanumeric('en-US', { ignore: " ().,:-" }).withMessage('Rejection reason contains invalid characters'),
   body('estimatedProcessingStart')
     .optional({ checkFalsy: true })
     .isISO8601().withMessage('Estimated start date must be a valid ISO date'),
@@ -269,14 +250,14 @@ const paymentStatusValidation = [
   body('adminRemarks')
     .optional({ checkFalsy: true })
     .trim()
-    .matches(SAFE_TEXT_REGEX).withMessage('Remarks contain invalid characters')
+    .isAlphanumeric('en-US', { ignore: " ().,:-" }).withMessage('Remarks contain invalid characters')
 ];
 
 const submitRefundValidation = [
   body('transactionId')
     .trim()
     .notEmpty().withMessage('Transaction ID is required')
-    .matches(SAFE_ID_REGEX).withMessage('Invalid transaction ID format'),
+    .isAlphanumeric('en-US', { ignore: '-_' }).withMessage('Invalid transaction ID format'),
   body('reason')
     .trim()
     .notEmpty().withMessage('Refund reason is required')
@@ -285,15 +266,15 @@ const submitRefundValidation = [
   body('otherReason')
     .optional({ checkFalsy: true })
     .trim()
-    .matches(SAFE_TEXT_REGEX).withMessage('Custom reason contains invalid characters')
+    .isAlphanumeric('en-US', { ignore: " ().,:-" }).withMessage('Custom reason contains invalid characters')
     .isLength({ max: 300 }),
   body('studentName')
     .optional({ checkFalsy: true })
     .trim()
-    .matches(NAME_REGEX).withMessage('Student name must contain only letters (no numbers or special characters)'),
+    .isAlpha('en-US', { ignore: " -'" }).withMessage('Student name must contain only letters (no numbers or special characters)'),
   body('amount')
     .optional({ checkFalsy: true })
-    .matches(AMOUNT_REGEX).withMessage('Amount must be a valid positive number with up to 2 decimal places')
+    .isDecimal({ decimal_digits: '0,2' }).withMessage('Amount must be a valid positive number with up to 2 decimal places')
 ];
 
 const refundStatusValidation = [
@@ -303,7 +284,7 @@ const refundStatusValidation = [
   body('adminRemarks')
     .optional({ checkFalsy: true })
     .trim()
-    .matches(SAFE_TEXT_REGEX).withMessage('Admin remarks contain invalid characters')
+    .isAlphanumeric('en-US', { ignore: " ().,:-" }).withMessage('Admin remarks contain invalid characters')
 ];
 
 // ============================================================================
