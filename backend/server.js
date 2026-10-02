@@ -1,202 +1,85 @@
 require('dotenv').config();
 
 const express = require('express');
-const cors = require('cors');
 const path = require('path');
 const mongoose = require('mongoose');
-const helmet = require('helmet');
+
+const connectDB = require('./config/db');
+const { helmetMiddleware, corsMiddleware, clientIpMiddleware } = require('./config/security');
+const { globalLimiter } = require('./middleware/rateLimiter');
 const auditLoggerMiddleware = require('./middleware/auditLoggerMiddleware');
-const { globalLimiter, authLimiter } = require('./middleware/rateLimiter');
-const { errorHandler, notFoundHandler, HTTP_ERROR_STATUSES } = require('./middleware/errorMiddleware');
+const apiRoutes = require('./routes');
+const { notFoundHandler, errorHandler } = require('./middleware/errorMiddleware');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Trust reverse proxy if configured (supports Vercel, Cloudflare, NGINX)
-if (process.env.TRUST_PROXY_HOPS) {
-  app.set('trust proxy', Number(process.env.TRUST_PROXY_HOPS) || 1);
-} else {
-  app.set('trust proxy', 1);
-}
+// Trust reverse proxy if configured (Vercel, Cloudflare, NGINX)
+app.set('trust proxy', Number(process.env.TRUST_PROXY_HOPS) || 1);
 
-// Apply Helmet Security Headers
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://apis.google.com", "https://vercel.live"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com"],
-      imgSrc: ["'self'", "data:", "https://res.cloudinary.com"],
-      connectSrc: ["'self'", "http://localhost:5000", "https://*.vercel.app", "https://vercel.live", "wss://ws-us3.pusher.com"],
-      fontSrc: ["'self'", "data:", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com"],
-      frameAncestors: ["'none'"],
-      objectSrc: ["'none'"],
-      baseUri: ["'self'"],
-      formAction: ["'self'"]
-    },
-  },
-  crossOriginEmbedderPolicy: { policy: "require-corp" }, 
-  crossOriginResourcePolicy: { policy: "cross-origin" },
-  crossOriginOpenerPolicy: { policy: "same-origin" },
-  frameguard: { action: 'deny' },
-  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
-  hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
-  xContentTypeOptions: true
-}));
+// Initialize Database Connection
+connectDB();
 
-// Extract and attach clean client IP to all requests (supports Vercel, proxies, Cloudflare)
+// ----------------------------------------------------------------------------
+// 1. Security & Core Middleware
+// ----------------------------------------------------------------------------
+app.use(helmetMiddleware);
+app.use(corsMiddleware);
+app.use(clientIpMiddleware);
+app.use(express.json());
+
+// ----------------------------------------------------------------------------
+// 2. Request Logging & Audit Middleware
+// ----------------------------------------------------------------------------
 app.use((req, res, next) => {
-  const forwarded = req.headers && req.headers['x-forwarded-for'];
-  const ip = forwarded ? forwarded.split(',')[0].trim() : (req.socket?.remoteAddress || req.ip || '');
-  req.clientIp = (ip || '').replace(/^::ffff:/, '');
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
+  next();
+});
+app.use(auditLoggerMiddleware);
+
+// ----------------------------------------------------------------------------
+// 3. Static Uploads
+// ----------------------------------------------------------------------------
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// ----------------------------------------------------------------------------
+// 4. Serverless MongoDB Reconnection Guard
+// ----------------------------------------------------------------------------
+app.use(async (req, res, next) => {
+  if (req.path === '/' || req.path === '/favicon.ico' || req.path === '/api/health') {
+    return next();
+  }
+  try {
+    await connectDB();
+  } catch (_e) {}
   next();
 });
 
-// Apply Global Rate Limiter
-app.use('/api', globalLimiter);
-
-// Allow CORS dynamically for all Vercel environments and localhost
-const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-
-    const allowedOrigins = [
-      process.env.FRONTEND_URL,
-      ...(process.env.ALLOWED_ORIGIN ? process.env.ALLOWED_ORIGIN.split(',').map(s => s.trim()) : []),
-      'https://verifitor-frontend.vercel.app',
-      'http://localhost:3000',
-      'http://localhost:5173'
-    ].filter(Boolean);
-
-    const isAllowed = allowedOrigins.includes(origin) || 
-                      origin.endsWith('.vercel.app') ||
-                      origin.includes('localhost') || 
-                      origin.includes('127.0.0.1');
-
-    if (isAllowed) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Origin', 'X-Requested-With', 'Accept', 'Content-Type', 'Authorization', 'ngrok-skip-browser-warning']
-};
-
-app.use(cors(corsOptions));
-app.options(/.*/, cors(corsOptions)); // Handle preflight requests natively (Express 5 safe)
-app.use(express.json());
-
-// Request logger
-app.use((req, res, next) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
-    next();
-});
-
-// Custom Audit Logger (saves to MongoDB)
-app.use(auditLoggerMiddleware);
-
-// Serve uploaded files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// Root endpoint for status checks & Vercel deployment verification
+// ----------------------------------------------------------------------------
+// 5. System Status Root Endpoint
+// ----------------------------------------------------------------------------
 app.get('/', (req, res) => {
-    res.json({
-        status: 'online',
-        service: 'VeriFitor API',
-        database: mongoose.connection.readyState === 1 ? 'connected' : (mongoose.connection.readyState === 2 ? 'connecting' : 'disconnected')
-    });
+  res.json({
+    status: 'online',
+    service: 'VeriFitor API',
+    database: mongoose.connection.readyState === 1 ? 'connected' : (mongoose.connection.readyState === 2 ? 'connecting' : 'disconnected')
+  });
 });
-
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 
-// Database Connection
-const connectDB = require('./config/db');
-connectDB();
+// ----------------------------------------------------------------------------
+// 6. Centralized API Routes (Grouped by Department)
+// ----------------------------------------------------------------------------
+app.use('/api', globalLimiter, apiRoutes);
 
-app.use(async (req, res, next) => {
-    if (req.path === '/api/health' || req.path === '/favicon.ico' || req.path === '/') {
-        return next();
-    }
-    try {
-        await connectDB();
-    } catch (_e) {}
-    next();
-});
-
-// Import Routes
-const authRoutes = require('./routes/auth');
-const dashboardRoutes = require('./routes/dashboard');
-const requestRoutes = require('./routes/requests');
-const transactionRoutes = require('./routes/transactions');
-const blockchainTransactionRoutes = require('./routes/blockchainTransactions');
-const notificationRoutes = require('./routes/notifications');
-const adminRoutes = require('./routes/adminManagement');
-const activityLogRoutes = require('./routes/activityLogs');
-const registrarRoutes = require('./routes/registrars');
-const verifyRoutes = require('./routes/verify');
-const torRoutes = require('./routes/tor');
-const documentRoutes = require('./routes/documents');
-const studentRoutes = require('./routes/students');
-const diplomaRoutes = require('./routes/diploma');
-const documentUploadRoutes = require('./routes/documentUploads');
-const alumniRoutes = require('./routes/alumni');
-const uploadRoutes = require('./routes/uploads');
-const emailRoutes = require('./routes/email');
-const profileRoutes = require('./routes/profile');
-const refundRoutes = require('./routes/refunds');
-const backupRoutes = require('./routes/backup');
-
-console.log('Routes imported successfully');
-
-app.use('/api/auth', authLimiter, authRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/requests', requestRoutes);
-app.use('/api/transactions', transactionRoutes);
-app.use('/api/payments', transactionRoutes);
-app.use('/api/blockchain/transactions', blockchainTransactionRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/admins', adminRoutes);
-app.use('/api/activity-logs', activityLogRoutes);
-app.use('/api/registrars', registrarRoutes);
-app.use('/api/verify', verifyRoutes);
-app.use('/api/tor', torRoutes);
-app.use('/api/documents', documentRoutes);
-app.use('/api/v1/students', studentRoutes); // V1 Migration
-app.use('/api/diploma', diplomaRoutes);
-app.use('/api/requests', documentUploadRoutes);
-app.use('/api/v1/alumni', alumniRoutes); // V1 Migration
-app.use('/api/upload', uploadRoutes);
-app.use('/api/email', emailRoutes);
-app.use('/api/profile', profileRoutes);
-app.use('/api/refunds', refundRoutes);
-app.use('/api/backup', backupRoutes);
-
-console.log('Routes mounted successfully');
-
-app.get('/api/health', (req, res) => {
-    res.json({ status: 'API is running' });
-});
-
-// Test route for debugging
-app.get('/api/test', (req, res) => {
-    res.json({ message: 'Test route working' });
-});
-
-// Endpoint providing definitions for all API error statuses
-app.get('/api/error-statuses', (req, res) => {
-    res.json({ success: true, statuses: HTTP_ERROR_STATUSES });
-});
-
-// 404 Route Not Found Handler
+// ----------------------------------------------------------------------------
+// 7. Error Handling Pipeline
+// ----------------------------------------------------------------------------
 app.use(notFoundHandler);
-
-// Centralized Global Error Handler
 app.use(errorHandler);
 
 if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
-    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 }
 
 module.exports = app;
