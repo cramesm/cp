@@ -7,6 +7,7 @@ const mongoose = require('mongoose');
 const helmet = require('helmet');
 const auditLoggerMiddleware = require('./middleware/auditLoggerMiddleware');
 const { globalLimiter, authLimiter } = require('./middleware/rateLimiter');
+const { errorHandler, notFoundHandler, HTTP_ERROR_STATUSES } = require('./middleware/errorMiddleware');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -183,16 +184,16 @@ app.get('/api/test', (req, res) => {
     res.json({ message: 'Test route working' });
 });
 
-// Global error handler for Express 5 async errors
-app.use((err, req, res, next) => {
-    console.error('=== GLOBAL ERROR HANDLER ===');
-    console.error('Route:', req.method, req.originalUrl);
-    console.error('Error:', err.message);
-    console.error('Stack:', err.stack);
-    if (!res.headersSent) {
-        res.status(500).json({ success: false, message: 'Server error' });
-    }
+// Endpoint providing definitions for all API error statuses
+app.get('/api/error-statuses', (req, res) => {
+    res.json({ success: true, statuses: HTTP_ERROR_STATUSES });
 });
+
+// 404 Route Not Found Handler
+app.use(notFoundHandler);
+
+// Centralized Global Error Handler
+app.use(errorHandler);
 
 if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

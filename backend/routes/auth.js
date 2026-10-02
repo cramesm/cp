@@ -2,7 +2,14 @@ const express = require('express');
 const router = express.Router();
 const AuthController = require('../controllers/authController');
 const { auth, canManageStaff } = require('../middleware/authMiddleware');
-const { validate, registerValidation, loginValidation, updateProfileValidation } = require('../middleware/validationMiddleware');
+const { 
+  validate, 
+  registerValidation, 
+  loginValidation, 
+  updateProfileValidation,
+  changePasswordValidation,
+  resetPasswordValidation
+} = require('../middleware/validationMiddleware');
 const { registerLimiter, loginProgressiveLimiter } = require('../middleware/rateLimiterMiddleware');
 
 // @route   GET /api/auth/check-email
@@ -33,7 +40,7 @@ router.post('/forgot-password', AuthController.forgotPassword);
 router.post('/verify-otp', AuthController.verifyPasswordResetOTP);
 
 // @route   POST /api/auth/reset-password
-router.post('/reset-password', AuthController.resetPassword);
+router.post('/reset-password', resetPasswordValidation, validate, AuthController.resetPassword);
 
 // @route   GET /api/auth/profile
 router.get('/profile', auth, AuthController.getProfile);
@@ -42,6 +49,6 @@ router.get('/profile', auth, AuthController.getProfile);
 router.put('/profile', auth, updateProfileValidation, validate, AuthController.updateProfile);
 
 // @route   PUT /api/auth/change-password
-router.put('/change-password', auth, AuthController.changePassword);
+router.put('/change-password', auth, changePasswordValidation, validate, AuthController.changePassword);
 
 module.exports = router;
