@@ -710,6 +710,49 @@ const RequestDetails = () => {
                                         </div>
 
                                         {/* ========================================================= */}
+                                        {/* STUDENT REQUEST DETAILS */}
+                                        {/* ========================================================= */}
+                                        <div className="border border-slate-200/90 rounded-2xl overflow-hidden shadow-2xs bg-white">
+                                            <div className="bg-slate-50/80 px-5 py-3.5 border-b border-slate-200 flex items-center justify-between gap-3">
+                                                <div className="flex items-center gap-2.5">
+                                                    <div className="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold">
+                                                        <FileText size={15} />
+                                                    </div>
+                                                    <h3 className="font-bold text-slate-900 text-sm">Request Details</h3>
+                                                </div>
+                                                <span className="font-mono text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-md">
+                                                    {requestData.requestId}
+                                                </span>
+                                            </div>
+
+                                            <div className="p-5 space-y-4">
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                                                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                                        <p className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Student Name</p>
+                                                        <p className="font-bold text-slate-900 text-sm">{requestData.name}</p>
+                                                    </div>
+                                                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                                        <p className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Student ID</p>
+                                                        <p className="font-mono font-bold text-slate-900 text-sm">{requestData.studentId || 'N/A'}</p>
+                                                    </div>
+                                                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                                        <p className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Requested Document</p>
+                                                        <p className="font-bold text-slate-900 text-sm">{requestData.documentType || requestData.document_type}</p>
+                                                    </div>
+                                                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                                        <p className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Course / Year</p>
+                                                        <p className="font-bold text-slate-900 text-sm">{requestData.course || 'N/A'} - {requestData.yearLevel || 'N/A'}</p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 text-xs">
+                                                    <span className="font-bold text-slate-400 uppercase tracking-wider block mb-1">Purpose / Request Notes</span>
+                                                    <p className="text-slate-800 font-semibold">{requestData.purpose || requestData.otherPurpose || 'Official issuance for employment / higher education.'}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* ========================================================= */}
                                         {/* PAYMENT STATUS CARD (ACCOUNTING DEPARTMENT - READ-ONLY) */}
                                         {/* ========================================================= */}
                                         <div className="border border-slate-200/90 rounded-2xl overflow-hidden shadow-2xs bg-white">
@@ -935,49 +978,6 @@ const RequestDetails = () => {
                                                     <AlertCircle className="inline mr-2" size={16} /> No payment transaction recorded for this request.
                                                 </div>
                                             )}
-                                        </div>
-
-                                        {/* ========================================================= */}
-                                        {/* STUDENT REQUEST DETAILS */}
-                                        {/* ========================================================= */}
-                                        <div className="border border-slate-200/90 rounded-2xl overflow-hidden shadow-2xs bg-white">
-                                            <div className="bg-slate-50/80 px-5 py-3.5 border-b border-slate-200 flex items-center justify-between gap-3">
-                                                <div className="flex items-center gap-2.5">
-                                                    <div className="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold">
-                                                        <FileText size={15} />
-                                                    </div>
-                                                    <h3 className="font-bold text-slate-900 text-sm">Request Details</h3>
-                                                </div>
-                                                <span className="font-mono text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-md">
-                                                    {requestData.requestId}
-                                                </span>
-                                            </div>
-
-                                            <div className="p-5 space-y-4">
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-                                                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                                                        <p className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Student Name</p>
-                                                        <p className="font-bold text-slate-900 text-sm">{requestData.name}</p>
-                                                    </div>
-                                                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                                                        <p className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Student ID</p>
-                                                        <p className="font-mono font-bold text-slate-900 text-sm">{requestData.studentId || 'N/A'}</p>
-                                                    </div>
-                                                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                                                        <p className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Requested Document</p>
-                                                        <p className="font-bold text-slate-900 text-sm">{requestData.documentType || requestData.document_type}</p>
-                                                    </div>
-                                                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                                                        <p className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Course / Year</p>
-                                                        <p className="font-bold text-slate-900 text-sm">{requestData.course || 'N/A'} - {requestData.yearLevel || 'N/A'}</p>
-                                                    </div>
-                                                </div>
-
-                                                <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 text-xs">
-                                                    <span className="font-bold text-slate-400 uppercase tracking-wider block mb-1">Purpose / Request Notes</span>
-                                                    <p className="text-slate-800 font-semibold">{requestData.purpose || requestData.otherPurpose || 'Official issuance for employment / higher education.'}</p>
-                                                </div>
-                                            </div>
                                         </div>
 
                                         {/* ========================================================= */}
