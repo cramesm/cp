@@ -475,6 +475,78 @@ const RequestDetails = () => {
         }
     };
 
+    const base64ToBlob = (base64Data, contentType = 'application/pdf') => {
+        const cleanBase64 = base64Data.includes(';base64,')
+            ? base64Data.split(';base64,')[1]
+            : base64Data;
+        const byteCharacters = atob(cleanBase64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        return new Blob([byteArray], { type: contentType });
+    };
+
+    const handlePreviewDocument = () => {
+        if (!requestData?.documentFile) return;
+        try {
+            if (requestData.documentFile.startsWith('data:')) {
+                const blob = base64ToBlob(requestData.documentFile, 'application/pdf');
+                const blobUrl = URL.createObjectURL(blob);
+                window.open(blobUrl, '_blank', 'noopener,noreferrer');
+            } else {
+                const fileUrl = requestData.documentFile.startsWith('http')
+                    ? requestData.documentFile
+                    : `${API_BASE}${requestData.documentFile}`;
+                window.open(fileUrl, '_blank', 'noopener,noreferrer');
+            }
+        } catch (err) {
+            console.error('Preview error:', err);
+            showFeedback({
+                title: 'Preview Failed',
+                message: 'Failed to open document preview.',
+                type: 'error'
+            });
+        }
+    };
+
+    const handleDownloadDocument = () => {
+        if (!requestData?.documentFile) return;
+        try {
+            let blobUrl;
+            let shouldRevoke = false;
+
+            if (requestData.documentFile.startsWith('data:')) {
+                const blob = base64ToBlob(requestData.documentFile, 'application/pdf');
+                blobUrl = URL.createObjectURL(blob);
+                shouldRevoke = true;
+            } else {
+                blobUrl = requestData.documentFile.startsWith('http')
+                    ? requestData.documentFile
+                    : `${API_BASE}${requestData.documentFile}`;
+            }
+
+            const downloadLink = document.createElement('a');
+            downloadLink.href = blobUrl;
+            downloadLink.download = `official-document-${requestData.requestId || 'export'}.pdf`;
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+
+            if (shouldRevoke) {
+                setTimeout(() => URL.revokeObjectURL(blobUrl), 15000);
+            }
+        } catch (err) {
+            console.error('Download error:', err);
+            showFeedback({
+                title: 'Download Failed',
+                message: 'Failed to download document file. Please try again.',
+                type: 'error'
+            });
+        }
+    };
+
     if (loading) return (
         <Layout>
             <div className="flex justify-center items-center h-full min-h-screen">
@@ -1358,15 +1430,14 @@ const RequestDetails = () => {
                                                     </div>
 
                                                     <div className="flex items-center gap-2 flex-wrap sm:self-center">
-                                                        <a
-                                                            href={requestData.documentFile.startsWith('data:') ? requestData.documentFile : `${API_BASE}${requestData.documentFile}`}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
+                                                        <button
+                                                            type="button"
+                                                            onClick={handlePreviewDocument}
                                                             className="bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs px-4 py-2.5 rounded-full border border-slate-200 shadow-2xs hover:-translate-y-0.5 transition-all flex items-center gap-1.5 cursor-pointer"
                                                         >
                                                             <Eye size={14} className="text-slate-500" />
                                                             <span>Preview Attached PDF</span>
-                                                        </a>
+                                                        </button>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1465,15 +1536,14 @@ const RequestDetails = () => {
                                                 </div>
                                                 {requestData.documentFile && (
                                                     <div className="flex justify-center">
-                                                        <a
-                                                            href={requestData.documentFile.startsWith('data:') ? requestData.documentFile : `${API_BASE}${requestData.documentFile}`}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="bg-[#2c3543] hover:bg-[#1f2631] text-white px-6 py-2.5 rounded-full font-bold text-xs flex items-center gap-2 shadow-xs transition-all"
+                                                        <button
+                                                            type="button"
+                                                            onClick={handlePreviewDocument}
+                                                            className="bg-[#2c3543] hover:bg-[#1f2631] text-white px-6 py-2.5 rounded-full font-bold text-xs flex items-center gap-2 shadow-xs transition-all cursor-pointer"
                                                         >
                                                             <Eye size={14} />
                                                             <span>Preview Attached Document</span>
-                                                        </a>
+                                                        </button>
                                                     </div>
                                                 )}
                                             </div>
@@ -1738,16 +1808,24 @@ const RequestDetails = () => {
 
                                         <div className="flex flex-wrap gap-3 justify-center">
                                             {requestData.documentFile && (
-                                                <a
-                                                    href={requestData.documentFile.startsWith('data:') ? requestData.documentFile : `${API_BASE}${requestData.documentFile}`}
-                                                    download={requestData.documentFile.startsWith('data:') ? `official-document-${requestData.requestId}.pdf` : undefined}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-full font-bold text-xs flex items-center gap-2 shadow-xs hover:-translate-y-0.5 active:translate-y-0.5 transition-all cursor-pointer"
-                                                >
-                                                    <Download size={14} /> 
-                                                    <span>Download Official Soft Copy</span>
-                                                </a>
+                                                <>
+                                                    <button
+                                                        type="button"
+                                                        onClick={handlePreviewDocument}
+                                                        className="bg-white hover:bg-slate-50 text-slate-700 px-6 py-2.5 rounded-full font-bold text-xs flex items-center gap-2 border border-slate-200 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+                                                    >
+                                                        <Eye size={14} className="text-slate-500" />
+                                                        <span>Preview Official Document</span>
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleDownloadDocument}
+                                                        className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-full font-bold text-xs flex items-center gap-2 shadow-xs hover:-translate-y-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+                                                    >
+                                                        <Download size={14} /> 
+                                                        <span>Download Official Soft Copy</span>
+                                                    </button>
+                                                </>
                                             )}
                                         </div>
                                         {isSuperAdmin && (

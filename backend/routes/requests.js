@@ -10,6 +10,9 @@ router.get('/', auth, RequestController.getAllRequests);
 // Get single request by ID
 router.get('/:id', auth, RequestController.getRequestById);
 
+// Get raw PDF for request
+router.get('/:id/pdf', auth, RequestController.getDocumentPdf);
+
 // Create new request
 router.post('/', auth, createRequestValidation, validate, RequestController.createRequest);
 

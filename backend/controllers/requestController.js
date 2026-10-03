@@ -559,6 +559,53 @@ const RequestController = {
     }
   },
 
+  // @desc    Download/view raw document PDF directly
+  getDocumentPdf: async (req, res) => {
+    try {
+      const query = {
+        $or: [
+          { requestId: req.params.id },
+          ...(mongoose.Types.ObjectId.isValid(req.params.id) ? [{ _id: req.params.id }] : [])
+        ]
+      };
+      const request = await Request.findOne(query).lean();
+      if (!request) return res.status(404).json({ message: 'Request not found' });
+
+      if (!isStaffUser(req.user)) {
+        const callerEmail = (req.user?.email || '').toLowerCase().trim();
+        const callerId = String(req.user?.id || req.user?._id || '');
+        const reqEmail = (request.email || '').toLowerCase().trim();
+        const reqUserId = String(request.userId || '');
+
+        const isOwner = (reqEmail && reqEmail === callerEmail) || (reqUserId && reqUserId === callerId);
+        if (!isOwner) {
+          return res.status(403).json({ message: 'Access denied. You can only view your own documents.' });
+        }
+      }
+
+      if (!request.documentFile) {
+        return res.status(404).json({ message: 'No official document file attached to this request yet.' });
+      }
+
+      let pdfBuffer;
+      if (request.documentFile.startsWith('data:')) {
+        const base64Data = request.documentFile.split(';base64,')[1];
+        pdfBuffer = Buffer.from(base64Data, 'base64');
+      } else {
+        return res.redirect(request.documentFile);
+      }
+
+      const filename = `official-document-${request.requestId || 'export'}.pdf`;
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+      res.setHeader('Content-Length', pdfBuffer.length);
+      return res.send(pdfBuffer);
+    } catch (error) {
+      console.error('Error streaming document PDF:', error);
+      res.status(500).json({ message: 'Error retrieving document PDF' });
+    }
+  },
+
   // @desc    Bulk delete requests
   bulkDeleteRequests: async (req, res) => {
     return res.status(403).json({ success: false, message: 'Document request deletion has been disabled.' });
