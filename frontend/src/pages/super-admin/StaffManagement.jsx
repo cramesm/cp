@@ -631,9 +631,8 @@ const ManageRegistrar = () => {
                         </div>
                       </div>
                     ) : (
-                      <div className="px-3.5 py-2 bg-slate-100 border border-slate-200 rounded-xl text-[13px] font-bold text-slate-700 flex items-center justify-between">
-                        <span>{addForm.department} Department</span>
-                        <span className="text-[10px] uppercase tracking-wider bg-slate-200 px-2 py-0.5 rounded text-slate-600 font-bold">Scoped</span>
+                      <div className="px-3.5 py-2 bg-slate-100 border border-slate-200 rounded-xl text-[13px] font-bold text-slate-700">
+                        {addForm.department} Department
                       </div>
                     )}
                     <p className="text-[11px] text-slate-500 mt-1.5 leading-snug">
