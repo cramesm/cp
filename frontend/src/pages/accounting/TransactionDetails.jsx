@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import Layout from '../../components/Layout';
 import api from '../../api';
-import { CheckCircle, XCircle, Clock, Image as ImageIcon, Eye, CreditCard, AlertCircle, User, FileText, RefreshCw, Edit3, Shield } from 'lucide-react';
+import { Image as ImageIcon, Eye, CreditCard, AlertCircle, User, FileText, Edit3, Shield, ArrowLeft } from 'lucide-react';
 import ConfirmModal from '../../components/ConfirmModal';
 import FeedbackModal from '../../components/FeedbackModal';
 
 const API_BASE = (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : '') || 'http://127.0.0.1:5000';
 
 const TransactionDetails = () => {
+    const navigate = useNavigate();
     const { id } = useParams();
     const [txData, setTxData] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -64,10 +65,11 @@ const TransactionDetails = () => {
                 setActionLoading(true);
                 try {
                     await api.put(`/transactions/${txData.transactionId}/verify`, { status: newStatus });
-                    const res = await api.get(`/transactions/${id}`);
-                    setTxData(res.data);
+                    const transactionResponse = await api.get(`/transactions/${id}`);
+                    setTxData(transactionResponse.data);
                     setIsEditingStatus(false);
-                } catch (err) {
+                } catch (error) {
+                    console.error('Status update error:', error);
                     showFeedback({
                         title: 'Update Failed',
                         message: 'We hit a snag updating this transaction\'s status. Please check your connection and try again.',
@@ -83,8 +85,8 @@ const TransactionDetails = () => {
     useEffect(() => {
         const fetchTransaction = async () => {
             try {
-                const res = await api.get(`/transactions/${id}`);
-                setTxData(res.data);
+                const transactionResponse = await api.get(`/transactions/${id}`);
+                setTxData(transactionResponse.data);
             } catch (error) {
                 console.error("Error fetching transaction:", error);
             } finally {
@@ -114,6 +116,14 @@ const TransactionDetails = () => {
                     <AlertCircle size={48} className="mb-4 text-red-400" />
                     <h2 className="text-lg font-black text-slate-800">Transaction Not Found</h2>
                     <p className="text-xs text-slate-400 mt-1 font-mono">Transaction ID: {id}</p>
+                    <button
+                        type="button"
+                        onClick={() => navigate('/transactions')}
+                        className="mt-4 bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold text-xs px-4 py-2 rounded-full border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-2 cursor-pointer w-fit"
+                    >
+                        <ArrowLeft size={13} />
+                        <span>Back to Transactions</span>
+                    </button>
                 </div>
             </Layout>
         );
@@ -217,6 +227,23 @@ const TransactionDetails = () => {
                         <p className="text-xs text-slate-400 font-medium m-0 mt-1">
                             Submitted on {formattedDate} at {formattedTime}
                         </p>
+                    </div>
+
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                        <button 
+                            type="button"
+                            onClick={() => {
+                                if (window.history.length > 1) {
+                                    navigate(-1);
+                                } else {
+                                    navigate('/transactions');
+                                }
+                            }}
+                            className="bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold text-xs px-4 py-2 rounded-full border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-2 cursor-pointer w-fit"
+                        >
+                            <ArrowLeft size={13} />
+                            <span>Back</span>
+                        </button>
                     </div>
                 </div>
 

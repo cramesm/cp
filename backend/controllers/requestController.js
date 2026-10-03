@@ -83,6 +83,14 @@ const batchEnrichRequests = async (requestsList) => {
       reqObj.isPaymentVerified = tx?.status === 'Completed';
       reqObj.paymentTx = tx || null;
 
+      if (reqObj.isPaymentVerified && (!reqObj.mobileStatus || reqObj.mobileStatus === 'pending')) {
+        reqObj.mobileStatus = 'payment_verified';
+      }
+
+      reqObj.trackingStatus = (reqObj.status === 'Pending' && reqObj.isPaymentVerified)
+        ? 'Payment Verified'
+        : reqObj.status;
+
       return reqObj;
     });
   } catch (err) {
@@ -132,6 +140,14 @@ const RequestController = {
 
       const requests = await Request.find(query).sort({ dateRequested: 1 }).lean();
       const enrichedRequests = await batchEnrichRequests(requests);
+
+      if (req.user && (req.user.role === 'student' || req.user.role === 'alumni')) {
+        enrichedRequests.forEach(requestRecord => {
+          if (requestRecord.status === 'Pending' && requestRecord.isPaymentVerified) {
+            requestRecord.status = 'Payment Verified';
+          }
+        });
+      }
       
       res.json(enrichedRequests);
     } catch (error) {
@@ -166,6 +182,11 @@ const RequestController = {
       }
       
       const enrichedRequest = await enrichRequestWithStudentData(request);
+      if (req.user && (req.user.role === 'student' || req.user.role === 'alumni')) {
+        if (enrichedRequest.status === 'Pending' && enrichedRequest.isPaymentVerified) {
+          enrichedRequest.status = 'Payment Verified';
+        }
+      }
       res.json(enrichedRequest);
     } catch (error) {
       console.error('Error fetching single request:', error);

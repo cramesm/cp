@@ -24,7 +24,19 @@ const TransactionController = {
   // @desc    Get all transactions
   getAllTransactions: async (req, res) => {
     try {
-      const transactions = await Transaction.find().sort({ date: 1 });
+      let query = {};
+      if (req.user && (req.user.role === 'student' || req.user.role === 'alumni')) {
+        const userClauses = [];
+        if (req.user.email) {
+          userClauses.push({ payerEmail: req.user.email });
+          userClauses.push({ email: req.user.email });
+        }
+        if (req.user.id || req.user._id) {
+          userClauses.push({ userId: req.user.id || req.user._id });
+        }
+        query = { $or: userClauses.length > 0 ? userClauses : [{ payerEmail: req.user.email }] };
+      }
+      const transactions = await Transaction.find(query).sort({ date: 1 });
       res.json(transactions);
     } catch (error) {
       console.error('Error fetching transactions:', error);
@@ -569,10 +581,11 @@ const TransactionController = {
           } catch (_e) {}
         }
 
-        // Update linked request's mobileStatus while preserving status for document verification
+        // Update linked request's mobileStatus and payment receipt ID while preserving status for document verification
         if (linkedReq) {
           const reqUpdate = {
-            mobileStatus: 'payment_verified'
+            mobileStatus: 'payment_verified',
+            paymentReceiptId: transaction.transactionId
           };
           // If request was previously rejected, reset to Pending so admin can verify document request
           if (linkedReq.status === 'Rejected') {
