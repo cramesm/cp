@@ -275,7 +275,6 @@ const RegistrarController = {
       res.status(201).json({
         success: true,
         message: 'Staff account created successfully! Credentials and login instructions have been dispatched via email.',
-        tempPassword: finalPassword,
         registrar: {
           _id: newRegistrar._id,
           registrarId: newRegistrar.registrarId,

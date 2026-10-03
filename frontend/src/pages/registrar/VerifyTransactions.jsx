@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Layout from "../../components/Layout";
 import API from "../../api";
-import { CheckCircle, AlertCircle, Copy, Search, Check } from 'lucide-react';
+import { CheckCircle, AlertCircle, Copy, Search, Check, ArrowLeft } from 'lucide-react';
 
 function VerifyTransaction() {
+    const navigate = useNavigate();
     const [studentIDNumber, setStudentIDNumber] = useState("");
     const [result, setResult] = useState(null);
     const [toast, setToast] = useState({ show: false, message: '', type: 'info' });
@@ -58,6 +60,28 @@ function VerifyTransaction() {
                         <p className="font-bold text-xs tracking-wide">{toast.message}</p>
                     </div>
                 )}
+
+                {/* Header with Title and Back Navigation */}
+                <div className="bg-white rounded-[22px] p-4 sm:p-5 shadow-[0_8px_24px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.02)] border border-slate-100/90 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-[20px] font-black text-slate-900 tracking-tight leading-tight m-0">
+                            Verify Academic Record
+                        </h1>
+                        <p className="text-slate-500 text-xs font-semibold mt-1">
+                            Authenticate cryptographic signatures and ledger status for issued academic credentials.
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                        <button 
+                            type="button"
+                            onClick={() => navigate('/blockchain')}
+                            className="bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold text-xs px-4 py-2 rounded-full border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-2 cursor-pointer w-fit"
+                        >
+                            <ArrowLeft size={13} />
+                            <span>Back to Blockchain Records</span>
+                        </button>
+                    </div>
+                </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     {/* Search Card */}

@@ -176,14 +176,12 @@ const ManageRegistrar = () => {
 
       if (res.data) {
         const createdReg = res.data.registrar || {};
-        const tempPassword = res.data.tempPassword || '';
 
         setAddSuccessData({
           name: createdReg.name || `${addForm.firstName.trim()} ${addForm.lastName.trim()}`,
           email: createdReg.email || addForm.email.trim(),
           department: createdReg.department || addForm.department,
-          role: createdReg.role || (addForm.department === 'Accounting' ? 'Accounting Staff' : addForm.department === 'IT Administration' ? 'IT Staff' : 'Registrar Staff'),
-          tempPassword
+          role: createdReg.role || (addForm.department === 'Accounting' ? 'Accounting Staff' : addForm.department === 'IT Administration' ? 'IT Staff' : 'Registrar Staff')
         });
 
         // Refresh staff list immediately
@@ -199,7 +197,7 @@ const ManageRegistrar = () => {
 
   const handleCopyCredentials = () => {
     if (!addSuccessData) return;
-    const textToCopy = `VeriFitor Staff Account Credentials\nName: ${addSuccessData.name}\nEmail: ${addSuccessData.email}\nTemporary Password: ${addSuccessData.tempPassword}\nDepartment: ${addSuccessData.department}\nNotice: Upon logging in, please change your temporary password in Profile Settings.`;
+    const textToCopy = `VeriFitor Staff Account Profile\nName: ${addSuccessData.name}\nEmail: ${addSuccessData.email}\nDepartment: ${addSuccessData.department}\nRole: ${addSuccessData.role}\nNotice: Account credentials have been securely dispatched via email to ${addSuccessData.email}.`;
     navigator.clipboard.writeText(textToCopy);
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
@@ -696,17 +694,18 @@ const ManageRegistrar = () => {
                     <span className="font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full text-[11px]">{addSuccessData.role}</span>
                   </div>
                   <div className="flex justify-between items-center text-[12px] pt-1.5 border-t border-slate-200">
-                    <span className="text-slate-500 font-medium">Temp Password:</span>
-                    <code className="bg-white border border-slate-300 px-2.5 py-0.5 rounded font-mono font-bold text-slate-900 text-[13px] select-all">
-                      {addSuccessData.tempPassword}
-                    </code>
+                    <span className="text-slate-500 font-medium">Credentials Delivery:</span>
+                    <span className="inline-flex items-center gap-1.5 text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full text-[11px] font-semibold">
+                      <i className="fa-solid fa-envelope-circle-check text-emerald-600"></i>
+                      Dispatched via Email
+                    </span>
                   </div>
                 </div>
 
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-left mb-4">
-                  <p className="text-[11.5px] text-amber-900 leading-snug m-0">
-                    <i className="fa-solid fa-shield-halved text-amber-600 mr-1.5"></i>
-                    <strong>Important Security Notice:</strong> Upon logging in, it is recommended to change the temporary password in the profile settings.
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-left mb-4">
+                  <p className="text-[11.5px] text-blue-900 leading-snug m-0">
+                    <i className="fa-solid fa-shield-halved text-blue-600 mr-1.5"></i>
+                    <strong>Security Notice:</strong> The temporary password was sent directly to the staff member&apos;s email address and is not visible to administrators.
                   </p>
                 </div>
 
