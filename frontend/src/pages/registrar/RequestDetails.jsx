@@ -213,7 +213,7 @@ const RequestDetails = () => {
             console.error('Update status error:', err);
             showFeedback({
                 title: 'Update Failed',
-                message: 'Oops! We couldn\'t update the status of this request right now. Please try again.',
+                message: err.response?.data?.message || 'Oops! We couldn\'t update the status of this request right now. Please try again.',
                 type: 'error'
             });
         } finally {
@@ -467,7 +467,7 @@ const RequestDetails = () => {
             console.error('Finalize error:', err);
             showFeedback({
                 title: 'Failed to Finalize',
-                message: 'Oops! We ran into an issue while securing this document. Please try again later.',
+                message: err.response?.data?.message || 'Oops! We ran into an issue while securing this document. Please try again later.',
                 type: 'error'
             });
         } finally {

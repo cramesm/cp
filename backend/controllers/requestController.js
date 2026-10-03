@@ -299,12 +299,20 @@ const RequestController = {
     try {
       const { status, name, documentHash, forceOverride, rejectionReason, estimatedProcessingStart, estimatedProcessingEnd } = req.body;
       const userRole = (req.user?.role || '').toLowerCase();
+      const userDept = (req.user?.department || '').toLowerCase();
 
       if (forceOverride && userRole !== 'super admin') {
         return res.status(403).json({ message: 'Only super admins can perform force overrides.' });
       }
 
-      const isStaffOrAdmin = ['super admin', 'registrar', 'registrar staff', 'admin', 'staff'].includes(userRole);
+      const isStaffOrAdmin = [
+        'super admin',
+        'registrar admin',
+        'registrar staff',
+        'registrar',
+        'admin',
+        'staff'
+      ].includes(userRole) || userRole.includes('registrar') || userDept === 'registrar';
       if (status && !isStaffOrAdmin) {
         return res.status(403).json({ message: 'Only authorized staff and administrators can update the processing status of a request.' });
       }
@@ -463,7 +471,15 @@ const RequestController = {
   uploadDocumentFile: async (req, res) => {
     try {
       const userRole = (req.user?.role || '').toLowerCase();
-      const isStaffOrAdmin = ['super admin', 'registrar', 'registrar staff', 'admin', 'staff'].includes(userRole);
+      const userDept = (req.user?.department || '').toLowerCase();
+      const isStaffOrAdmin = [
+        'super admin',
+        'registrar admin',
+        'registrar staff',
+        'registrar',
+        'admin',
+        'staff'
+      ].includes(userRole) || userRole.includes('registrar') || userDept === 'registrar';
       if (!isStaffOrAdmin) {
         return res.status(403).json({ message: 'Only authorized staff and administrators can upload and process document files.' });
       }
