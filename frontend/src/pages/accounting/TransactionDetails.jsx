@@ -122,7 +122,7 @@ const TransactionDetails = () => {
                         className="mt-4 bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold text-xs px-4 py-2 rounded-full border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-2 cursor-pointer w-fit"
                     >
                         <ArrowLeft size={13} />
-                        <span>Back to Transactions</span>
+                        <span>Back to Payments</span>
                     </button>
                 </div>
             </Layout>
@@ -242,7 +242,7 @@ const TransactionDetails = () => {
                             className="bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold text-xs px-4 py-2 rounded-full border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-2 cursor-pointer w-fit"
                         >
                             <ArrowLeft size={13} />
-                            <span>Back</span>
+                            <span>Back to Payments</span>
                         </button>
                     </div>
                 </div>
