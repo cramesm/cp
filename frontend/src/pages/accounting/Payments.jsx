@@ -52,7 +52,7 @@ const Transactions = () => {
   const [filterProgram, setFilterProgram] = useState('All');
   const [filterUserStatus, setFilterUserStatus] = useState('All');
   const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState(new Date().toLocaleDateString('en-CA'));
+  const [endDate, setEndDate] = useState('');
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
@@ -73,15 +73,6 @@ const Transactions = () => {
     try {
       const res = await api.get('/transactions');
       setTransactions(res.data || []);
-      if (res.data && res.data.length > 0) {
-        setStartDate(prev => {
-          if (!prev) {
-            const oldest = new Date(Math.min(...res.data.map(t => new Date(t.date))));
-            return oldest.toLocaleDateString('en-CA');
-          }
-          return prev;
-        });
-      }
     } catch (err) {
       console.error('Error fetching transactions:', err);
     } finally {
@@ -660,6 +651,16 @@ const Transactions = () => {
                       if (key === 'startDate') setStartDate('');
                       if (key === 'endDate') setEndDate('');
                   }}
+                  onClearAll={() => {
+                      setFilterUserRole('All');
+                      setFilterProgram('All');
+                      setFilterUserStatus('All');
+                      setFilterPaymentMode('All Modes');
+                      setFilterDocType('All Types');
+                      setFilterStatus('All Status');
+                      setStartDate('');
+                      setEndDate('');
+                  }}
               />
             </div>
 
@@ -675,7 +676,7 @@ const Transactions = () => {
                   setFilterProgram('All');
                   setFilterUserStatus('All');
                   setStartDate('');
-                  setEndDate(new Date().toLocaleDateString('en-CA'));
+                  setEndDate('');
                   setSortConfig({ key: 'date', direction: 'desc' });
                 }}
             >

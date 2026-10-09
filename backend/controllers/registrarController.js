@@ -313,6 +313,9 @@ const RegistrarController = {
 
       if (!staff) return res.status(404).json({ message: 'User not found' });
 
+      const oldRole = staff.role;
+      const oldStatus = staff.status || 'Active';
+
       // Department boundary enforcement: Department Admins can only manage staff within their own department
       const requesterDept = (req.user?.department || '').toLowerCase();
       const targetDept = (staff.department || '').toLowerCase();

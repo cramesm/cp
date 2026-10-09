@@ -26,21 +26,25 @@ const batchEnrichRequests = async (requestsList) => {
   try {
     const studentIds = [...new Set(requestsList.map(r => r.studentId).filter(Boolean))];
     const userEmails = [...new Set(requestsList.map(r => r.email).filter(Boolean))];
+    const userIds = [...new Set(requestsList.map(r => r.userId).filter(Boolean))];
+    const validUserIds = userIds.filter(id => mongoose.Types.ObjectId.isValid(id));
 
-    if (studentIds.length === 0 && userEmails.length === 0) return requestsList;
+    if (studentIds.length === 0 && userEmails.length === 0 && validUserIds.length === 0) return requestsList;
 
     const requestIds = requestsList.map(r => r.requestId).filter(Boolean);
     const [students, alumni, transactions] = await Promise.all([
       Student.find({
         $or: [
           ...(studentIds.length ? [{ studentId: { $in: studentIds } }] : []),
-          ...(userEmails.length ? [{ email: { $in: userEmails } }] : [])
+          ...(userEmails.length ? [{ email: { $in: userEmails } }] : []),
+          ...(validUserIds.length ? [{ _id: { $in: validUserIds } }] : [])
         ]
       }).lean(),
       Alumni.find({
         $or: [
           ...(studentIds.length ? [{ studentId: { $in: studentIds } }] : []),
-          ...(userEmails.length ? [{ email: { $in: userEmails } }] : [])
+          ...(userEmails.length ? [{ email: { $in: userEmails } }] : []),
+          ...(validUserIds.length ? [{ _id: { $in: validUserIds } }] : [])
         ]
       }).lean(),
       requestIds.length > 0 ? Transaction.find({ requestId: { $in: requestIds } }).lean() : Promise.resolve([])
@@ -53,29 +57,50 @@ const batchEnrichRequests = async (requestsList) => {
 
     const studentMap = {};
     students.forEach(s => {
-      if (s.studentId) studentMap[s.studentId] = { ...s, detectedOwnerType: 'Student' };
-      if (s.email) studentMap[s.email] = { ...s, detectedOwnerType: 'Student' };
-    });
-    alumni.forEach(a => {
-      if (a.studentId) studentMap[a.studentId] = { ...a, detectedOwnerType: 'Alumni' };
-      if (a.email) studentMap[a.email] = { ...a, detectedOwnerType: 'Alumni' };
+      let detectedType = 'Student';
+      const statusLower = (s.status || '').toLowerCase();
+      if (statusLower.includes('former') || statusLower === 'stopped' || statusLower === 'inactive') {
+        detectedType = 'Former Student';
+      } else if (s.role === 'alumni') {
+        detectedType = 'Alumni';
+      }
+      const dataObj = { ...s, detectedOwnerType: detectedType };
+      if (s.studentId) studentMap[s.studentId] = dataObj;
+      if (s.email) studentMap[s.email] = dataObj;
+      if (s._id) studentMap[String(s._id)] = dataObj;
     });
 
+    alumni.forEach(a => {
+      let detectedType = 'Alumni';
+      const statusLower = (a.status || '').toLowerCase();
+      if (statusLower.includes('former')) {
+        detectedType = 'Former Student';
+      }
+      const dataObj = { ...a, detectedOwnerType: detectedType };
+      if (a.studentId) studentMap[a.studentId] = dataObj;
+      if (a.email) studentMap[a.email] = dataObj;
+      if (a._id) studentMap[String(a._id)] = dataObj;
+    });
+
+    const cleanId = (val) => (!val || val === 'N/A' || val === 'n/a' || val === 'None' || val === 'none') ? '' : val;
+
     return requestsList.map(reqObj => {
-      const student = (reqObj.studentId && studentMap[reqObj.studentId]) ||
-                      (reqObj.email && studentMap[reqObj.email]) || null;
+      const student = (cleanId(reqObj.studentId) && studentMap[cleanId(reqObj.studentId)]) ||
+                      (reqObj.email && studentMap[reqObj.email]) ||
+                      (reqObj.userId && studentMap[String(reqObj.userId)]) || null;
       if (student) {
-        reqObj.studentId = reqObj.studentId || student.studentId || '';
+        reqObj.studentId = cleanId(reqObj.studentId) || cleanId(student.studentId) || '';
         reqObj.course = reqObj.course || student.course || '';
         reqObj.yearLevel = reqObj.yearLevel || student.yearLevel || '';
         reqObj.ownerType = student.detectedOwnerType || (student.role === 'alumni' ? 'Alumni' : 'Student');
+        reqObj.userProfileStudentId = cleanId(student.studentId) || '';
         
         if (reqObj.name && reqObj.name.toLowerCase() === 'user' && (student.firstName || student.lastName)) {
           reqObj.name = `${student.firstName || ''} ${student.lastName || ''}`.trim();
         }
       } else {
         const isDiploma = (reqObj.documentType || reqObj.document_type || '').toLowerCase().includes('diploma');
-        reqObj.ownerType = isDiploma ? 'Alumni' : 'Student';
+        reqObj.ownerType = reqObj.ownerType || (isDiploma ? 'Alumni' : 'Student');
       }
 
       const tx = txMap[reqObj.requestId];
@@ -263,6 +288,7 @@ const RequestController = {
         purpose: req.body.purpose || '',
         otherPurpose: req.body.otherPurpose || '',
         quantity: req.body.quantity || 1,
+        referenceNumber: req.body.referenceNumber || '',
         email: req.user.email || ''
       });
 
@@ -346,6 +372,11 @@ const RequestController = {
                                        status === 'Rejected' ? 'rejected' :
                                        status.toLowerCase().replace(/\s+/g, '_');
         updateData.mobileStatus = normalizedMobileStatus;
+        if (status.toLowerCase() === 'released' || status.toLowerCase() === 'completed') {
+          updateData.dateReleased = new Date();
+        } else {
+          updateData.dateReleased = null;
+        }
       }
       if (documentHash !== undefined) updateData.documentHash = documentHash;
       if (rejectionReason !== undefined) updateData.rejectionReason = rejectionReason;

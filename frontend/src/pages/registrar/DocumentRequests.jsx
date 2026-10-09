@@ -33,7 +33,7 @@ const Requests = () => {
     const [filterProgram, setFilterProgram] = useState('All');
     const [filterUserStatus, setFilterUserStatus] = useState('All');
     const [startDate, setStartDate] = useState('');
-    const [endDate, setEndDate] = useState(new Date().toLocaleDateString('en-CA'));
+    const [endDate, setEndDate] = useState('');
     const [entriesPerPage, setEntriesPerPage] = useState(10);
     const [currentPage, setCurrentPage] = useState(initialPage);
     const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
@@ -99,15 +99,6 @@ const Requests = () => {
                 }
 
                 setRequests(finalRequests);
-                if (finalRequests.length > 0) {
-                    setStartDate(prev => {
-                        if (!prev) {
-                            const oldest = new Date(Math.min(...finalRequests.map(req => new Date(req.dateRequested))));
-                            return oldest.toLocaleDateString('en-CA');
-                        }
-                        return prev;
-                    });
-                }
             } catch (error) {
                 console.error("Error fetching requests:", error);
             } finally {
@@ -307,6 +298,15 @@ const Requests = () => {
                                 if (key === 'startDate') setStartDate('');
                                 if (key === 'endDate') setEndDate('');
                             }}
+                            onClearAll={() => {
+                                setFilterStatus('All Status');
+                                setFilterType('All Document');
+                                setFilterUserRole('All');
+                                setFilterProgram('All');
+                                setFilterUserStatus('All');
+                                setStartDate('');
+                                setEndDate('');
+                            }}
                         />
                     </div>
 
@@ -468,7 +468,7 @@ const Requests = () => {
                         setFilterProgram('All');
                         setFilterUserStatus('All');
                         setStartDate('');
-                        setEndDate(new Date().toLocaleDateString('en-CA'));
+                        setEndDate('');
                         setSortConfig({ key: 'dateRequested', direction: 'desc' });
                     }}
                 >

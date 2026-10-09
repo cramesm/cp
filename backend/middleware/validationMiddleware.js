@@ -223,7 +223,11 @@ const createRequestValidation = [
     .isAlphanumeric('en-US', { ignore: " -" }).withMessage('Year level contains invalid characters'),
   body('quantity')
     .optional()
-    .isInt({ min: 1, max: 20 }).withMessage('Quantity must be an integer between 1 and 20')
+    .isInt({ min: 1, max: 20 }).withMessage('Quantity must be an integer between 1 and 20'),
+  body('referenceNumber')
+    .optional({ checkFalsy: true })
+    .trim()
+    .isLength({ max: 100 }).withMessage('Reference number cannot exceed 100 characters')
 ];
 
 const requestStatusValidation = [

@@ -22,7 +22,7 @@ const blockchainTransactionSchema = new mongoose.Schema(
     },
     ownerType: {
       type: String,
-      enum: ['Student', 'Alumni'],
+      enum: ['Student', 'Alumni', 'Former Student'],
       default: 'Student'
     },
     nameOfStudent: {

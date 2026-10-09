@@ -44,11 +44,6 @@ const Footer = () => {
               <p className="text-gray-400 text-xs">Verified on:</p>
               <p className="text-white font-semibold">{new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} - {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</p>
             </div>
-            
-            <div className="flex flex-col md:items-end space-y-2 pt-1">
-              <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-              <a href="#" className="hover:text-white transition-colors">Terms of Use</a>
-            </div>
           </div>
 
         </div>

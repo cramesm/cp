@@ -1,12 +1,14 @@
 import { useEffect, useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import Layout from "../../components/Layout";
 import API from "../../api";
 import FilterDrawer from "../../components/FilterDrawer";
 import ActiveFilterChips from "../../components/ActiveFilterChips";
 import TableSkeleton from "../../components/TableSkeleton";
-import { Copy, CheckCircle, AlertCircle, RefreshCw, Search, SlidersHorizontal, ArrowDownAZ, ArrowUpZA, Check } from "lucide-react";
+import { Copy, CheckCircle, AlertCircle, RefreshCw, Search, SlidersHorizontal, ArrowDownAZ, ArrowUpZA, Check, ArrowLeft } from "lucide-react";
 
 function MyTransactions() {
+    const navigate = useNavigate();
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -153,6 +155,34 @@ function MyTransactions() {
                     </div>
                 )}
 
+                {/* Header Card */}
+                <div className="bg-white rounded-[22px] p-4 sm:p-5 shadow-[0_8px_24px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.02)] border border-slate-100/90 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-[20px] font-black text-slate-900 tracking-tight leading-tight m-0">
+                            Secured Records Ledger
+                        </h1>
+                        <p className="text-slate-500 text-xs font-semibold mt-1">
+                            View and search all verified academic records registered on the tamper-proof digital ledger.
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                        <button 
+                            type="button"
+                            onClick={() => {
+                                if (window.history.length > 1) {
+                                    navigate(-1);
+                                } else {
+                                    navigate('/blockchain');
+                                }
+                            }}
+                            className="bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold text-xs px-4 py-2 rounded-full border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-2 cursor-pointer w-fit"
+                        >
+                            <ArrowLeft size={13} />
+                            <span>Back</span>
+                        </button>
+                    </div>
+                </div>
+
                 {/* Main Card */}
                 <div className="rounded-[22px] bg-white shadow-[0_8px_24px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.02)] border border-slate-100/90 overflow-hidden">
                     
@@ -214,6 +244,10 @@ function MyTransactions() {
                             onRemove={(key) => {
                                 if (key === 'filterStatus') setFilterStatus('All Status');
                                 if (key === 'filterMonth') setFilterMonth('');
+                            }}
+                            onClearAll={() => {
+                                setFilterStatus('All Status');
+                                setFilterMonth('');
                             }}
                         />
                     </div>

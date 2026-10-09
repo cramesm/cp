@@ -180,13 +180,14 @@ const DocumentController = {
       if (doc.linkedRequestId) {
         await Request.findOneAndUpdate(
           { requestId: doc.linkedRequestId },
-          { documentHash: hash, status: 'Released' }
+          { documentHash: hash, status: 'Released', dateReleased: new Date() }
         );
       } else {
         await Request.create({
           requestId: doc.documentId,
           name: doc.studentName,
           status: 'Released',
+          dateReleased: new Date(),
           documentType: doc.documentType,
           documentHash: hash
         });

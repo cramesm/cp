@@ -268,6 +268,12 @@ const Notifications = () => {
                 if (key === 'startDate') setStartDate('');
                 if (key === 'endDate') setEndDate('');
               }}
+              onClearAll={() => {
+                setFilterStatus('All Status');
+                setFilterCategory('All');
+                setStartDate('');
+                setEndDate('');
+              }}
             />
           </div>
 

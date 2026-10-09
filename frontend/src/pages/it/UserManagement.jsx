@@ -241,6 +241,10 @@ const StudentManagement = () => {
                                 if (key === 'filterProgram') setFilterProgram('All');
                                 if (key === 'filterStatus') setFilterStatus('All');
                             }}
+                            onClearAll={() => {
+                                setFilterProgram('All');
+                                setFilterStatus('All');
+                            }}
                         />
                     </div>
 
@@ -328,7 +332,7 @@ const StudentManagement = () => {
                                     <th className="py-3 px-5">Name</th>
                                     <th className="py-3 px-5">{activeTab === 'student' ? 'School Email' : 'Email'}</th>
                                     <th className="py-3 px-5">Student ID</th>
-                                    {activeTab === 'student' && <th className="py-3 px-5">Program</th>}
+                                    <th className="py-3 px-5">Role</th>
                                     <th className="py-3 px-5">Joined Date</th>
                                     <th className="py-3 px-5 text-center">Status</th>
                                     <th className="py-3 px-5 text-right">Action</th>
@@ -336,9 +340,9 @@ const StudentManagement = () => {
                             </thead>
                             <tbody className="divide-y divide-slate-100 text-[12.5px]">
                                 {loading ? (
-                                    <TableSkeleton columns={6} rows={entriesPerPage || 10} />
+                                    <TableSkeleton columns={7} rows={entriesPerPage || 10} />
                                 ) : paginatedUsers.length > 0 ? (
-                                    paginatedUsers.map((user, idx) => (
+                                    paginatedUsers.map((user) => (
                                         <tr
                                             key={user._id}
                                             className="hover:bg-slate-50/80 transition-colors"
@@ -352,13 +356,11 @@ const StudentManagement = () => {
                                                     {user.studentId ? user.studentId : 'N/A'}
                                                 </span>
                                             </td>
-                                            {activeTab === 'student' && (
-                                                <td className="py-3 px-5">
-                                                    <span className="inline-block px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-extrabold uppercase tracking-wider border border-blue-200/60">
-                                                        {user.programLevel || 'Bachelors'}
-                                                    </span>
-                                                </td>
-                                            )}
+                                            <td className="py-3 px-5">
+                                                <span className="inline-block px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-extrabold uppercase tracking-wider border border-blue-200/60">
+                                                    {user.role ? (user.role.charAt(0).toUpperCase() + user.role.slice(1).toLowerCase()) : (activeTab === 'alumni' ? 'Alumni' : 'Student')}
+                                                </span>
+                                            </td>
                                             <td className="py-3 px-5 text-slate-500">
                                                 {new Date(user.createdAt).toLocaleDateString()}
                                             </td>

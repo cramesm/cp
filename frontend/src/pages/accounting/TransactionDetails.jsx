@@ -294,6 +294,11 @@ const TransactionDetails = () => {
                                     {txData.paymentMode}
                                 </span>
 
+                                <span className="text-slate-400 font-bold">Reference No:</span>
+                                <span className="font-mono text-slate-800 font-bold text-[12px] break-all">
+                                    {txData.referenceNumber || 'N/A'}
+                                </span>
+
                                 <span className="text-slate-400 font-bold">Status:</span>
                                 <span className={`inline-flex items-center gap-1.5 w-fit px-3 py-0.5 rounded-full text-[10.5px] font-extrabold uppercase border ${statusBadge.style}`}>
                                     <span className={`w-1.5 h-1.5 rounded-full ${statusBadge.dotColor}`}></span>

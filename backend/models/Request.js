@@ -34,6 +34,10 @@ const requestSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  referenceNumber: {
+    type: String,
+    default: ''
+  },
   course: {
     type: String,
     default: ''
@@ -80,6 +84,10 @@ const requestSchema = new mongoose.Schema({
   dateRequested: {
     type: Date,
     default: Date.now
+  },
+  dateReleased: {
+    type: Date,
+    default: null
   },
   estimatedProcessingStart: {
     type: Date,

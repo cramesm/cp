@@ -110,6 +110,7 @@ const TransactionController = {
               _id: rawReceipt._id,
               transactionId: rawReceipt.paymentSubmissionId || `TXN-${rawReceipt._id}`,
               requestId: rawReceipt.trueRequestId || rawReceipt.requestId || requestId || 'N/A',
+              referenceNumber: rawReceipt.referenceNumber || rawReceipt.refNumber || '',
               documentType: rawReceipt.docName || docName || 'General',
               paymentMode: rawReceipt.paymentType || 'Receipt',
               amount: rawReceipt.amount || '0.00',
@@ -224,6 +225,7 @@ const TransactionController = {
             _id: rawReceipt._id,
             transactionId: rawReceipt.paymentSubmissionId || `TXN-${rawReceipt._id}`,
             requestId: rawReceipt.trueRequestId || rawReceipt.requestId || targetRequestId,
+            referenceNumber: rawReceipt.referenceNumber || rawReceipt.refNumber || '',
             documentType: rawReceipt.docName || 'General',
             paymentMode: rawReceipt.paymentType || 'Receipt',
             amount: rawReceipt.amount || '0.00',
@@ -297,7 +299,7 @@ const TransactionController = {
   // @desc    Upload receipt and create transaction
   uploadReceipt: async (req, res) => {
     try {
-      const { requestId, name, documentType, docName, paymentMode, paymentType, amount, payerName, payerEmail, payerType, userId } = req.body;
+      const { requestId, name, documentType, docName, paymentMode, paymentType, amount, payerName, payerEmail, payerType, userId, referenceNumber } = req.body;
 
       const count = await Transaction.countDocuments();
       const transactionId = `TXN-${Date.now().toString(36).toUpperCase()}-${(count + 1).toString().padStart(4, '0')}`;
@@ -315,6 +317,7 @@ const TransactionController = {
       const newTx = await Transaction.create({
         transactionId,
         requestId: requestId || 'N/A',
+        referenceNumber: referenceNumber || '',
         userId: userId || req.user?.id || req.user?._id || null,
         name: name || payerName || 'Unknown',
         documentType: effectiveDocType,
@@ -329,6 +332,14 @@ const TransactionController = {
 
       // Synchronize associated Request if available
       if (requestId && requestId !== 'N/A') {
+        const reqUpdate = {
+          status: 'Pending',
+          mobileStatus: 'pending',
+          paymentType: effectivePaymentMode
+        };
+        if (referenceNumber) {
+          reqUpdate.referenceNumber = referenceNumber;
+        }
         await Request.findOneAndUpdate(
           {
             $or: [
@@ -336,11 +347,7 @@ const TransactionController = {
               ...(mongoose.Types.ObjectId.isValid(requestId) ? [{ _id: requestId }] : [])
             ]
           },
-          {
-            status: 'Pending',
-            mobileStatus: 'pending',
-            paymentType: effectivePaymentMode
-          }
+          reqUpdate
         );
       }
 
@@ -419,6 +426,7 @@ const TransactionController = {
       const newTx = await Transaction.create({
         transactionId: req.body.transactionId || 'TXN-' + Date.now(),
         requestId: req.body.requestId || 'N/A',
+        referenceNumber: req.body.referenceNumber || '',
         name: req.body.name || 'Unknown',
         documentType: req.body.documentType || 'General',
         paymentMode: req.body.paymentMode || 'GCash',
@@ -731,6 +739,9 @@ const TransactionController = {
       }
 
       const updateData = { status: 'Pending Verification', adminRemarks: '' };
+      if (req.body.referenceNumber) {
+        updateData.referenceNumber = req.body.referenceNumber;
+      }
       if (req.file) {
         const uploadResult = await uploadStream(req.file.buffer, 'receipts');
         updateData.receiptImage = uploadResult.secure_url;

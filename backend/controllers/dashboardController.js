@@ -15,6 +15,8 @@ const DashboardController = {
   // @desc    Get dashboard summary statistics tailored for each role
   getStats: async (req, res) => {
     try {
+      res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+
       const [
         totalRequests,
         pendingRequests,
@@ -38,7 +40,7 @@ const DashboardController = {
         Request.countDocuments({ status: 'Pending' }),
         Request.countDocuments({ status: 'In Process' }),
         Request.countDocuments({ status: 'Rejected' }),
-        Request.countDocuments({ status: 'Released' }),
+        Request.countDocuments({ status: { $regex: /^(released|completed)$/i } }),
         BlockchainTransaction.countDocuments(),
         Refund.countDocuments({ status: { $regex: /^pending$/i } }),
         Refund.countDocuments(),
@@ -56,14 +58,31 @@ const DashboardController = {
       const totalRevenue = completedTxs.reduce((sum, tx) => sum + (parseFloat(tx.amount) || 0), 0);
       const totalRefunded = approvedRefundsList.reduce((sum, rf) => sum + (parseFloat(rf.amount) || 0), 0);
 
-      // Start of today
-      const startOfToday = new Date();
-      startOfToday.setHours(0, 0, 0, 0);
+      // Timezone-aware date boundaries for "Today"
+      // Client offset is in minutes: getTimezoneOffset() = UTC - LocalTime (e.g. -480 for UTC+8)
+      let clientOffset = -480;
+      if (req.query.timezoneOffset !== undefined && !isNaN(parseInt(req.query.timezoneOffset, 10))) {
+        clientOffset = parseInt(req.query.timezoneOffset, 10);
+      } else if (req.headers['x-timezone-offset'] !== undefined && !isNaN(parseInt(req.headers['x-timezone-offset'], 10))) {
+        clientOffset = parseInt(req.headers['x-timezone-offset'], 10);
+      } else {
+        const serverOffset = new Date().getTimezoneOffset();
+        if (serverOffset !== 0) clientOffset = serverOffset;
+      }
+
+      const now = new Date();
+      const clientLocalNow = new Date(now.getTime() - (clientOffset * 60 * 1000));
+      const year = clientLocalNow.getUTCFullYear();
+      const month = clientLocalNow.getUTCMonth();
+      const date = clientLocalNow.getUTCDate();
+
+      const startOfToday = new Date(Date.UTC(year, month, date, 0, 0, 0, 0) + (clientOffset * 60 * 1000));
+      const endOfToday = new Date(Date.UTC(year, month, date, 23, 59, 59, 999) + (clientOffset * 60 * 1000));
 
       // Today's completed transactions & revenue
       const todayCompletedTxs = await Transaction.find({
-        status: 'Completed',
-        updatedAt: { $gte: startOfToday }
+        status: { $regex: /^completed$/i },
+        updatedAt: { $gte: startOfToday, $lte: endOfToday }
       }).select('amount');
 
       const todayRevenue = todayCompletedTxs.reduce((sum, tx) => sum + (parseFloat(tx.amount) || 0), 0);
@@ -71,31 +90,59 @@ const DashboardController = {
 
       // Today's released requests
       const todayReleasedRequestsCount = await Request.countDocuments({
-        status: 'Released',
-        updatedAt: { $gte: startOfToday }
+        status: { $regex: /^(released|completed)$/i },
+        $or: [
+          { dateReleased: { $gte: startOfToday, $lte: endOfToday } },
+          {
+            $and: [
+              { $or: [{ dateReleased: null }, { dateReleased: { $exists: false } }] },
+              { updatedAt: { $gte: startOfToday, $lte: endOfToday } }
+            ]
+          }
+        ]
       });
 
       // Separate staff counts by department
-      const registrarStaffCount = await Registrar.countDocuments({
-        $or: [
-          { department: 'Registrar' },
-          { role: { $regex: /registrar/i } }
-        ]
-      });
-
-      const accountingStaffCount = await Registrar.countDocuments({
-        $or: [
-          { department: 'Accounting' },
-          { role: { $regex: /accounting/i } }
-        ]
-      });
-
-      const itStaffCount = await Registrar.countDocuments({
-        $or: [
-          { department: 'IT Administration' },
-          { role: { $regex: /it/i } }
-        ]
-      });
+      const [
+        registrarStaffCount,
+        accountingStaffCount,
+        itStaffCount,
+        itActiveStaffCount,
+        itInactiveStaffCount
+      ] = await Promise.all([
+        Registrar.countDocuments({
+          $or: [
+            { department: 'Registrar' },
+            { role: { $regex: /registrar/i } }
+          ]
+        }),
+        Registrar.countDocuments({
+          $or: [
+            { department: 'Accounting' },
+            { role: { $regex: /accounting/i } }
+          ]
+        }),
+        Registrar.countDocuments({
+          $or: [
+            { department: 'IT Administration' },
+            { role: { $regex: /it/i } }
+          ]
+        }),
+        Registrar.countDocuments({
+          $or: [
+            { department: 'IT Administration' },
+            { role: { $regex: /it/i } }
+          ],
+          status: 'Active'
+        }),
+        Registrar.countDocuments({
+          $or: [
+            { department: 'IT Administration' },
+            { role: { $regex: /it/i } }
+          ],
+          status: { $ne: 'Active' }
+        })
+      ]);
 
       // Payment channels distribution
       const [gcashCount, landbankCount, otherPaymentCount] = await Promise.all([
@@ -138,7 +185,9 @@ const DashboardController = {
         inactiveStaff,
         registrarStaffCount,
         accountingStaffCount,
-        itStaffCount
+        itStaffCount,
+        itActiveStaffCount,
+        itInactiveStaffCount
       });
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);

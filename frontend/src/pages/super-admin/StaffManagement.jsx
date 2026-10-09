@@ -215,9 +215,10 @@ const ManageRegistrar = () => {
             try {
                 const response = await api.put(`/registrars/${registrarId}`, { status: newStatus });
                 if (response.data) {
+                    const updatedStatus = response.data?.status || newStatus;
                     setRegistrars(prev => prev.map(reg => 
-                        (reg._id === registrarId || reg.registrarId === registrarId) 
-                            ? { ...reg, status: response.data.status } 
+                        (String(reg._id) === String(registrarId) || String(reg.registrarId) === String(registrarId)) 
+                            ? { ...reg, status: updatedStatus } 
                             : reg
                     ));
                     showFeedback({

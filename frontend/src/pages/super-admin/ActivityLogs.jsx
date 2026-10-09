@@ -386,6 +386,14 @@ export default function ActivityLogs() {
                   if (key === 'startDate') setStartDate('');
                   if (key === 'endDate') setEndDate('');
                 }}
+                onClearAll={() => {
+                  setFilterUser('All Users');
+                  setFilterAction('All Actions');
+                  setFilterType('All Document');
+                  setFilterStatus('All Status');
+                  setStartDate('');
+                  setEndDate('');
+                }}
               />
             </div>
 

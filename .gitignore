@@ -57,6 +57,7 @@ Thumbs.db
 
 # AI Agent Instructions
 AGENTS.md
+GEMINI.md
 .agent/
 .agents/
 

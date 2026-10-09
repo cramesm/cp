@@ -31,6 +31,10 @@ const transactionSchema = new mongoose.Schema({
     type: String,
     default: '0.00'
   },
+  referenceNumber: {
+    type: String,
+    default: ''
+  },
   receiptImage: {
     type: String,
     default: ''

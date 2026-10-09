@@ -98,16 +98,18 @@ const RequestDetails = () => {
             const found = res.data;
             const foundTx = txRes.data;
 
-            // Auto-populate blockchain form data from request details
+            // Auto-populate blockchain form data from request details and user profile
             if (found) {
                 const docType = (found.documentType || found.document_type || '').toLowerCase();
                 const isDiploma = docType.includes('diploma');
                 const detectedOwner = found.ownerType || (isDiploma ? 'Alumni' : 'Student');
+                const rawId = found.studentId || found.studentIDNumber || found.userProfileStudentId || '';
+                const cleanStudentId = (rawId && rawId !== 'N/A' && rawId !== 'None' && rawId !== 'n/a') ? rawId : '';
 
                 setBlockchainData(prev => ({
                     ...prev,
                     ownerType: detectedOwner || prev.ownerType || 'Student',
-                    studentIDNumber: found.studentId || found.studentIDNumber || prev.studentIDNumber || '',
+                    studentIDNumber: cleanStudentId || prev.studentIDNumber || '',
                     course: found.course || prev.course || '',
                     yearLevel: found.yearLevel || prev.yearLevel || '',
                     nameOfSchool: found.nameOfSchool || found.schoolName || prev.nameOfSchool || 'VeriFitor University',
@@ -443,10 +445,10 @@ const RequestDetails = () => {
             if (isBlockchainEligible) {
                 const blockchainRes = await api.post('/blockchain/transactions', {
                     nameOfStudent: requestData.name || "Unknown",
-                    ownerType: blockchainData.ownerType,
-                    course: blockchainData.ownerType === 'Student' ? blockchainData.course : "",
-                    yearLevel: blockchainData.ownerType === 'Student' ? blockchainData.yearLevel : "",
-                    studentIDNumber: blockchainData.studentIDNumber,
+                    ownerType: blockchainData.ownerType || 'Student',
+                    course: blockchainData.ownerType === 'Alumni' ? "" : (blockchainData.course || ""),
+                    yearLevel: blockchainData.ownerType === 'Alumni' ? "" : (blockchainData.yearLevel || ""),
+                    studentIDNumber: (blockchainData.studentIDNumber || "").trim(),
                     typeOfDocument: requestData.documentType || requestData.document_type || "Document",
                     nameOfSchool: blockchainData.nameOfSchool,
                     yearGraduated: blockchainData.ownerType === 'Alumni' ? Number(blockchainData.yearGraduated) : 0
@@ -1554,12 +1556,12 @@ const RequestDetails = () => {
                                 {/* Step 2 Content — Non-Blockchain: Direct Finalize & Release (No Upload Required) */}
                                 {currentStep === 2 && !isBlockchainEligible && status !== 'Released' && (
                                     <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 animate-in fade-in slide-in-from-right-4 duration-300">
-                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
+                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                                             <div>
                                                 <h2 className="text-2xl font-bold text-slate-800">Finalize & Release Document</h2>
                                                 <p className="text-slate-500 text-sm mt-1">Review request details and approve release for the student. No document upload is required for this standard document.</p>
                                             </div>
-                                            <span className="self-start sm:self-auto px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-bold uppercase tracking-wider">
+                                            <span className="self-start sm:self-auto px-3.5 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-bold uppercase tracking-wider whitespace-nowrap shrink-0">
                                                 Standard Document
                                             </span>
                                         </div>
@@ -1648,28 +1650,52 @@ const RequestDetails = () => {
 
                                                 <div className="grid grid-cols-2 gap-6 mb-8">
                                                     <div className="col-span-2">
-                                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Owner Type *</label>
-                                                        <select
-                                                            value={blockchainData.ownerType}
-                                                            onChange={(e) => setBlockchainData({ ...blockchainData, ownerType: e.target.value })}
-                                                            disabled={!hasProcessingAccess}
-                                                            className={`w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm outline-none ${!hasProcessingAccess ? 'opacity-75 cursor-not-allowed' : 'focus:border-blue-500'}`}
-                                                        >
-                                                            <option value="Student">Student</option>
-                                                            <option value="Alumni">Alumni</option>
-                                                        </select>
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <label className="block text-xs font-bold text-slate-500 uppercase">Owner Type</label>
+                                                            <span className="text-[11px] font-semibold text-slate-400">Auto-fetched from registered profile</span>
+                                                        </div>
+                                                        <div className="w-full bg-slate-50 border border-slate-200/90 rounded-xl p-3 flex items-center justify-between">
+                                                            <span className="text-sm font-bold text-slate-800">
+                                                                {blockchainData.ownerType || 'Student'}
+                                                            </span>
+                                                            <span className={`px-2.5 py-0.5 rounded-full text-[10.5px] font-extrabold uppercase tracking-wider ${
+                                                                blockchainData.ownerType === 'Alumni'
+                                                                    ? 'bg-amber-100 text-amber-800 border border-amber-200/60'
+                                                                    : blockchainData.ownerType === 'Former Student'
+                                                                    ? 'bg-purple-100 text-purple-800 border border-purple-200/60'
+                                                                    : 'bg-blue-100 text-blue-800 border border-blue-200/60'
+                                                            }`}>
+                                                                {blockchainData.ownerType || 'Student'} Profile
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                     <div>
-                                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-2">ID Number *</label>
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <label className="block text-xs font-bold text-slate-500 uppercase">ID Number *</label>
+                                                            {blockchainData.studentIDNumber ? (
+                                                                <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
+                                                                    Auto-filled &bull; Editable
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200/60">
+                                                                    ID Missing on File
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                         <input
                                                             type="text"
                                                             required
-                                                            placeholder="e.g. ID-2023-001"
+                                                            placeholder="Enter or override Student ID (e.g. 2023-001)"
                                                             value={blockchainData.studentIDNumber}
                                                             onChange={(e) => setBlockchainData({ ...blockchainData, studentIDNumber: e.target.value })}
                                                             disabled={!hasProcessingAccess}
                                                             className={`w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm outline-none ${!hasProcessingAccess ? 'opacity-75 cursor-not-allowed' : 'focus:border-blue-500'}`}
                                                         />
+                                                        {!blockchainData.studentIDNumber && (
+                                                            <p className="text-[11px] text-amber-600 font-medium mt-1">
+                                                                No ID on account profile. Please enter the verified ID number to proceed.
+                                                            </p>
+                                                        )}
                                                     </div>
 
                                                     {blockchainData.ownerType === 'Alumni' ? (
@@ -1740,7 +1766,7 @@ const RequestDetails = () => {
                                                     className={`flex-1 text-white py-2.5 px-6 rounded-full font-bold text-xs border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center justify-center gap-2 cursor-pointer ${
                                                         isBlockchainEligible ? 'bg-[#2c3543] hover:bg-[#1f2631]' : 'bg-emerald-600 hover:bg-emerald-700'
                                                     }`}
-                                                    disabled={actionLoading || (isBlockchainEligible && !blockchainData.studentIDNumber)}
+                                                    disabled={actionLoading || (isBlockchainEligible && !blockchainData.studentIDNumber?.trim())}
                                                     onClick={() => showConfirm({
                                                         title: isBlockchainEligible ? 'Secure to Blockchain' : 'Finalize Document',
                                                         message: 'Are you sure you want to finalize this request?',

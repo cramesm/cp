@@ -37,6 +37,8 @@ const Dashboard = () => {
         registrarStaffCount: 0,
         accountingStaffCount: 0,
         itStaffCount: 0,
+        itActiveStaffCount: 0,
+        itInactiveStaffCount: 0,
         todayRevenue: 0,
         todayCompletedPaymentsCount: 0,
         todayReleasedRequestsCount: 0,
@@ -84,8 +86,17 @@ const Dashboard = () => {
         setError(null);
         try {
             const [statsRes, recentRes] = await Promise.all([
-                api.get('/dashboard/stats'),
-                api.get('/dashboard/recent')
+                api.get('/dashboard/stats', {
+                    params: {
+                        timezoneOffset: new Date().getTimezoneOffset(),
+                        _t: Date.now()
+                    }
+                }),
+                api.get('/dashboard/recent', {
+                    params: {
+                        _t: Date.now()
+                    }
+                })
             ]);
             
             setStats(statsRes.data || {});
@@ -269,19 +280,19 @@ const Dashboard = () => {
                 subtitle: 'Graduated student accounts'
             },
             {
-                title: 'Active Staff',
-                value: stats.activeStaff ?? 0,
+                title: 'Active IT Staff',
+                value: stats.itActiveStaffCount ?? stats.itStaffCount ?? 0,
                 icon: 'fa-solid fa-user-check',
                 iconBg: 'bg-emerald-50 text-emerald-600 border border-emerald-200/60',
                 link: '/manage-registrar',
-                subtitle: 'Registrar, Accounting & IT staff'
+                subtitle: 'Active technical & support staff'
             },
             {
-                title: 'Inactive Accounts',
-                value: stats.inactiveStaff ?? 0,
+                title: 'Inactive IT Accounts',
+                value: stats.itInactiveStaffCount ?? 0,
                 icon: 'fa-solid fa-user-slash',
                 iconBg: 'bg-amber-50 text-amber-600 border border-amber-200/60',
-                badge: stats.inactiveStaff > 0 ? stats.inactiveStaff : null,
+                badge: stats.itInactiveStaffCount > 0 ? stats.itInactiveStaffCount : null,
                 link: '/manage-registrar',
                 subtitle: 'Deactivated / Pending activation'
             },
@@ -400,7 +411,7 @@ const Dashboard = () => {
                 subtitle: 'Blockchain records anchored'
             },
             {
-                title: 'Lifetime Fulfilled',
+                title: 'Total Requests Completed',
                 value: stats.releasedRequests ?? 0,
                 icon: 'fa-solid fa-award',
                 iconBg: 'bg-indigo-50 text-indigo-600 border border-indigo-200/60',
@@ -1188,7 +1199,7 @@ const Dashboard = () => {
                                     <div className="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-xs font-bold border border-purple-200/60">
                                         <i className="fa-solid fa-bell"></i>
                                     </div>
-                                    <h3 className="text-slate-900 text-[15px] font-extrabold m-0">Desk Alerts & Updates</h3>
+                                    <h3 className="text-slate-900 text-[15px] font-extrabold m-0">Notifications</h3>
                                 </div>
                                 <button 
                                     onClick={() => navigate('/notifications')} 
