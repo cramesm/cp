@@ -7,6 +7,7 @@ import FeedbackModal from '../../components/FeedbackModal';
 import DateRangePicker from '../../components/common/DateRangePicker';
 import api from '../../api';
 import { useModals } from '../../hooks/useModals';
+import { getStatusConfig } from '../../utils/statusUtils';
 
 const API_BASE = (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : '') || 'http://127.0.0.1:5000';
 
@@ -573,18 +574,8 @@ const RequestDetails = () => {
                     <div>
                         <div className="flex items-center gap-2.5 flex-wrap">
                             <h1 className="text-[18px] font-black text-slate-900 m-0">Process Document Request</h1>
-                            <span data-testid="header-status-badge" className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[10.5px] uppercase tracking-wider font-extrabold border whitespace-nowrap shrink-0 ${
-                                status === 'Pending' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                                status === 'In Process' ? 'bg-purple-50 text-purple-700 border-purple-200' :
-                                (status === 'Released' || status === 'Claimed') ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                                'bg-red-50 text-red-700 border-red-200'
-                            }`}>
-                                <span className={`w-1.5 h-1.5 rounded-full ${
-                                    status === 'Pending' ? 'bg-amber-500' :
-                                    status === 'In Process' ? 'bg-purple-500' :
-                                    (status === 'Released' || status === 'Claimed') ? 'bg-emerald-500' :
-                                    'bg-red-500'
-                                }`}></span>
+                            <span data-testid="header-status-badge" className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[10.5px] uppercase tracking-wider font-extrabold border whitespace-nowrap shrink-0 ${getStatusConfig(status).badge}`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${getStatusConfig(status).dot}`}></span>
                                 <span>{status}</span>
                             </span>
 
@@ -755,16 +746,28 @@ const RequestDetails = () => {
                                                     <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
                                                         status === 'Rejected'
                                                             ? 'bg-red-50 text-red-700 border border-red-200'
-                                                            : status === 'In Process' || status === 'Released' || status === 'Claimed'
-                                                            ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                                                            : status === 'In Process'
+                                                            ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                                            : status === 'Ready to Claim'
+                                                            ? 'bg-teal-50 text-teal-700 border border-teal-200'
+                                                            : status === 'Released'
+                                                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                                            : status === 'Claimed'
+                                                            ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
                                                             : isPaymentCleared
                                                             ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                                                             : 'bg-slate-100 text-slate-500 border border-slate-200'
                                                     }`}>
                                                         {status === 'Rejected' ? (
                                                             <XCircle size={13} className="text-red-600" />
-                                                        ) : status === 'In Process' || status === 'Released' || status === 'Claimed' ? (
-                                                            <CheckCircle2 size={13} className="text-purple-600" />
+                                                        ) : status === 'In Process' ? (
+                                                            <Clock size={13} className="text-blue-600" />
+                                                        ) : status === 'Ready to Claim' ? (
+                                                            <CheckCircle2 size={13} className="text-teal-600" />
+                                                        ) : status === 'Released' ? (
+                                                            <CheckCircle2 size={13} className="text-emerald-600" />
+                                                        ) : status === 'Claimed' ? (
+                                                            <CheckCircle2 size={13} className="text-indigo-600" />
                                                         ) : isPaymentCleared ? (
                                                             <Unlock size={13} className="text-emerald-600" />
                                                         ) : (
@@ -774,8 +777,9 @@ const RequestDetails = () => {
                                                             Request: {
                                                                 status === 'Rejected' ? 'Rejected' :
                                                                 status === 'In Process' ? 'Approved & Scheduled' :
-                                                                status === 'Claimed' ? 'Claimed' :
+                                                                status === 'Ready to Claim' ? 'Ready to Claim' :
                                                                 status === 'Released' ? 'Released' :
+                                                                status === 'Claimed' ? 'Claimed' :
                                                                 isPaymentCleared ? 'Ready to Approve' : 'Awaiting Payment'
                                                             }
                                                         </span>
@@ -1844,8 +1848,8 @@ const RequestDetails = () => {
                                                 </div>
                                                 <div>
                                                     <span className="text-slate-400 font-bold block mb-1">CURRENT STATUS</span>
-                                                    <span data-testid="completed-status-badge" className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase bg-emerald-100 text-emerald-800 border border-emerald-300">
-                                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                                    <span data-testid="completed-status-badge" className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase border ${getStatusConfig(status).badge}`}>
+                                                        <span className={`w-1.5 h-1.5 rounded-full ${getStatusConfig(status).dot}`}></span>
                                                         <span>{status}</span>
                                                     </span>
                                                 </div>
@@ -1969,11 +1973,13 @@ const RequestDetails = () => {
                                 <label className="block text-slate-700 font-bold text-xs mb-2 uppercase tracking-wider">
                                     Set Target Status
                                 </label>
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                                     {[
                                         { value: 'Pending', label: 'Pending', color: 'border-amber-400 text-amber-800 bg-amber-50/50' },
-                                        { value: 'In Process', label: 'In Process', color: 'border-purple-400 text-purple-800 bg-purple-50/50' },
+                                        { value: 'In Process', label: 'In Process', color: 'border-blue-400 text-blue-800 bg-blue-50/50' },
+                                        { value: 'Ready to Claim', label: 'Ready to Claim', color: 'border-teal-400 text-teal-800 bg-teal-50/50' },
                                         { value: 'Released', label: 'Released', color: 'border-emerald-400 text-emerald-800 bg-emerald-50/50' },
+                                        { value: 'Claimed', label: 'Claimed', color: 'border-indigo-400 text-indigo-800 bg-indigo-50/50' },
                                         { value: 'Rejected', label: 'Rejected', color: 'border-red-400 text-red-800 bg-red-50/50' }
                                     ].map(st => (
                                         <button

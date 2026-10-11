@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../../components/Layout';
 import api from '../../api';
+import { getStatusConfig } from '../../utils/statusUtils';
 import { 
     AlertCircle, 
     RefreshCw, 
@@ -1401,7 +1402,7 @@ const Dashboard = () => {
                             {/* Registrar Status Filter Pills */}
                             {(isRegistrar || (isSuperAdmin && superAdminTab === 'requests')) && (
                                 <div className="hidden sm:flex items-center gap-1 bg-slate-100 p-0.5 rounded-full text-[11px] font-bold">
-                                    {['All', 'Pending', 'In Process', 'Ready for Release'].map(status => (
+                                    {['All', 'Pending', 'In Process', 'Ready to Claim', 'Released', 'Claimed'].map(status => (
                                         <button
                                             key={status}
                                             onClick={() => setRequestStatusFilter(status)}
@@ -1420,7 +1421,7 @@ const Dashboard = () => {
                             {/* Accounting Status Filter Pills */}
                             {(isAccounting || (isSuperAdmin && superAdminTab === 'payments')) && (
                                 <div className="hidden sm:flex items-center gap-1 bg-slate-100 p-0.5 rounded-full text-[11px] font-bold">
-                                    {['All', 'Pending Verification', 'Completed', 'Rejected'].map(status => (
+                                    {['All', 'Pending Verification', 'Completed', 'Needs Update', 'Rejected', 'Refunded'].map(status => (
                                         <button
                                             key={status}
                                             onClick={() => setPaymentStatusFilter(status)}
@@ -1501,12 +1502,9 @@ const Dashboard = () => {
                                                     ₱{Number(pmt.amount || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
                                                 </td>
                                                 <td className="py-3 px-5 text-center">
-                                                    <span className={`inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider ${
-                                                        pmt.status === 'Completed' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
-                                                        pmt.status === 'Rejected' ? 'bg-rose-50 text-rose-700 border border-rose-200' :
-                                                        'bg-amber-50 text-amber-700 border border-amber-200'
-                                                    }`}>
-                                                        {pmt.status || 'Pending Verification'}
+                                                    <span className={`inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider border ${getStatusConfig(pmt.status || 'Pending Verification').badge}`}>
+                                                        <span className={`w-1.5 h-1.5 rounded-full ${getStatusConfig(pmt.status || 'Pending Verification').dot}`}></span>
+                                                        <span>{pmt.status || 'Pending Verification'}</span>
                                                     </span>
                                                 </td>
                                                 <td className="py-3 px-5 text-right">
@@ -1628,13 +1626,8 @@ const Dashboard = () => {
                                                     )}
                                                 </td>
                                                 <td className="py-3 px-5 text-center">
-                                                    <span className={`inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider ${
-                                                        req.status === 'Released' || req.status === 'Approved'
-                                                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                                            : req.status === 'In Process'
-                                                            ? 'bg-purple-50 text-purple-700 border border-purple-200'
-                                                            : 'bg-amber-50 text-amber-700 border border-amber-200'
-                                                    }`}>
+                                                    <span className={`inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider border whitespace-nowrap shrink-0 ${getStatusConfig(req.status || 'Pending').badge}`}>
+                                                        <span className={`w-1.5 h-1.5 rounded-full ${getStatusConfig(req.status || 'Pending').dot}`}></span>
                                                         <span>{req.status || 'Pending'}</span>
                                                     </span>
                                                 </td>

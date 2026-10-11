@@ -8,6 +8,7 @@ import ActiveFilterChips from '../../components/ActiveFilterChips';
 import api from '../../api';
 import TableSkeleton from '../../components/TableSkeleton';
 import { useModals } from '../../hooks/useModals';
+import { getStatusConfig } from '../../utils/statusUtils';
 import { 
   X, ZoomIn, CheckCircle, Image as ImageIcon, Send, AlertCircle, RefreshCw, 
   Receipt, Eye, XCircle, Undo2, SlidersHorizontal, ArrowDownAZ, ArrowUpZA, 
@@ -900,32 +901,15 @@ const Transactions = () => {
                             {formattedDate}
                           </td>
                           <td className="py-3.5 px-5 align-middle text-center">
-                            {tx.status === 'Completed' ? (
-                              <span className="inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200/80">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                <span>Completed</span>
-                              </span>
-                            ) : tx.status === 'Pending Verification' ? (
-                              <span className="inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200/80">
-                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                                <span>Pending Verification</span>
-                              </span>
-                            ) : tx.status === 'Needs Update' ? (
-                              <span className="inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider bg-orange-50 text-orange-700 border border-orange-200/80">
-                                <span className="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
-                                <span>Needs Update</span>
-                              </span>
-                            ) : tx.status === 'Refunded' ? (
-                              <span className="inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider bg-purple-50 text-purple-700 border border-purple-200/80">
-                                <span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
-                                <span>Refunded</span>
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider bg-red-50 text-red-700 border border-red-200/80">
-                                <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
-                                <span>{tx.status}</span>
-                              </span>
-                            )}
+                            {(() => {
+                              const { badge, dot } = getStatusConfig(tx.status || 'Pending Verification');
+                              return (
+                                <span className={`inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider border ${badge}`}>
+                                  <span className={`w-1.5 h-1.5 rounded-full ${dot}`}></span>
+                                  <span>{tx.status || 'Pending Verification'}</span>
+                                </span>
+                              );
+                            })()}
                           </td>
                           <td className="py-3.5 px-5 align-middle text-right">
                             <div className="flex items-center justify-end gap-1.5">
@@ -1076,22 +1060,15 @@ const Transactions = () => {
                           <td className="py-3.5 px-5 align-middle text-slate-600">{refund.reason === 'Other' ? refund.otherReason : refund.reason}</td>
                           <td className="py-3.5 px-5 align-middle text-[12px] text-slate-500 font-medium">{formattedDate}</td>
                           <td className="py-3.5 px-5 align-middle text-center">
-                            {refund.status?.toLowerCase() === 'approved' ? (
-                              <span className="inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200/80">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                <span>Approved</span>
-                              </span>
-                            ) : refund.status?.toLowerCase() === 'pending' ? (
-                              <span className="inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200/80">
-                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                                <span>Pending</span>
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider bg-red-50 text-red-700 border border-red-200/80">
-                                <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
-                                <span>{refund.status}</span>
-                              </span>
-                            )}
+                            {(() => {
+                              const { badge, dot } = getStatusConfig(refund.status || 'Pending');
+                              return (
+                                <span className={`inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider border ${badge}`}>
+                                  <span className={`w-1.5 h-1.5 rounded-full ${dot}`}></span>
+                                  <span>{refund.status || 'Pending'}</span>
+                                </span>
+                              );
+                            })()}
                           </td>
                           <td className="py-3.5 px-5 align-middle text-right">
                             <div className="flex items-center justify-end gap-1.5">

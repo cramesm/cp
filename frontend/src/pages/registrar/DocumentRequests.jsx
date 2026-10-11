@@ -9,6 +9,7 @@ import TableSkeleton from '../../components/TableSkeleton';
 import ConfirmModal from '../../components/ConfirmModal';
 import FeedbackModal from '../../components/FeedbackModal';
 import { useModals } from '../../hooks/useModals';
+import { getStatusConfig } from '../../utils/statusUtils';
 
 const Requests = () => {
     const [requests, setRequests] = useState([]);
@@ -186,29 +187,11 @@ const Requests = () => {
 
     // Status Badge Component
     const renderStatusBadge = (status) => {
-        let styles = "bg-slate-100 text-slate-600 border-slate-200/80";
-        let dotColor = "bg-slate-400";
-        let label = status;
-
-        if (status === 'Released' || status === 'Approved') {
-            styles = "bg-emerald-50 text-emerald-700 border-emerald-200/80";
-            dotColor = "bg-emerald-500";
-            label = "Released";
-        } else if (status === 'Pending') {
-            styles = "bg-amber-50 text-amber-700 border-amber-200/80";
-            dotColor = "bg-amber-500";
-        } else if (status === 'In Process') {
-            styles = "bg-blue-50 text-blue-700 border-blue-200/80";
-            dotColor = "bg-blue-500";
-        } else if (status === 'Rejected') {
-            styles = "bg-red-50 text-red-700 border-red-200/80";
-            dotColor = "bg-red-500";
-        }
-
+        const { badge, dot, label } = getStatusConfig(status);
         return (
-            <span className={`inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider border whitespace-nowrap shrink-0 ${styles}`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${dotColor}`}></span>
-                <span>{label}</span>
+            <span className={`inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider border whitespace-nowrap shrink-0 ${badge}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${dot}`}></span>
+                <span>{label || status}</span>
             </span>
         );
     };
@@ -530,7 +513,7 @@ const Requests = () => {
                             label="Request Status:" 
                             value={filterStatus} 
                             onChange={setFilterStatus} 
-                            options={['All Status', 'Pending', 'In Process', 'Released', 'Rejected']} 
+                            options={['All Status', 'Pending', 'In Process', 'Ready to Claim', 'Released', 'Claimed', 'Needs Update', 'Rejected']} 
                         />
 
                         <div className="grid grid-cols-2 gap-3">

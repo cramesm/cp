@@ -5,6 +5,7 @@ import api from '../../api';
 import { Image as ImageIcon, Eye, CreditCard, AlertCircle, User, FileText, Edit3, Shield, ArrowLeft } from 'lucide-react';
 import ConfirmModal from '../../components/ConfirmModal';
 import FeedbackModal from '../../components/FeedbackModal';
+import { getStatusConfig } from '../../utils/statusUtils';
 
 const API_BASE = (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : '') || 'http://127.0.0.1:5000';
 
@@ -130,36 +131,10 @@ const TransactionDetails = () => {
     }
 
     const getStatusBadge = (status) => {
-        const s = (status || '').toLowerCase();
-        if (s === 'completed') {
-            return {
-                style: 'bg-emerald-50 text-emerald-700 border-emerald-200/80',
-                dotColor: 'bg-emerald-500'
-            };
-        } else if (s === 'pending verification') {
-            return {
-                style: 'bg-amber-50 text-amber-700 border-amber-200/80',
-                dotColor: 'bg-amber-500'
-            };
-        } else if (s === 'needs update') {
-            return {
-                style: 'bg-orange-50 text-orange-700 border-orange-200/80',
-                dotColor: 'bg-orange-500'
-            };
-        } else if (s === 'rejected') {
-            return {
-                style: 'bg-red-50 text-red-700 border-red-200/80',
-                dotColor: 'bg-red-500'
-            };
-        } else if (s === 'refunded') {
-            return {
-                style: 'bg-purple-50 text-purple-700 border-purple-200/80',
-                dotColor: 'bg-purple-500'
-            };
-        }
+        const { badge, dot } = getStatusConfig(status);
         return {
-            style: 'bg-slate-100 text-slate-600 border-slate-200/80',
-            dotColor: 'bg-slate-400'
+            style: badge,
+            dotColor: dot
         };
     };
 
@@ -354,8 +329,9 @@ const TransactionDetails = () => {
                                 {/* Status Indicator */}
                                 <div className={`flex items-center gap-3 p-3.5 rounded-xl border ${
                                     txData.status === 'Completed' ? 'bg-emerald-50/80 border-emerald-200' :
-                                    txData.status === 'Needs Update' ? 'bg-amber-50/80 border-amber-200' :
+                                    txData.status === 'Needs Update' ? 'bg-orange-50/80 border-orange-200' :
                                     txData.status === 'Rejected' ? 'bg-red-50/80 border-red-200' :
+                                    txData.status === 'Refunded' ? 'bg-purple-50/80 border-purple-200' :
                                     'bg-amber-50/80 border-amber-200'
                                 }`}>
                                     <span className={`w-2.5 h-2.5 rounded-full ${statusBadge.dotColor}`}></span>
