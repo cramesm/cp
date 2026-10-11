@@ -1168,7 +1168,11 @@ const Transactions = () => {
                       </div>
                       <div>
                         <span className="text-gray-400 font-bold block mb-1">REFERENCE NUMBER</span>
-                        <span className="font-mono text-gray-700 break-all font-semibold">{selectedTx.referenceNumber || 'N/A'}</span>
+                        {selectedTx.referenceNumber ? (
+                          <span className="font-mono text-gray-700 break-all font-semibold">{selectedTx.referenceNumber}</span>
+                        ) : (
+                          <span className="text-gray-400 italic font-medium">{selectedTx.paymentMode === 'Cash' ? 'None (Cash Payment)' : 'See uploaded receipt'}</span>
+                        )}
                       </div>
                       <div>
                         <span className="text-gray-400 font-bold block mb-1">DOCUMENT TYPE</span>
