@@ -233,8 +233,20 @@ const createRequestValidation = [
 const requestStatusValidation = [
   body('status')
     .optional()
-    .isIn(['Pending', 'In Process', 'Released', 'Rejected'])
-    .withMessage('Invalid status. Allowed values: Pending, In Process, Released, Rejected'),
+    .isIn([
+      'Pending for Payment',
+      'Pending',
+      'Needs Update',
+      'In Process',
+      'Released',
+      'Ready to Claim',
+      'Claimed',
+      'Refund Approved',
+      'Refunded',
+      'Completed',
+      'Rejected'
+    ])
+    .withMessage('Invalid status. Allowed values: Pending for Payment, Pending, Needs Update, In Process, Released, Ready to Claim, Claimed, Refund Approved, Refunded, Completed, Rejected'),
   body('rejectionReason')
     .optional({ checkFalsy: true })
     .trim()

@@ -48,9 +48,30 @@ const requestSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['Pending', 'In Process', 'Released', 'Rejected'],
+    enum: [
+      'Pending for Payment',
+      'Pending',
+      'Needs Update',
+      'In Process',
+      'Released',
+      'Ready to Claim',
+      'Claimed',
+      'Refund Approved',
+      'Refunded',
+      'Completed',
+      'Rejected'
+    ],
     default: 'Pending'
   },
+  claimedAt: {
+    type: Date,
+    default: null
+  },
+  statusHistory: [{
+    status: { type: String, required: true },
+    at: { type: Date, default: Date.now },
+    remarks: { type: String, default: '' }
+  }],
   rejectionReason: {
     type: String,
     default: ''

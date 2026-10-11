@@ -35,12 +35,15 @@ router.post('/logout', AuthController.logout);
 
 // @route   POST /api/auth/forgot-password
 router.post('/forgot-password', passwordResetLimiter, AuthController.forgotPassword);
+router.post('/forgot-password/request-otp', passwordResetLimiter, AuthController.forgotPassword);
 
 // @route   POST /api/auth/verify-otp
 router.post('/verify-otp', otpLimiter, AuthController.verifyPasswordResetOTP);
+router.post('/forgot-password/verify-otp', otpLimiter, AuthController.verifyPasswordResetOTP);
 
 // @route   POST /api/auth/reset-password
 router.post('/reset-password', passwordResetLimiter, resetPasswordValidation, validate, AuthController.resetPassword);
+router.post('/forgot-password/reset', passwordResetLimiter, resetPasswordValidation, validate, AuthController.resetPassword);
 
 // @route   GET /api/auth/profile
 router.get('/profile', auth, AuthController.getProfile);

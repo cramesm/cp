@@ -58,6 +58,7 @@ router.use('/email', require('./email'));
 
 // System Discovery & Health Diagnostics
 router.get('/health', (req, res) => res.json({ status: 'API is running' }));
+router.get('/request-policy', (_req, res) => res.json({ success: true, express: null }));
 router.get('/error-statuses', (req, res) => res.json({ success: true, statuses: HTTP_ERROR_STATUSES }));
 
 module.exports = router;

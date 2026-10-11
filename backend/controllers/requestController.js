@@ -374,6 +374,8 @@ const RequestController = {
         updateData.mobileStatus = normalizedMobileStatus;
         if (status.toLowerCase() === 'released' || status.toLowerCase() === 'completed') {
           updateData.dateReleased = new Date();
+        } else if (status.toLowerCase() === 'claimed') {
+          updateData.claimedAt = new Date();
         } else {
           updateData.dateReleased = null;
         }
@@ -486,6 +488,77 @@ const RequestController = {
     } catch (error) {
       console.error('Error updating request:', error);
       res.status(500).json({ message: 'Error updating request' });
+    }
+  },
+
+  // @desc    Claim request (student or staff)
+  claimRequest: async (req, res) => {
+    try {
+      const query = {
+        $or: [
+          { requestId: req.params.id },
+          ...(mongoose.Types.ObjectId.isValid(req.params.id) ? [{ _id: req.params.id }] : [])
+        ]
+      };
+      const request = await Request.findOne(query);
+      if (!request) return res.status(404).json({ message: 'Request not found' });
+
+      const isStaff = [
+        'super admin', 'registrar admin', 'registrar staff', 'registrar', 'admin', 'staff'
+      ].includes((req.user?.role || '').toLowerCase()) || (req.user?.department || '').toLowerCase() === 'registrar';
+
+      if (!isStaff) {
+        const callerEmail = (req.user?.email || '').toLowerCase().trim();
+        const callerId = String(req.user?.id || req.user?._id || '');
+        const reqEmail = (request.email || '').toLowerCase().trim();
+        const reqUserId = String(request.userId || '');
+        const isOwner = (reqEmail && reqEmail === callerEmail) || (reqUserId && reqUserId === callerId);
+        if (!isOwner) {
+          return res.status(403).json({ message: 'Access denied. You can only claim your own requests.' });
+        }
+      }
+
+      const normalizedStatus = (request.status || '').toLowerCase();
+      if (!['released', 'ready to claim', 'ready_to_claim'].includes(normalizedStatus)) {
+        return res.status(409).json({ message: 'Only requests ready to claim can be claimed.' });
+      }
+
+      const claimedAt = new Date();
+      request.status = 'Claimed';
+      request.mobileStatus = 'claimed';
+      request.claimedAt = claimedAt;
+      if (!request.statusHistory) request.statusHistory = [];
+      request.statusHistory.push({ status: 'Claimed', at: claimedAt, remarks: 'Document claimed by requester' });
+      await request.save();
+
+      try {
+        await ActivityLog.create({
+          userEmail: req.user.email || request.email || 'N/A',
+          userName: req.user.name || request.name || 'User',
+          action: 'Document Claimed',
+          type: request.documentType || '------',
+          status: 'Successful',
+          details: `Request #${request.requestId} was marked as Claimed`,
+          ipAddress: getClientIp(req)
+        });
+      } catch (_logErr) {}
+
+      try {
+        await Notification.create({
+          title: 'Document Claimed',
+          message: `Your request #${request.requestId} for ${request.documentType} has been claimed successfully.`,
+          isRead: false,
+          userId: request.userId || req.user.id || '',
+          email: request.email || req.user.email || '',
+          type: 'request',
+          link: `/requests/${request.requestId}`
+        });
+      } catch (_notifErr) {}
+
+      res.json({ success: true, message: 'Document claimed successfully', request });
+    } catch (error) {
+      console.error('Error claiming request:', error);
+      res.status(500).json({ message: 'Error claiming request' });
     }
   },
 
