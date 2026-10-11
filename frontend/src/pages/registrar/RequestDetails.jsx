@@ -132,8 +132,8 @@ const RequestDetails = () => {
                 }
             }
 
-            // If already released, attempt to load existing blockchain verification details
-            if (found && found.status === 'Released' && (found.studentId || found.studentIDNumber)) {
+            // If already released or claimed, attempt to load existing blockchain verification details
+            if (found && (found.status === 'Released' || found.status === 'Claimed') && (found.studentId || found.studentIDNumber)) {
                 const sid = found.studentId || found.studentIDNumber;
                 try {
                     const bcRes = await api.get(`/blockchain/transactions/verify-by-id/${sid}`);
@@ -165,7 +165,7 @@ const RequestDetails = () => {
             const docType = (found?.documentType || found?.document_type || '').toLowerCase();
             const isBlockchain = docType.includes('tor') || docType.includes('diploma');
 
-            if (found && found.status === 'Released') {
+            if (found && (found.status === 'Released' || found.status === 'Claimed')) {
                 setCurrentStep(isBlockchain ? 4 : 3);
             } else if (foundTx && foundTx.status === 'Rejected' && found && found.status !== 'Rejected') {
                 // Payment was rejected but document request has not been confirmed rejected yet:
@@ -573,16 +573,16 @@ const RequestDetails = () => {
                     <div>
                         <div className="flex items-center gap-2.5 flex-wrap">
                             <h1 className="text-[18px] font-black text-slate-900 m-0">Process Document Request</h1>
-                            <span className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[10.5px] uppercase tracking-wider font-extrabold border ${
+                            <span data-testid="header-status-badge" className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[10.5px] uppercase tracking-wider font-extrabold border whitespace-nowrap shrink-0 ${
                                 status === 'Pending' ? 'bg-amber-50 text-amber-700 border-amber-200' :
                                 status === 'In Process' ? 'bg-purple-50 text-purple-700 border-purple-200' :
-                                status === 'Released' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                (status === 'Released' || status === 'Claimed') ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
                                 'bg-red-50 text-red-700 border-red-200'
                             }`}>
                                 <span className={`w-1.5 h-1.5 rounded-full ${
                                     status === 'Pending' ? 'bg-amber-500' :
                                     status === 'In Process' ? 'bg-purple-500' :
-                                    status === 'Released' ? 'bg-emerald-500' :
+                                    (status === 'Released' || status === 'Claimed') ? 'bg-emerald-500' :
                                     'bg-red-500'
                                 }`}></span>
                                 <span>{status}</span>
@@ -717,7 +717,7 @@ const RequestDetails = () => {
 
                                 {/* Step 1 Content */}
                                 {currentStep === 1 && (
-                                    <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-100 animate-in fade-in slide-in-from-right-4 duration-300 space-y-7">
+                                    <div data-testid="step-1-view" className="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-100 animate-in fade-in slide-in-from-right-4 duration-300 space-y-7">
                                         
                                         {/* Step 1 Header */}
                                         <div>
@@ -755,7 +755,7 @@ const RequestDetails = () => {
                                                     <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
                                                         status === 'Rejected'
                                                             ? 'bg-red-50 text-red-700 border border-red-200'
-                                                            : status === 'In Process' || status === 'Released'
+                                                            : status === 'In Process' || status === 'Released' || status === 'Claimed'
                                                             ? 'bg-purple-50 text-purple-700 border border-purple-200'
                                                             : isPaymentCleared
                                                             ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
@@ -763,7 +763,7 @@ const RequestDetails = () => {
                                                     }`}>
                                                         {status === 'Rejected' ? (
                                                             <XCircle size={13} className="text-red-600" />
-                                                        ) : status === 'In Process' || status === 'Released' ? (
+                                                        ) : status === 'In Process' || status === 'Released' || status === 'Claimed' ? (
                                                             <CheckCircle2 size={13} className="text-purple-600" />
                                                         ) : isPaymentCleared ? (
                                                             <Unlock size={13} className="text-emerald-600" />
@@ -774,6 +774,7 @@ const RequestDetails = () => {
                                                             Request: {
                                                                 status === 'Rejected' ? 'Rejected' :
                                                                 status === 'In Process' ? 'Approved & Scheduled' :
+                                                                status === 'Claimed' ? 'Claimed' :
                                                                 status === 'Released' ? 'Released' :
                                                                 isPaymentCleared ? 'Ready to Approve' : 'Awaiting Payment'
                                                             }
@@ -1554,7 +1555,7 @@ const RequestDetails = () => {
                                 )}
 
                                 {/* Step 2 Content — Non-Blockchain: Direct Finalize & Release (No Upload Required) */}
-                                {currentStep === 2 && !isBlockchainEligible && status !== 'Released' && (
+                                {currentStep === 2 && !isBlockchainEligible && status !== 'Released' && status !== 'Claimed' && (
                                     <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 animate-in fade-in slide-in-from-right-4 duration-300">
                                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                                             <div>
@@ -1642,7 +1643,7 @@ const RequestDetails = () => {
                                 )}
 
                                 {/* Step 3 Content — Blockchain Eligible: Secure & Finalize */}
-                                {currentStep === 3 && isBlockchainEligible && status !== 'Released' && (
+                                {currentStep === 3 && isBlockchainEligible && status !== 'Released' && status !== 'Claimed' && (
                                     <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 animate-in fade-in slide-in-from-right-4 duration-300">
                                         <h2 className="text-2xl font-bold text-slate-800 mb-2">Secure & Finalize</h2>
 
@@ -1792,14 +1793,64 @@ const RequestDetails = () => {
 
                                 {/* Final Step Content */}
                                 {((isBlockchainEligible && currentStep === 4) || (!isBlockchainEligible && currentStep === 3)) && (
-                                    <div className="bg-white p-10 rounded-2xl shadow-sm border border-slate-100 animate-in fade-in slide-in-from-right-4 duration-300 text-center">
+                                    <div data-testid="completed-step-view" className="bg-white p-10 rounded-2xl shadow-sm border border-slate-100 animate-in fade-in slide-in-from-right-4 duration-300 text-center">
                                         <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
                                             <CheckCircle2 size={48} className="text-emerald-600" />
                                         </div>
-                                        <h2 className="text-2xl font-bold text-slate-800 mb-2">Request Completed</h2>
+                                        <h2 className="text-2xl font-bold text-slate-800 mb-2">{status === 'Claimed' ? 'Document Claimed' : 'Request Completed'}</h2>
                                         <p className="text-slate-500 mb-8 max-w-md mx-auto text-xs">
-                                            The document request has been successfully finalized. It is now marked as Released and is ready for the student.
+                                            The document request has been successfully finalized. It is now marked as {status === 'Claimed' ? 'Claimed' : 'Released'} and completed.
                                         </p>
+
+                                        {/* Request Summary & Release Details */}
+                                        <div data-testid="request-release-summary" className="bg-slate-50 rounded-2xl p-6 border border-slate-200/80 mb-8 text-left max-w-2xl mx-auto shadow-2xs">
+                                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Request &amp; Release Summary</h3>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 text-xs">
+                                                <div>
+                                                    <span className="text-slate-400 font-bold block mb-1">STUDENT NAME</span>
+                                                    <span className="font-bold text-slate-800 text-sm">{requestData.name}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-slate-400 font-bold block mb-1">STUDENT ID</span>
+                                                    <span className="font-bold text-slate-800 text-sm">{requestData.studentId || requestData.studentIDNumber || 'N/A'}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-slate-400 font-bold block mb-1">DOCUMENT TYPE</span>
+                                                    <span className="font-bold text-slate-800 text-sm">{requestData.documentType || requestData.document_type}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-slate-400 font-bold block mb-1">PROGRAM / COURSE</span>
+                                                    <span className="font-semibold text-slate-700">{requestData.course || 'N/A'}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-slate-400 font-bold block mb-1">PURPOSE</span>
+                                                    <span className="font-semibold text-slate-700">{requestData.purpose || requestData.otherPurpose || 'Official Copy'}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-slate-400 font-bold block mb-1">QUANTITY</span>
+                                                    <span className="font-semibold text-slate-700">{requestData.quantity || 1} copy/copies</span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-slate-400 font-bold block mb-1">DATE REQUESTED</span>
+                                                    <span className="font-semibold text-slate-700">
+                                                        {requestData.dateRequested ? new Date(requestData.dateRequested).toLocaleDateString() : 'N/A'}
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-slate-400 font-bold block mb-1">DATE RELEASED</span>
+                                                    <span className="font-semibold text-slate-700">
+                                                        {requestData.dateReleased ? new Date(requestData.dateReleased).toLocaleDateString() : 'N/A'}
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-slate-400 font-bold block mb-1">CURRENT STATUS</span>
+                                                    <span data-testid="completed-status-badge" className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                                        <span>{status}</span>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
 
                                         {blockchainResult && (
                                             <div className="bg-slate-50 p-5 rounded-xl border border-slate-200 text-left mb-8 max-w-lg mx-auto">

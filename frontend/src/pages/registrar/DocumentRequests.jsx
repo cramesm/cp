@@ -206,7 +206,7 @@ const Requests = () => {
         }
 
         return (
-            <span className={`inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider border ${styles}`}>
+            <span className={`inline-flex items-center gap-1.5 py-0.5 px-3 rounded-full font-extrabold text-[10.5px] uppercase tracking-wider border whitespace-nowrap shrink-0 ${styles}`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${dotColor}`}></span>
                 <span>{label}</span>
             </span>
