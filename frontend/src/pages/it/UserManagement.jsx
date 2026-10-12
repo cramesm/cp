@@ -348,7 +348,7 @@ const StudentManagement = () => {
                                             className="hover:bg-slate-50/80 transition-colors"
                                         >
                                             <td className="py-3 px-5 font-bold text-slate-900">
-                                                {user.firstName} {user.lastName}
+                                                {user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : (user.name || 'User')}
                                             </td>
                                             <td className="py-3 px-5 text-slate-600">{user.email}</td>
                                             <td className="py-3 px-5 font-mono text-slate-600">

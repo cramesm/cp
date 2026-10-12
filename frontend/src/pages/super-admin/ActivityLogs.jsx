@@ -58,7 +58,8 @@ export default function ActivityLogs() {
     try {
       setLoading(true);
       const res = await api.get('/activity-logs');
-      setLogs(res.data || []);
+      const logArray = Array.isArray(res.data) ? res.data : (res.data?.logs || []);
+      setLogs(logArray);
     } catch (error) {
       console.error('Error fetching activity logs:', error);
     } finally {
