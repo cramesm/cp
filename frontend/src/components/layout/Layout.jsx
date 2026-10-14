@@ -6,6 +6,7 @@ import verifitorIcon from '../../assets/logo-verifitor.png';
 import api from '../../api';
 import { useAccessibility } from '../../context/AccessibilityContext';
 import AccessibilityModal from '../modals/AccessibilityModal';
+import ConfirmModal from '../modals/ConfirmModal';
 
 const getInitials = (name) => {
     if (!name) return 'U';
@@ -23,6 +24,8 @@ const Layout = ({ children }) => {
     });
     const [isMobileOpen, setIsMobileOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     const { setSettingsModalOpen, simpleMode } = useAccessibility();
 
@@ -52,6 +55,7 @@ const Layout = ({ children }) => {
 
     const handleLogout = async () => {
         try {
+            setIsLoggingOut(true);
             const adminUserStr = localStorage.getItem('adminUser');
             const adminUser = adminUserStr ? JSON.parse(adminUserStr) : null;
             await api.post('/auth/logout', {
@@ -65,6 +69,8 @@ const Layout = ({ children }) => {
             localStorage.removeItem('token');
             localStorage.removeItem('userRole');
             localStorage.removeItem('adminUser');
+            setIsLoggingOut(false);
+            setShowLogoutConfirm(false);
             navigate('/login');
         }
     };
@@ -341,9 +347,12 @@ const Layout = ({ children }) => {
                 {/* Bottom Dock Actions with 3D Shaped Logout Button */}
                 <div className="p-3 border-t border-slate-700/60">
                     <button 
-                        onClick={handleLogout}
-                        className={`w-full bg-white text-[#2c3543] py-2 rounded-xl font-bold flex justify-center items-center gap-2 border-t border-white border-b-4 border-slate-300 shadow-[0_4px_12px_rgba(0,0,0,0.2)] hover:bg-gray-50 hover:-translate-y-0.5 active:translate-y-1 active:border-b-0 transition-all ${isCollapsed ? 'px-0' : 'px-3'}`}
+                        type="button"
+                        onClick={() => setShowLogoutConfirm(true)}
+                        data-testid="logout-button"
+                        className={`w-full bg-white text-[#2c3543] py-2 rounded-xl font-bold flex justify-center items-center gap-2 border-t border-white border-b-4 border-slate-300 shadow-[0_4px_12px_rgba(0,0,0,0.2)] hover:bg-gray-50 hover:-translate-y-0.5 active:translate-y-1 active:border-b-0 transition-all cursor-pointer ${isCollapsed ? 'px-0' : 'px-3'}`}
                         title={isCollapsed ? "Logout" : ""}
+                        aria-label="Logout"
                     >
                         <i className="fa-solid fa-arrow-right-from-bracket text-sm"></i>
                         {!isCollapsed && <span className="text-[13px]">Logout</span>}
@@ -439,6 +448,17 @@ const Layout = ({ children }) => {
 
                 {/* Modals */}
                 <AccessibilityModal />
+                <ConfirmModal
+                    isOpen={showLogoutConfirm}
+                    onClose={() => !isLoggingOut && setShowLogoutConfirm(false)}
+                    onConfirm={handleLogout}
+                    title="Confirm Logout"
+                    message="Are you sure you want to log out of your account?"
+                    confirmText="Log Out"
+                    cancelText="Cancel"
+                    type="danger"
+                    isLoading={isLoggingOut}
+                />
             </div>
         </div>
     );

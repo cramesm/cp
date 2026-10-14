@@ -102,6 +102,7 @@ const ConfirmModal = ({
             type="button"
             onClick={onClose}
             disabled={isLoading}
+            data-testid="confirm-modal-cancel"
             className="px-4.5 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 bg-white hover:bg-slate-100 hover:text-slate-700 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-300 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             {cancelText}
@@ -111,6 +112,7 @@ const ConfirmModal = ({
             type="button"
             onClick={onConfirm}
             disabled={isLoading}
+            data-testid="confirm-modal-confirm"
             className={`px-5 py-2 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 cursor-pointer ${config.btnBg} disabled:opacity-80 disabled:cursor-not-allowed`}
           >
             {isLoading ? (
