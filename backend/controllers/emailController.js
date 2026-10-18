@@ -1,4 +1,4 @@
-const nodemailer = require('nodemailer');
+const { sendMailWithFallback } = require('../utils/emailService');
 const ActivityLog = require('../models/ActivityLog');
 
 const EmailController = {
@@ -11,23 +11,15 @@ const EmailController = {
         return res.status(400).json({ success: false, message: 'Missing required fields: to, subject, and html/text' });
       }
 
-      const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-          user: process.env.SMTP_EMAIL || process.env.SMTP_USER,
-          pass: process.env.SMTP_PASSWORD || process.env.SMTP_PASS,
-        },
-      });
-
       const mailOptions = {
-        from: process.env.SMTP_FROM || `"Verifitor" <${process.env.SMTP_EMAIL || process.env.SMTP_USER}>`,
+        from: process.env.SMTP_FROM || `"Verifitor" <${process.env.SMTP_EMAIL || process.env.SMTP_USER || 'verifitorr@gmail.com'}>`,
         to,
         subject,
         html,
         text,
       };
 
-      const info = await transporter.sendMail(mailOptions);
+      const info = await sendMailWithFallback(mailOptions);
 
       try {
         await ActivityLog.create({

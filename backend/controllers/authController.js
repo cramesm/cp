@@ -1,7 +1,6 @@
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { JWT_SECRET } = require('../config/jwtConfig');
-const nodemailer = require('nodemailer');
 const Student = require('../models/Users/Student');
 const Alumni = require('../models/Users/Alumni');
 const SuperAdmin = require('../models/Users/SuperAdmin');
@@ -50,27 +49,6 @@ const otpStore = {};
 
 // Temporary store for registration OTPs
 const registrationOtpStore = {};
-
-// Nodemailer transporter (Gmail or custom SMTP)
-const smtpUser = process.env.SMTP_USER || process.env.SMTP_EMAIL;
-const smtpPass = process.env.SMTP_PASS || process.env.SMTP_PASSWORD;
-const transporter = process.env.SMTP_HOST
-  ? nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT) || 465,
-      secure: process.env.SMTP_SECURE === 'true' || process.env.SMTP_PORT === '465',
-      auth: {
-        user: smtpUser,
-        pass: smtpPass,
-      },
-    })
-  : nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: smtpUser,
-        pass: smtpPass,
-      },
-    });
 
 // Helper to generate JWT
 const generateToken = (user) => {

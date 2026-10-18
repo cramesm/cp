@@ -1,48 +1,84 @@
 const nodemailer = require('nodemailer');
 
-const smtpUser = process.env.SMTP_USER || process.env.SMTP_EMAIL;
-const smtpPass = process.env.SMTP_PASS || process.env.SMTP_PASSWORD;
+const cleanConfig = (val) => String(val || '').trim().replace(/^["']|["']$/g, '');
+const cleanPass = (val) => cleanConfig(val).replace(/\s+/g, '');
 
-const transporter = process.env.SMTP_HOST
-  ? nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT) || 465,
-      secure: process.env.SMTP_SECURE === 'true' || process.env.SMTP_PORT === '465',
-      auth: {
-        user: smtpUser,
-        pass: smtpPass,
-      },
-      connectionTimeout: 10000,
-      greetingTimeout: 10000,
-      socketTimeout: 15000,
-    })
-  : nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: smtpUser,
-        pass: smtpPass,
-      },
+const getSmtpUser = () => cleanConfig(process.env.SMTP_USER || process.env.SMTP_EMAIL || 'verifitorr@gmail.com');
+const getSmtpPass = () => cleanPass(process.env.SMTP_PASS || process.env.SMTP_PASSWORD);
+
+const getTransporter = () => {
+  const host = cleanConfig(process.env.SMTP_HOST);
+  const user = getSmtpUser();
+  const pass = getSmtpPass();
+  const port = Number(cleanConfig(process.env.SMTP_PORT)) || 465;
+  const isSecure = cleanConfig(process.env.SMTP_SECURE) === 'true' || port === 465;
+
+  if (host && !host.includes('gmail.com')) {
+    return nodemailer.createTransport({
+      host,
+      port,
+      secure: isSecure,
+      auth: { user, pass },
       connectionTimeout: 10000,
       greetingTimeout: 10000,
       socketTimeout: 15000,
     });
+  }
+
+  return nodemailer.createTransport({
+    service: 'gmail',
+    auth: { user, pass },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000,
+  });
+};
+
+const sendMailWithFallback = async (mailOptions) => {
+  const transporter = getTransporter();
+  try {
+    return await transporter.sendMail(mailOptions);
+  } catch (primaryErr) {
+    const host = cleanConfig(process.env.SMTP_HOST);
+    if (host && host.includes('gmail.com')) {
+      try {
+        const fallbackTransporter = nodemailer.createTransport({
+          host: 'smtp.gmail.com',
+          port: 587,
+          secure: false,
+          auth: {
+            user: getSmtpUser(),
+            pass: getSmtpPass(),
+          },
+          connectionTimeout: 10000,
+          greetingTimeout: 10000,
+          socketTimeout: 15000,
+        });
+        return await fallbackTransporter.sendMail(mailOptions);
+      } catch (_fallbackErr) {
+        throw primaryErr;
+      }
+    }
+    throw primaryErr;
+  }
+};
 
 const getFromAddress = (defaultLabel = 'VeriFitor System') => {
   if (process.env.SMTP_FROM) {
-    return process.env.SMTP_FROM;
+    return cleanConfig(process.env.SMTP_FROM);
   }
-  const email = smtpUser || 'verifitorr@gmail.com';
+  const email = getSmtpUser();
   return `"${defaultLabel}" <${email}>`;
 };
 
 const getFrontendUrl = () => {
   if (process.env.FRONTEND_URL && !process.env.FRONTEND_URL.includes('localhost')) {
-    return process.env.FRONTEND_URL;
+    return cleanConfig(process.env.FRONTEND_URL);
   }
   if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
     return 'https://verifitor-frontend.vercel.app';
   }
-  return process.env.FRONTEND_URL || 'http://localhost:5173';
+  return cleanConfig(process.env.FRONTEND_URL) || 'http://localhost:5173';
 };
 
 /**
@@ -107,7 +143,7 @@ async function sendStaffWelcomeEmail({ to, name, email, tempPassword, department
     </div>
   `;
 
-  return transporter.sendMail({
+  return sendMailWithFallback({
     from: getFromAddress('VeriFitor System'),
     to,
     subject: `Welcome to VeriFitor - Staff Credentials & Access`,
@@ -161,7 +197,7 @@ async function sendAccountStatusEmail({ to, name, status }) {
     </div>
   `;
 
-  return transporter.sendMail({
+  return sendMailWithFallback({
     from: getFromAddress('VeriFitor System'),
     to,
     subject: `VeriFitor - Account Status Update: ${status}`,
@@ -193,7 +229,7 @@ async function sendPasswordChangedEmail({ to, name }) {
     </div>
   `;
 
-  return transporter.sendMail({
+  return sendMailWithFallback({
     from: getFromAddress('VeriFitor Security'),
     to,
     subject: `VeriFitor - Password Changed Successfully`,
@@ -250,7 +286,7 @@ async function sendRoleChangeEmail({ to, name, oldRole, newRole, isPromotion }) 
     </div>
   `;
 
-  return transporter.sendMail({
+  return sendMailWithFallback({
     from: getFromAddress('VeriFitor System'),
     to,
     subject: `VeriFitor - Role Update: Assigned as ${newRole}`,
@@ -259,6 +295,8 @@ async function sendRoleChangeEmail({ to, name, oldRole, newRole, isPromotion }) 
 }
 
 module.exports = {
+  getTransporter,
+  sendMailWithFallback,
   sendStaffWelcomeEmail,
   sendAccountStatusEmail,
   sendPasswordChangedEmail,
