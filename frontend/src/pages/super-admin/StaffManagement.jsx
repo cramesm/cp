@@ -181,7 +181,9 @@ const ManageRegistrar = () => {
           name: createdReg.name || `${addForm.firstName.trim()} ${addForm.lastName.trim()}`,
           email: createdReg.email || addForm.email.trim(),
           department: createdReg.department || addForm.department,
-          role: createdReg.role || (addForm.department === 'Accounting' ? 'Accounting Staff' : addForm.department === 'IT Administration' ? 'IT Staff' : 'Registrar Staff')
+          role: createdReg.role || (addForm.department === 'Accounting' ? 'Accounting Staff' : addForm.department === 'IT Administration' ? 'IT Staff' : 'Registrar Staff'),
+          tempPassword: res.data.tempPassword || '',
+          emailSent: res.data.emailSent
         });
 
         // Refresh staff list immediately
@@ -676,11 +678,11 @@ const ManageRegistrar = () => {
                   <Check size={28} className="stroke-[3]" />
                 </div>
                 <h3 className="text-xl font-black text-slate-900 mb-1">Staff Successfully Added!</h3>
-                <p className="text-slate-500 text-[12px] leading-relaxed max-w-sm mx-auto mb-4">
-                  An automated email containing credentials and portal access has been dispatched to <strong>{addSuccessData.email}</strong>.
+                <p className="text-slate-500 text-[12px] leading-relaxed max-w-sm mx-auto mb-3">
+                  Account profile for <strong>{addSuccessData.email}</strong> is ready.
                 </p>
 
-                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 text-left mb-4 space-y-2">
+                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 text-left mb-3 space-y-2">
                   <div className="flex justify-between items-center text-[12px]">
                     <span className="text-slate-500 font-medium">Full Name:</span>
                     <span className="font-bold text-slate-900">{addSuccessData.name}</span>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Layout from '../../components/Layout';
 import ConfirmModal from '../../components/ConfirmModal';
-import { User, Archive, Edit3, CheckCircle, Lock, AlertTriangle, RefreshCw, ArrowLeft } from 'lucide-react';
+import { User, Archive, Edit3, CheckCircle, Lock, AlertTriangle, RefreshCw, ArrowLeft, Key } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../../api';
 import PropTypes from 'prop-types';
@@ -26,6 +26,7 @@ export default function RegistrarInformation() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [resending, setResending] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [confirmConfig, setConfirmConfig] = useState(null);
 
@@ -173,6 +174,41 @@ export default function RegistrarInformation() {
     });
   };
 
+  const handleResendCredentials = () => {
+    showConfirm({
+      title: 'Reset & Resend Credentials',
+      message: `Generate a new temporary password and dispatch login credentials directly to ${formData.email}? The temporary password will be sent directly to the staff member and is not visible to administrators.`,
+      type: 'warning',
+      confirmText: 'Dispatch Credentials',
+      onConfirm: async () => {
+        setResending(true);
+        try {
+          const res = await api.post(`/registrars/${registrarId || id}/resend-credentials`);
+          if (res.data.emailSent) {
+            setToast({ 
+              show: true, 
+              message: `New credentials successfully dispatched to ${formData.email}!`, 
+              type: 'success' 
+            });
+          } else {
+            setToast({ 
+              show: true, 
+              message: res.data.message || 'Email delivery failed. Please check SMTP configuration.', 
+              type: 'error' 
+            });
+          }
+          setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 4000);
+        } catch (error) {
+          console.error('Error re-dispatching credentials:', error);
+          const errorMsg = error.response?.data?.message || 'Failed to re-dispatch credentials.';
+          setToast({ show: true, message: errorMsg, type: 'error' });
+          setTimeout(() => setToast({ show: false, message: '', type: 'error' }), 4000);
+        } finally {
+          setResending(false);
+        }
+      }
+    });
+  };
 
   return (
     <Layout>
@@ -338,6 +374,32 @@ export default function RegistrarInformation() {
                       </p>
                     </div>
                   </div>
+                </section>
+
+                <section className="bg-white p-6 rounded-[22px] shadow-[0_8px_24px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.02)] border border-slate-100/90">
+                  <div className="flex items-center gap-2 mb-3 text-[#2c3543]">
+                    <Key size={18} />
+                    <h3 className="text-[14px] font-black uppercase tracking-wider m-0">Account Access & Credentials</h3>
+                  </div>
+                  <p className="text-[12px] text-slate-500 mb-4 leading-relaxed">
+                    If this staff member missed their welcome email or cannot access their account, generate a new temporary password and re-dispatch it directly to their email.
+                  </p>
+
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-left mb-4">
+                    <p className="text-[11.5px] text-blue-900 leading-snug m-0">
+                      <strong>Security Notice:</strong> The temporary password is sent directly to the staff member&apos;s email address and is not visible to administrators.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleResendCredentials}
+                    disabled={resending}
+                    className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-2.5 rounded-full text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  >
+                    <RefreshCw size={13} className={resending ? 'animate-spin' : ''} />
+                    <span>{resending ? 'Dispatching...' : 'Resend Credentials Email'}</span>
+                  </button>
                 </section>
 
                 <section className="bg-amber-50/60 border border-amber-200/80 p-6 rounded-[22px] shadow-2xs">

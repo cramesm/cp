@@ -48,4 +48,4 @@ adminSchema.methods.comparePassword = async function(candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-module.exports = mongoose.models.Admin || mongoose.model('Admin', adminSchema);
+module.exports = mongoose.models.Admin || mongoose.model('Admin', adminSchema, process.env.MONGODB_ADMINS_COLLECTION || 'staff');

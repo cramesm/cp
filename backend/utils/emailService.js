@@ -12,6 +12,9 @@ const transporter = process.env.SMTP_HOST
         user: smtpUser,
         pass: smtpPass,
       },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000,
     })
   : nodemailer.createTransport({
       service: 'gmail',
@@ -19,6 +22,9 @@ const transporter = process.env.SMTP_HOST
         user: smtpUser,
         pass: smtpPass,
       },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000,
     });
 
 const getFromAddress = (defaultLabel = 'VeriFitor System') => {

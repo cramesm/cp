@@ -68,4 +68,4 @@ const blockchainTransactionSchema = new mongoose.Schema(
 
 module.exports =
   mongoose.models.Blockchain_Transaction ||
-  mongoose.model("Blockchain_Transaction", blockchainTransactionSchema, "Blockchain_Transaction");
+  mongoose.model("Blockchain_Transaction", blockchainTransactionSchema, process.env.MONGODB_BLOCKCHAIN_COLLECTION || "blockchain_transactions");

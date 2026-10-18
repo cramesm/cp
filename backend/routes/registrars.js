@@ -22,6 +22,9 @@ router.put('/:id/role', superAdminOnly, RegistrarController.updateRole);
 // @route   PUT /api/registrars/:id
 router.put('/:id', updateStaffValidation, validate, RegistrarController.updateRegistrar);
 
+// @route   POST /api/registrars/:id/resend-credentials
+router.post('/:id/resend-credentials', RegistrarController.resendCredentials);
+
 // @route   DELETE /api/registrars/:id (IT Admin and Super Admin only)
 router.delete('/:id', itOrSuperAdmin, RegistrarController.deleteRegistrar);
 

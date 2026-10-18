@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Registrar = require('../models/Registrar');
 const Admin = require('../models/Users/Admin');
 const ActivityLog = require('../models/ActivityLog');
@@ -105,16 +106,24 @@ const RegistrarController = {
       const userRole = (req.user?.role || '').toLowerCase();
       const userDept = (req.user?.department || '').toLowerCase();
 
-      let staff = await Registrar.findById(req.params.id);
+      const isObjectId = mongoose.Types.ObjectId.isValid(req.params.id);
+      let staff = null;
       let isAdmin = false;
       
-      if (!staff) {
-        staff = await Admin.findById(req.params.id);
-        isAdmin = true;
+      if (isObjectId) {
+        staff = await Registrar.findById(req.params.id);
+        if (!staff) {
+          staff = await Admin.findById(req.params.id);
+          isAdmin = true;
+        }
       }
       
       if (!staff) {
         staff = await Registrar.findOne({ registrarId: req.params.id });
+      }
+
+      if (!staff) {
+        staff = await Registrar.findOne({ email: req.params.id });
       }
 
       if (!staff || staff.isArchived || staff.status === 'Archived') {
@@ -250,6 +259,8 @@ const RegistrarController = {
       });
 
       // Send welcome email with credentials & department info
+      let emailSent = false;
+      let emailError = null;
       try {
         await sendStaffWelcomeEmail({
           to: cleanEmail,
@@ -259,8 +270,10 @@ const RegistrarController = {
           department: assignedDept,
           role: newRegistrar.role
         });
+        emailSent = true;
       } catch (emailErr) {
         console.error('Failed to send staff welcome email:', emailErr);
+        emailError = emailErr?.message || 'SMTP service error';
       }
 
       await ActivityLog.create({
@@ -269,11 +282,12 @@ const RegistrarController = {
         action: 'Staff Account Created',
         type: 'Staff Management',
         status: 'Successful',
-        details: `Created new staff account for ${name} (${cleanEmail}) - Role: ${newRegistrar.role}, Dept: ${assignedDept}`
+        details: `Created new staff account for ${name} (${cleanEmail}) - Role: ${newRegistrar.role}, Dept: ${assignedDept}${emailSent ? ' (Email dispatched)' : ` (Email dispatch failed: ${emailError})`}`
       });
 
       res.status(201).json({
         success: true,
+        emailSent,
         message: 'Staff account created successfully! Credentials and login instructions have been dispatched via email.',
         registrar: {
           _id: newRegistrar._id,
@@ -546,6 +560,121 @@ const RegistrarController = {
     } catch (error) {
       console.error('Error archiving staff account:', error);
       res.status(500).json({ message: 'Error archiving staff account' });
+    }
+  },
+
+  // @desc    Resend welcome email & regenerate temporary password for a staff member
+  // @route   POST /api/registrars/:id/resend-credentials
+  resendCredentials: async (req, res) => {
+    try {
+      const requesterRole = (req.user?.role || '').toLowerCase();
+      const requesterDept = (req.user?.department || '').toLowerCase();
+
+      const isObjectId = mongoose.Types.ObjectId.isValid(req.params.id);
+      let staff = null;
+      let model = Registrar;
+
+      if (isObjectId) {
+        staff = await Registrar.findById(req.params.id);
+        if (!staff) {
+          staff = await Admin.findById(req.params.id);
+          model = Admin;
+        }
+      }
+
+      if (!staff) {
+        staff = await Registrar.findOne({ registrarId: req.params.id });
+        model = Registrar;
+      }
+
+      if (!staff) {
+        staff = await Registrar.findOne({ email: req.params.id });
+        model = Registrar;
+      }
+
+      if (!staff) {
+        return res.status(404).json({ message: 'Staff member not found.' });
+      }
+
+      // Department boundary enforcement
+      const isITOrSuper = requesterRole === 'super admin' || requesterRole.includes('it admin') || requesterRole.includes('it administrator');
+      if (!isITOrSuper) {
+        const staffDept = (staff.department || '').toLowerCase();
+        let targetPrefix = '';
+        if (requesterRole.includes('registrar') || requesterDept === 'registrar') targetPrefix = 'registrar';
+        else if (requesterRole.includes('accounting') || requesterDept === 'accounting') targetPrefix = 'accounting';
+        else if (requesterRole.includes('it') || requesterDept.includes('it')) targetPrefix = 'it';
+
+        if (targetPrefix && !staffDept.startsWith(targetPrefix)) {
+          return res.status(403).json({ message: `Access denied: You can only manage staff within your department (${req.user.department || requesterRole}).` });
+        }
+      }
+
+      // Generate secure temporary password
+      const uppers = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+      const lowers = "abcdefghijkmnopqrstuvwxyz";
+      const digits = "23456789";
+      const specials = "!@#$*";
+      let temp = "";
+      temp += uppers.charAt(Math.floor(Math.random() * uppers.length));
+      temp += lowers.charAt(Math.floor(Math.random() * lowers.length));
+      temp += lowers.charAt(Math.floor(Math.random() * lowers.length));
+      temp += digits.charAt(Math.floor(Math.random() * digits.length));
+      temp += digits.charAt(Math.floor(Math.random() * digits.length));
+      temp += specials.charAt(Math.floor(Math.random() * specials.length));
+      const pool = uppers + lowers + digits;
+      for (let i = 0; i < 3; i++) {
+        temp += pool.charAt(Math.floor(Math.random() * pool.length));
+      }
+      const newTempPassword = temp.split('').sort(() => 0.5 - Math.random()).join('');
+
+      staff.password = newTempPassword;
+      staff.mustChangePassword = true;
+      await staff.save();
+
+      let emailSent = false;
+      let emailError = null;
+      try {
+        await sendStaffWelcomeEmail({
+          to: staff.email,
+          name: staff.name,
+          email: staff.email,
+          tempPassword: newTempPassword,
+          department: staff.department || 'Academic',
+          role: staff.role || 'Staff'
+        });
+        emailSent = true;
+      } catch (err) {
+        console.error('Failed to resend staff credentials email:', err);
+        emailError = err?.message || 'SMTP service error';
+      }
+
+      await ActivityLog.create({
+        userEmail: req.user?.email || 'admin@verifitor.edu',
+        userName: req.user?.name || 'Administrator',
+        action: 'Staff Credentials Re-dispatched',
+        type: 'Staff Management',
+        status: emailSent ? 'Successful' : 'Failed',
+        details: `Re-dispatched credentials for ${staff.name} (${staff.email}) - Dept: ${staff.department}${emailSent ? ' (Email sent)' : ` (Email failed: ${emailError})`}`
+      });
+
+      res.json({
+        success: true,
+        emailSent,
+        message: emailSent
+          ? `Credentials have been re-dispatched to ${staff.email}.`
+          : `Email delivery failed. Please check SMTP configuration.`,
+        staff: {
+          _id: staff._id,
+          name: staff.name,
+          email: staff.email,
+          department: staff.department,
+          role: staff.role
+        }
+      });
+    } catch (error) {
+      console.error('Error re-dispatching staff credentials:', error);
+      res.status(500).json({ message: 'Error re-dispatching staff credentials' });
     }
   }
 };
