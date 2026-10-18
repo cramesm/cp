@@ -3,7 +3,19 @@ const nodemailer = require('nodemailer');
 const cleanConfig = (val) => String(val || '').trim().replace(/^["']|["']$/g, '');
 const cleanPass = (val) => cleanConfig(val).replace(/\s+/g, '');
 
-const getSmtpUser = () => cleanConfig(process.env.SMTP_USER || process.env.SMTP_EMAIL || 'verifitorr@gmail.com');
+const getSmtpUser = () => {
+  const user = cleanConfig(process.env.SMTP_USER);
+  const email = cleanConfig(process.env.SMTP_EMAIL);
+
+  if (email && email.toLowerCase().includes('verifitorr')) return email;
+  if (user && user.toLowerCase().includes('verifitorr')) return user;
+
+  if (user.toLowerCase() === 'verifitor@gmail.com' || email.toLowerCase() === 'verifitor@gmail.com') {
+    return 'verifitorr@gmail.com';
+  }
+
+  return user || email || 'verifitorr@gmail.com';
+};
 const getSmtpPass = () => cleanPass(process.env.SMTP_PASS || process.env.SMTP_PASSWORD);
 
 const getTransporter = () => {
@@ -299,6 +311,8 @@ async function sendRoleChangeEmail({ to, name, oldRole, newRole, isPromotion }) 
 
 module.exports = {
   getTransporter,
+  getSmtpUser,
+  getSmtpPass,
   sendMailWithFallback,
   sendStaffWelcomeEmail,
   sendAccountStatusEmail,

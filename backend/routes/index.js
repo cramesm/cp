@@ -59,8 +59,7 @@ router.use('/email', require('./email'));
 // System Discovery & Health Diagnostics
 router.get('/health', (req, res) => res.json({ status: 'API is running' }));
 router.get('/smtp-debug', async (req, res) => {
-  const cleanConfig = (val) => String(val || '').trim().replace(/^["']|["']$/g, '');
-  const cleanPass = (val) => cleanConfig(val).replace(/\s+/g, '');
+  const { getTransporter, getSmtpUser, getSmtpPass } = require('../utils/emailService');
 
   const user1 = process.env.SMTP_USER || '';
   const user2 = process.env.SMTP_EMAIL || '';
@@ -70,13 +69,12 @@ router.get('/smtp-debug', async (req, res) => {
   const port = process.env.SMTP_PORT || '';
   const secure = process.env.SMTP_SECURE || '';
 
-  const cleanUser = cleanConfig(user1 || user2 || 'verifitorr@gmail.com');
-  const cleanP = cleanPass(pass1 || pass2);
+  const cleanUser = getSmtpUser();
+  const cleanP = getSmtpPass();
 
   let verifyResult = 'not tested';
   let verifyError = null;
   try {
-    const { getTransporter } = require('../utils/emailService');
     const transporter = getTransporter();
     await transporter.verify();
     verifyResult = 'success';
