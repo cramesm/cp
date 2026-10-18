@@ -311,7 +311,7 @@ const RegistrarController = {
         action: 'Staff Account Created',
         type: 'Staff Management',
         status: 'Successful',
-        details: `Created new staff account for ${name} (${cleanEmail}) - Role: ${newRegistrar.role}, Dept: ${assignedDept}${emailSent ? ' (Email dispatched)' : ` (Email dispatch failed: ${emailError})`}`
+        details: `Created new staff account for ${name} (${cleanEmail}) - Role: ${newRegistrar.role}, Dept: ${assignedDept}${emailSent ? ` (Email dispatched to ${cleanEmail})` : ` (Email dispatch failed to ${cleanEmail}: ${emailError})`}`
       });
 
       res.status(201).json({
@@ -684,7 +684,7 @@ const RegistrarController = {
         action: 'Staff Credentials Re-dispatched',
         type: 'Staff Management',
         status: emailSent ? 'Successful' : 'Failed',
-        details: `Re-dispatched credentials for ${staff.name} (${staff.email}) - Dept: ${staff.department}${emailSent ? ' (Email sent)' : ` (Email failed: ${emailError})`}`
+        details: `Re-dispatched credentials for ${staff.name} (${staff.email}) - Dept: ${staff.department}${emailSent ? ` (Email dispatched to ${staff.email})` : ` (Email dispatch failed to ${staff.email}: ${emailError})`}`
       });
 
       res.json({

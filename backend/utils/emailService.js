@@ -143,9 +143,12 @@ async function sendStaffWelcomeEmail({ to, name, email, tempPassword, department
     </div>
   `;
 
+  const recipient = (to || email || '').trim();
+  console.log(`[SMTP] Dispatching staff welcome email to: ${recipient}`);
+
   return sendMailWithFallback({
     from: getFromAddress('VeriFitor System'),
-    to,
+    to: recipient,
     subject: `Welcome to VeriFitor - Staff Credentials & Access`,
     html,
   });

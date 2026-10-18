@@ -8,7 +8,7 @@ const Admin = require('../models/Users/Admin');
 const Registrar = require('../models/Registrar');
 const ActivityLog = require('../models/ActivityLog');
 const LoginLockout = require('../models/LoginLockout');
-const { sendStaffWelcomeEmail, sendPasswordChangedEmail } = require('../utils/emailService');
+const { sendStaffWelcomeEmail, sendPasswordChangedEmail, sendMailWithFallback } = require('../utils/emailService');
 
 // Universal helper to find user across any collection by _id
 const findUserById = async (id) => {
@@ -222,8 +222,8 @@ const AuthController = {
         console.log(`[OTP_DEV_MODE] Registration OTP for ${email}: ${otp}`);
       }
 
-      const emailSender = process.env.SMTP_FROM || `"VeriFitor System" <${smtpUser || 'verifitor@gmail.com'}>`;
-      await transporter.sendMail({
+      const emailSender = process.env.SMTP_FROM || `"VeriFitor System" <${process.env.SMTP_USER || process.env.SMTP_EMAIL || 'verifitorr@gmail.com'}>`;
+      await sendMailWithFallback({
         from: emailSender,
         to: email,
         subject: 'VeriFitor - Registration OTP',
@@ -556,8 +556,8 @@ const AuthController = {
         console.log(`[OTP_DEV_MODE] Password Reset OTP for ${email}: ${otp}`);
       }
 
-      const emailSender = process.env.SMTP_FROM || `"VeriFitor System" <${smtpUser || 'verifitor@gmail.com'}>`;
-      await transporter.sendMail({
+      const emailSender = process.env.SMTP_FROM || `"VeriFitor System" <${process.env.SMTP_USER || process.env.SMTP_EMAIL || 'verifitorr@gmail.com'}>`;
+      await sendMailWithFallback({
         from: emailSender,
         to: email,
         subject: 'VeriFitor - Password Reset OTP',
