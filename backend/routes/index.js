@@ -58,55 +58,6 @@ router.use('/email', require('./email'));
 
 // System Discovery & Health Diagnostics
 router.get('/health', (req, res) => res.json({ status: 'API is running' }));
-router.get('/smtp-debug', async (req, res) => {
-  const { getTransporter, getSmtpUser, getSmtpPass } = require('../utils/emailService');
-
-  const user1 = process.env.SMTP_USER || '';
-  const user2 = process.env.SMTP_EMAIL || '';
-  const pass1 = process.env.SMTP_PASS || '';
-  const pass2 = process.env.SMTP_PASSWORD || '';
-  const host = process.env.SMTP_HOST || '';
-  const port = process.env.SMTP_PORT || '';
-  const secure = process.env.SMTP_SECURE || '';
-
-  const cleanUser = getSmtpUser();
-  const cleanP = getSmtpPass();
-
-  let verifyResult = 'not tested';
-  let verifyError = null;
-  try {
-    const transporter = getTransporter();
-    await transporter.verify();
-    verifyResult = 'success';
-  } catch (err) {
-    verifyResult = 'failed';
-    verifyError = err.message;
-  }
-
-  res.json({
-    status: 'ok',
-    diagnostics: {
-      has_SMTP_USER: !!user1,
-      user1_val: user1,
-      has_SMTP_EMAIL: !!user2,
-      user2_val: user2,
-      effective_user: cleanUser,
-      has_SMTP_PASS: !!pass1,
-      pass1_length: pass1.length,
-      pass1_prefix: pass1.length >= 4 ? `${pass1.substring(0, 2)}***${pass1.substring(pass1.length - 2)}` : 'too-short',
-      has_SMTP_PASSWORD: !!pass2,
-      pass2_length: pass2.length,
-      pass2_prefix: pass2.length >= 4 ? `${pass2.substring(0, 2)}***${pass2.substring(pass2.length - 2)}` : 'too-short',
-      effective_clean_pass_length: cleanP.length,
-      effective_clean_pass_prefix: cleanP.length >= 4 ? `${cleanP.substring(0, 2)}***${cleanP.substring(cleanP.length - 2)}` : 'too-short',
-      host,
-      port,
-      secure,
-      verifyResult,
-      verifyError
-    }
-  });
-});
 router.get('/request-policy', (_req, res) => res.json({ success: true, express: null }));
 router.get('/error-statuses', (req, res) => res.json({ success: true, statuses: HTTP_ERROR_STATUSES }));
 
