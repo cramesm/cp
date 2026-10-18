@@ -89,10 +89,10 @@ router.get('/smtp-debug', async (req, res) => {
     status: 'ok',
     diagnostics: {
       has_SMTP_USER: !!user1,
-      user1_val: user1 ? `${user1.substring(0, 4)}***@${user1.split('@')[1] || ''}` : null,
+      user1_val: user1,
       has_SMTP_EMAIL: !!user2,
-      user2_val: user2 ? `${user2.substring(0, 4)}***@${user2.split('@')[1] || ''}` : null,
-      effective_user: `${cleanUser.substring(0, 4)}***@${cleanUser.split('@')[1] || ''}`,
+      user2_val: user2,
+      effective_user: cleanUser,
       has_SMTP_PASS: !!pass1,
       pass1_length: pass1.length,
       pass1_prefix: pass1.length >= 4 ? `${pass1.substring(0, 2)}***${pass1.substring(pass1.length - 2)}` : 'too-short',
