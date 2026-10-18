@@ -60,8 +60,15 @@ const RegistrarController = {
       const registrars = await Registrar.find(query);
 
       let admins = [];
-      // Only include Admin model accounts if Super Admin
-      if (userRole === 'super admin' && (!req.query.department || req.query.department === 'All' || req.query.department === 'All Departments')) {
+      // Only query Admin model if it is configured to a separate collection from Registrar
+      const isSeparateAdminCollection = Admin.collection && Registrar.collection &&
+        Admin.collection.collectionName !== Registrar.collection.collectionName;
+
+      if (
+        userRole === 'super admin' &&
+        isSeparateAdminCollection &&
+        (!req.query.department || req.query.department === 'All' || req.query.department === 'All Departments')
+      ) {
         let adminQuery = {
           isArchived: { $ne: true },
           status: { $ne: 'Archived' }
@@ -72,26 +79,48 @@ const RegistrarController = {
         admins = await Admin.find(adminQuery);
       }
 
-      const combined = [
-        ...registrars.map(r => {
-          const obj = r.toObject ? r.toObject() : { ...r };
-          const roleLower = (obj.role || '').toLowerCase();
-          if (roleLower.includes('accounting')) {
-            obj.department = 'Accounting';
-          } else if (roleLower.includes('it')) {
-            obj.department = 'IT Administration';
-          } else if (roleLower.includes('registrar') || !obj.department) {
-            obj.department = 'Registrar';
-          }
-          return obj;
-        }),
-        ...admins.map(a => ({
-          ...(a.toObject ? a.toObject() : a),
-          registrarId: 'ADMIN-' + a._id.toString().substring(0, 4),
-          status: a.status || 'Active',
-          department: a.department || 'Administration'
-        }))
-      ];
+      const seenIds = new Set();
+      const seenEmails = new Set();
+      const combined = [];
+
+      for (const r of registrars) {
+        const obj = r.toObject ? r.toObject() : { ...r };
+        const idStr = obj._id?.toString();
+        const emailLower = (obj.email || '').toLowerCase().trim();
+
+        if (idStr && seenIds.has(idStr)) continue;
+        if (emailLower && seenEmails.has(emailLower)) continue;
+
+        if (idStr) seenIds.add(idStr);
+        if (emailLower) seenEmails.add(emailLower);
+
+        const roleLower = (obj.role || '').toLowerCase();
+        if (roleLower.includes('accounting')) {
+          obj.department = 'Accounting';
+        } else if (roleLower.includes('it')) {
+          obj.department = 'IT Administration';
+        } else if (roleLower.includes('registrar') || !obj.department) {
+          obj.department = 'Registrar';
+        }
+        combined.push(obj);
+      }
+
+      for (const a of admins) {
+        const obj = a.toObject ? a.toObject() : { ...a };
+        const idStr = obj._id?.toString();
+        const emailLower = (obj.email || '').toLowerCase().trim();
+
+        if (idStr && seenIds.has(idStr)) continue;
+        if (emailLower && seenEmails.has(emailLower)) continue;
+
+        if (idStr) seenIds.add(idStr);
+        if (emailLower) seenEmails.add(emailLower);
+
+        obj.registrarId = obj.registrarId || ('ADMIN-' + (idStr ? idStr.substring(0, 4) : '0000'));
+        obj.status = obj.status || 'Active';
+        obj.department = obj.department || 'Administration';
+        combined.push(obj);
+      }
 
       res.json(combined);
     } catch (error) {
