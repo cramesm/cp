@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAccessibility } from '../../context/AccessibilityContext';
 import { 
@@ -17,6 +17,28 @@ import {
 const HelpGuideModal = () => {
     const { helpModalOpen, setHelpModalOpen } = useAccessibility();
     const [activeTab, setActiveTab] = useState('where'); // 'where' | 'how' | 'statuses'
+    const previousFocusRef = useRef(null);
+
+    useEffect(() => {
+        if (!helpModalOpen) return;
+
+        previousFocusRef.current = document.activeElement;
+
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                setHelpModalOpen(false);
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+            if (previousFocusRef.current && typeof previousFocusRef.current.focus === 'function') {
+                previousFocusRef.current.focus();
+            }
+        };
+    }, [helpModalOpen, setHelpModalOpen]);
 
     if (!helpModalOpen) return null;
 

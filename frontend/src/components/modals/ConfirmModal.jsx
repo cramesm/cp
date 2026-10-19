@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { X, AlertTriangle, AlertCircle, CheckCircle2, HelpCircle } from 'lucide-react';
 
 const ConfirmModal = ({
@@ -12,6 +12,64 @@ const ConfirmModal = ({
   type = 'info',
   isLoading = false
 }) => {
+  const modalRef = useRef(null);
+  const cancelBtnRef = useRef(null);
+  const previousFocusRef = useRef(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    previousFocusRef.current = document.activeElement;
+
+    const timer = setTimeout(() => {
+      if (cancelBtnRef.current) {
+        cancelBtnRef.current.focus();
+      }
+    }, 50);
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        if (!isLoading) {
+          e.preventDefault();
+          onClose();
+        }
+        return;
+      }
+
+      if (e.key === 'Tab' && modalRef.current) {
+        const focusable = modalRef.current.querySelectorAll(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable.length === 0) return;
+
+        const firstEl = focusable[0];
+        const lastEl = focusable[focusable.length - 1];
+
+        if (e.shiftKey) {
+          if (document.activeElement === firstEl) {
+            e.preventDefault();
+            lastEl.focus();
+          }
+        } else {
+          if (document.activeElement === lastEl) {
+            e.preventDefault();
+            firstEl.focus();
+          }
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('keydown', handleKeyDown);
+      if (previousFocusRef.current && typeof previousFocusRef.current.focus === 'function') {
+        previousFocusRef.current.focus();
+      }
+    };
+  }, [isOpen, isLoading, onClose]);
+
   if (!isOpen) return null;
 
   // Configure appearance based on the modal type
@@ -57,6 +115,7 @@ const ConfirmModal = ({
       onClick={handleOverlayClick}
     >
       <div 
+        ref={modalRef}
         className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all animate-scale-up border border-slate-100"
         role="dialog"
         aria-modal="true"
@@ -99,6 +158,7 @@ const ConfirmModal = ({
         {/* Footer Actions */}
         <div className="bg-slate-50 px-6 py-4 flex items-center justify-end gap-3 border-t border-slate-100">
           <button
+            ref={cancelBtnRef}
             type="button"
             onClick={onClose}
             disabled={isLoading}
