@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAccessibility } from '../../context/AccessibilityContext';
 import { 
@@ -7,7 +7,6 @@ import {
     Eye, 
     Type, 
     SunMedium, 
-    Check, 
     Info 
 } from 'lucide-react';
 
@@ -22,6 +21,81 @@ const AccessibilityModal = () => {
         highContrast,
         toggleHighContrast
     } = useAccessibility();
+
+    const modalRef = useRef(null);
+    const closeBtnRef = useRef(null);
+    const previousFocusRef = useRef(null);
+
+    // Auto-focus first element upon opening, restore focus upon closing
+    useEffect(() => {
+        if (settingsModalOpen) {
+            previousFocusRef.current = document.activeElement;
+            const timer = setTimeout(() => {
+                if (closeBtnRef.current) {
+                    closeBtnRef.current.focus();
+                }
+            }, 60);
+            return () => clearTimeout(timer);
+        } else if (previousFocusRef.current && typeof previousFocusRef.current.focus === 'function') {
+            previousFocusRef.current.focus();
+        }
+    }, [settingsModalOpen]);
+
+    // Handle Escape key and Tab focus trapping inside the modal
+    useEffect(() => {
+        if (!settingsModalOpen) return;
+
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                setSettingsModalOpen(false);
+                return;
+            }
+
+            if (e.key === 'Tab' && modalRef.current) {
+                const focusable = modalRef.current.querySelectorAll(
+                    'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+                );
+                if (focusable.length === 0) return;
+
+                const firstEl = focusable[0];
+                const lastEl = focusable[focusable.length - 1];
+
+                if (e.shiftKey) {
+                    if (document.activeElement === firstEl) {
+                        e.preventDefault();
+                        lastEl.focus();
+                    }
+                } else {
+                    if (document.activeElement === lastEl) {
+                        e.preventDefault();
+                        firstEl.focus();
+                    }
+                }
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [settingsModalOpen, setSettingsModalOpen]);
+
+    const handleTextSizeKeyDown = (e, currentId) => {
+        const order = ['normal', 'large', 'xl'];
+        const currentIndex = order.indexOf(currentId);
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+            e.preventDefault();
+            const nextIndex = (currentIndex + 1) % order.length;
+            setFontSize(order[nextIndex]);
+            const nextBtn = modalRef.current?.querySelector(`[data-size="${order[nextIndex]}"]`);
+            if (nextBtn) nextBtn.focus();
+        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            const prevIndex = (currentIndex - 1 + order.length) % order.length;
+            setFontSize(order[prevIndex]);
+            const prevBtn = modalRef.current?.querySelector(`[data-size="${order[prevIndex]}"]`);
+            if (prevBtn) prevBtn.focus();
+        }
+    };
 
     if (!settingsModalOpen) return null;
 
@@ -39,6 +113,7 @@ const AccessibilityModal = () => {
 
                 {/* Modal Window */}
                 <motion.div
+                    ref={modalRef}
                     initial={{ opacity: 0, scale: 0.95, y: 10 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -64,8 +139,9 @@ const AccessibilityModal = () => {
                             </div>
                         </div>
                         <button
+                            ref={closeBtnRef}
                             onClick={() => setSettingsModalOpen(false)}
-                            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors focus:outline-none"
+                            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#2c3e50] cursor-pointer"
                             aria-label="Close settings"
                         >
                             <X size={18} />
@@ -109,7 +185,8 @@ const AccessibilityModal = () => {
                                     onClick={toggleSimpleMode}
                                     role="switch"
                                     aria-checked={simpleMode}
-                                    className={`relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                                    aria-label="Toggle Simple Mode (Senior / Easy View)"
+                                    className={`relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 ${
                                         simpleMode ? 'bg-blue-600' : 'bg-slate-300'
                                     }`}
                                 >
@@ -129,7 +206,7 @@ const AccessibilityModal = () => {
                                 <Type size={15} className="text-slate-500" />
                                 <span>Text Size</span>
                             </label>
-                            <div className="grid grid-cols-3 gap-2.5">
+                            <div className="grid grid-cols-3 gap-2.5" role="radiogroup" aria-label="Text size options">
                                 {[
                                     { id: 'normal', label: 'Standard', sub: '100%', sample: 'Aa' },
                                     { id: 'large', label: 'Large', sub: '115%', sample: 'Aa+' },
@@ -138,8 +215,13 @@ const AccessibilityModal = () => {
                                     <button
                                         key={option.id}
                                         type="button"
+                                        data-size={option.id}
+                                        role="radio"
+                                        aria-checked={fontSize === option.id}
+                                        aria-label={`Text size ${option.label} (${option.sub})`}
                                         onClick={() => setFontSize(option.id)}
-                                        className={`p-3 rounded-2xl border flex flex-col items-center justify-center gap-1 transition-all ${
+                                        onKeyDown={(e) => handleTextSizeKeyDown(e, option.id)}
+                                        className={`p-3 rounded-2xl border flex flex-col items-center justify-center gap-1 transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 ${
                                             fontSize === option.id
                                                 ? 'bg-blue-50/80 border-blue-500 text-blue-800 shadow-sm ring-2 ring-blue-500/20'
                                                 : 'bg-white border-slate-200 hover:border-slate-300 text-slate-700'
@@ -171,7 +253,8 @@ const AccessibilityModal = () => {
                                 onClick={toggleHighContrast}
                                 role="switch"
                                 aria-checked={highContrast}
-                                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                                aria-label="Toggle High Contrast Mode"
+                                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2 ${
                                     highContrast ? 'bg-amber-600' : 'bg-slate-300'
                                 }`}
                             >
@@ -193,8 +276,9 @@ const AccessibilityModal = () => {
                             <span>Preferences are saved automatically.</span>
                         </span>
                         <button
+                            type="button"
                             onClick={() => setSettingsModalOpen(false)}
-                            className="px-4 py-2 rounded-xl bg-slate-800 text-white font-bold hover:bg-slate-900 transition-colors"
+                            className="px-4 py-2 rounded-xl bg-slate-800 text-white font-bold hover:bg-slate-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-800 focus-visible:ring-offset-2 cursor-pointer"
                         >
                             Done
                         </button>
