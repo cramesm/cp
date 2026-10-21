@@ -411,7 +411,7 @@ const Layout = ({ children }) => {
                             >
                                 <i className="fa-solid fa-bell text-[15px]"></i>
                                 {unreadCount > 0 && (
-                                    <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-0.5 flex items-center justify-center bg-red-700 text-white text-[9.5px] font-extrabold rounded-full ring-2 ring-[#4d6f8c] shadow-sm animate-pulse">
+                                    <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-0.5 flex items-center justify-center bg-red-800 text-white text-[10px] font-extrabold rounded-full ring-2 ring-[#4d6f8c] shadow-sm">
                                         {unreadCount}
                                     </span>
                                 )}

@@ -653,7 +653,7 @@ const Dashboard = () => {
                             </div>
 
                             {card.badge && (
-                                <span className="absolute top-3 right-10 bg-red-700 text-white text-[9.5px] font-extrabold px-2 py-0.5 rounded-full shadow-xs animate-pulse">
+                                <span className="absolute top-3 right-10 bg-red-800 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full shadow-xs">
                                     {card.badge} Action
                                 </span>
                             )}
