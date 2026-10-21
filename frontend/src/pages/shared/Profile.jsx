@@ -347,7 +347,7 @@ const Profile = () => {
                 <div className="bg-white rounded-[22px] shadow-[0_8px_24px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.02)] border border-slate-100/90 overflow-hidden">
                     <div className="py-3.5 px-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
                         <h3 className="text-[16px] font-black text-slate-900 m-0">Security & Password</h3>
-                        <span className="text-[11.5px] font-medium text-slate-400">Leave blank if unchanged</span>
+                        <span className="text-[11.5px] font-medium text-slate-600">Leave blank if unchanged</span>
                     </div>
 
                     <div className="p-5 sm:p-6">
@@ -361,15 +361,15 @@ const Profile = () => {
                                         name="current" 
                                         value={passwords.current} 
                                         onChange={handlePasswordChange} 
-                                        className="w-full border border-slate-200 rounded-xl px-3.5 py-2 pr-10 text-[13.5px] outline-none focus:border-blue-500 transition-all bg-white" 
+                                        className="w-full border border-slate-200 rounded-xl px-3.5 py-2 pr-11 text-[13.5px] outline-none focus:border-blue-500 transition-all bg-white" 
                                     />
                                     <button 
                                         type="button"
                                         aria-label={showCurrentPassword ? 'Hide current password' : 'Show current password'}
-                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 focus:outline-none p-1.5"
+                                        className="absolute right-1 top-1/2 -translate-y-1/2 w-10 h-10 min-w-[40px] min-h-[40px] touch-target flex items-center justify-center text-slate-600 hover:text-slate-900 focus:outline-none cursor-pointer"
                                         onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                                     >
-                                        {showCurrentPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                                        {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                     </button>
                                 </div>
                             </div>
@@ -383,15 +383,15 @@ const Profile = () => {
                                         name="newGroup" 
                                         value={passwords.newGroup} 
                                         onChange={handlePasswordChange} 
-                                        className="w-full border border-slate-200 rounded-xl px-3.5 py-2 pr-10 text-[13.5px] outline-none focus:border-blue-500 transition-all bg-white" 
+                                        className="w-full border border-slate-200 rounded-xl px-3.5 py-2 pr-11 text-[13.5px] outline-none focus:border-blue-500 transition-all bg-white" 
                                     />
                                     <button 
                                         type="button"
                                         aria-label={showNewPassword ? 'Hide new password' : 'Show new password'}
-                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 focus:outline-none p-1.5"
+                                        className="absolute right-1 top-1/2 -translate-y-1/2 w-10 h-10 min-w-[40px] min-h-[40px] touch-target flex items-center justify-center text-slate-600 hover:text-slate-900 focus:outline-none cursor-pointer"
                                         onClick={() => setShowNewPassword(!showNewPassword)}
                                     >
-                                        {showNewPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                                        {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                     </button>
                                 </div>
                             </div>
@@ -405,15 +405,15 @@ const Profile = () => {
                                         name="confirm" 
                                         value={passwords.confirm} 
                                         onChange={handlePasswordChange} 
-                                        className="w-full border border-slate-200 rounded-xl px-3.5 py-2 pr-10 text-[13.5px] outline-none focus:border-blue-500 transition-all bg-white" 
+                                        className="w-full border border-slate-200 rounded-xl px-3.5 py-2 pr-11 text-[13.5px] outline-none focus:border-blue-500 transition-all bg-white" 
                                     />
                                     <button 
                                         type="button"
                                         aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
-                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 focus:outline-none p-1.5"
+                                        className="absolute right-1 top-1/2 -translate-y-1/2 w-10 h-10 min-w-[40px] min-h-[40px] touch-target flex items-center justify-center text-slate-600 hover:text-slate-900 focus:outline-none cursor-pointer"
                                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                     >
-                                        {showConfirmPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                                        {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                     </button>
                                 </div>
                             </div>
@@ -423,7 +423,7 @@ const Profile = () => {
                                     type="button"
                                     onClick={handleUpdatePassword}
                                     disabled={saving || (!passwords.current && !passwords.newGroup)}
-                                    className="bg-[#2c3543] hover:bg-[#1f2631] text-white py-2 px-6 rounded-full font-bold text-xs transition-all shadow-xs hover:shadow-md cursor-pointer border-none disabled:opacity-40"
+                                    className="bg-[#2c3543] hover:bg-[#1f2631] text-white py-2.5 px-6 min-h-[44px] touch-target rounded-full font-bold text-xs transition-all shadow-xs hover:shadow-md cursor-pointer border-none disabled:opacity-40"
                                 >
                                     Update Password
                                 </button>
@@ -435,13 +435,13 @@ const Profile = () => {
                 {/* Action Buttons */}
                 <div className="flex justify-end gap-3 pt-1">
                     <button 
-                        className="bg-slate-200 hover:bg-slate-300 text-slate-700 py-2 px-6 rounded-full font-bold text-[13px] transition-all cursor-pointer border-none"
+                        className="bg-slate-200 hover:bg-slate-300 text-slate-700 py-2.5 px-6 min-h-[44px] touch-target rounded-full font-bold text-[13px] transition-all cursor-pointer border-none"
                         onClick={() => navigate('/profile/info')}
                     >
                         Cancel
                     </button>
                     <button 
-                        className="bg-[#2c3543] hover:bg-[#1f2631] text-white py-2 px-7 rounded-full font-bold text-[13px] transition-all shadow-xs hover:shadow-md cursor-pointer border-none active:scale-95"
+                        className="bg-[#2c3543] hover:bg-[#1f2631] text-white py-2.5 px-7 min-h-[44px] touch-target rounded-full font-bold text-[13px] transition-all shadow-xs hover:shadow-md cursor-pointer border-none active:scale-95"
                         onClick={handleSaveChanges}
                         disabled={saving}
                     >

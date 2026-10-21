@@ -124,13 +124,13 @@ const FeedbackModal = ({
                 </h3>
                 <button 
                   onClick={onClose} 
-                  className="p-1 rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-colors duration-150"
+                  className="w-10 h-10 min-w-[40px] min-h-[40px] touch-target flex items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-800 transition-colors duration-150 cursor-pointer"
                   aria-label="Close modal"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
-              <p className="mt-2.5 text-sm text-slate-500 leading-relaxed break-words whitespace-pre-line">
+              <p className="mt-2.5 text-sm text-slate-600 leading-relaxed break-words whitespace-pre-line font-medium">
                 {message}
               </p>
             </div>
@@ -143,7 +143,7 @@ const FeedbackModal = ({
             ref={actionBtnRef}
             type="button"
             onClick={onClose}
-            className={`px-5 py-2 rounded-xl text-sm font-semibold transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 ${config.btnBg}`}
+            className={`px-5 py-2.5 min-h-[44px] touch-target rounded-xl text-sm font-semibold transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 cursor-pointer ${config.btnBg}`}
           >
             Okay
           </button>

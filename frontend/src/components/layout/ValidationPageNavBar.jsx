@@ -18,6 +18,10 @@ const ValidationNavbar = () => {
             {/* Logo Section */}
             <div 
               onClick={() => navigate('/')} 
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate('/'); } }}
+              tabIndex={0}
+              role="button"
+              aria-label="Go to VerifiTOR homepage"
               className="bg-white p-1.5 rounded-xl flex items-center justify-center cursor-pointer shadow-sm hover:opacity-95 transition-opacity"
             >
               <img 
@@ -37,11 +41,11 @@ const ValidationNavbar = () => {
               <button
                 type="button"
                 onClick={() => setSettingsModalOpen(true)}
-                className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center border border-white/15 transition-all shadow-inner relative group cursor-pointer"
+                className="w-10 h-10 min-w-[40px] min-h-[40px] touch-target rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center border border-white/15 transition-all shadow-inner relative group cursor-pointer"
                 title="Display & Readability Settings"
                 aria-label="Open Display Settings"
               >
-                <Settings size={15} className={`transition-transform duration-300 group-hover:rotate-45 ${simpleMode ? 'text-cyan-300' : ''}`} />
+                <Settings size={18} className={`transition-transform duration-300 group-hover:rotate-45 ${simpleMode ? 'text-cyan-300' : ''}`} />
                 {simpleMode && (
                   <span className="absolute -top-1 -right-1 w-2 h-2 bg-cyan-400 rounded-full ring-2 ring-[#3d5a73]"></span>
                 )}

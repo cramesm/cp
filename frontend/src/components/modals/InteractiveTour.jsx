@@ -2,16 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAccessibility } from '../../context/AccessibilityContext';
 import { 
-    Compass, 
     ArrowRight, 
     ArrowLeft, 
     X, 
     Check, 
-    Sparkles, 
-    Layers, 
-    Eye, 
-    Bell, 
-    SlidersHorizontal 
+    Sparkles 
 } from 'lucide-react';
 
 const tourSteps = [
@@ -178,8 +173,9 @@ const InteractiveTour = () => {
                             </div>
                             <button
                                 onClick={closeTour}
-                                className="text-slate-400 hover:text-slate-700 p-1 rounded-full hover:bg-slate-100 transition-colors"
+                                className="w-10 h-10 min-w-[40px] min-h-[40px] touch-target flex items-center justify-center text-slate-600 hover:text-slate-900 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
                                 title="Skip Tour"
+                                aria-label="Skip tour"
                             >
                                 <X size={18} />
                             </button>
@@ -189,7 +185,7 @@ const InteractiveTour = () => {
                         <h4 className="text-base font-black text-slate-900 mb-2">
                             {currentStep.title}
                         </h4>
-                        <p className="text-xs text-slate-600 leading-relaxed mb-6">
+                        <p className="text-xs text-slate-600 leading-relaxed mb-6 font-medium">
                             {currentStep.description}
                         </p>
 
@@ -214,7 +210,7 @@ const InteractiveTour = () => {
                                     <button
                                         type="button"
                                         onClick={handlePrev}
-                                        className="px-3 py-1.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-xs hover:bg-slate-50 transition-colors flex items-center gap-1"
+                                        className="px-3.5 py-2 min-h-[40px] touch-target rounded-xl border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-50 transition-colors flex items-center gap-1 cursor-pointer"
                                     >
                                         <ArrowLeft size={13} />
                                         <span>Back</span>
@@ -223,7 +219,7 @@ const InteractiveTour = () => {
                                 <button
                                     type="button"
                                     onClick={handleNext}
-                                    className="px-4 py-1.5 rounded-xl bg-blue-600 text-white font-bold text-xs hover:bg-blue-700 transition-colors shadow-sm flex items-center gap-1.5"
+                                    className="px-4 py-2 min-h-[40px] touch-target rounded-xl bg-blue-600 text-white font-bold text-xs hover:bg-blue-700 transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer"
                                 >
                                     <span>{isLastStep ? 'Finish' : 'Next'}</span>
                                     {isLastStep ? <Check size={14} /> : <ArrowRight size={13} />}

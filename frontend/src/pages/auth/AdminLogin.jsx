@@ -258,8 +258,9 @@ const AdminLogin = () => {
                                 <input
                                     id="login-email"
                                     type="email"
+                                    aria-label="Username or Email"
                                     placeholder="Username or Email"
-                                    className="w-full px-6 py-3.5 bg-white border border-gray-300 rounded-full text-[14px] text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#213448] focus:ring-4 focus:ring-[#213448]/10 transition-all duration-200 shadow-sm hover:border-gray-400"
+                                    className="w-full px-6 py-3.5 bg-white border border-gray-300 rounded-full text-[14px] text-gray-800 placeholder-gray-500 focus:outline-none focus:border-[#213448] focus:ring-4 focus:ring-[#213448]/10 transition-all duration-200 shadow-sm hover:border-gray-400"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     disabled={isLoading}
@@ -273,8 +274,9 @@ const AdminLogin = () => {
                                     <input
                                         id="login-password"
                                         type={showPassword ? 'text' : 'password'}
+                                        aria-label="Password"
                                         placeholder="Password"
-                                        className="w-full px-6 py-3.5 pr-14 bg-white border border-gray-300 rounded-full text-[14px] text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#213448] focus:ring-4 focus:ring-[#213448]/10 transition-all duration-200 shadow-sm hover:border-gray-400"
+                                        className="w-full px-6 py-3.5 pr-14 bg-white border border-gray-300 rounded-full text-[14px] text-gray-800 placeholder-gray-500 focus:outline-none focus:border-[#213448] focus:ring-4 focus:ring-[#213448]/10 transition-all duration-200 shadow-sm hover:border-gray-400"
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         disabled={isLoading}
@@ -282,7 +284,7 @@ const AdminLogin = () => {
                                     />
                                     <button
                                         type="button"
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors focus:outline-none"
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-full text-slate-600 hover:text-slate-900 hover:bg-gray-100 transition-colors focus:outline-none cursor-pointer touch-target"
                                         onClick={() => setShowPassword(!showPassword)}
                                         aria-label={showPassword ? 'Hide password' : 'Show password'}
                                     >
@@ -290,7 +292,7 @@ const AdminLogin = () => {
                                     </button>
                                 </div>
                                 <div className="mt-2 text-right pr-2">
-                                    <Link to="/forgot-password" className="text-[12.5px] text-[#2B6D9B] hover:text-[#184869] font-medium transition-colors">
+                                    <Link to="/forgot-password" className="text-[12.5px] text-[#2B6D9B] hover:text-[#184869] font-medium transition-colors inline-block py-1">
                                         Forgot Password?
                                     </Link>
                                 </div>
@@ -327,8 +329,9 @@ const AdminLogin = () => {
                                 <button
                                     type="button"
                                     onClick={() => setShowDemoAccounts(false)}
-                                    className="text-gray-400 hover:text-gray-600 text-xs px-1 cursor-pointer transition-colors"
+                                    className="text-slate-600 hover:text-slate-900 text-xs px-2 py-1 min-h-[32px] inline-flex items-center cursor-pointer transition-colors"
                                     title="Close Demo Accounts"
+                                    aria-label="Close demo accounts"
                                 >
                                     <i className="fa-solid fa-xmark"></i>
                                 </button>

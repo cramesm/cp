@@ -35,6 +35,14 @@ function Blockchain() {
                         return (
                             <div
                                 key={index}
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        navigate(feature.path);
+                                    }
+                                }}
                                 onClick={() => navigate(feature.path)}
                                 className="bg-white rounded-[22px] p-6 shadow-[0_8px_24px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.02)] border border-slate-100/90 flex flex-col justify-between cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group"
                             >
@@ -43,20 +51,22 @@ function Blockchain() {
                                         <div className={`w-12 h-12 rounded-2xl ${feature.iconBg} flex items-center justify-center text-lg shadow-2xs group-hover:scale-105 transition-transform`}>
                                             <Icon size={22} />
                                         </div>
-                                        <div className="w-8 h-8 rounded-full bg-slate-100 group-hover:bg-[#2c3543] text-slate-400 group-hover:text-white flex items-center justify-center transition-colors">
+                                        <div className="w-8 h-8 rounded-full bg-slate-100 group-hover:bg-[#2c3543] text-slate-500 group-hover:text-white flex items-center justify-center transition-colors">
                                             <ArrowUpRight size={15} />
                                         </div>
                                     </div>
                                     <h2 className="text-[17px] font-black text-slate-900 tracking-tight mb-1">{feature.title}</h2>
-                                    <p className="text-slate-500 text-xs font-medium leading-relaxed mb-6">{feature.description}</p>
+                                    <p className="text-slate-600 text-xs font-medium leading-relaxed mb-6">{feature.description}</p>
                                 </div>
 
                                 <button
+                                    type="button"
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         navigate(feature.path);
                                     }}
-                                    className="w-full bg-[#2c3543] hover:bg-[#1f2631] text-white py-2 px-4 rounded-full text-xs font-bold border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_6px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 hover:shadow-[0_4px_10px_rgba(0,0,0,0.3)] active:translate-y-0.5 active:border-b-0 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                                    aria-label={`${feature.actionText}: ${feature.title}`}
+                                    className="w-full bg-[#2c3543] hover:bg-[#1f2631] text-white min-h-[44px] py-2.5 px-4 rounded-full text-xs font-bold border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_6px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 hover:shadow-[0_4px_10px_rgba(0,0,0,0.3)] active:translate-y-0.5 active:border-b-0 transition-all flex items-center justify-center gap-1.5 cursor-pointer touch-target"
                                 >
                                     <span>{feature.actionText}</span>
                                     <ArrowUpRight size={13} />

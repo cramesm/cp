@@ -20,16 +20,16 @@ const Footer = () => {
             </p>
           </div>
 
-          {/* Column 2: Disclaimer */}
+            {/* Column 2: Disclaimer */}
           <div className="space-y-4">
             <h3 className="text-white font-bold uppercase tracking-widest text-sm">
               Disclaimer & Privacy
             </h3>
-            <p className="text-gray-300 font-light leading-5">
-              Verification results are validated against the institution's official digital registry and cryptographic records.
+            <p className="text-slate-100 font-normal leading-5">
+              Verification results are validated against the institution&apos;s official digital registry and cryptographic records.
             </p>
             <div className="bg-black/10 p-3 rounded-md border border-white/5">
-              <p className="text-[10px] italic text-gray-400 leading-4">
+              <p className="text-[10px] italic text-slate-200 leading-4">
                 This page displays limited academic information in compliance with the Data Privacy Act of 2012 (RA 10173).
               </p>
             </div>
@@ -41,7 +41,7 @@ const Footer = () => {
               Sessions Info & Links
             </h3>
             <div className="space-y-0.5">
-              <p className="text-gray-400 text-xs">Verified on:</p>
+              <p className="text-slate-200 text-xs">Verified on:</p>
               <p className="text-white font-semibold">{new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} - {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</p>
             </div>
           </div>

@@ -62,7 +62,7 @@ const ActiveFilterChips = ({ filters, onRemove, onClearAll }) => {
               e.stopPropagation();
               onRemove?.(filter.key);
             }}
-            className="p-0.5 hover:bg-blue-200 rounded-full transition-colors text-blue-700 hover:text-blue-900 cursor-pointer"
+            className="p-1 min-w-[28px] min-h-[28px] touch-target flex items-center justify-center hover:bg-blue-200 rounded-full transition-colors text-blue-700 hover:text-blue-900 cursor-pointer"
             aria-label={`Remove ${filter.label} filter`}
             title={`Remove ${filter.label} filter`}
           >
@@ -77,7 +77,7 @@ const ActiveFilterChips = ({ filters, onRemove, onClearAll }) => {
             e.stopPropagation();
             onClearAll();
           }}
-          className="text-[11px] font-bold text-slate-500 hover:text-rose-600 px-2 py-0.5 rounded transition-colors cursor-pointer"
+          className="text-xs font-bold text-slate-700 hover:text-rose-600 px-2.5 py-1 min-h-[32px] touch-target rounded transition-colors cursor-pointer"
         >
           Clear all
         </button>

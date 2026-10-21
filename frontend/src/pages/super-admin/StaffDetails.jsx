@@ -243,7 +243,7 @@ export default function RegistrarInformation() {
                 </div>
                 {formData.employeeId && (
                   <div className="flex items-center gap-1.5 mt-1">
-                    <span className="text-xs text-slate-400 font-medium">Employee ID:</span>
+                    <span className="text-xs text-slate-600 font-medium">Employee ID:</span>
                     <span className="bg-slate-100 px-2 py-0.5 rounded-md text-slate-800 font-mono text-[11.5px] font-bold">
                       {formData.employeeId}
                     </span>
@@ -254,7 +254,7 @@ export default function RegistrarInformation() {
                 <button 
                   type="button"
                   onClick={() => navigate('/manage-registrar')}
-                  className="bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold text-xs px-4 py-2 rounded-full border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-2 cursor-pointer w-fit"
+                  className="bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold text-xs min-h-[44px] px-5 py-2.5 rounded-full border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-2 cursor-pointer w-fit touch-target"
                 >
                   <ArrowLeft size={13} />
                   <span>Back to Staff Management</span>
@@ -290,7 +290,7 @@ export default function RegistrarInformation() {
                     {/* Account Role */}
                     <div className="flex flex-col gap-1.5">
                       <div className="flex justify-between items-center">
-                        <label className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Account Role</label>
+                        <label className="text-[11px] font-extrabold text-slate-700 uppercase tracking-wider">Account Role</label>
                         <span className={`text-[9.5px] font-extrabold uppercase px-2 py-0.5 rounded-full ${
                           (formData.role || '').toLowerCase().includes('admin')
                             ? 'bg-purple-100 text-purple-800 border border-purple-200'
@@ -299,7 +299,7 @@ export default function RegistrarInformation() {
                           {(formData.role || '').toLowerCase().includes('admin') ? 'Admin Tier' : 'Staff Tier'}
                         </span>
                       </div>
-                      <div className="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-700">
+                      <div className="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 min-h-[44px] flex items-center text-xs font-bold text-slate-700">
                         {formData.role || 'Staff'}
                       </div>
                     </div>
@@ -307,29 +307,29 @@ export default function RegistrarInformation() {
                     {/* Employee ID: Immutable official identifier */}
                     <div className="flex flex-col gap-1.5">
                       <div className="flex justify-between items-center">
-                        <label className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Employee ID</label>
-                        <span className="text-[9.5px] font-extrabold text-slate-400 uppercase tracking-wider bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
+                        <label className="text-[11px] font-extrabold text-slate-700 uppercase tracking-wider">Employee ID</label>
+                        <span className="text-[9.5px] font-extrabold text-slate-600 uppercase tracking-wider bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
                           Fixed (Cannot be changed)
                         </span>
                       </div>
-                      <div className="w-full bg-slate-100/90 border border-slate-200 rounded-xl px-3.5 py-2 text-[13px] font-mono font-bold text-slate-700 cursor-not-allowed select-all flex items-center justify-between">
+                      <div className="w-full bg-slate-100/90 border border-slate-200 rounded-xl px-3.5 py-2.5 min-h-[44px] text-[13px] font-mono font-bold text-slate-700 cursor-not-allowed select-all flex items-center justify-between">
                         <span>{formData.employeeId || 'N/A'}</span>
-                        <span className="text-[10px] text-slate-400 font-semibold font-sans">Official Staff ID</span>
+                        <span className="text-[10px] text-slate-600 font-semibold font-sans">Official Staff ID</span>
                       </div>
                     </div>
 
 
                     
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Last Login IP Address</label>
-                      <div className="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-mono font-bold text-slate-700">
+                      <label className="text-[11px] font-extrabold text-slate-700 uppercase tracking-wider">Last Login IP Address</label>
+                      <div className="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 min-h-[44px] flex items-center text-xs font-mono font-bold text-slate-700">
                         {formData.lastLoginIp || 'No login recorded yet'}
                       </div>
                     </div>
 
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Last Login Timestamp</label>
-                      <div className="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-medium text-slate-700">
+                      <label className="text-[11px] font-extrabold text-slate-700 uppercase tracking-wider">Last Login Timestamp</label>
+                      <div className="bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 min-h-[44px] flex items-center text-xs font-medium text-slate-700">
                         {formData.lastLoginAt ? new Date(formData.lastLoginAt).toLocaleString('en-US') : 'No login recorded yet'}
                       </div>
                     </div>
@@ -337,9 +337,10 @@ export default function RegistrarInformation() {
 
                   <div className="flex justify-end mt-8 pt-4 border-t border-slate-100">
                     <button
+                      type="button"
                       onClick={handleUpdateInfo}
                       disabled={updating}
-                      className="w-full sm:w-auto px-8 bg-[#2c3543] hover:bg-[#1f2631] text-white py-2 rounded-full font-bold text-xs border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_6px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                      className="w-full sm:w-auto px-8 bg-[#2c3543] hover:bg-[#1f2631] text-white py-2.5 min-h-[44px] rounded-full font-bold text-xs border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_6px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer touch-target"
                     >
                       {updating ? (
                         <>
@@ -363,7 +364,7 @@ export default function RegistrarInformation() {
                     <Lock size={18} />
                     <h3 className="text-[14px] font-black uppercase tracking-wider m-0">Account Security Policy</h3>
                   </div>
-                  <div className="space-y-3 text-xs text-slate-600">
+                  <div className="space-y-3 text-xs text-slate-700">
                     <p className="leading-relaxed">
                       Staff accounts are provisioned with an automated temporary password dispatched via email upon account creation.
                     </p>
@@ -381,7 +382,7 @@ export default function RegistrarInformation() {
                     <Key size={18} />
                     <h3 className="text-[14px] font-black uppercase tracking-wider m-0">Account Access & Credentials</h3>
                   </div>
-                  <p className="text-[12px] text-slate-500 mb-4 leading-relaxed">
+                  <p className="text-[12px] text-slate-700 mb-4 leading-relaxed">
                     If this staff member missed their welcome email or cannot access their account, generate a new temporary password and re-dispatch it directly to their email.
                   </p>
 
@@ -395,7 +396,7 @@ export default function RegistrarInformation() {
                     type="button"
                     onClick={handleResendCredentials}
                     disabled={resending}
-                    className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-2.5 rounded-full text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-2.5 min-h-[44px] rounded-full text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 touch-target"
                   >
                     <RefreshCw size={13} className={resending ? 'animate-spin' : ''} />
                     <span>{resending ? 'Dispatching...' : 'Resend Credentials Email'}</span>
@@ -407,19 +408,20 @@ export default function RegistrarInformation() {
                     <Archive size={18} />
                     <h3 className="text-[14px] font-black uppercase tracking-wider m-0">Archive Account</h3>
                   </div>
-                  <p className="text-[11.5px] text-amber-800 font-bold mb-3 flex items-center gap-1.5">
+                  <p className="text-[11.5px] text-amber-900 font-bold mb-3 flex items-center gap-1.5">
                     <AlertTriangle size={13} /> Archiving: This account will be deactivated and hidden from the active staff list. Historical data is preserved.
                   </p>
                   <div className="flex items-center gap-2.5 mb-4 bg-white/80 p-2.5 rounded-xl border border-amber-200/60">
-                    <input type="checkbox" id="consent" className="w-3.5 h-3.5 accent-amber-600 cursor-pointer" />
+                    <input type="checkbox" id="consent" className="w-4 h-4 accent-amber-600 cursor-pointer touch-target" />
                     <label htmlFor="consent" className="text-[11px] text-amber-950 font-bold leading-tight cursor-pointer">
                       I confirm that I want to archive this account.
                     </label>
                   </div>
                   <button
+                    type="button"
                     onClick={handleDeleteAccount}
                     disabled={deleting}
-                    className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 rounded-full text-xs border-t border-white/20 border-b-2 border-amber-900 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all disabled:opacity-50 cursor-pointer"
+                    className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 min-h-[44px] rounded-full text-xs border-t border-white/20 border-b-2 border-amber-900 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all disabled:opacity-50 cursor-pointer touch-target"
                   >
                     {deleting ? (
                       <>
@@ -454,13 +456,13 @@ export default function RegistrarInformation() {
 function InfoInput({ label, name, value, onChange }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">{label}</label>
+      <label className="text-[11px] font-extrabold text-slate-700 uppercase tracking-wider">{label}</label>
       <input 
         type="text" 
         name={name}
         value={value} 
         onChange={onChange}
-        className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-[13px] font-medium text-slate-800 outline-none focus:border-blue-500 transition-all"
+        className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 min-h-[44px] text-[13px] font-medium text-slate-800 outline-none focus:border-blue-500 transition-all"
       />
     </div>
   );

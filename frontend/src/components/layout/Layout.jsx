@@ -75,6 +75,12 @@ const Layout = ({ children }) => {
         }
     };
 
+    const userRole = (localStorage.getItem('userRole') || '').toLowerCase();
+    const isSuperAdmin = userRole === 'super admin';
+    const isRegistrar = userRole.includes('registrar');
+    const isAccounting = userRole.includes('accounting');
+    const isIT = userRole.includes('it administrator') || userRole.includes('it admin') || userRole.includes('it');
+
     const getPageTitle = () => {
         const path = location.pathname;
 
@@ -90,7 +96,11 @@ const Layout = ({ children }) => {
             case '/blockchain':
                 return 'Secured Digital Records';
             case '/manage-registrar':
-                return 'Manage Registrars';
+                if (isSuperAdmin) return 'Manage Staffs';
+                if (isIT) return 'IT Staff';
+                if (userRole === 'registrar admin') return 'Registrar Staff';
+                if (userRole === 'accounting admin') return 'Accounting Staff';
+                return 'Manage Staffs';
             case '/manage-users':
                 return 'User Management';
             case '/activity-logs':
@@ -110,6 +120,7 @@ const Layout = ({ children }) => {
                     return 'Transaction Details';
                 }
                 if (path.startsWith('/manage-registrar/details/')) {
+                    if (isSuperAdmin) return 'Staff Information';
                     return 'Registrar Information';
                 }
                 if (path.startsWith('/tor/')) {
@@ -127,12 +138,6 @@ const Layout = ({ children }) => {
                 return 'Dashboard';
         }
     };
-
-    const userRole = (localStorage.getItem('userRole') || '').toLowerCase();
-    const isSuperAdmin = userRole === 'super admin';
-    const isRegistrar = userRole.includes('registrar');
-    const isAccounting = userRole.includes('accounting');
-    const isIT = userRole.includes('it administrator') || userRole.includes('it admin') || userRole.includes('it');
 
     const menuItems = [
         { path: '/dashboard', label: 'Dashboard', icon: 'fa-solid fa-table-cells-large' }
@@ -159,7 +164,7 @@ const Layout = ({ children }) => {
     const adminItems = [];
     if (isSuperAdmin) {
         adminItems.push(
-            { path: '/manage-registrar', label: 'Manage Staff', icon: 'fa-solid fa-user-gear' },
+            { path: '/manage-registrar', label: 'Manage Staffs', icon: 'fa-solid fa-user-gear' },
             { path: '/manage-users', label: 'Manage Users', icon: 'fa-solid fa-users' },
             { path: '/activity-logs', label: 'System Logs', icon: 'fa-solid fa-clipboard-list' }
         );
@@ -292,7 +297,7 @@ const Layout = ({ children }) => {
                             return (
                                 <div key={`divider-${index}`} className="pt-2.5 pb-1 px-1">
                                     {!isCollapsed && (
-                                        <span className="block px-2 text-[10px] font-black uppercase tracking-wider text-slate-400/80">
+                                        <span className="block px-2 text-[10px] font-black uppercase tracking-wider text-slate-300">
                                             {item.section}
                                         </span>
                                     )}
@@ -316,11 +321,11 @@ const Layout = ({ children }) => {
                                     }
                                 }}
                                 className={({ isActive }) =>
-                                    `group relative flex items-center gap-3 px-3 py-2 rounded-xl font-bold text-[13px] transition-all duration-200 select-none cursor-pointer ${
+                                    `group relative flex items-center gap-3 px-3 py-2.5 min-h-[42px] rounded-xl font-bold text-[13px] transition-all duration-200 select-none cursor-pointer ${
                                         isActive
                                             ? 'bg-gradient-to-b from-[#3e4c5e] to-[#2d3846] text-white border-t border-white/20 border-b-2 border-black/40 shadow-[0_4px_12px_rgba(0,0,0,0.35),inset_0_1px_1px_rgba(255,255,255,0.2)] scale-[1.01]'
-                                            : 'bg-[#252d3a]/60 text-[#9ba4b5] border-t border-white/5 border-b border-black/20 hover:bg-gradient-to-b hover:from-[#354253] hover:to-[#293442] hover:text-white hover:shadow-[0_3px_10px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 active:translate-y-0.5'
-                                    } ${isCollapsed ? 'justify-center px-0 py-2' : ''}`
+                                            : 'bg-[#252d3a]/60 text-slate-200 border-t border-white/5 border-b border-black/20 hover:bg-gradient-to-b hover:from-[#354253] hover:to-[#293442] hover:text-white hover:shadow-[0_3px_10px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 active:translate-y-0.5'
+                                    } ${isCollapsed ? 'justify-center px-0 py-2.5' : ''}`
                                 }
                             >
                                 {({ isActive }) => (
@@ -329,7 +334,7 @@ const Layout = ({ children }) => {
                                         <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
                                             isActive 
                                                 ? 'bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-[0_2px_6px_rgba(37,99,235,0.4),inset_0_1px_1px_rgba(255,255,255,0.4)]' 
-                                                : 'bg-[#1e2531] text-[#9ba4b5] group-hover:text-white group-hover:bg-[#283342] shadow-[inset_0_1px_2px_rgba(0,0,0,0.4)]'
+                                                : 'bg-[#1e2531] text-slate-200 group-hover:text-white group-hover:bg-[#283342] shadow-[inset_0_1px_2px_rgba(0,0,0,0.4)]'
                                         }`}>
                                             <i className={`${item.icon} ${isCollapsed ? 'text-[15px]' : 'text-[13px]'}`}></i>
                                         </div>
@@ -350,7 +355,7 @@ const Layout = ({ children }) => {
                         type="button"
                         onClick={() => setShowLogoutConfirm(true)}
                         data-testid="logout-button"
-                        className={`w-full bg-white text-[#2c3543] py-2 rounded-xl font-bold flex justify-center items-center gap-2 border-t border-white border-b-4 border-slate-300 shadow-[0_4px_12px_rgba(0,0,0,0.2)] hover:bg-gray-50 hover:-translate-y-0.5 active:translate-y-1 active:border-b-0 transition-all cursor-pointer ${isCollapsed ? 'px-0' : 'px-3'}`}
+                        className={`w-full bg-white text-[#2c3543] py-2.5 min-h-[44px] rounded-xl font-bold flex justify-center items-center gap-2 border-t border-white border-b-4 border-slate-300 shadow-[0_4px_12px_rgba(0,0,0,0.2)] hover:bg-gray-50 hover:-translate-y-0.5 active:translate-y-1 active:border-b-0 transition-all cursor-pointer ${isCollapsed ? 'px-0' : 'px-3'}`}
                         title={isCollapsed ? "Logout" : ""}
                         aria-label="Logout"
                     >
@@ -364,20 +369,20 @@ const Layout = ({ children }) => {
                 
                 {/* Sticky Header Wrapper (Tightened gap, no bleed) */}
                 <div className="sticky top-0 z-[990] pt-3 pb-1.5 px-3 sm:px-4 bg-[#e9e9e9]/95 backdrop-blur-md transition-colors">
-                    <header className="flex items-center justify-between px-5 sm:px-6 bg-gradient-to-r from-[#44627d] via-[#4d6f8c] to-[#547794] rounded-[22px] h-[62px] shadow-[0_8px_24px_rgba(44,53,67,0.12),0_2px_6px_rgba(0,0,0,0.03)] border border-white/20">
+                    <header className="flex items-center justify-between px-5 sm:px-6 bg-gradient-to-r from-[#44627d] via-[#4d6f8c] to-[#547794] rounded-[22px] h-[64px] shadow-[0_8px_24px_rgba(44,53,67,0.12),0_2px_6px_rgba(0,0,0,0.03)] border border-white/20">
                         <div className="flex items-center gap-3" data-tour="header-title">
                             <button
                                 onClick={handleToggle}
-                                className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer focus:outline-none flex items-center justify-center border border-white/15 shadow-inner"
+                                className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer focus:outline-none flex items-center justify-center border border-white/15 shadow-inner touch-target"
                                 title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
                                 aria-label={isCollapsed ? "Expand sidebar navigation" : "Collapse sidebar navigation"}
                                 aria-expanded={!isCollapsed}
                             >
                                 <i className="fa-solid fa-angles-left text-base"></i>
                             </button>
-                            <h2 className="text-white text-[19px] sm:text-[21px] font-extrabold m-0 tracking-tight drop-shadow-xs truncate max-w-[260px] sm:max-w-none">
+                            <span className="text-white text-[19px] sm:text-[21px] font-extrabold m-0 tracking-tight drop-shadow-xs truncate max-w-[260px] sm:max-w-none">
                                 {getPageTitle()}
-                            </h2>
+                            </span>
                         </div>
 
                         <div className="flex items-center gap-2.5 sm:gap-3">
@@ -386,11 +391,11 @@ const Layout = ({ children }) => {
                                 type="button"
                                 onClick={() => setSettingsModalOpen(true)}
                                 data-tour="gear-settings"
-                                className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all border border-white/15 shadow-inner relative group cursor-pointer"
+                                className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all border border-white/15 shadow-inner relative group cursor-pointer touch-target"
                                 title="Display & Accessibility Settings (Simple Mode, Text Size)"
                                 aria-label="Open Display and Accessibility Settings"
                             >
-                                <i className={`fa-solid fa-gear text-[14px] transition-transform duration-300 group-hover:rotate-45 ${simpleMode ? 'text-cyan-300' : ''}`}></i>
+                                <i className={`fa-solid fa-gear text-[15px] transition-transform duration-300 group-hover:rotate-45 ${simpleMode ? 'text-cyan-300' : ''}`}></i>
                                 {simpleMode && (
                                     <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-cyan-400 rounded-full ring-2 ring-[#4d6f8c]"></span>
                                 )}
@@ -401,12 +406,12 @@ const Layout = ({ children }) => {
                                 type="button"
                                 onClick={() => navigate('/notifications')}
                                 data-tour="notifications"
-                                className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all border border-white/15 shadow-inner relative cursor-pointer"
+                                className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all border border-white/15 shadow-inner relative cursor-pointer touch-target"
                                 aria-label={`View notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
                             >
-                                <i className="fa-solid fa-bell text-[14px]"></i>
+                                <i className="fa-solid fa-bell text-[15px]"></i>
                                 {unreadCount > 0 && (
-                                    <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-0.5 flex items-center justify-center bg-red-500 text-white text-[9.5px] font-extrabold rounded-full ring-2 ring-[#4d6f8c] shadow-sm animate-pulse">
+                                    <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-0.5 flex items-center justify-center bg-red-700 text-white text-[9.5px] font-extrabold rounded-full ring-2 ring-[#4d6f8c] shadow-sm animate-pulse">
                                         {unreadCount}
                                     </span>
                                 )}
@@ -414,13 +419,13 @@ const Layout = ({ children }) => {
 
                             {/* Non-Clickable User Profile Badge */}
                             <div className="flex items-center gap-2 p-1 pl-1.5 pr-3 bg-white/15 rounded-full border border-white/20 shadow-xs select-none cursor-default">
-                                <div className="w-7 h-7 rounded-full bg-white text-[#547794] flex items-center justify-center font-extrabold text-[11px] shadow-xs overflow-hidden flex-shrink-0">
+                                <div className="w-8 h-8 rounded-full bg-white text-[#547794] flex items-center justify-center font-extrabold text-[12px] shadow-xs overflow-hidden flex-shrink-0">
                                     {adminUser.profilePic ? (
                                         <img 
                                             src={adminUser.profilePic.startsWith('http') 
                                                 ? adminUser.profilePic 
                                                 : (import.meta.env.DEV ? `http://localhost:5000${adminUser.profilePic}` : adminUser.profilePic)} 
-                                            alt="Profile" 
+                                            alt={`${adminUser.name || 'User'} profile avatar`} 
                                             className="w-full h-full object-cover" 
                                         />
                                     ) : (
@@ -429,7 +434,7 @@ const Layout = ({ children }) => {
                                 </div>
                                 <div className="hidden md:flex flex-col text-left">
                                     <span className="text-white text-[12.5px] font-bold m-0 leading-tight truncate max-w-[120px]">{adminUser.name || 'Registrar Name'}</span>
-                                    <span className="text-white/80 text-[10px] font-medium m-0 leading-tight lowercase truncate max-w-[120px]">{adminUser.email || `${userRole.replace(' ', '')}name@sample.com`}</span>
+                                    <span className="text-white/95 text-[10px] font-medium m-0 leading-tight lowercase truncate max-w-[120px]">{adminUser.email || `${userRole.replace(' ', '')}name@sample.com`}</span>
                                 </div>
                             </div>
                         </div>

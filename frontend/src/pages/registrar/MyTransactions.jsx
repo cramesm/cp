@@ -206,8 +206,9 @@ function MyTransactions() {
 
                             <div className="flex items-center gap-2.5 flex-wrap">
                                 <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={13} />
                                     <input
+                                        aria-label="Search transactions by ID, student name, or document"
                                         type="text"
                                         placeholder="Search by ID, name, doc..."
                                         className="w-56 sm:w-64 rounded-full border border-slate-200 bg-white py-1.5 pl-8 pr-3.5 text-[12px] font-medium outline-none focus:border-blue-500 shadow-2xs"
@@ -330,7 +331,7 @@ function MyTransactions() {
                                     })
                                 ) : (
                                     <tr>
-                                        <td colSpan={8} className="py-16 text-center text-slate-400 italic">
+                                        <td colSpan={8} className="py-16 text-center text-slate-600 font-medium italic">
                                             No blockchain transactions found matching your filters.
                                         </td>
                                     </tr>
@@ -345,7 +346,7 @@ function MyTransactions() {
                             <button
                                 disabled={currentPage === 1}
                                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                className={`text-xs px-2.5 py-1 rounded-md ${currentPage === 1 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:bg-slate-200 cursor-pointer font-bold'}`}
+                                className={`text-xs min-h-[38px] px-3.5 py-1.5 rounded-md touch-target ${currentPage === 1 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-700 hover:bg-slate-200 cursor-pointer font-bold'}`}
                             >
                                 Previous
                             </button>
@@ -357,7 +358,7 @@ function MyTransactions() {
                                         <button
                                             key={pageNumber}
                                             onClick={() => setCurrentPage(pageNumber)}
-                                            className={`w-7 h-7 rounded-lg text-xs transition-colors font-bold ${
+                                            className={`w-9 h-9 min-w-[36px] min-h-[36px] touch-target rounded-lg text-xs transition-colors font-bold cursor-pointer ${
                                                 currentPage === pageNumber
                                                     ? 'bg-[#2c3543] text-white shadow-2xs'
                                                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -367,7 +368,7 @@ function MyTransactions() {
                                         </button>
                                     );
                                 } else if (pageNumber === currentPage - 2 || pageNumber === currentPage + 2) {
-                                    return <span key={pageNumber} className="text-slate-400 text-xs px-1">...</span>;
+                                    return <span key={pageNumber} className="text-slate-600 font-bold text-xs px-1">...</span>;
                                 }
                                 return null;
                             })}
@@ -375,7 +376,7 @@ function MyTransactions() {
                             <button
                                 disabled={currentPage === totalPages || totalPages === 0}
                                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                className={`text-xs px-2.5 py-1 rounded-md ${currentPage === totalPages || totalPages === 0 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:bg-slate-200 cursor-pointer font-bold'}`}
+                                className={`text-xs min-h-[38px] px-3.5 py-1.5 rounded-md touch-target ${currentPage === totalPages || totalPages === 0 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-700 hover:bg-slate-200 cursor-pointer font-bold'}`}
                             >
                                 Next
                             </button>

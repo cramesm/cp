@@ -212,7 +212,7 @@ const StudentManagement = () => {
                             <div className="flex items-center gap-2.5 flex-wrap">
                                 {/* Search Bar */}
                                 <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={13} />
                                     <input
                                         aria-label="Search users"
                                         type="text"
@@ -259,7 +259,7 @@ const StudentManagement = () => {
                         }}
                     >
                         <div className="flex flex-col gap-4">
-                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Sorting</h3>
+                            <h3 className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">Sorting</h3>
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="flex flex-col gap-1.5">
                                     <label htmlFor="sortBy" className="text-xs font-bold text-slate-700">Sort By:</label>
@@ -361,7 +361,7 @@ const StudentManagement = () => {
                                                     {user.role ? (user.role.charAt(0).toUpperCase() + user.role.slice(1).toLowerCase()) : (activeTab === 'alumni' ? 'Alumni' : 'Student')}
                                                 </span>
                                             </td>
-                                            <td className="py-3 px-5 text-slate-500">
+                                            <td className="py-3 px-5 text-slate-600 font-medium">
                                                 {new Date(user.createdAt).toLocaleDateString()}
                                             </td>
                                             <td className="py-3 px-5 text-center">
@@ -391,7 +391,8 @@ const StudentManagement = () => {
                                                 <div className="flex justify-end gap-2">
                                                     <button
                                                         onClick={() => handleDelete(user._id, user.role || 'student', `${user.firstName} ${user.lastName}`)}
-                                                        className="w-7 h-7 rounded-full bg-amber-50 hover:bg-amber-600 hover:text-white text-amber-600 flex items-center justify-center transition-all shadow-2xs border border-amber-200/60 hover:-translate-y-0.5 active:translate-y-0.5"
+                                                        aria-label={`Archive ${user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : (user.name || 'user')}`}
+                                                        className="w-9 h-9 min-w-[36px] min-h-[36px] touch-target rounded-full bg-amber-50 hover:bg-amber-600 hover:text-white text-amber-600 flex items-center justify-center transition-all shadow-2xs border border-amber-200/60 hover:-translate-y-0.5 active:translate-y-0.5 cursor-pointer"
                                                         title="Archive User"
                                                     >
                                                         <i className="fa-solid fa-box-archive text-xs"></i>
@@ -401,7 +402,7 @@ const StudentManagement = () => {
                                         </tr>
                                     ))
                                 ) : (
-                                    <tr><td colSpan="7" className="py-12 text-center text-slate-400 italic">No {activeTab === 'student' ? 'students' : 'alumni'} found.</td></tr>
+                                    <tr><td colSpan="7" className="py-12 text-center text-slate-600 font-medium italic">No {activeTab === 'student' ? 'students' : 'alumni'} found.</td></tr>
                                 )}
                             </tbody>
                         </table>
@@ -413,7 +414,7 @@ const StudentManagement = () => {
                             <button 
                                 disabled={currentPage === 1}
                                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                className={`text-xs px-2.5 py-1 rounded-md ${currentPage === 1 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:bg-slate-200 cursor-pointer font-bold'}`}
+                                className={`text-xs min-h-[38px] px-3.5 py-1.5 rounded-md touch-target ${currentPage === 1 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-700 hover:bg-slate-200 cursor-pointer font-bold'}`}
                             >
                                 Previous
                             </button>
@@ -425,7 +426,7 @@ const StudentManagement = () => {
                                         <button
                                             key={pageNumber}
                                             onClick={() => setCurrentPage(pageNumber)}
-                                            className={`w-7 h-7 rounded-lg text-xs transition-colors font-bold ${
+                                            className={`w-9 h-9 min-w-[36px] min-h-[36px] touch-target rounded-lg text-xs transition-colors font-bold cursor-pointer ${
                                                 currentPage === pageNumber 
                                                     ? 'bg-[#2c3543] text-white shadow-2xs' 
                                                     : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -435,7 +436,7 @@ const StudentManagement = () => {
                                         </button>
                                     );
                                 } else if (pageNumber === currentPage - 2 || pageNumber === currentPage + 2) {
-                                    return <span key={pageNumber} className="text-slate-400 text-xs px-1">...</span>;
+                                    return <span key={pageNumber} className="text-slate-600 font-bold text-xs px-1">...</span>;
                                 }
                                 return null;
                             })}
@@ -443,7 +444,7 @@ const StudentManagement = () => {
                             <button 
                                 disabled={currentPage === totalPages || totalPages === 0}
                                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                className={`text-xs px-2.5 py-1 rounded-md ${currentPage === totalPages || totalPages === 0 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:bg-slate-200 cursor-pointer font-bold'}`}
+                                className={`text-xs min-h-[38px] px-3.5 py-1.5 rounded-md touch-target ${currentPage === totalPages || totalPages === 0 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-700 hover:bg-slate-200 cursor-pointer font-bold'}`}
                             >
                                 Next
                             </button>

@@ -243,7 +243,7 @@ export default function DateRangePicker({
       <div className="w-full">
         <div className="grid grid-cols-7 mb-1 text-center">
           {dayLabels.map(d => (
-            <span key={d} className="text-[11px] font-bold text-slate-400 py-1">
+            <span key={d} className="text-[11px] font-bold text-slate-600 py-1">
               {d}
             </span>
           ))}
@@ -273,7 +273,7 @@ export default function DateRangePicker({
         {label && (
           <div className="flex items-center gap-2">
             <h4 className="font-bold text-slate-800 text-sm">{label}</h4>
-            {hint && <span className="text-xs text-slate-400 font-normal">({hint})</span>}
+            {hint && <span className="text-xs text-slate-600 font-medium">({hint})</span>}
           </div>
         )}
 
@@ -286,7 +286,7 @@ export default function DateRangePicker({
                 <span>{totalCalendarDays} Days Window ({totalBusinessDays} Working Days)</span>
               </span>
             ) : (
-              <span className="text-xs text-slate-500 font-medium">Select start and target completion dates</span>
+              <span className="text-xs text-slate-600 font-medium">Select start and target completion dates</span>
             )}
           </div>
 
@@ -294,7 +294,7 @@ export default function DateRangePicker({
             <button
               type="button"
               onClick={handleClear}
-              className="text-xs font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1 px-2.5 py-1 rounded-lg hover:bg-slate-200/60 transition-colors cursor-pointer"
+              className="text-xs font-bold text-slate-600 hover:text-slate-900 flex items-center gap-1 px-3 py-1.5 min-h-[36px] touch-target rounded-lg hover:bg-slate-200/60 transition-colors cursor-pointer"
               title="Reset date selection"
             >
               <RotateCcw size={12} />
@@ -314,7 +314,7 @@ export default function DateRangePicker({
             }`}
           >
             <div>
-              <span className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+              <span className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-600">
                 Processing Start Date
               </span>
               <span className="block text-sm font-bold text-slate-800 mt-0.5">
@@ -323,7 +323,7 @@ export default function DateRangePicker({
                   : 'Select start date'}
               </span>
             </div>
-            <CalendarIcon size={16} className={activeInput === 'start' ? 'text-blue-600' : 'text-slate-400'} />
+            <CalendarIcon size={16} className={activeInput === 'start' ? 'text-blue-600' : 'text-slate-600'} />
           </div>
 
           <div
@@ -335,7 +335,7 @@ export default function DateRangePicker({
             }`}
           >
             <div>
-              <span className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+              <span className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-600">
                 Estimated Ready / Completion
               </span>
               <span className="block text-sm font-bold text-slate-800 mt-0.5">
@@ -344,7 +344,7 @@ export default function DateRangePicker({
                   : 'Select completion date'}
               </span>
             </div>
-            <ArrowRight size={16} className={activeInput === 'end' ? 'text-blue-600' : 'text-slate-400'} />
+            <ArrowRight size={16} className={activeInput === 'end' ? 'text-blue-600' : 'text-slate-600'} />
           </div>
         </div>
       </div>
@@ -358,7 +358,7 @@ export default function DateRangePicker({
               type="button"
               onClick={handlePrevMonth}
               disabled={isBeforeDay(currentMonthDate, new Date(today.getFullYear(), today.getMonth(), 1))}
-              className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer shadow-2xs"
+              className="w-10 h-10 min-w-[40px] min-h-[40px] touch-target rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer shadow-2xs"
               title="Previous month"
               aria-label="Previous month"
             >
@@ -370,7 +370,7 @@ export default function DateRangePicker({
             <button
               type="button"
               onClick={handleNextMonth}
-              className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer shadow-2xs"
+              className="w-10 h-10 min-w-[40px] min-h-[40px] touch-target rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer shadow-2xs"
               title="Next month"
               aria-label="Next month"
             >

@@ -146,6 +146,7 @@ const OTP = () => {
                                     ref={(el) => (inputRefs.current[idx] = el)}
                                     type="text"
                                     maxLength="1"
+                                    aria-label={`Digit ${idx + 1} of 6-digit verification code`}
                                     className="w-[46px] h-[56px] sm:w-[52px] sm:h-[62px] border border-gray-300 rounded-2xl text-center text-2xl font-bold text-[#111827] outline-none bg-white shadow-sm transition-all duration-200 focus:border-[#213448] focus:ring-4 focus:ring-[#213448]/10 hover:border-gray-400"
                                     inputMode="numeric"
                                     value={digit}
@@ -174,12 +175,12 @@ const OTP = () => {
                     </form>
 
                     <div className="text-center space-y-3 mt-8">
-                        <p className="text-[13px] text-gray-500">
-                            Didn't receive code?{' '}
+                        <p className="text-[13px] text-slate-600">
+                            Didn&apos;t receive code?{' '}
                             <button 
                                 onClick={handleResendOTP} 
                                 disabled={isResending}
-                                className="text-[#2B6D9B] font-semibold hover:underline focus:outline-none disabled:opacity-50"
+                                className="text-[#2B6D9B] font-semibold hover:underline focus:outline-none disabled:opacity-50 min-h-[44px] px-2 inline-flex items-center touch-target"
                             >
                                 {isResending ? 'Sending...' : 'Resend Code'}
                             </button>
@@ -190,15 +191,21 @@ const OTP = () => {
 
             {/* Incomplete code modal */}
             {showModal && (
-                <div id="error-modal" className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[1000] flex justify-center items-center p-4">
+                <div 
+                    id="error-modal" 
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="incomplete-code-title"
+                    className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[1000] flex justify-center items-center p-4"
+                >
                     <div className="bg-white w-full max-w-[340px] p-6 rounded-3xl text-center shadow-2xl animate-scaleIn">
                         <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4 text-xl">
                             <i className="fa-solid fa-circle-exclamation"></i>
                         </div>
-                        <h3 className="text-[18px] font-bold text-gray-900 mb-2">Incomplete Code</h3>
+                        <h3 id="incomplete-code-title" className="text-[18px] font-bold text-gray-900 mb-2">Incomplete Code</h3>
                         <p className="text-gray-500 text-[13.5px] mb-6 leading-relaxed">Please enter the complete 6-digit verification code to proceed.</p>
                         <button 
-                            className="bg-[#111827] text-white py-3 px-6 rounded-full font-semibold text-sm cursor-pointer w-full transition-colors hover:bg-[#213448]" 
+                            className="bg-[#111827] text-white py-3 px-6 rounded-full font-semibold text-sm cursor-pointer w-full transition-colors hover:bg-[#213448] min-h-[44px]" 
                             onClick={() => setShowModal(false)}
                         >
                             Got it

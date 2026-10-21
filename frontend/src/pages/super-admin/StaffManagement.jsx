@@ -317,6 +317,7 @@ const ManageRegistrar = () => {
               {/* Department Filter (Visible for Super Admin) */}
               {isSuperAdmin && (
                 <select
+                  aria-label="Filter staff by department"
                   value={departmentFilter}
                   onChange={(e) => setDepartmentFilter(e.target.value)}
                   className="rounded-full border border-slate-200 bg-white py-1.5 px-3 text-[11.5px] font-bold text-slate-700 outline-none focus:border-blue-500 shadow-2xs cursor-pointer"
@@ -330,6 +331,7 @@ const ManageRegistrar = () => {
 
               {/* Role Level Filter */}
               <select
+                aria-label="Filter staff by role level"
                 value={roleFilter}
                 onChange={(e) => setRoleFilter(e.target.value)}
                 className="rounded-full border border-slate-200 bg-white py-1.5 px-3 text-[11.5px] font-bold text-slate-700 outline-none focus:border-blue-500 shadow-2xs cursor-pointer"
@@ -341,6 +343,7 @@ const ManageRegistrar = () => {
 
               {/* Status Filter */}
               <select
+                aria-label="Filter staff by status"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="rounded-full border border-slate-200 bg-white py-1.5 px-3 text-[11.5px] font-bold text-slate-700 outline-none focus:border-blue-500 shadow-2xs cursor-pointer"
@@ -352,8 +355,9 @@ const ManageRegistrar = () => {
 
               {/* Search Bar */}
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={13} />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={13} />
                 <input
+                  aria-label="Search staff members"
                   type="text"
                   placeholder="Search staff..."
                   className="w-48 sm:w-56 rounded-full border border-slate-200 bg-white py-1.5 pl-8 pr-3.5 text-[12px] font-medium outline-none focus:border-blue-500 shadow-2xs"
@@ -467,7 +471,7 @@ const ManageRegistrar = () => {
                         <div className="flex justify-end gap-1.5 items-center flex-wrap">
                           <button
                             onClick={() => handleToggleStatus(item._id || item.registrarId, item.status || 'Inactive')}
-                            className={`min-w-[80px] rounded-full px-2.5 py-1 text-[11px] font-bold text-white text-center border-t border-white/20 border-b-2 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all cursor-pointer ${
+                            className={`min-w-[80px] min-h-[36px] touch-target rounded-full px-2.5 py-1.5 text-[11px] font-bold text-white text-center border-t border-white/20 border-b-2 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all cursor-pointer ${
                                 (item.status || 'Inactive') === 'Active'
                                     ? 'bg-amber-600 hover:bg-amber-700 border-amber-900/40'
                                     : 'bg-emerald-600 hover:bg-emerald-700 border-emerald-900/40'
@@ -477,7 +481,7 @@ const ManageRegistrar = () => {
                           </button>
                           <Link
                             to={`/manage-registrar/details/${item._id || item.registrarId}`}
-                            className="min-w-[70px] rounded-full bg-[#2c3543] hover:bg-[#1f2631] px-3 py-1 text-[11px] font-bold text-white text-center border-t border-white/20 border-b-2 border-black/50 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all cursor-pointer"
+                            className="min-w-[70px] min-h-[36px] touch-target rounded-full bg-[#2c3543] hover:bg-[#1f2631] px-3 py-1.5 text-[11px] font-bold text-white text-center border-t border-white/20 border-b-2 border-black/50 shadow-2xs hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all cursor-pointer flex items-center justify-center"
                           >
                             Manage
                           </Link>
@@ -487,7 +491,7 @@ const ManageRegistrar = () => {
                     );
                   })
                 ) : (
-                  <tr><td colSpan="8" className="py-12 text-center text-slate-400 italic">No staff accounts found in this department.</td></tr>
+                  <tr><td colSpan="8" className="py-12 text-center text-slate-600 font-medium italic">No staff accounts found in this department.</td></tr>
                 )}
               </tbody>
             </table>
@@ -499,17 +503,17 @@ const ManageRegistrar = () => {
                 <button 
                     disabled={currentPage === 1}
                     onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    className={`text-xs px-2.5 py-1 rounded-md ${currentPage === 1 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:bg-slate-200 cursor-pointer font-bold'}`}
+                    className={`text-xs min-h-[38px] px-3.5 py-1.5 rounded-md touch-target ${currentPage === 1 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-700 hover:bg-slate-200 cursor-pointer font-bold'}`}
                 >
                     Previous
                 </button>
-                <span className="text-xs text-slate-500 font-bold px-2">
+                <span className="text-xs text-slate-700 font-bold px-2">
                     Page {currentPage} of {totalPages || 1}
                 </span>
                 <button 
                     disabled={currentPage === totalPages || totalPages === 0}
                     onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    className={`text-xs px-2.5 py-1 rounded-md ${currentPage === totalPages || totalPages === 0 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:bg-slate-200 cursor-pointer font-bold'}`}
+                    className={`text-xs min-h-[38px] px-3.5 py-1.5 rounded-md touch-target ${currentPage === totalPages || totalPages === 0 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-700 hover:bg-slate-200 cursor-pointer font-bold'}`}
                 >
                     Next
                 </button>
@@ -522,7 +526,12 @@ const ManageRegistrar = () => {
       {/* Add Staff Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 sm:p-7 relative border border-slate-100 overflow-hidden">
+          <div 
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="add-staff-modal-title"
+            className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 sm:p-7 relative border border-slate-100 overflow-hidden"
+          >
             {/* Close Button */}
             <button
               type="button"
@@ -530,7 +539,8 @@ const ManageRegistrar = () => {
                 setShowAddModal(false);
                 setAddSuccessData(null);
               }}
-              className="absolute right-5 top-5 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-colors cursor-pointer"
+              aria-label="Close modal"
+              className="absolute right-5 top-5 w-10 h-10 min-w-[40px] min-h-[40px] touch-target rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-800 flex items-center justify-center transition-colors cursor-pointer"
             >
               <X size={15} />
             </button>
@@ -541,8 +551,8 @@ const ManageRegistrar = () => {
                   <div className="w-11 h-11 rounded-2xl bg-[#111827] text-white flex items-center justify-center mb-3 shadow-2xs">
                     <UserPlus size={20} />
                   </div>
-                  <h3 className="text-xl font-black text-slate-900 tracking-tight">Add Staff Member</h3>
-                  <p className="text-slate-500 text-[12px] mt-1 leading-relaxed">
+                  <h3 id="add-staff-modal-title" className="text-xl font-black text-slate-900 tracking-tight">Add Staff Member</h3>
+                  <p className="text-slate-600 text-[12px] mt-1 leading-relaxed font-medium">
                     Create an official staff account. A secure temporary password will be automatically generated and emailed to the staff member.
                   </p>
                 </div>
@@ -648,14 +658,14 @@ const ManageRegistrar = () => {
                     <button
                       type="button"
                       onClick={() => setShowAddModal(false)}
-                      className="w-1/3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-full font-bold text-[13px] transition-colors cursor-pointer"
+                      className="w-1/3 py-2.5 min-h-[44px] touch-target bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-full font-bold text-[13px] transition-colors cursor-pointer"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={addLoading || emailStatus.available === false}
-                      className="w-2/3 py-2.5 bg-[#111827] hover:bg-[#213448] text-white rounded-full font-bold text-[13px] shadow-sm flex items-center justify-center gap-2 transition-all disabled:opacity-60 cursor-pointer"
+                      className="w-2/3 py-2.5 min-h-[44px] touch-target bg-[#111827] hover:bg-[#213448] text-white rounded-full font-bold text-[13px] shadow-sm flex items-center justify-center gap-2 transition-all disabled:opacity-60 cursor-pointer"
                     >
                       {addLoading ? (
                         <>
@@ -678,25 +688,25 @@ const ManageRegistrar = () => {
                   <Check size={28} className="stroke-[3]" />
                 </div>
                 <h3 className="text-xl font-black text-slate-900 mb-1">Staff Successfully Added!</h3>
-                <p className="text-slate-500 text-[12px] leading-relaxed max-w-sm mx-auto mb-3">
+                <p className="text-slate-600 text-[12px] leading-relaxed max-w-sm mx-auto mb-3 font-medium">
                   Account profile for <strong>{addSuccessData.email}</strong> is ready.
                 </p>
 
                 <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 text-left mb-3 space-y-2">
                   <div className="flex justify-between items-center text-[12px]">
-                    <span className="text-slate-500 font-medium">Full Name:</span>
+                    <span className="text-slate-600 font-medium">Full Name:</span>
                     <span className="font-bold text-slate-900">{addSuccessData.name}</span>
                   </div>
                   <div className="flex justify-between items-center text-[12px]">
-                    <span className="text-slate-500 font-medium">Department:</span>
+                    <span className="text-slate-600 font-medium">Department:</span>
                     <span className="font-bold text-slate-800">{addSuccessData.department}</span>
                   </div>
                   <div className="flex justify-between items-center text-[12px]">
-                    <span className="text-slate-500 font-medium">Role:</span>
+                    <span className="text-slate-600 font-medium">Role:</span>
                     <span className="font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full text-[11px]">{addSuccessData.role}</span>
                   </div>
                   <div className="flex justify-between items-center text-[12px] pt-1.5 border-t border-slate-200">
-                    <span className="text-slate-500 font-medium">Credentials Delivery:</span>
+                    <span className="text-slate-600 font-medium">Credentials Delivery:</span>
                     <span className="inline-flex items-center gap-1.5 text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full text-[11px] font-semibold">
                       <i className="fa-solid fa-envelope-circle-check text-emerald-600"></i>
                       Dispatched via Email
@@ -715,7 +725,8 @@ const ManageRegistrar = () => {
                   <button
                     type="button"
                     onClick={handleCopyCredentials}
-                    className="w-1/2 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-full font-bold text-[12.5px] flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                    aria-label="Copy staff credentials details"
+                    className="w-1/2 py-2.5 min-h-[44px] touch-target bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-full font-bold text-[12.5px] flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                   >
                     {copied ? (
                       <>
@@ -735,7 +746,7 @@ const ManageRegistrar = () => {
                       setShowAddModal(false);
                       setAddSuccessData(null);
                     }}
-                    className="w-1/2 py-2.5 bg-[#111827] hover:bg-[#213448] text-white rounded-full font-bold text-[12.5px] shadow-sm transition-all cursor-pointer"
+                    className="w-1/2 py-2.5 min-h-[44px] touch-target bg-[#111827] hover:bg-[#213448] text-white rounded-full font-bold text-[12.5px] shadow-sm transition-all cursor-pointer"
                   >
                     Done
                   </button>

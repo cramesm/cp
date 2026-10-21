@@ -178,8 +178,8 @@ function App() {
         <Route path="/refunds" element={<Navigate to="/transactions?tab=refunds" replace />} />
         <Route path="/document-requests" element={<Navigate to="/requests" replace />} />
 
-        {/* Public Validation Page (QR Scans go straight to /verify/results) */}
-        <Route path="/verify" element={<Navigate to="/" replace />} />
+        {/* Public Validation Page (Supports both /verify and /verify/results) */}
+        <Route path="/verify" element={<ValidationResults />} />
         <Route path="/verify/results" element={<ValidationResults />} />
 
         {/* Catch-all redirect */}

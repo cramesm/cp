@@ -10,8 +10,7 @@ import {
     Clock, 
     AlertCircle, 
     Layers,
-    BookOpen,
-    HelpCircle
+    BookOpen
 } from 'lucide-react';
 
 const HelpGuideModal = () => {
@@ -82,7 +81,7 @@ const HelpGuideModal = () => {
                         </div>
                         <button
                             onClick={() => setHelpModalOpen(false)}
-                            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors focus:outline-none"
+                            className="w-10 h-10 min-w-[40px] min-h-[40px] touch-target rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 cursor-pointer"
                             aria-label="Close help guide"
                         >
                             <X size={18} />
@@ -102,10 +101,10 @@ const HelpGuideModal = () => {
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
-                                    className={`flex items-center gap-2 px-4 py-3 text-xs font-bold rounded-t-xl transition-all border-b-2 ${
+                                    className={`flex items-center gap-2 px-4 py-3 min-h-[44px] touch-target text-xs font-bold rounded-t-xl transition-all border-b-2 cursor-pointer ${
                                         isActive
                                             ? 'bg-white text-blue-700 border-blue-600 shadow-xs'
-                                            : 'text-slate-500 border-transparent hover:text-slate-800'
+                                            : 'text-slate-600 border-transparent hover:text-slate-900'
                                     }`}
                                 >
                                     <Icon size={16} />
@@ -265,7 +264,7 @@ const HelpGuideModal = () => {
                     <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end">
                         <button
                             onClick={() => setHelpModalOpen(false)}
-                            className="px-5 py-2.5 rounded-xl bg-[#2c3e50] text-white font-bold text-xs hover:bg-[#1a252f] transition-colors shadow-sm"
+                            className="px-5 py-2.5 min-h-[44px] touch-target rounded-xl bg-[#2c3e50] text-white font-bold text-xs hover:bg-[#1a252f] transition-colors shadow-sm cursor-pointer"
                         >
                             Got it, close guide
                         </button>

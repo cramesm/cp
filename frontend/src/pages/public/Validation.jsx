@@ -1,17 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { CheckCircle, ExternalLink, ShieldCheck, AlertTriangle, Mail, Phone, Globe, Loader2, ArrowLeft } from 'lucide-react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { CheckCircle, ShieldCheck, AlertTriangle, Mail, Phone, Globe, Loader2 } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import ValidationNavbar from '../../components/ValidationPageNavBar';
 import Footer from '../../components/Footer';
 import api from '../../api';
 
 const Validation = () => {
-  const navigate = useNavigate();
   // STATE MANAGEMENT
   const [isLoading, setIsLoading] = useState(true);
   const [isValid, setIsValid] = useState(false);
   const [verificationData, setVerificationData] = useState(null);
-  const [error, setError] = useState(null);
 
   // Use React Router's useSearchParams to avoid DOM taint flow from window.location
   const [searchParams] = useSearchParams();
@@ -23,7 +21,6 @@ const Validation = () => {
     const fetchVerification = async () => {
       if (!hashFromUrl) {
         setIsLoading(false);
-        setError('No valid hash provided');
         return;
       }
 
@@ -36,11 +33,10 @@ const Validation = () => {
           setIsValid(true);
         } else {
           setIsValid(false);
-          setError(result.message);
         }
       } catch (err) {
+        console.error("Verification error:", err);
         setIsValid(false);
-        setError(err.response?.data?.message || 'Failed to reach verification server');
       } finally {
         setIsLoading(false);
       }
@@ -140,11 +136,11 @@ const Validation = () => {
                           
                           <div className="pt-6 mt-6 border-t-2 border-dashed border-gray-100 space-y-4 bg-slate-50 p-4 rounded-xl">
                             <div className="flex justify-between items-center">
-                              <span className="text-xs font-bold text-gray-400 uppercase tracking-tight">Doc Fingerprint:</span>
+                              <span className="text-xs font-bold text-slate-700 uppercase tracking-tight">Doc Fingerprint:</span>
                               <span className="text-gray-800 font-mono font-bold bg-white px-2 py-1 rounded border border-gray-200 overflow-hidden text-ellipsis max-w-[200px] select-all" title={hashFromUrl}>{hashFromUrl}</span>
                             </div>
                             <div className="flex justify-between items-center">
-                              <span className="text-xs font-bold text-gray-400 uppercase tracking-tight">Security Status:</span>
+                              <span className="text-xs font-bold text-slate-700 uppercase tracking-tight">Security Status:</span>
                               <span className={isBlockchainEligible ? "text-green-600 font-bold flex items-center uppercase text-xs bg-green-50 px-2 py-0.5 rounded border border-green-200" : "text-blue-600 font-bold flex items-center uppercase text-xs bg-blue-50 px-2 py-0.5 rounded border border-blue-200"}>
                                 <span className={isBlockchainEligible ? "w-2.5 h-2.5 bg-green-600 rounded-full mr-1.5 animate-pulse" : "w-2.5 h-2.5 bg-blue-600 rounded-full mr-1.5 animate-pulse"}></span>
                                 {isBlockchainEligible ? (verificationData?.blockchainRecord?.status || 'RECORDED') : 'Secured locally on Database Index'}
@@ -153,13 +149,13 @@ const Validation = () => {
                             {isBlockchainEligible ? (
                               <>
                                 <div className="flex justify-between items-start gap-4 mb-3">
-                                  <span className="text-xs font-bold text-gray-400 uppercase tracking-tight mt-1">Reference Number:</span>
+                                  <span className="text-xs font-bold text-slate-700 uppercase tracking-tight mt-1">Reference Number:</span>
                                   <div className="flex flex-col items-end">
                                     <span className="font-mono text-[10px] break-all select-all text-gray-800 bg-white p-1 rounded border border-gray-200 max-w-[220px] text-right">{verificationData?.blockchainRecord?.txID || 'N/A'}</span>
                                   </div>
                                 </div>
                                 <div className="flex justify-between items-start gap-4">
-                                  <span className="text-xs font-bold text-gray-400 uppercase tracking-tight mt-1">Tx Hash:</span>
+                                  <span className="text-xs font-bold text-slate-700 uppercase tracking-tight mt-1">Tx Hash:</span>
                                   <div className="flex flex-col items-end">
                                     <span className="font-mono text-[10px] break-all select-all text-gray-800 bg-white p-1 rounded border border-gray-200 max-w-[220px] text-right">{verificationData?.blockchainRecord?.txHash || 'N/A'}</span>
                                   </div>
@@ -167,29 +163,29 @@ const Validation = () => {
                                 {verificationData?.blockchainRecord?.blockNumber && verificationData.blockchainRecord.blockNumber !== 'N/A' && (
                                   <>
                                     <div className="flex justify-between items-center">
-                                      <span className="text-xs font-bold text-gray-400 uppercase tracking-tight">Block Mined:</span>
+                                      <span className="text-xs font-bold text-slate-700 uppercase tracking-tight">Block Mined:</span>
                                       <span className="font-semibold text-gray-800 font-mono text-xs">#{verificationData.blockchainRecord.blockNumber}</span>
                                     </div>
                                     <div className="flex justify-between items-center">
-                                      <span className="text-xs font-bold text-gray-400 uppercase tracking-tight">EVM Smart Contract:</span>
-                                      <span className="font-mono text-[9px] text-gray-500 overflow-hidden text-ellipsis max-w-[180px]" title={verificationData.blockchainRecord.contractAddress}>{verificationData.blockchainRecord.contractAddress || '0x5FbDB2315678afecb367f032d93F642f64180aa3'}</span>
+                                      <span className="text-xs font-bold text-slate-700 uppercase tracking-tight">EVM Smart Contract:</span>
+                                      <span className="font-mono text-[9px] text-gray-600 overflow-hidden text-ellipsis max-w-[180px]" title={verificationData.blockchainRecord.contractAddress}>{verificationData.blockchainRecord.contractAddress || '0x5FbDB2315678afecb367f032d93F642f64180aa3'}</span>
                                     </div>
                                     <div className="flex justify-between items-center">
-                                      <span className="text-xs font-bold text-gray-400 uppercase tracking-tight">Validator Node:</span>
-                                      <span className="text-[10px] text-gray-600 font-medium">{verificationData.blockchainRecord.miner || 'POW Node-01'}</span>
+                                      <span className="text-xs font-bold text-slate-700 uppercase tracking-tight">Validator Node:</span>
+                                      <span className="text-[10px] text-gray-700 font-medium">{verificationData.blockchainRecord.miner || 'POW Node-01'}</span>
                                     </div>
                                   </>
                                 )}
                                 <div className="flex justify-between items-center pt-2 border-t border-gray-200">
-                                  <span className="text-[10px] font-bold text-gray-400 uppercase">Mined Timestamp:</span>
-                                  <span className="text-[10px] text-gray-500 font-semibold uppercase">{verificationData?.blockchainRecord?.date ? new Date(verificationData.blockchainRecord.date).toLocaleString() : 'N/A'}</span>
+                                  <span className="text-[10px] font-bold text-slate-700 uppercase">Mined Timestamp:</span>
+                                  <span className="text-[10px] text-slate-700 font-semibold uppercase">{verificationData?.blockchainRecord?.date ? new Date(verificationData.blockchainRecord.date).toLocaleString() : 'N/A'}</span>
                                 </div>
                               </>
                             ) : (
                               <>
                                 <div className="flex justify-between items-center pt-2 border-t border-gray-200">
-                                  <span className="text-[10px] font-bold text-gray-400 uppercase">Secured Timestamp:</span>
-                                  <span className="text-[10px] text-gray-500 font-semibold uppercase">{verificationData?.issuedDate ? new Date(verificationData.issuedDate).toLocaleString() : 'N/A'}</span>
+                                  <span className="text-[10px] font-bold text-slate-700 uppercase">Secured Timestamp:</span>
+                                  <span className="text-[10px] text-slate-700 font-semibold uppercase">{verificationData?.issuedDate ? new Date(verificationData.issuedDate).toLocaleString() : 'N/A'}</span>
                                 </div>
                               </>
                             )}
@@ -218,7 +214,7 @@ const Validation = () => {
                   <div>
                     <h2 className="text-2xl font-bold text-gray-800 mb-3">Verification Failed</h2>
                     <p className="text-gray-600 leading-relaxed text-lg font-light">
-                      The document's digital signature does not match the blockchain records secured by VerifiTOR. 
+                      The document&apos;s digital signature does not match the blockchain records secured by VerifiTOR. 
                       Please contact the university registrar immediately for further assistance.
                     </p>
                   </div>
@@ -229,22 +225,30 @@ const Validation = () => {
                   <h2 className="text-xl font-bold text-gray-800 mb-8 border-b border-gray-100 pb-4">Contact Registrar Office</h2>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div className="flex flex-col items-center md:items-start text-center md:text-left">
-                      <div className="flex items-center text-gray-400 mb-2 uppercase text-[10px] font-black tracking-widest">
+                      <div className="flex items-center text-slate-600 mb-2 uppercase text-[10.5px] font-black tracking-widest">
                         <Mail className="w-4 h-4 mr-2" /> Email Address
                       </div>
-                      <a href="mailto:registrar@university.edu.ph" className="text-blue-600 font-semibold hover:underline">registrar@university.edu.ph</a>
+                      <a href="mailto:registrar@university.edu.ph" className="text-blue-600 font-semibold hover:underline min-h-[44px] inline-flex items-center touch-target">registrar@university.edu.ph</a>
                     </div>
                     <div className="flex flex-col items-center md:items-start text-center md:text-left">
-                      <div className="flex items-center text-gray-400 mb-2 uppercase text-[10px] font-black tracking-widest">
+                      <div className="flex items-center text-slate-600 mb-2 uppercase text-[10.5px] font-black tracking-widest">
                         <Phone className="w-4 h-4 mr-2" /> Phone Number
                       </div>
-                      <span className="text-gray-800 font-semibold">(02) 1234-5678</span>
+                      <span className="text-gray-800 font-semibold min-h-[44px] inline-flex items-center">(02) 1234-5678</span>
                     </div>
                     <div className="flex flex-col items-center md:items-start text-center md:text-left">
-                      <div className="flex items-center text-gray-400 mb-2 uppercase text-[10px] font-black tracking-widest">
+                      <div className="flex items-center text-slate-600 mb-2 uppercase text-[10.5px] font-black tracking-widest">
                         <Globe className="w-4 h-4 mr-2" /> Official Website
                       </div>
-                      <a href="https://university.com" target="_blank" rel="noreferrer" className="text-blue-600 font-semibold hover:underline">University.com</a>
+                      <a 
+                        href="https://university.com" 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        aria-label="Official Website (opens in new tab)"
+                        className="text-blue-600 font-semibold hover:underline min-h-[44px] inline-flex items-center touch-target"
+                      >
+                        University.com
+                      </a>
                     </div>
                   </div>
                 </div>

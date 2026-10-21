@@ -584,8 +584,9 @@ const RequestDetails = () => {
                                 <button
                                     type="button"
                                     onClick={handleOpenSuperAdminModal}
-                                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition-all cursor-pointer shadow-2xs hover:-translate-y-0.5"
+                                    className="inline-flex items-center gap-1.5 min-h-[38px] px-3.5 py-1.5 rounded-full text-[11px] font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition-all cursor-pointer shadow-2xs hover:-translate-y-0.5 touch-target"
                                     title="Super Admin Force Override (Status & Steps)"
+                                    aria-label="Super Admin Force Override (Status & Steps)"
                                 >
                                     <Shield size={12} className="text-indigo-600" />
                                     <span>Super Admin Override</span>
@@ -593,15 +594,16 @@ const RequestDetails = () => {
                             )}
                         </div>
                         <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs text-slate-400 font-medium">Request ID:</span>
+                            <span className="text-xs text-slate-600 font-medium">Request ID:</span>
                             <span className="bg-slate-100 px-2 py-0.5 rounded-md text-slate-800 font-mono text-[11.5px] font-bold" title={requestData.requestId}>
                                 {formatShortId(requestData.requestId, 'REQ')}
                             </span>
                             <button
                                 type="button"
                                 onClick={() => handleCopy(requestData.requestId, 'hdr-req')}
-                                className="text-slate-400 hover:text-slate-700 transition-colors p-1 rounded hover:bg-slate-200/60 cursor-pointer"
+                                className="w-8 h-8 min-w-[32px] min-h-[32px] text-slate-500 hover:text-slate-700 transition-colors p-1 rounded hover:bg-slate-200/60 cursor-pointer flex items-center justify-center touch-target"
                                 title="Copy Full Request ID"
+                                aria-label="Copy Full Request ID"
                             >
                                 {copiedId === 'hdr-req' ? <Check size={11} className="text-emerald-600" /> : <Copy size={11} />}
                             </button>
@@ -612,7 +614,7 @@ const RequestDetails = () => {
                         <button 
                             type="button"
                             onClick={() => navigate(backToRequests)}
-                            className="bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold text-xs px-4 py-2 rounded-full border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-2 cursor-pointer w-fit"
+                            className="bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold text-xs min-h-[44px] px-5 py-2.5 rounded-full border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-2 cursor-pointer w-fit touch-target"
                         >
                             <ArrowLeft size={13} />
                             <span>Back to Document Requests</span>
@@ -640,7 +642,8 @@ const RequestDetails = () => {
                             <div className="flex flex-col gap-2 shrink-0">
                                 {isSuperAdmin && (
                                     <button
-                                        className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-xl font-bold transition-all shadow-sm whitespace-nowrap"
+                                        type="button"
+                                        className="bg-red-600 hover:bg-red-700 text-white min-h-[44px] px-6 py-2.5 rounded-xl font-bold transition-all shadow-sm whitespace-nowrap touch-target cursor-pointer"
                                         onClick={() => showConfirm({
                                             title: 'Re-open Request',
                                             message: 'Are you sure you want to re-open this rejected request? The status will be changed back to "In Process".',
@@ -947,7 +950,7 @@ const RequestDetails = () => {
                                                             <p className="font-mono font-bold text-slate-900 text-sm truncate" title={paymentTx.transactionId}>{paymentTx.transactionId || 'N/A'}</p>
                                                         </div>
                                                         <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                                                            <p className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Payer Details</p>
+                                                            <p className="text-[10.5px] font-bold text-slate-600 uppercase tracking-wider mb-0.5">Payer Details</p>
                                                             <p className="font-bold text-slate-900 text-sm truncate" title={paymentTx.payerEmail}>{paymentTx.payerName || requestData.name} ({paymentTx.payerEmail || requestData.email || 'N/A'})</p>
                                                         </div>
                                                     </div>
@@ -956,14 +959,14 @@ const RequestDetails = () => {
                                                     {(paymentTx.imageUrl || paymentTx.receiptImage) && (
                                                         <div className="pt-1">
                                                             <div className="flex items-center justify-between mb-2">
-                                                                <span className="text-xs font-bold text-slate-600 flex items-center gap-1.5">
-                                                                    <FileSearch size={14} className="text-slate-400" />
+                                                                <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                                                                    <FileSearch size={14} className="text-slate-500" />
                                                                     <span>Uploaded Proof of Payment (Read-Only Inspection)</span>
                                                                 </span>
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => window.open((paymentTx.imageUrl || paymentTx.receiptImage).startsWith('http') ? (paymentTx.imageUrl || paymentTx.receiptImage) : `${API_BASE}${paymentTx.receiptImage}`, '_blank')}
-                                                                    className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 cursor-pointer"
+                                                                    className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 cursor-pointer min-h-[44px] px-2 touch-target"
                                                                 >
                                                                     <Eye size={12} />
                                                                     <span>Open Full Receipt</span>
@@ -992,7 +995,7 @@ const RequestDetails = () => {
                                                                     <button
                                                                         type="button"
                                                                         onClick={() => setIsEditingPayment(true)}
-                                                                        className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer"
+                                                                        className="px-4 py-2 min-h-[44px] bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer touch-target"
                                                                     >
                                                                         Verify Payment Now
                                                                     </button>
@@ -1006,14 +1009,14 @@ const RequestDetails = () => {
                                                                         <button
                                                                             type="button"
                                                                             onClick={() => setIsEditingPayment(false)}
-                                                                            className="text-xs text-slate-500 hover:text-slate-700 font-semibold cursor-pointer"
+                                                                            className="text-xs text-slate-600 hover:text-slate-800 font-semibold cursor-pointer min-h-[38px] px-3 touch-target"
                                                                         >
                                                                             Cancel
                                                                         </button>
                                                                     </div>
                                                                     <div className="flex flex-col sm:flex-row gap-3">
                                                                         <select
-                                                                            className="flex-1 py-2 px-3 border border-slate-200 rounded-xl outline-none focus:border-blue-500 text-xs font-bold text-slate-700 bg-white"
+                                                                            className="flex-1 py-2.5 px-3 min-h-[44px] border border-slate-200 rounded-xl outline-none focus:border-blue-500 text-xs font-bold text-slate-700 bg-white"
                                                                             value={paymentAction}
                                                                             onChange={(e) => setPaymentAction(e.target.value)}
                                                                             disabled={actionLoading}
@@ -1023,7 +1026,8 @@ const RequestDetails = () => {
                                                                             <option value="Rejected">Reject Completely (Invalid / Fraudulent Receipt)</option>
                                                                         </select>
                                                                         <button
-                                                                            className={`text-white py-2 px-5 rounded-xl font-bold text-xs transition-all shadow-sm cursor-pointer shrink-0 ${
+                                                                            type="button"
+                                                                            className={`text-white min-h-[44px] py-2.5 px-5 rounded-xl font-bold text-xs transition-all shadow-sm cursor-pointer shrink-0 touch-target ${
                                                                                 paymentAction === 'Completed' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700'
                                                                             }`}
                                                                             onClick={() => showConfirm({

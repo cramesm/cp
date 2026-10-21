@@ -141,7 +141,7 @@ const AccessibilityModal = () => {
                         <button
                             ref={closeBtnRef}
                             onClick={() => setSettingsModalOpen(false)}
-                            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#2c3e50] cursor-pointer"
+                            className="w-10 h-10 min-w-[40px] min-h-[40px] touch-target rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#2c3e50] cursor-pointer"
                             aria-label="Close settings"
                         >
                             <X size={18} />
@@ -186,7 +186,7 @@ const AccessibilityModal = () => {
                                     role="switch"
                                     aria-checked={simpleMode}
                                     aria-label="Toggle Simple Mode (Senior / Easy View)"
-                                    className={`relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 ${
+                                    className={`relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out touch-target focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 ${
                                         simpleMode ? 'bg-blue-600' : 'bg-slate-300'
                                     }`}
                                 >
@@ -203,7 +203,7 @@ const AccessibilityModal = () => {
                         {/* 2. Text Size Selector */}
                         <div className="space-y-2">
                             <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                                <Type size={15} className="text-slate-500" />
+                                <Type size={15} className="text-slate-600" />
                                 <span>Text Size</span>
                             </label>
                             <div className="grid grid-cols-3 gap-2.5" role="radiogroup" aria-label="Text size options">
@@ -254,7 +254,7 @@ const AccessibilityModal = () => {
                                 role="switch"
                                 aria-checked={highContrast}
                                 aria-label="Toggle High Contrast Mode"
-                                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2 ${
+                                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out touch-target focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2 ${
                                     highContrast ? 'bg-amber-600' : 'bg-slate-300'
                                 }`}
                             >
@@ -270,15 +270,15 @@ const AccessibilityModal = () => {
                     </div>
 
                     {/* Footer */}
-                    <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                    <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600 font-medium">
                         <span className="flex items-center gap-1.5">
-                            <Info size={14} className="text-slate-400" />
+                            <Info size={14} className="text-slate-600" />
                             <span>Preferences are saved automatically.</span>
                         </span>
                         <button
                             type="button"
                             onClick={() => setSettingsModalOpen(false)}
-                            className="px-4 py-2 rounded-xl bg-slate-800 text-white font-bold hover:bg-slate-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-800 focus-visible:ring-offset-2 cursor-pointer"
+                            className="px-5 py-2.5 min-h-[44px] touch-target rounded-xl bg-slate-800 text-white font-bold hover:bg-slate-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-800 focus-visible:ring-offset-2 cursor-pointer"
                         >
                             Done
                         </button>

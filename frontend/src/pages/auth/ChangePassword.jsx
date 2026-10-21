@@ -123,16 +123,18 @@ const ChangePassword = () => {
                                 <input 
                                     type={showPassword ? "text" : "password"} 
                                     id="new-password" 
+                                    aria-label="New Password"
                                     placeholder="New Password"
-                                    className="w-full px-6 py-3.5 pr-14 bg-white border border-gray-300 rounded-full text-[14px] text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#213448] focus:ring-4 focus:ring-[#213448]/10 transition-all duration-200 shadow-sm hover:border-gray-400" 
+                                    className="w-full px-6 py-3.5 pr-14 bg-white border border-gray-300 rounded-full text-[14px] text-gray-800 placeholder-gray-500 focus:outline-none focus:border-[#213448] focus:ring-4 focus:ring-[#213448]/10 transition-all duration-200 shadow-sm hover:border-gray-400" 
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     required 
                                     disabled={isLoading}
+                                    autoComplete="new-password"
                                 />
                                 <button
                                     type="button"
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors focus:outline-none"
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-full text-slate-600 hover:text-slate-900 hover:bg-gray-100 transition-colors focus:outline-none cursor-pointer touch-target"
                                     onClick={() => setShowPassword(!showPassword)}
                                     aria-label={showPassword ? "Hide password" : "Show password"}
                                 >
@@ -145,16 +147,18 @@ const ChangePassword = () => {
                                 <input 
                                     type={showConfirmPassword ? "text" : "password"} 
                                     id="confirm-password" 
+                                    aria-label="Confirm New Password"
                                     placeholder="Confirm New Password"
-                                    className="w-full px-6 py-3.5 pr-14 bg-white border border-gray-300 rounded-full text-[14px] text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#213448] focus:ring-4 focus:ring-[#213448]/10 transition-all duration-200 shadow-sm hover:border-gray-400" 
+                                    className="w-full px-6 py-3.5 pr-14 bg-white border border-gray-300 rounded-full text-[14px] text-gray-800 placeholder-gray-500 focus:outline-none focus:border-[#213448] focus:ring-4 focus:ring-[#213448]/10 transition-all duration-200 shadow-sm hover:border-gray-400" 
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
                                     required 
                                     disabled={isLoading}
+                                    autoComplete="new-password"
                                 />
                                 <button
                                     type="button"
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors focus:outline-none"
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-full text-slate-600 hover:text-slate-900 hover:bg-gray-100 transition-colors focus:outline-none cursor-pointer touch-target"
                                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                     aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
                                 >
@@ -181,7 +185,7 @@ const ChangePassword = () => {
                     </form>
 
                     <div className="text-center mt-8">
-                        <Link to="/" className="inline-flex items-center gap-1.5 text-[13px] text-[#2B6D9B] hover:text-[#184869] font-medium transition-colors">
+                        <Link to="/" className="inline-flex items-center gap-1.5 px-4 py-2.5 min-h-[44px] text-[13px] text-[#2B6D9B] hover:text-[#184869] font-medium transition-colors touch-target">
                             <i className="fa-solid fa-chevron-left text-[10px]"></i>
                             <span>Back to Login</span>
                         </Link>
@@ -191,15 +195,21 @@ const ChangePassword = () => {
 
             {/* Modal */}
             {modal.show && (
-                <div id="error-modal" className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[1000] flex justify-center items-center p-4">
+                <div 
+                    id="error-modal" 
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="change-password-modal-title"
+                    className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[1000] flex justify-center items-center p-4"
+                >
                     <div className="bg-white w-full max-w-[340px] p-6 rounded-3xl text-center shadow-2xl animate-scaleIn">
                         <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 text-xl ${modal.type === 'success' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
                             <i className={`fa-solid ${modal.type === 'success' ? 'fa-circle-check' : 'fa-triangle-exclamation'}`}></i>
                         </div>
-                        <h3 className="text-[18px] font-bold text-gray-900 mb-2">{modal.title}</h3>
-                        <p id="modal-message" className="text-gray-500 text-[13.5px] mb-6 leading-relaxed">{modal.message}</p>
+                        <h3 id="change-password-modal-title" className="text-[18px] font-bold text-gray-900 mb-2">{modal.title}</h3>
+                        <p id="modal-message" className="text-gray-600 text-[13.5px] mb-6 leading-relaxed">{modal.message}</p>
                         <button 
-                            className="bg-[#111827] text-white py-3 px-6 rounded-full font-semibold text-sm cursor-pointer w-full transition-colors hover:bg-[#213448]" 
+                            className="bg-[#111827] text-white py-3 px-6 min-h-[44px] rounded-full font-semibold text-sm cursor-pointer w-full transition-colors hover:bg-[#213448]" 
                             onClick={() => {
                                 setModal({ show: false, title: '', message: '', type: 'error' });
                                 if (modal.type === 'success') {

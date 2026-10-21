@@ -95,8 +95,10 @@ function VerifyTransaction() {
 
                         <form onSubmit={handleVerify} className="space-y-4">
                             <div>
-                                <label className="block text-xs font-bold text-slate-700 mb-1.5">Student ID Number *</label>
+                                <label htmlFor="verify-student-id" className="block text-xs font-bold text-slate-700 mb-1.5">Student ID Number *</label>
                                 <input
+                                    id="verify-student-id"
+                                    aria-label="Student ID Number"
                                     type="text"
                                     placeholder="e.g., ID-2023-0001"
                                     value={studentIDNumber}
@@ -109,7 +111,7 @@ function VerifyTransaction() {
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="w-full bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold text-xs py-2.5 px-4 rounded-full border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_6px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                                className="w-full min-h-[44px] touch-target bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold text-xs py-2.5 px-4 rounded-full border-t border-white/20 border-b-2 border-black/50 shadow-[0_2px_6px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                             >
                                 {loading ? (
                                     <span>Verifying Record...</span>
@@ -156,51 +158,49 @@ function VerifyTransaction() {
                                             </>
                                         )}
                                     </div>
-                                </div>
-
-                                {/* Content */}
+                                </div>                                 {/* Content */}
                                 <div className="p-5 space-y-5">
                                     <div>
-                                        <h4 className="text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-3">Academic Record Details</h4>
+                                        <h4 className="text-xs font-extrabold text-slate-600 uppercase tracking-wider mb-3">Academic Record Details</h4>
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                                             <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                                                <p className="text-[10.5px] font-bold text-slate-400 uppercase mb-1">Reference Number</p>
+                                                <p className="text-[10.5px] font-bold text-slate-600 uppercase mb-1">Reference Number</p>
                                                 <p className="text-xs font-mono font-bold text-slate-900 break-all">
                                                     {result.blockchainRecord?.referenceNumber}
                                                 </p>
                                             </div>
 
                                             <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                                                <p className="text-[10.5px] font-bold text-slate-400 uppercase mb-1">Student Name</p>
+                                                <p className="text-[10.5px] font-bold text-slate-600 uppercase mb-1">Student Name</p>
                                                 <p className="text-xs font-bold text-slate-900">
                                                     {result.blockchainRecord?.nameOfStudent}
                                                 </p>
                                             </div>
 
                                             <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                                                <p className="text-[10.5px] font-bold text-slate-400 uppercase mb-1">ID Number</p>
+                                                <p className="text-[10.5px] font-bold text-slate-600 uppercase mb-1">ID Number</p>
                                                 <p className="text-xs font-mono font-bold text-slate-900">
                                                     {result.blockchainRecord?.studentIDNumber}
                                                 </p>
                                             </div>
 
                                             <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                                                <p className="text-[10.5px] font-bold text-slate-400 uppercase mb-1">Document Type</p>
+                                                <p className="text-[10.5px] font-bold text-slate-600 uppercase mb-1">Document Type</p>
                                                 <p className="text-xs font-semibold text-slate-900">
                                                     {result.blockchainRecord?.typeOfDocument}
                                                 </p>
                                             </div>
 
                                             <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                                                <p className="text-[10.5px] font-bold text-slate-400 uppercase mb-1">School / Institution</p>
+                                                <p className="text-[10.5px] font-bold text-slate-600 uppercase mb-1">School / Institution</p>
                                                 <p className="text-xs font-semibold text-slate-900">
                                                     {result.blockchainRecord?.nameOfSchool}
                                                 </p>
                                             </div>
 
                                             <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                                                <p className="text-[10.5px] font-bold text-slate-400 uppercase mb-1">Year Graduated</p>
+                                                <p className="text-[10.5px] font-bold text-slate-600 uppercase mb-1">Year Graduated</p>
                                                 <p className="text-xs font-semibold text-slate-900">
                                                     {result.blockchainRecord?.yearGraduated}
                                                 </p>
@@ -209,18 +209,18 @@ function VerifyTransaction() {
                                     </div>
 
                                     <div className="border-t border-slate-100 pt-4">
-                                        <h4 className="text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-3">Blockchain Ledger Details</h4>
+                                        <h4 className="text-xs font-extrabold text-slate-600 uppercase tracking-wider mb-3">Blockchain Ledger Details</h4>
 
                                         <div className="space-y-3">
                                             <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                                 <div>
-                                                    <p className="text-[10.5px] font-bold text-slate-400 uppercase mb-0.5">Recorded By</p>
+                                                    <p className="text-[10.5px] font-bold text-slate-600 uppercase mb-0.5">Recorded By</p>
                                                     <p className="text-xs font-mono font-medium text-slate-700 break-all m-0">
                                                         {result.blockchainRecord?.recordedBy}
                                                     </p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-[10.5px] font-bold text-slate-400 uppercase mb-0.5">Timestamp</p>
+                                                    <p className="text-[10.5px] font-bold text-slate-600 uppercase mb-0.5">Timestamp</p>
                                                     <p className="text-xs font-mono font-medium text-slate-700 m-0">
                                                         {new Date(result.blockchainRecord?.timestamp * 1000).toLocaleString()}
                                                     </p>
@@ -229,14 +229,15 @@ function VerifyTransaction() {
 
                                             {result.databaseRecord?.blockchainTxHash && (
                                                 <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                                                    <p className="text-[10.5px] font-bold text-slate-400 uppercase mb-1">Transaction Hash</p>
+                                                    <p className="text-[10.5px] font-bold text-slate-600 uppercase mb-1">Transaction Hash</p>
                                                     <div className="flex items-center gap-2">
                                                         <p className="text-xs font-mono bg-white border border-slate-200 px-3 py-1.5 rounded-lg text-slate-700 break-all flex-1 m-0">
                                                             {result.databaseRecord.blockchainTxHash}
                                                         </p>
                                                         <button
                                                             onClick={() => copyToClipboard(result.databaseRecord.blockchainTxHash)}
-                                                            className="bg-white hover:bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-200 font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                                                            aria-label="Copy transaction hash"
+                                                            className="bg-white hover:bg-slate-100 text-slate-700 px-3.5 py-1.5 min-h-[38px] touch-target rounded-lg border border-slate-200 font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
                                                             title="Copy hash"
                                                         >
                                                             {copiedHash ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
@@ -255,11 +256,11 @@ function VerifyTransaction() {
                     {/* Empty State */}
                     {!result && (
                         <div className="lg:col-span-2 bg-white rounded-[22px] shadow-[0_8px_24px_rgba(0,0,0,0.03),0_2px_6px_rgba(0,0,0,0.02)] border border-slate-100/90 p-12 flex flex-col items-center justify-center text-center">
-                            <div className="w-14 h-14 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center text-xl mb-3 border border-slate-100">
+                            <div className="w-14 h-14 rounded-2xl bg-slate-50 text-slate-600 flex items-center justify-center text-xl mb-3 border border-slate-100">
                                 <Search size={24} />
                             </div>
                             <h4 className="text-sm font-black text-slate-800 mb-1">Awaiting Student ID</h4>
-                            <p className="text-slate-400 text-xs max-w-sm m-0">
+                            <p className="text-slate-600 text-xs font-medium max-w-sm m-0">
                                 Enter a student ID to verify ledger records.
                             </p>
                         </div>

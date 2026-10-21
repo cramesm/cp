@@ -116,11 +116,11 @@ const TransactionDetails = () => {
                 <div className="flex flex-col items-center justify-center min-h-[500px] text-slate-500">
                     <AlertCircle size={48} className="mb-4 text-red-400" />
                     <h2 className="text-lg font-black text-slate-800">Transaction Not Found</h2>
-                    <p className="text-xs text-slate-400 mt-1 font-mono">Transaction ID: {id}</p>
+                    <p className="text-xs text-slate-600 mt-1 font-mono">Transaction ID: {id}</p>
                     <button
                         type="button"
                         onClick={() => navigate('/transactions')}
-                        className="mt-4 bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold text-xs px-4 py-2 rounded-full border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-2 cursor-pointer w-fit"
+                        className="mt-4 bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold text-xs min-h-[44px] px-5 py-2.5 rounded-full border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-2 cursor-pointer w-fit touch-target"
                     >
                         <ArrowLeft size={13} />
                         <span>Back to Payments</span>
@@ -191,15 +191,16 @@ const TransactionDetails = () => {
                                         setNewStatus(txData.status);
                                         setIsEditingStatus(true);
                                     }}
-                                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition-all cursor-pointer shadow-2xs hover:-translate-y-0.5"
+                                    className="inline-flex items-center gap-1.5 min-h-[38px] px-3.5 py-1.5 rounded-full text-[11px] font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition-all cursor-pointer shadow-2xs hover:-translate-y-0.5 touch-target"
                                     title="Super Admin Force Override Status"
+                                    aria-label="Super Admin Force Override Status"
                                 >
                                     <Shield size={12} className="text-indigo-600" />
                                     <span>Super Admin Override</span>
                                 </button>
                             )}
                         </div>
-                        <p className="text-xs text-slate-400 font-medium m-0 mt-1">
+                        <p className="text-xs text-slate-600 font-medium m-0 mt-1">
                             Submitted on {formattedDate} at {formattedTime}
                         </p>
                     </div>
@@ -214,7 +215,7 @@ const TransactionDetails = () => {
                                     navigate('/transactions');
                                 }
                             }}
-                            className="bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold text-xs px-4 py-2 rounded-full border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-2 cursor-pointer w-fit"
+                            className="bg-[#2c3543] hover:bg-[#1f2631] text-white font-bold text-xs min-h-[44px] px-5 py-2.5 rounded-full border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all flex items-center gap-2 cursor-pointer w-fit touch-target"
                         >
                             <ArrowLeft size={13} />
                             <span>Back to Payments</span>
@@ -233,16 +234,16 @@ const TransactionDetails = () => {
                                 <User size={15} /> Payer Information
                             </h4>
                             <div className="grid grid-cols-[130px_1fr] gap-y-3 text-[12.5px]">
-                                <span className="text-slate-400 font-bold">Payer Name:</span>
+                                <span className="text-slate-600 font-bold">Payer Name:</span>
                                 <span className="text-slate-900 font-bold">{txData.payerName || txData.name}</span>
 
-                                <span className="text-slate-400 font-bold">Email:</span>
+                                <span className="text-slate-600 font-bold">Email:</span>
                                 <span className="text-slate-700 font-medium">{txData.payerEmail || 'Not provided'}</span>
 
-                                <span className="text-slate-400 font-bold">Type:</span>
+                                <span className="text-slate-600 font-bold">Type:</span>
                                 <span className="text-slate-700 font-medium">{txData.payerType || 'Student'}</span>
 
-                                <span className="text-slate-400 font-bold">Request ID:</span>
+                                <span className="text-slate-600 font-bold">Request ID:</span>
                                 <span className="bg-slate-100 px-2 py-0.5 rounded-md text-slate-700 font-mono text-[11.5px] font-bold w-fit">
                                     {txData.requestId}
                                 </span>
@@ -255,32 +256,32 @@ const TransactionDetails = () => {
                                 <CreditCard size={15} /> Payment Summary
                             </h4>
                             <div className="grid grid-cols-[130px_1fr] gap-y-3 text-[12.5px]">
-                                <span className="text-slate-400 font-bold">Document:</span>
+                                <span className="text-slate-600 font-bold">Document:</span>
                                 <span className="text-slate-800 font-bold flex items-center gap-1.5">
                                     <i className="fa-solid fa-file-lines text-blue-500 text-xs"></i>
                                     <span>{txData.documentType}</span>
                                 </span>
 
-                                <span className="text-slate-400 font-bold">Amount:</span>
+                                <span className="text-slate-600 font-bold">Amount:</span>
                                 <span className="text-slate-900 font-black text-[15px]">₱{txData.amount || '0.00'}</span>
 
-                                <span className="text-slate-400 font-bold">Payment Mode:</span>
+                                <span className="text-slate-600 font-bold">Payment Mode:</span>
                                 <span className={`inline-flex items-center w-fit px-2.5 py-0.5 rounded-md text-[11px] font-extrabold uppercase ${getPaymentModeStyle(txData.paymentMode)}`}>
                                     {txData.paymentMode}
                                 </span>
 
-                                <span className="text-slate-400 font-bold">Reference No:</span>
+                                <span className="text-slate-600 font-bold">Reference No:</span>
                                 {txData.referenceNumber ? (
                                     <span className="font-mono text-slate-800 font-bold text-[12px] break-all">
                                         {txData.referenceNumber}
                                     </span>
                                 ) : (
-                                    <span className="text-slate-400 italic font-medium text-[12px]">
+                                    <span className="text-slate-600 italic font-medium text-[12px]">
                                         {txData.paymentMode === 'Cash' ? 'None (Cash Payment)' : 'See uploaded receipt'}
                                     </span>
                                 )}
 
-                                <span className="text-slate-400 font-bold">Status:</span>
+                                <span className="text-slate-600 font-bold">Status:</span>
                                 <span className={`inline-flex items-center gap-1.5 w-fit px-3 py-0.5 rounded-full text-[10.5px] font-extrabold uppercase border ${statusBadge.style}`}>
                                     <span className={`w-1.5 h-1.5 rounded-full ${statusBadge.dotColor}`}></span>
                                     <span>{txData.status}</span>
@@ -307,8 +308,9 @@ const TransactionDetails = () => {
                                             onClick={() => setZoomedImage(true)}
                                         />
                                         <button
+                                            type="button"
                                             onClick={() => setZoomedImage(true)}
-                                            className="bg-[#2c3543] hover:bg-[#1f2631] text-white px-6 py-2 rounded-full font-bold text-xs flex items-center gap-2 border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all cursor-pointer"
+                                            className="bg-[#2c3543] hover:bg-[#1f2631] text-white px-6 py-2.5 min-h-[44px] rounded-full font-bold text-xs flex items-center gap-2 border-t border-t-white/20 border-b-2 border-b-black/50 shadow-[0_2px_5px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 active:translate-y-0.5 active:border-b-0 transition-all cursor-pointer touch-target"
                                         >
                                             <Eye size={14} /> 
                                             <span>View Full Size</span>
@@ -316,10 +318,10 @@ const TransactionDetails = () => {
                                     </div>
                                 ) : (
                                     <div className="flex flex-col items-center text-center gap-3 py-10">
-                                        <div className="bg-slate-200 p-3.5 rounded-full text-slate-400">
+                                        <div className="bg-slate-200 p-3.5 rounded-full text-slate-500">
                                             <ImageIcon size={28} />
                                         </div>
-                                        <p className="text-xs font-bold text-slate-400 m-0">No valid receipt image uploaded</p>
+                                        <p className="text-xs font-bold text-slate-600 m-0">No valid receipt image uploaded</p>
                                     </div>
                                 )}
                             </div>
@@ -342,16 +344,18 @@ const TransactionDetails = () => {
                                 }`}>
                                     <span className={`w-2.5 h-2.5 rounded-full ${statusBadge.dotColor}`}></span>
                                     <div>
-                                        <p className="text-[10.5px] font-extrabold uppercase text-slate-400 m-0">Current Status</p>
+                                        <p className="text-[10.5px] font-extrabold uppercase text-slate-600 m-0">Current Status</p>
                                         <p className="text-[13px] font-black text-slate-900 m-0">{txData.status}</p>
                                     </div>
                                     {isSuperAdmin && !isEditingStatus && (
                                         <button 
+                                            type="button"
                                             onClick={() => {
                                                 setNewStatus(txData.status);
                                                 setIsEditingStatus(true);
                                             }}
-                                            className="ml-auto text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 cursor-pointer"
+                                            aria-label="Edit payment status"
+                                            className="ml-auto text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 cursor-pointer min-h-[36px] px-2.5 touch-target"
                                         >
                                             <Edit3 size={12} /> 
                                             <span>Edit</span>
@@ -364,7 +368,7 @@ const TransactionDetails = () => {
                                     <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 animate-in fade-in">
                                         <p className="text-[10.5px] font-extrabold text-blue-800 mb-2 uppercase tracking-wide">Super Admin Override</p>
                                         <select 
-                                            className="w-full p-2 border border-blue-200 rounded-lg text-xs mb-3 outline-none bg-white font-bold text-slate-800"
+                                            className="w-full p-2.5 min-h-[44px] border border-blue-200 rounded-lg text-xs mb-3 outline-none bg-white font-bold text-slate-800"
                                             value={newStatus}
                                             onChange={(e) => setNewStatus(e.target.value)}
                                         >
@@ -376,14 +380,16 @@ const TransactionDetails = () => {
                                         </select>
                                         <div className="flex gap-2">
                                             <button 
-                                                className="flex-1 py-1.5 text-xs font-bold text-slate-600 hover:bg-blue-100 rounded-lg transition-colors cursor-pointer"
+                                                type="button"
+                                                className="flex-1 py-2 min-h-[44px] text-xs font-bold text-slate-700 hover:bg-blue-100 rounded-lg transition-colors cursor-pointer touch-target"
                                                 onClick={() => setIsEditingStatus(false)}
                                                 disabled={actionLoading}
                                             >
                                                 Cancel
                                             </button>
                                             <button 
-                                                className="flex-1 py-1.5 text-xs font-bold bg-[#2c3543] text-white rounded-lg hover:bg-[#1f2631] transition-colors disabled:opacity-50 cursor-pointer"
+                                                type="button"
+                                                className="flex-1 py-2 min-h-[44px] text-xs font-bold bg-[#2c3543] text-white rounded-lg hover:bg-[#1f2631] transition-colors disabled:opacity-50 cursor-pointer touch-target"
                                                 onClick={handleUpdateStatus}
                                                 disabled={actionLoading}
                                             >
@@ -396,10 +402,10 @@ const TransactionDetails = () => {
                                 {/* Verified By */}
                                 {txData.verifiedBy && (
                                     <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-                                        <p className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Verified By</p>
+                                        <p className="text-[10.5px] font-bold text-slate-600 uppercase tracking-wider mb-0.5">Verified By</p>
                                         <p className="text-xs font-bold text-slate-900 m-0">{txData.verifiedBy}</p>
                                         {txData.verifiedAt && (
-                                            <p className="text-[11px] text-slate-400 mt-1 m-0">
+                                            <p className="text-[11px] text-slate-600 mt-1 m-0">
                                                 {new Date(txData.verifiedAt).toLocaleString('en-US', {
                                                     year: 'numeric', month: 'long', day: 'numeric',
                                                     hour: '2-digit', minute: '2-digit'
@@ -412,23 +418,23 @@ const TransactionDetails = () => {
                                 {/* Admin Remarks */}
                                 {txData.adminRemarks && (
                                     <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-                                        <p className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Admin Remarks</p>
+                                        <p className="text-[10.5px] font-bold text-slate-600 uppercase tracking-wider mb-0.5">Admin Remarks</p>
                                         <p className="text-xs text-slate-700 leading-relaxed m-0 font-medium">{txData.adminRemarks}</p>
                                     </div>
                                 )}
 
                                 {/* Timestamps */}
                                 <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-                                    <p className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider mb-2">Timeline</p>
+                                    <p className="text-[10.5px] font-bold text-slate-600 uppercase tracking-wider mb-2">Timeline</p>
                                     <div className="space-y-1.5 text-xs">
                                         <div className="flex justify-between">
-                                            <span className="text-slate-400 font-medium">Submitted</span>
-                                            <span className="text-slate-700 font-bold">{formattedDate}, {formattedTime}</span>
+                                            <span className="text-slate-600 font-medium">Submitted</span>
+                                            <span className="text-slate-800 font-bold">{formattedDate}, {formattedTime}</span>
                                         </div>
                                         {txData.verifiedAt && (
                                             <div className="flex justify-between">
-                                                <span className="text-slate-400 font-medium">Verified</span>
-                                                <span className="text-slate-700 font-bold">
+                                                <span className="text-slate-600 font-medium">Verified</span>
+                                                <span className="text-slate-800 font-bold">
                                                     {new Date(txData.verifiedAt).toLocaleDateString('en-US', {
                                                         year: 'numeric', month: 'long', day: 'numeric'
                                                     })}
@@ -441,8 +447,8 @@ const TransactionDetails = () => {
                                 {/* Needs Update Notification Info */}
                                 {txData.status === 'Needs Update' && (
                                     <div className="p-3.5 bg-amber-50 rounded-xl border border-amber-200">
-                                        <p className="text-[10.5px] font-bold text-amber-700 uppercase tracking-wider mb-1">Awaiting Re-upload</p>
-                                        <p className="text-xs text-amber-600 m-0">Pending updated receipt upload from student.</p>
+                                        <p className="text-[10.5px] font-bold text-amber-800 uppercase tracking-wider mb-1">Awaiting Re-upload</p>
+                                        <p className="text-xs text-amber-800 m-0 font-medium">Pending updated receipt upload from student.</p>
                                     </div>
                                 )}
                             </div>

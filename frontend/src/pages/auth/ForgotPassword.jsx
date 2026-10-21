@@ -6,14 +6,12 @@ import api from '../../api';
 
 const ForgotPassword = () => {
     const [email, setEmail] = useState('');
-    const [message, setMessage] = useState('');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
 
     const handleSendOTP = async (e) => {
         e.preventDefault();
-        setMessage('');
         setError('');
         setIsLoading(true);
         try {
@@ -80,8 +78,9 @@ const ForgotPassword = () => {
                             <input 
                                 type="email" 
                                 id="email" 
+                                aria-label="Enter your email address"
                                 placeholder="Enter your email address" 
-                                className="w-full px-6 py-3.5 bg-white border border-gray-300 rounded-full text-[14px] text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#213448] focus:ring-4 focus:ring-[#213448]/10 transition-all duration-200 shadow-sm hover:border-gray-400"
+                                className="w-full px-6 py-3.5 bg-white border border-gray-300 rounded-full text-[14px] text-gray-800 placeholder-gray-500 focus:outline-none focus:border-[#213448] focus:ring-4 focus:ring-[#213448]/10 transition-all duration-200 shadow-sm hover:border-gray-400"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required 
@@ -108,7 +107,7 @@ const ForgotPassword = () => {
                     </form>
 
                     <div className="text-center mt-8">
-                        <Link to="/" className="inline-flex items-center gap-1.5 text-[13px] text-[#2B6D9B] hover:text-[#184869] font-medium transition-colors">
+                        <Link to="/" className="inline-flex items-center gap-1.5 px-4 py-2.5 min-h-[44px] text-[13px] text-[#2B6D9B] hover:text-[#184869] font-medium transition-colors touch-target">
                             <i className="fa-solid fa-chevron-left text-[10px]"></i>
                             <span>Back to Login</span>
                         </Link>
